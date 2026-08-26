@@ -39,7 +39,8 @@ evals/
 - migrations and persistence
 - tenant/facility/room/resident/device domain logic
 - edge-telemetry ingestion
-- RFID tag-to-resident mapping and identity confidence
+- device-to-room and room-to-resident assignment logic
+- single-resident room ambiguity/confidence handling
 - telemetry validation
 - cross-sensor fusion
 - personal baseline engine
@@ -85,7 +86,7 @@ simulator/
 - resident overview/detail experiences
 - alerts/events timeline and detail UX
 - confidence, uncertainty, unavailable-data states
-- RFID identity/attribution states in the UI
+- room assignment and multi-person ambiguity states in the UI
 - device-health UX
 - calibration UX
 - LLM interpretation presentation
@@ -105,7 +106,7 @@ simulator/
 
 ### Simulator boundary
 
-The cofounder owns **scenario generation and telemetry simulation**, not the real cloud intelligence.
+Rishit owns **scenario generation and telemetry simulation**, not the real cloud intelligence.
 
 The simulator may generate scenarios such as:
 
@@ -116,7 +117,7 @@ The simulator may generate scenarios such as:
 - prolonged inactivity
 - repetitive movement
 - multi-person ambiguity
-- RFID missing/ambiguous/multiple-tag state
+- missing/conflicting room assignment state
 - device/sensor failure
 - recurring normal routine
 - recovery
@@ -149,7 +150,7 @@ sensor-specific edge adapters and fixtures
 
 ### Responsibilities
 
-- radar, thermal, Wi-Fi CSI, and UHF RFID hardware bring-up;
+- radar, thermal, and Wi-Fi CSI hardware bring-up;
 - firmware sensor acquisition and device control;
 - per-sensor raw-to-usable conversion at the device boundary;
 - lightweight invalid-data filtering, reduction, compression, and packaging;
@@ -183,7 +184,7 @@ repo-level CI/configuration
 - API/data contracts
 - event lifecycle states
 - severity/confidence meanings
-- resident identity semantics
+- resident/room assignment semantics
 - major architectural changes
 
 ### Contract rule

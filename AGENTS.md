@@ -35,18 +35,20 @@ If code and docs disagree, do not silently choose one. Determine whether the cod
 
 ## Human ownership boundaries
 
-The two-person software team has stable ownership defined in `docs/TEAM_OWNERSHIP.md`:
+The three-owner product/engineering team has stable ownership defined in `docs/TEAM_OWNERSHIP.md`:
 
-- **Akshar:** backend, database, ingestion, fusion, baselines, anomaly/event logic, RFID mapping, LLM/context, feedback-learning backend, backend evals.
-- **Frontend/Product Cofounder:** clinic/home frontends, design system, frontend data clients, contract-valid mocks, scenario simulator, frontend/E2E tests.
+- **Akshar:** backend, database, ingestion, fusion, baselines, anomaly/event logic, room/resident assignment, LLM/context, feedback-learning backend, backend evals.
+- **Rishit:** clinic/home frontends, user-facing product flows, design system, frontend data clients, contract-valid mocks, scenario simulator, frontend/E2E tests.
+- **Hardware/Firmware Engineer:** sensor bring-up, firmware, edge preprocessing, device transport/health, and hardware validation.
 - **Shared:** contracts and source-of-truth docs; only one person/agent edits a shared contract at a time.
 
 Agents should stay inside the requesting founder's owned areas unless the task explicitly authorizes crossing a boundary. Prefer handoffs through contracts over editing the other owner's subsystem.
 
 ## Product invariants
 
-- Core hardware is 60 GHz radar + thermal + ESP32-S3 Wi-Fi CSI + UHF RAIN RFID identity hardware/passive wristbands.
-- The embedded device performs lightweight per-sensor edge preprocessing: raw-to-usable conversion, obvious-junk filtering, downsampling/compression, timestamps/sequence metadata, packaging, buffering/retry, and RFID tag capture.
+- Core hardware is 60 GHz radar + thermal + ESP32-S3 Wi-Fi CSI.
+- V1 supports one assigned resident per monitored room and does not attempt to identify or separate multiple people.
+- The embedded device performs lightweight per-sensor edge preprocessing: raw-to-usable conversion, obvious-junk filtering, downsampling/compression, timestamps/sequence metadata, packaging, and buffering/retry.
 - Cross-sensor fusion, resident baselines, anomaly detection, confidence/event logic, LLM interpretation, and feedback learning live in the cloud.
 - Data collection is continuous while the device is operating.
 - Sensor fusion is preferred over adding redundant core sensors.
@@ -77,8 +79,9 @@ Agents should stay inside the requesting founder's owned areas unless the task e
 - Hardware/vendor parsing and raw-to-usable conversion belong in firmware/edge adapter modules.
 - The cloud consumes versioned compact edge-telemetry contracts from `docs/DATA_CONTRACT.md`.
 - Simulator and real hardware must use the same edge-telemetry ingestion boundary.
-- RFID tag IDs are identity evidence; resident mapping happens in authorized backend/domain logic, not in UI code.
-- Do not leak radar-vendor, MLX90640, ESP32 CSI/RuView, or RFID-reader-specific structures into product/UI/domain code.
+- Device-to-room and room-to-resident assignment happens in authorized backend/domain logic, not in UI code.
+- Suspected multi-person presence must lower confidence or make resident-specific output unavailable; never guess attribution.
+- Do not leak radar-vendor, MLX90640, or ESP32 CSI/RuView structures into product/UI/domain code.
 - Continuous raw sensor uploads are not the primary production path. Raw/debug capture must be explicit, bounded, and separate.
 - Keep sensor processors, fusion, baseline, anomaly, events, AI, feedback, and device-health logic modular.
 - Do not add a trained event classifier until labeled data/evals justify it.

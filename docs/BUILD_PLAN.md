@@ -2,7 +2,7 @@
 
 **Status:** Execution plan
 **Strategy:** Contract-first, UI/UX-first, back-to-front, simulator-backed
-**Version:** 1.3
+**Version:** 1.4
 
 ---
 
@@ -46,18 +46,19 @@ Milestones in this document describe dependency order and integration checkpoint
 Primary ownership:
 
 - **Akshar — backend + intelligence:** `backend/`, `prompts/`, backend intelligence/evals.
-- **Frontend/Product Cofounder — frontend + product + scenario simulator:** `apps/clinic-dashboard/`, `apps/home-app/`, `simulator/`.
+- **Rishit — frontend + product + scenario simulator:** `apps/clinic-dashboard/`, `apps/home-app/`, `simulator/`.
+- **Hardware/Firmware Engineer — device + edge system:** `firmware/` and hardware bench-test assets.
 - **Shared — contracts/docs:** coordinate and assign one editor at a time.
 
-Both founders should normally work concurrently against the same frozen contracts. The frontend should progress against mocks while the backend progresses against the real API/domain implementation.
+All three owners should normally work concurrently against the same frozen contracts. The frontend should progress against mocks, the backend against the real API/domain implementation, and the hardware track against the edge-telemetry boundary and bring-up plan.
 
 Example:
 
 ```text
-Cofounder                              Akshar
+Rishit                                 Akshar                              Hardware/Firmware
 Event UI on mock contract       <->   Event API on same contract
 Feedback UX on mock contract    <->   Feedback persistence/memory
-Device-health UI                <->   Device-health service/API
+Device-health UI                <->   Device-health service/API      <-> Device health + telemetry producer
 ```
 
 See `docs/TEAM_OWNERSHIP.md` for exact directory ownership, Git/worktree rules, Codex/subagent guidance, and handoff criteria.
@@ -84,7 +85,7 @@ Use parallel agents only when work has clear file/module ownership.
 - turns a milestone into implementation tasks;
 - does not code unless asked.
 
-**Frontend Agent (normally run by Frontend/Product Cofounder)**
+**Frontend Agent (normally run by Rishit)**
 - owns clinic/home UI work, frontend client/provider layer, and product-facing simulator scenarios;
 - consumes published API/contracts;
 - does not invent backend schemas.
@@ -97,7 +98,7 @@ Use parallel agents only when work has clear file/module ownership.
 - owns cloud telemetry validation, sensor fusion, baseline, anomaly/event logic, confidence, and backend eval fixtures;
 - must not add unsupported medical thresholds.
 
-**Scenario Simulator Agent (normally run by Frontend/Product Cofounder)**
+**Scenario Simulator Agent (normally run by Rishit)**
 - owns contract-valid edge-telemetry scenarios used by mock UI and end-to-end demos;
 - does not duplicate production baseline/anomaly/LLM logic.
 
@@ -225,7 +226,7 @@ Build both product surfaces as the **actual production UI/UX** before the sensor
 
 ### Ownership
 
-**Frontend/Product Cofounder owns this product track.** Akshar can simultaneously build backend/domain work against the same contracts; neither side waits for the other. They initially run against contract-valid mock clients and later switch to real APIs without a redesign.
+**Rishit owns this product track.** Akshar can simultaneously build backend/domain work against the same contracts; neither side waits for the other. They initially run against contract-valid mock clients and later switch to real APIs without a redesign.
 
 ### Clinic dashboard — production UI backed by mock client
 
@@ -239,7 +240,7 @@ Build:
 - interpretation section;
 - confidence/data-quality section;
 - device health section;
-- identity/attribution status when RFID is missing or ambiguous;
+- room assignment and multi-person ambiguity status;
 - acknowledge/check/resolve controls;
 - feedback entry flow.
 
@@ -262,9 +263,9 @@ Build:
 - physiological deviation;
 - unknown anomaly;
 - low-confidence/multi-person event;
-- RFID identity present;
-- RFID missing/ambiguous;
-- multiple RFID tags detected;
+- valid one-resident room assignment;
+- missing/conflicting room assignment;
+- suspected multi-person presence;
 - device issue;
 - LLM pending/unavailable;
 - event acknowledged/checked/resolved;
@@ -412,7 +413,7 @@ Do not prematurely build a trained event classifier.
 
 ### Goal
 
-Allow radar, thermal, and CSI normalized observations plus RFID identity evidence to contribute independently to one fused resident state.
+Allow radar, thermal, and CSI normalized observations to contribute independently to the fused state of the resident assigned to a monitored room.
 
 ### Deliverables
 
@@ -427,10 +428,10 @@ Allow radar, thermal, and CSI normalized observations plus RFID identity evidenc
 ### Acceptance criteria
 
 - radar-only, thermal-only, CSI-only and combined sensing fixtures all process;
-- RFID-present, RFID-missing, and multi-tag identity fixtures all process;
+- valid and missing/conflicting room-resident assignments process safely;
 - fusion does not crash when one source is missing;
 - contradictory modalities lower confidence;
-- multi-person test case uses RFID evidence but still lowers attribution confidence when sensing remains ambiguous.
+- multi-person test case lowers confidence or marks resident-specific output unavailable without guessing attribution.
 
 ---
 
@@ -459,14 +460,13 @@ At minimum:
 - device network outage/retry;
 - recurring routine;
 - unknown/unclassified anomaly;
-- RFID identity present;
-- RFID missing/unreadable;
-- multiple RFID tags present;
+- valid room/resident assignment;
+- missing/conflicting room/resident assignment;
 - recovery.
 
 ### Deliverables
 
-- edge-telemetry generator for radar, thermal, CSI, and RFID;
+- edge-telemetry generator for radar, thermal, and CSI;
 - ingestion endpoint;
 - idempotency/deduplication;
 - processed telemetry persistence;
@@ -497,13 +497,12 @@ Edge/firmware:
 - radar preprocessor;
 - thermal preprocessor;
 - CSI preprocessor;
-- UHF RFID reader/tag capture.
 
 Cloud:
 - radar telemetry normalizer;
 - thermal telemetry normalizer;
 - CSI telemetry normalizer;
-- RFID identity resolver;
+- room/resident assignment adapter;
 - optional medical accessory normalizers.
 
 ### Until hardware arrives
@@ -546,7 +545,7 @@ Make system quality measurable before claiming it works.
 - detection latency;
 - confidence calibration;
 - modality ablation: radar vs thermal vs CSI vs fusion;
-- RFID read/identity-attribution coverage and ambiguity rate;
+- room-assignment validity and multi-person ambiguity rate;
 - global baseline vs personal baseline;
 - before/after feedback personalization;
 - LLM output validity/usefulness;
@@ -573,10 +572,9 @@ At integration time, document:
 - actual radar output/raw access and local feature conversion;
 - thermal framing/refresh and local reduction strategy;
 - CSI capture format/rate and local feature/compression strategy;
-- UHF RFID reader/tag-read behavior and antenna placement;
 - network bandwidth after edge preprocessing;
 - device clock/time behavior;
-- multi-person behavior and RFID identity evidence;
+- multi-person/interference behavior in nominally single-resident rooms;
 - actual firmware edge-telemetry mapping;
 - optional diagnostic raw-capture limits;
 - buffering limits;
@@ -586,7 +584,7 @@ At integration time, document:
 
 - implement real firmware sensor drivers/preprocessors;
 - map firmware packets into EdgeTelemetryEnvelope;
-- implement RFID tag capture and cloud tag-to-resident assignment;
+- implement device-to-room and room-to-resident assignment validation;
 - calibrate edge/cloud quality logic;
 - compare sensor-derived values against safe reference data;
 - update simulator to resemble real signal characteristics.

@@ -1,8 +1,8 @@
 # Contactless Adaptive Care Platform — Data & API Contract
 
 **Status:** V1 contract for UI-first and simulator-first development
-**Version:** 1.2
-**Important:** Final vendor-specific radar/CSI/RFID raw shapes are intentionally hardware-dependent. Production software stabilizes around a versioned **EdgeTelemetryEnvelope** emitted after lightweight on-device preprocessing. Optional raw/debug capture is separate and bounded.
+**Version:** 1.3
+**Important:** Final vendor-specific radar/CSI raw shapes are intentionally hardware-dependent. Production software stabilizes around a versioned **EdgeTelemetryEnvelope** emitted after lightweight on-device preprocessing. Optional raw/debug capture is separate and bounded.
 
 ---
 
@@ -13,7 +13,7 @@
 3. Simulator and real ESP32 use the same edge-telemetry ingestion envelope.
 4. Firmware/edge adapters convert vendor/raw sensor data into compact per-modality telemetry before upload.
 5. Cloud normalizers validate edge telemetry and convert it into normalized observations for fusion.
-6. RFID identity is a first-class input; tag-to-resident mapping is server-side and authorized.
+6. V1 supports one assigned resident per monitored room. Device-to-room and room-to-resident assignments are server-side and authorized.
 7. Units are explicit.
 8. Quality/confidence is explicit.
 9. Unknown/unavailable is valid; never invent a value.
@@ -38,7 +38,7 @@ Recommended identifiers:
 - `baseline_id`
 - `interpretation_id`
 
-Names and other identifying information live in product/profile tables, not in edge telemetry or passive RFID tags.
+Names and other identifying information live in product/profile tables, not in edge telemetry.
 
 ---
 
@@ -69,10 +69,9 @@ Edge preprocessing may include:
 - downsampling/aggregation/compression;
 - per-sensor quality indicators;
 - timestamps/sequence numbers;
-- RFID tag reads;
 - batching and retry metadata.
 
-The cloud still performs cross-sensor fusion, resident attribution, personal baselines, anomaly/event logic, and all LLM/feedback learning.
+The cloud still performs cross-sensor fusion, room/resident assignment, personal baselines, anomaly/event logic, and all LLM/feedback learning.
 
 ### Optional diagnostic raw capture
 
@@ -118,7 +117,6 @@ Initial:
 - `radar`
 - `thermal`
 - `wifi_csi`
-- `rfid`
 - `accessory`
 
 ### `payload_format`
@@ -129,7 +127,6 @@ Free versioned identifier owned by the firmware/edge adapter, examples:
 - `radar_edge_features_v1`
 - `mlx90640_edge_features_v1`
 - `esp32_csi_edge_v1`
-- `uhf_rfid_presence_v1`
 
 Only the relevant source normalizer should understand the source-specific payload internals. Product/domain/UI code must consume normalized objects instead.
 
@@ -199,35 +196,25 @@ Raw CSI may be captured separately for development/evaluation, but is not the de
 
 ---
 
-## 7. UHF RAIN RFID Identity Telemetry
+## 7. Room and Resident Monitoring Assignment
 
-RFID is a core V1 identity input. Passive wristbands/tags contain opaque tag identifiers, not resident names or medical data. The cloud resolves tag assignments through an authorized mapping table.
+V1 supports one assigned resident per monitored room. This is configuration data, not sensor telemetry. A monitoring device must resolve to one room, and that room must resolve to one active resident assignment before resident-specific processing begins.
 
 ```json
 {
   "schema_version": "1.0",
-  "device_id": "dev_room_214",
+  "assignment_id": "assign_room_214_a",
   "tenant_id": "tenant_demo",
+  "device_id": "dev_room_214",
   "room_id": "room_214",
-  "source": "rfid",
-  "sensor_model": "uhf_rain_rfid_reader",
-  "sequence": 442,
-  "device_time": null,
-  "device_monotonic_ms": 9184550,
-  "payload_format": "uhf_rfid_presence_v1",
-  "payload": {
-    "tags": [
-      {
-        "tag_id": "tag_abc123",
-        "read_strength": null
-      }
-    ],
-    "reader_quality": 0.95
-  }
+  "resident_id": "resident_demo_a",
+  "status": "active",
+  "effective_from": "2026-08-24T00:00:00Z",
+  "effective_to": null
 }
 ```
 
-The RFID identity resolver maps `tag_id` to a pseudonymous `resident_id` only through authorized server-side assignments. Multiple tag reads are allowed. RFID is identity evidence, not perfect proof that every radar/thermal/CSI reflection belongs to that tag wearer.
+Only one active resident assignment is allowed per monitored room in V1. If the assignment is missing or conflicting, the backend must not create resident-specific observations or events. If sensing suggests multiple people may be present, resident-specific output is marked ambiguous, low-confidence, or unavailable; the system does not guess who produced a signal.
 
 ### Optional diagnostic raw capture
 
@@ -253,7 +240,7 @@ Endpoint concept:
   "device_monotonic_ms": 9185000,
   "firmware_version": "sim-0.1.0",
   "buffered_packets": 0,
-  "sources_seen": ["radar", "thermal", "wifi_csi", "rfid"],
+  "sources_seen": ["radar", "thermal", "wifi_csi"],
   "transport_status": "ok"
 }
 ```
@@ -682,7 +669,7 @@ Minimum conceptual tables/collections:
 - `residents`
 - `devices`
 - `device_assignments`
-- `rfid_tags` / `resident_tag_assignments`
+- `room_resident_assignments`
 - `accessories` (optional/future)
 - `edge_telemetry`
 - `diagnostic_raw_chunks` (optional/bounded)
@@ -786,6 +773,7 @@ Minimum fixture scenarios should include:
 - physiological deviation event;
 - `unknown_anomaly`;
 - low-confidence/multi-person event;
+- missing/conflicting room-resident assignment;
 - device/sensor issue;
 - LLM interpretation pending;
 - LLM interpretation unavailable;
@@ -797,6 +785,10 @@ Mock-only fields must never leak into production API types. Ground-truth labels 
 ---
 
 ## 24. Contract Changes
+
+### V1.3 breaking scope decision
+
+V1.3 removes the wearable/reader identity source from the production ingestion contract. Resident attribution now comes from an authorized one-resident-per-room assignment. Simulators, backend models, frontend fixtures, and future firmware must use only radar, thermal, and Wi-Fi CSI as core sensor sources and must represent suspected multi-person presence as ambiguous or unavailable resident-specific monitoring.
 
 When changing any domain object:
 

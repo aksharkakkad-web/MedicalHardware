@@ -15,7 +15,7 @@ Do not lead with code, file-by-file detail, framework jargon, or low-level imple
 
 ## Team roles
 
-- **Akshar — backend and intelligence:** Owns how the monitoring system works behind the product: data, identity, quality, fusion, calibration, personal baselines, anomaly and warning logic, confidence, event creation, AI context, feedback learning, and evaluation.
+- **Akshar — backend and intelligence:** Owns how the monitoring system works behind the product: data, room/resident assignment, quality, fusion, calibration, personal baselines, anomaly and warning logic, confidence, event creation, AI context, feedback learning, and evaluation.
 - **Rishit — user-facing product and frontend:** Owns how clinic staff and families experience the system: user journeys, information hierarchy, screens, interactions, language, visual design, accessibility, frontend behavior, and product usability.
 - **Hardware/Firmware Engineer — device and edge system:** Owns sensor bring-up, firmware, lightweight device-side processing, packaging, buffering, connectivity, device testing, and mapping real hardware output into the shared system boundary.
 - **Shared:** Product behavior where user experience meets system behavior, shared definitions, contracts, end-to-end scenarios, integration checkpoints, and major product changes.
@@ -27,16 +27,16 @@ Each person should be able to make progress independently. Independence comes fr
 The product is more than an event screen. The first version should demonstrate this complete adaptive loop:
 
 ```text
-Room, device, resident, and RFID identity are set up
+Room, device, and assigned resident are set up
         ↓
 The resident begins calibration
 new → calibrating → partial → established
         ↓
 Sensors continuously produce information
         ↓
-The system checks identity, freshness, quality, and missing data
+The system checks room assignment, freshness, quality, and missing data
         ↓
-Radar, thermal, Wi-Fi CSI, and RFID evidence are combined
+Radar, thermal, and Wi-Fi CSI evidence are combined
         ↓
 The system compares the current state with the resident's personal baseline
         ↓
@@ -68,10 +68,11 @@ Calibration is part of the product, not a one-time technical setup. The system m
 1. **First user:** Start with the clinic caregiver experience, while keeping the future home/family product separate.
 2. **Complete flow:** Include setup, calibration, continuous monitoring, quality, fusion, baselines, event creation, caregiver action, feedback, and all three learning loops.
 3. **Shared meanings:** The team already has definitions for event priority, confidence, unavailable data, calibration states, and resolution outcomes.
-4. **First scenarios:** Normal resident, unusual movement, unknown anomaly, low-confidence event, device issue, and false alarm are a good starting set. Calibration, missing identity, multi-person ambiguity, recurring routine, and recovery are added as the next scenario layer.
+4. **First scenarios:** Normal resident, unusual movement, unknown anomaly, low-confidence event, device issue, and false alarm are a good starting set. Calibration, missing/conflicting room assignment, multi-person ambiguity, recurring routine, and recovery are added as the next scenario layer.
 5. **Ownership:** Akshar owns backend and intelligence. Rishit owns the user-facing product and frontend. The hardware/firmware engineer owns the device and edge system.
 6. **Success definition:** The complete product loop works first with toy data and then with real hardware data without redesigning the product or intelligence layers.
 7. **Working model:** All three tracks build back-to-front in parallel. Progress on one track should not block daily progress on another.
+8. **V1 room model:** Each monitored room has one assigned resident. The product does not use a wearable identity layer or try to separate multiple people; possible caregiver/visitor presence lowers confidence or makes resident-specific monitoring unavailable.
 
 The final market, medical thresholds, LLM provider, exact sensor math, and real hardware behavior do not need to be settled before work begins.
 
@@ -98,7 +99,7 @@ The final market, medical thresholds, LLM provider, exact sensor math, and real 
 **Hardware track**
 
 - Confirm the planned sensor responsibilities and device-side boundaries.
-- Define what the device will eventually send, including quality, timing, identity evidence, and device health.
+- Define what the device will eventually send, including quality, timing, occupancy/interference indicators, and device health.
 - Prepare a hardware bring-up checklist so work can start immediately when parts arrive.
 
 **Checkpoint**
@@ -122,7 +123,7 @@ Both sides can describe the same resident and event in the same way.
 
 **Hardware track**
 
-- Define the device states the product must understand: online, offline, missing sensor, poor quality, buffering, retrying, and identity unavailable.
+- Define the device states the product must understand: online, offline, missing sensor, poor quality, buffering, retrying, and room assignment unavailable.
 
 **Checkpoint**
 
@@ -178,12 +179,12 @@ A caregiver can understand an event, explain what actually happened, and see tha
 
 **Rishit/product scenario track**
 
-- Generate realistic scenarios for normal activity, unusual movement, physiological deviation, unknown anomaly, sensor failure, multiple people, RFID ambiguity, and recovery.
+- Generate realistic scenarios for normal activity, unusual movement, physiological deviation, unknown anomaly, sensor failure, multiple people, room-assignment problems, and recovery.
 - Keep the true scenario label outside the product information so the system cannot cheat.
 
 **Backend track**
 
-- Accept simulated radar, thermal, Wi-Fi CSI, and RFID information.
+- Accept simulated radar, thermal, and Wi-Fi CSI information.
 - Handle duplicates, delays, missing sensors, and device connectivity problems.
 - Turn sensor-specific information into a consistent internal form.
 
@@ -205,7 +206,7 @@ A simulated room scenario can travel through the backend and appear as a meaning
 
 **Backend track**
 
-- Combine the different sensors and resolve resident identity using RFID evidence.
+- Combine the different sensors for the resident assigned to the monitored room.
 - Learn what is normal for each resident.
 - Detect known unusual patterns and unknown anomalies.
 - Create confidence and deterministic warning decisions.
@@ -261,7 +262,7 @@ The team can compare versions using evidence instead of impressions.
 
 **Backend and hardware track**
 
-- Replace simulated input with real ESP32-preprocessed radar, thermal, Wi-Fi CSI, and RFID information.
+- Replace simulated input with real ESP32-preprocessed radar, thermal, and Wi-Fi CSI information.
 - Calibrate quality and confidence using real observations.
 - Feed real hardware failures into the existing device-health experience.
 
