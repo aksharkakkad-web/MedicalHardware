@@ -1,6 +1,7 @@
 ## Shared skills and tool routing
 
 - Before implementing or planning a feature, use `.claude/skills/check-before-build/SKILL.md` to inspect the current repository, Git history, and active remote issues/pull requests for reusable or overlapping work.
+- For ordinary frontend or backend implementation, infer the owner's lane after the reuse report and run `scripts/start-work.sh <backend|frontend> "<short-task-name>"` before editing. Do not ask the founder to create a branch or supply Git commands; the helper creates the correct owned branch from clean `main`. Stop for dirty worktrees, an existing work branch, or a shared-contract boundary.
 - Use Agent Browser for public pages, headless testing, and general browser automation.
 - Use Ego Browser only for the user's authenticated local browser session or when explicitly requested.
 - Keep credentials and browser-session data local. Never commit them.
