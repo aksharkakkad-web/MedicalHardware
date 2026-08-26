@@ -1,5 +1,6 @@
 from dataclasses import dataclass, replace
 from enum import StrEnum
+from typing import ClassVar
 
 
 class BaselineStatus(StrEnum):
@@ -11,6 +12,9 @@ class BaselineStatus(StrEnum):
 
 @dataclass(frozen=True)
 class CalibrationPolicy:
+    """Synthetic/test-only calibration thresholds for the toy scenario."""
+
+    SYNTHETIC_TEST_ONLY: ClassVar[bool] = True
     partial_eligible_windows: int
     established_eligible_windows: int
 

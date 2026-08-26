@@ -87,3 +87,55 @@ passed all 17 tests.
 None for the scoped toy behavior. The public API accepts the Task 1
 `baseline_learning_allowed` value as the `learning_allowed` boolean; integration
 with actual snapshots remains outside this task's brief.
+
+## Round 1 Fix Report
+
+### Changes
+
+- Marked `CalibrationPolicy` explicitly synthetic/test-only with the public
+  `SYNTHETIC_TEST_ONLY = True` class constant and a matching class docstring.
+- Added focused tests proving `concerning=True` and
+  `unresolved_anomaly=True` each exclude a window despite learning otherwise
+  being allowed.
+- Added focused tests for invalid policy threshold positivity/order and
+  unchanged setup-version recalibration rejection.
+
+### RED evidence
+
+After adding the covering tests and before adding the marker, the focused
+command:
+
+```text
+python3 -m unittest tests/calibration_domain/test_calibration.py -v
+```
+
+failed only the new marker test with:
+
+```text
+AttributeError: type object 'CalibrationPolicy' has no attribute 'SYNTHETIC_TEST_ONLY'
+Ran 8 tests in 0.000s
+FAILED (errors=1)
+```
+
+### GREEN and full-suite evidence
+
+Focused command:
+
+```text
+python3 -m unittest tests/calibration_domain/test_calibration.py -v
+```
+
+Output: `Ran 8 tests in 0.000s` / `OK`.
+
+Full-suite command:
+
+```text
+python3 -m unittest discover -s tests -p 'test_*.py'
+```
+
+Output: `Ran 22 tests in 1.103s` / `OK`.
+
+### Fix concerns
+
+None. The marker is metadata only and does not change the synthetic thresholds
+or runtime learning behavior.
