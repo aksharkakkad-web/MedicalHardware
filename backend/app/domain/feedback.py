@@ -2,19 +2,23 @@
 
 from dataclasses import dataclass, replace
 from datetime import datetime
+import re
 from uuid import uuid4
 
+from backend.app.domain._validation import (
+    require_aware_datetime,
+    require_nonblank_text,
+    require_strict_bool,
+)
 from backend.app.domain.events import EventStatus, MonitoringEvent, ResolutionOutcome
 
 
-def _require_text(value: str, field: str) -> None:
-    if not isinstance(value, str) or not value.strip():
-        raise ValueError(f"{field} must be a nonblank string")
-
-
-def _require_aware(value: datetime, field: str) -> None:
-    if value.tzinfo is None or value.utcoffset() is None:
-        raise ValueError(f"{field} must be timezone-aware")
+def _normalize_event_label(value: object) -> str:
+    value = require_nonblank_text(value, "actual_event_label")
+    normalized = re.sub(r"[^a-z0-9]+", "_", value.casefold()).strip("_")
+    if not normalized:
+        raise ValueError("actual_event_label must contain letters or numbers")
+    return normalized
 
 
 @dataclass(frozen=True)
@@ -78,13 +82,15 @@ class FeedbackService:
     ) -> LearningDecision:
         if event.status != EventStatus.RESOLVED or event.resolution_outcome is None:
             raise ValueError("feedback requires a resolved event")
-        _require_text(actor_id, "actor_id")
-        _require_text(actual_event_label, "actual_event_label")
-        if type(routine) is not bool:
-            raise ValueError("routine must be a boolean")
-        _require_aware(created_at, "created_at")
-        _require_aware(event.last_signal_at, "event timestamp")
-        if created_at < event.last_signal_at:
+        actor_id = require_nonblank_text(actor_id, "actor_id")
+        actual_event_label = _normalize_event_label(actual_event_label)
+        routine = require_strict_bool(routine, "routine")
+        created_at = require_aware_datetime(created_at, "created_at")
+        event_timestamp = require_aware_datetime(
+            event.last_signal_at,
+            "event timestamp",
+        )
+        if created_at < event_timestamp:
             raise ValueError("created_at cannot precede the event timestamp")
 
         feedback = FeedbackRecord(
@@ -100,7 +106,7 @@ class FeedbackService:
         self._feedback[feedback.feedback_id] = feedback
 
         memory = self._memories.get(event.resident_id, ResidentMemory(event.resident_id, 0, ()))
-        memory_updated = bool(routine and actual_event_label != "unknown")
+        memory_updated = routine and actual_event_label != "unknown"
         if memory_updated:
             entry = MemoryEntry(
                 entry_id=f"memory_{uuid4().hex}",
@@ -113,7 +119,10 @@ class FeedbackService:
             memory = ResidentMemory(event.resident_id, memory.version + 1, memory.entries + (entry,))
             self._memories[event.resident_id] = memory
 
-        baseline_window_eligible = event.resolution_outcome == ResolutionOutcome.FALSE_POSITIVE and routine
+        baseline_window_eligible = (
+            event.resolution_outcome == ResolutionOutcome.FALSE_POSITIVE
+            and memory_updated
+        )
         return LearningDecision(feedback, memory, memory_updated, baseline_window_eligible, True)
 
     def correct_memory(
@@ -125,25 +134,31 @@ class FeedbackService:
         reason: str,
         corrected_at: datetime,
     ) -> ResidentMemory:
-        _require_text(actor_id, "actor_id")
-        _require_text(reason, "reason")
-        _require_aware(corrected_at, "corrected_at")
+        actor_id = require_nonblank_text(actor_id, "actor_id")
+        reason = require_nonblank_text(reason, "reason")
+        corrected_at = require_aware_datetime(corrected_at, "corrected_at")
         memory = self._memories[resident_id]
         target = next((entry for entry in memory.entries if entry.entry_id == entry_id), None)
         if target is None:
             raise KeyError(f"Unknown memory entry: {entry_id}")
         if target.status != "active":
             raise ValueError("only active memory can be retired")
-        _require_aware(target.created_at, "memory entry timestamp")
-        if corrected_at < target.created_at:
+        target_created_at = require_aware_datetime(
+            target.created_at,
+            "memory entry timestamp",
+        )
+        if corrected_at < target_created_at:
             raise ValueError("corrected_at cannot precede memory entry creation")
-        found = False
         updated_entries: list[MemoryEntry] = []
         for entry in memory.entries:
             if entry.entry_id == entry_id:
-                entry = replace(entry, status="retired", retired_by=actor_id,
-                                retired_at=corrected_at, retirement_reason=reason)
-                found = True
+                entry = replace(
+                    entry,
+                    status="retired",
+                    retired_by=actor_id,
+                    retired_at=corrected_at,
+                    retirement_reason=reason,
+                )
             updated_entries.append(entry)
         updated = ResidentMemory(resident_id, memory.version + 1, tuple(updated_entries))
         self._memories[resident_id] = updated

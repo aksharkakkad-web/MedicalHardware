@@ -1,6 +1,6 @@
 import unittest
 from dataclasses import replace
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from backend.app.domain.events import (
     EventPriority,
@@ -22,9 +22,22 @@ class FeedbackLearningTests(unittest.TestCase):
             priority=EventPriority.HIGH,
             observed_at=now,
         )
-        store.acknowledge(self.event.event_id)
-        store.check(self.event.event_id)
-        self.event = store.resolve(self.event.event_id, ResolutionOutcome.FALSE_POSITIVE)
+        store.acknowledge(
+            self.event.event_id,
+            actor_id="operator_001",
+            at=now + timedelta(minutes=1),
+        )
+        store.check(
+            self.event.event_id,
+            actor_id="operator_001",
+            at=now + timedelta(minutes=2),
+        )
+        self.event = store.resolve(
+            self.event.event_id,
+            ResolutionOutcome.FALSE_POSITIVE,
+            actor_id="operator_001",
+            at=now + timedelta(minutes=3),
+        )
         self.service = FeedbackService()
 
     def test_confirmed_routine_updates_memory_and_marks_window_eligible(self) -> None:
@@ -55,6 +68,37 @@ class FeedbackLearningTests(unittest.TestCase):
         )
 
         self.assertFalse(decision.baseline_window_eligible)
+
+    def test_normalized_unknown_routine_cannot_become_baseline_eligible(self) -> None:
+        decision = self.service.submit_feedback(
+            event=self.event,
+            actor_id="operator_001",
+            actual_event_label="  UNKNOWN  ",
+            routine=True,
+            created_at=datetime(2026, 8, 26, 12, 5, tzinfo=timezone.utc),
+        )
+
+        self.assertEqual(decision.feedback.actual_event_label, "unknown")
+        self.assertFalse(decision.memory_updated)
+        self.assertEqual(decision.memory.version, 0)
+        self.assertFalse(decision.baseline_window_eligible)
+
+    def test_known_label_is_normalized_before_memory_update(self) -> None:
+        decision = self.service.submit_feedback(
+            event=self.event,
+            actor_id="operator_001",
+            actual_event_label="  Assisted Transfer  ",
+            routine=True,
+            created_at=datetime(2026, 8, 26, 12, 5, tzinfo=timezone.utc),
+        )
+
+        self.assertEqual(decision.feedback.actual_event_label, "assisted_transfer")
+        self.assertEqual(
+            decision.memory.active_entries[0].description,
+            "assisted_transfer",
+        )
+        self.assertTrue(decision.memory_updated)
+        self.assertTrue(decision.baseline_window_eligible)
 
     def test_operator_can_retire_incorrect_memory_without_deleting_history(self) -> None:
         decision = self.service.submit_feedback(
@@ -120,6 +164,32 @@ class FeedbackLearningTests(unittest.TestCase):
                 actual_event_label="assisted_transfer",
                 routine=True,
                 created_at=datetime(2026, 8, 26, 11, 59, tzinfo=timezone.utc),
+            )
+
+    def test_feedback_datetime_boundaries_consistently_raise_value_error(self) -> None:
+        with self.assertRaises(ValueError):
+            self.service.submit_feedback(
+                event=self.event,
+                actor_id="operator_001",
+                actual_event_label="assisted_transfer",
+                routine=True,
+                created_at="2026-08-26T12:05:00Z",
+            )
+
+        decision = self.service.submit_feedback(
+            event=self.event,
+            actor_id="operator_001",
+            actual_event_label="assisted_transfer",
+            routine=True,
+            created_at=datetime(2026, 8, 26, 12, 5, tzinfo=timezone.utc),
+        )
+        with self.assertRaises(ValueError):
+            self.service.correct_memory(
+                resident_id="resident_demo_a",
+                entry_id=decision.memory.active_entries[0].entry_id,
+                actor_id="operator_002",
+                reason="Routine no longer applies",
+                corrected_at="2026-08-27T09:00:00Z",
             )
 
     def test_memory_correction_requires_auditable_ordered_fields(self) -> None:

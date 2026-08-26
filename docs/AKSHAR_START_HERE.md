@@ -321,9 +321,9 @@ If we cannot answer those questions, the feature is not ready to build.
 
 ## Current starting point
 
-The approved V1 product logic now runs end-to-end with synthetic data. The backend can represent monitoring suitability, calibration, resident-away awareness, possible caregiver/visitor presence, event episodes and recurrence, trusted feedback, controlled baseline eligibility, and editable resident memory.
+One deterministic, timestamped, in-memory toy scenario now connects the implemented backend domain rules. It advances dimension-aware calibration, feeds resident-away and possible-visitor monitoring snapshots into learning and resident-event gates, explicitly resumes monitoring, groups related signals, records priority and caregiver action history, marks an open event overdue, resolves it with attributable feedback, and preserves baseline progress until a later controlled eligible update. A linked recurrence records the resident-memory version and routine entry available to it without lowering the deterministic priority; the same story also exercises a partial setup recalibration and an audited memory correction.
 
-The next backend phase adds durable database storage and the real product API around these tested rules. Rishit can continue building the clinic product against the same contract-valid scenarios, while the hardware engineer continues preparing the device telemetry boundary.
+This toy slice does not yet prove persistence, HTTP APIs, authentication, notification delivery, transport DTO conformance, sensor processing/fusion, anomaly generation, confidence/evidence, or AI interpretation. The next backend phase remains durable persistence and Product API contract mapping around these tested in-memory rules. Rishit can continue building the clinic product against contract-valid frontend scenarios, while the hardware engineer continues preparing the device telemetry boundary.
 
 ## Source-of-truth documents
 
