@@ -40,6 +40,21 @@ Evidence gaps:
 
 Proceed only when the evidence supports `reuse`, `extend`, `revive`, or `build-new` and the implementation boundary is clear. If the requester credibly identifies prior or parallel work that cannot be located and inspected, use `blocked`, not `build-new`. For `coordinate` or `blocked`, stop and request the missing decision. Never create a parallel abstraction merely because adapting existing work is less convenient.
 
+## Automatic work-branch preparation
+
+After a clear `reuse`, `extend`, `revive`, or `build-new` verdict and before editing files, infer the lane from the requested work:
+
+- `backend`: `backend/`, `prompts/`, `evals/`, data/ingestion/intelligence work;
+- `frontend`: `apps/clinic-dashboard/`, `apps/home-app/`, `simulator/`, product/UI work.
+
+When starting from clean `main`, run:
+
+```bash
+scripts/start-work.sh <backend|frontend> "<short task name>"
+```
+
+The helper synchronizes `main`, checks for an existing branch with the same task name, and creates the owned branch. Do not ask the founder to create a branch or supply Git commands for ordinary owned work. If the tree is dirty, a work branch is already checked out, the request crosses a shared boundary, or the helper finds an existing branch, stop and report the safe handoff/coordination choice instead of creating another branch.
+
 ## Example
 
 For “build the resident event API,” search `MonitoringEvent`, lifecycle verbs, routes, contracts, history, branches, issues, and PRs. If contracts exist but code does not, report `build-new` against the existing contract—not “nothing exists.”

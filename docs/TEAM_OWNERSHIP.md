@@ -235,9 +235,20 @@ Use short-lived branches/worktrees with clear ownership rather than both founder
 Suggested naming:
 
 ```text
-akshar/<backend-task>
-cofounder/<frontend-task>
+akshar/backend-<task>
+cofounder/frontend-<task>
 ```
+
+Coding agents create these branches automatically with:
+
+```bash
+scripts/start-work.sh backend "<task>"
+scripts/start-work.sh frontend "<task>"
+```
+
+The helper only starts from clean `main` and refuses to duplicate an existing
+branch. Founders normally describe the work; they do not need to run Git setup
+commands themselves.
 
 Rules:
 
