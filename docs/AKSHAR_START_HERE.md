@@ -13,25 +13,38 @@ Keep planning and progress updates at a product-manager level. Focus on:
 
 Do not lead with code, file-by-file detail, framework jargon, or low-level implementation unless Akshar specifically asks for it.
 
-## Your role
+## Team roles
 
-You are not only writing backend code. You are the person making sure the whole product flow makes sense:
+- **Akshar — backend and intelligence:** Owns how the monitoring system works behind the product: data, identity, quality, fusion, calibration, personal baselines, anomaly and warning logic, confidence, event creation, AI context, feedback learning, and evaluation.
+- **Rishit — user-facing product and frontend:** Owns how clinic staff and families experience the system: user journeys, information hierarchy, screens, interactions, language, visual design, accessibility, frontend behavior, and product usability.
+- **Hardware/Firmware Engineer — device and edge system:** Owns sensor bring-up, firmware, lightweight device-side processing, packaging, buffering, connectivity, device testing, and mapping real hardware output into the shared system boundary.
+- **Shared:** Product behavior where user experience meets system behavior, shared definitions, contracts, end-to-end scenarios, integration checkpoints, and major product changes.
 
-1. Decide what the caregiver or family member needs to see.
-2. Decide what action they can take.
-3. Decide what the system should remember afterward.
-4. Turn those decisions into backend behavior, data, and APIs.
+Each person should be able to make progress independently. Independence comes from agreeing on the boundaries, not from building disconnected systems.
 
-The frontend/product owner turns the same decisions into screens. You do not need to own the visual design, but you should help define the behavior the screens represent.
+## The complete product loop
 
-## The first product flow
-
-Keep the first version focused on one complete loop:
+The product is more than an event screen. The first version should demonstrate this complete adaptive loop:
 
 ```text
-Something unusual happens
+Room, device, resident, and RFID identity are set up
         ↓
-The system creates an event
+The resident begins calibration
+new → calibrating → partial → established
+        ↓
+Sensors continuously produce information
+        ↓
+The system checks identity, freshness, quality, and missing data
+        ↓
+Radar, thermal, Wi-Fi CSI, and RFID evidence are combined
+        ↓
+The system compares the current state with the resident's personal baseline
+        ↓
+The system finds a known pattern, a deterministic warning, or an unknown anomaly
+        ↓
+An event is created with priority, confidence, evidence, and limitations
+        ↓
+AI may explain the already-created event using resident context
         ↓
 A caregiver opens and understands it
         ↓
@@ -39,26 +52,30 @@ They acknowledge and check it
         ↓
 They resolve it and give feedback
         ↓
-The system remembers what happened
+The system learns through three controlled loops
 ```
 
-Every later feature should make this loop more useful, more trustworthy, or easier to complete.
+The three learning loops are:
 
-## Before either track starts
+1. **Fast resident memory:** Trustworthy feedback can quickly add routines and context for future explanations.
+2. **Controlled personal baseline:** Confirmed normal information can gradually update what is normal for that resident. Concerning or uncertain events do not silently become normal.
+3. **Offline global improvement:** Accumulated labeled examples improve the overall system only after evaluation, versioning, and deliberate release.
 
-Both founders should agree on these items first:
+Calibration is part of the product, not a one-time technical setup. The system must communicate whether a resident is new, calibrating, partially understood, or established, and it must lower confidence when it lacks enough trustworthy history.
+
+## Shared alignment already agreed
 
 1. **First user:** Start with the clinic caregiver experience, while keeping the future home/family product separate.
-2. **First complete flow:** An event appears, is understood, acknowledged, checked, resolved, and receives feedback.
-3. **Shared language:** Agree on what event priority, confidence, unavailable data, and resolution outcomes mean.
-4. **First scenarios:** Normal resident, unusual movement, unknown anomaly, low-confidence event, device issue, and false alarm.
-5. **Contract freeze:** Use the existing V1 event, resident, feedback, and device-health shapes as the first shared agreement.
-6. **Ownership:** Akshar owns backend and intelligence. The frontend/product cofounder owns the clinic and home experiences, mock client, and scenario simulator. Shared product and contract decisions require agreement.
-7. **Success definition:** The first release is successful when a caregiver can complete the full event flow using either mock data or the real API without the experience being redesigned.
+2. **Complete flow:** Include setup, calibration, continuous monitoring, quality, fusion, baselines, event creation, caregiver action, feedback, and all three learning loops.
+3. **Shared meanings:** The team already has definitions for event priority, confidence, unavailable data, calibration states, and resolution outcomes.
+4. **First scenarios:** Normal resident, unusual movement, unknown anomaly, low-confidence event, device issue, and false alarm are a good starting set. Calibration, missing identity, multi-person ambiguity, recurring routine, and recovery are added as the next scenario layer.
+5. **Ownership:** Akshar owns backend and intelligence. Rishit owns the user-facing product and frontend. The hardware/firmware engineer owns the device and edge system.
+6. **Success definition:** The complete product loop works first with toy data and then with real hardware data without redesigning the product or intelligence layers.
+7. **Working model:** All three tracks build back-to-front in parallel. Progress on one track should not block daily progress on another.
 
 The final market, medical thresholds, LLM provider, exact sensor math, and real hardware behavior do not need to be settled before work begins.
 
-## Two-track roadmap
+## Three-track roadmap
 
 ### Phase 1 — Product and project foundation
 
@@ -77,6 +94,12 @@ The final market, medical thresholds, LLM provider, exact sensor math, and real 
 
 - Establish the backend, database, tests, and product health checks.
 - Represent residents, rooms, devices, events, feedback, and device health.
+
+**Hardware track**
+
+- Confirm the planned sensor responsibilities and device-side boundaries.
+- Define what the device will eventually send, including quality, timing, identity evidence, and device health.
+- Prepare a hardware bring-up checklist so work can start immediately when parts arrive.
 
 **Checkpoint**
 
@@ -97,11 +120,15 @@ Both sides can describe the same resident and event in the same way.
 - Prevent invalid actions and preserve the original event evidence.
 - Store the resolution outcome and who took the action.
 
+**Hardware track**
+
+- Define the device states the product must understand: online, offline, missing sensor, poor quality, buffering, retrying, and identity unavailable.
+
 **Checkpoint**
 
 The complete caregiver flow works independently on both sides against the same rules.
 
-### Phase 3 — Connect frontend and backend
+### Phase 3 — First convergence on toy data
 
 **Frontend track**
 
@@ -115,9 +142,14 @@ The complete caregiver flow works independently on both sides against the same r
 - Add access boundaries so users see only the residents and locations they are allowed to see.
 - Make actions reliable and auditable.
 
+**Hardware track**
+
+- Produce device-shaped toy messages that follow the same planned boundary as the future real device.
+- Validate that the planned firmware responsibilities do not leak sensor-vendor details into the product.
+
 **Checkpoint**
 
-The frontend connects to the real backend without redesigning the experience.
+The frontend connects to the real backend using toy data without redesigning the experience. The planned hardware boundary can feed the same backend later.
 
 ### Phase 4 — Feedback and understandable explanations
 
@@ -134,13 +166,17 @@ The frontend connects to the real backend without redesigning the experience.
 - Add AI explanations only after an event already exists.
 - Keep deterministic warnings independent from AI availability or opinion.
 
+**Hardware track**
+
+- No major dependency on this phase; continue sensor research, bench planning, and edge-processing preparation independently.
+
 **Checkpoint**
 
 A caregiver can understand an event, explain what actually happened, and see that feedback preserved for future context.
 
 ### Phase 5 — Simulated monitoring
 
-**Frontend/product simulator track**
+**Rishit/product scenario track**
 
 - Generate realistic scenarios for normal activity, unusual movement, physiological deviation, unknown anomaly, sensor failure, multiple people, RFID ambiguity, and recovery.
 - Keep the true scenario label outside the product information so the system cannot cheat.
@@ -150,6 +186,11 @@ A caregiver can understand an event, explain what actually happened, and see tha
 - Accept simulated radar, thermal, Wi-Fi CSI, and RFID information.
 - Handle duplicates, delays, missing sensors, and device connectivity problems.
 - Turn sensor-specific information into a consistent internal form.
+
+**Hardware track**
+
+- Refine device-shaped simulated output and expected quality signals.
+- Prepare firmware modules and test fixtures that can later replace simulated producers.
 
 **Checkpoint**
 
@@ -169,6 +210,11 @@ A simulated room scenario can travel through the backend and appear as a meaning
 - Detect known unusual patterns and unknown anomalies.
 - Create confidence and deterministic warning decisions.
 - Keep all prototype warning rules clearly labeled as test-only until validated.
+
+**Hardware track**
+
+- Define how each sensor reports availability and quality.
+- Test edge-processing assumptions as parts become available without moving cloud intelligence onto the device.
 
 **Checkpoint**
 
@@ -235,16 +281,21 @@ Real hardware replaces the simulator without rewriting the event, feedback, AI, 
 
 The product is understandable, measurable, supportable, and safe enough for a controlled pilot using appropriately authorized data.
 
-## How both tracks work together
+## How all three tracks work together
 
-The two sides meet at four shared boundaries:
+The three tracks meet at four shared boundaries:
 
 1. Product behavior — what the user sees and can do.
 2. Shared definitions — what an event, status, priority, confidence, and outcome mean.
-3. Handoff checkpoints — mock frontend and real backend must behave the same way.
-4. End-to-end scenarios — the same scenario should be traceable from simulated room activity to the final user action.
+3. Handoff checkpoints — mock frontend, real backend, simulated device, and real device must behave consistently at their boundaries.
+4. End-to-end scenarios — the same scenario should be traceable from simulated or real room activity to the final user action and learning outcome.
 
-Only one person should edit a shared product contract at a time. Product changes discovered in the frontend should be agreed on before the backend hardens them, and backend limitations that affect the experience should be raised before the frontend depends on them.
+Only one person should edit a shared product contract at a time. Product changes discovered by Rishit should be agreed on before Akshar hardens them. Backend limitations that affect the experience should be raised before the frontend depends on them. Hardware discoveries should change only the device boundary unless evidence proves that a product or intelligence change is necessary.
+
+The convergence happens twice:
+
+1. **Before hardware arrives:** Rishit's product and Akshar's backend connect using toy data and simulated device information.
+2. **After hardware arrives:** The hardware engineer replaces the simulated producer with real device information. The product and intelligence layers should not need to be rebuilt.
 
 ## Parallel tracks that run throughout
 
