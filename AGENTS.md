@@ -160,6 +160,12 @@ At minimum, verify relevant:
 
 When the repo is bootstrapped, keep the exact canonical commands in this file up to date.
 
+Current backend/domain verification:
+
+```bash
+python3 -m unittest discover -s tests -p 'test_*.py' -v
+```
+
 Never report a task complete without running the relevant available checks or clearly stating what could not be run.
 
 ## Codex task style

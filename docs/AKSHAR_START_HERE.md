@@ -321,9 +321,9 @@ If we cannot answer those questions, the feature is not ready to build.
 
 ## Current starting point
 
-The repository contains the product requirements, architecture, contracts, build plan, and the approved V1 product-logic design. The first backend slice defines and tests the basic event lifecycle.
+The approved V1 product logic now runs end-to-end with synthetic data. The backend can represent monitoring suitability, calibration, resident-away awareness, possible caregiver/visitor presence, event episodes and recurrence, trusted feedback, controlled baseline eligibility, and editable resident memory.
 
-The next step is to review `docs/superpowers/specs/2026-08-26-v1-product-logic-design.md`, turn it into the implementation sequence, and then build the complete toy-data slice from setup and calibration through feedback and learning.
+The next backend phase adds durable database storage and the real product API around these tested rules. Rishit can continue building the clinic product against the same contract-valid scenarios, while the hardware engineer continues preparing the device telemetry boundary.
 
 ## Source-of-truth documents
 
