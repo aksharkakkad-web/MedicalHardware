@@ -2,7 +2,7 @@
 
 Pull requests in this repository use two independent quality gates:
 
-1. `repository-validation` runs the repository policy tests.
+1. `repository-policy` runs the repository policy tests.
 2. Greptile reviews the change and publishes a confidence check.
 
 Greptile is configured to review every new commit, require a confidence score
