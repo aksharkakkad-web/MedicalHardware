@@ -7,6 +7,16 @@ from uuid import uuid4
 from backend.app.domain.events import EventStatus, MonitoringEvent, ResolutionOutcome
 
 
+def _require_text(value: str, field: str) -> None:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{field} must be a nonblank string")
+
+
+def _require_aware(value: datetime, field: str) -> None:
+    if value.tzinfo is None or value.utcoffset() is None:
+        raise ValueError(f"{field} must be timezone-aware")
+
+
 @dataclass(frozen=True)
 class FeedbackRecord:
     feedback_id: str
@@ -68,6 +78,14 @@ class FeedbackService:
     ) -> LearningDecision:
         if event.status != EventStatus.RESOLVED or event.resolution_outcome is None:
             raise ValueError("feedback requires a resolved event")
+        _require_text(actor_id, "actor_id")
+        _require_text(actual_event_label, "actual_event_label")
+        if type(routine) is not bool:
+            raise ValueError("routine must be a boolean")
+        _require_aware(created_at, "created_at")
+        _require_aware(event.last_signal_at, "event timestamp")
+        if created_at < event.last_signal_at:
+            raise ValueError("created_at cannot precede the event timestamp")
 
         feedback = FeedbackRecord(
             feedback_id=f"fb_{uuid4().hex}",
@@ -107,20 +125,26 @@ class FeedbackService:
         reason: str,
         corrected_at: datetime,
     ) -> ResidentMemory:
+        _require_text(actor_id, "actor_id")
+        _require_text(reason, "reason")
+        _require_aware(corrected_at, "corrected_at")
         memory = self._memories[resident_id]
+        target = next((entry for entry in memory.entries if entry.entry_id == entry_id), None)
+        if target is None:
+            raise KeyError(f"Unknown memory entry: {entry_id}")
+        if target.status != "active":
+            raise ValueError("only active memory can be retired")
+        _require_aware(target.created_at, "memory entry timestamp")
+        if corrected_at < target.created_at:
+            raise ValueError("corrected_at cannot precede memory entry creation")
         found = False
         updated_entries: list[MemoryEntry] = []
         for entry in memory.entries:
             if entry.entry_id == entry_id:
-                if entry.status != "active":
-                    raise ValueError("only active memory can be retired")
                 entry = replace(entry, status="retired", retired_by=actor_id,
                                 retired_at=corrected_at, retirement_reason=reason)
                 found = True
             updated_entries.append(entry)
-        if not found:
-            raise KeyError(f"Unknown memory entry: {entry_id}")
-
         updated = ResidentMemory(resident_id, memory.version + 1, tuple(updated_entries))
         self._memories[resident_id] = updated
         return updated

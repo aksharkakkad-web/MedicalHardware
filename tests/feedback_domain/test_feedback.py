@@ -78,6 +78,81 @@ class FeedbackLearningTests(unittest.TestCase):
         self.assertEqual(len(corrected.entries), 1)
         self.assertEqual(corrected.entries[0].status, "retired")
 
+    def test_feedback_requires_resolved_event(self) -> None:
+        unresolved = replace(self.event, status="checked")
+        with self.assertRaises(ValueError):
+            self.service.submit_feedback(
+                event=unresolved,
+                actor_id="operator_001",
+                actual_event_label="assisted_transfer",
+                routine=True,
+                created_at=datetime(2026, 8, 26, 12, 5, tzinfo=timezone.utc),
+            )
+
+    def test_feedback_does_not_mutate_event_snapshot(self) -> None:
+        original = self.event
+        self.service.submit_feedback(
+            event=self.event,
+            actor_id="operator_001",
+            actual_event_label="assisted_transfer",
+            routine=True,
+            created_at=datetime(2026, 8, 26, 12, 5, tzinfo=timezone.utc),
+        )
+        self.assertEqual(self.event, original)
+
+    def test_feedback_rejects_malformed_audit_fields(self) -> None:
+        valid_time = datetime(2026, 8, 26, 12, 5, tzinfo=timezone.utc)
+        invalid_inputs = (
+            {"actor_id": "", "actual_event_label": "label", "routine": True, "created_at": valid_time},
+            {"actor_id": "operator", "actual_event_label": "", "routine": True, "created_at": valid_time},
+            {"actor_id": "operator", "actual_event_label": "label", "routine": 1, "created_at": valid_time},
+            {"actor_id": "operator", "actual_event_label": "label", "routine": True, "created_at": datetime(2026, 8, 26, 12, 5)},
+        )
+        for values in invalid_inputs:
+            with self.subTest(values=values), self.assertRaises(ValueError):
+                self.service.submit_feedback(event=self.event, **values)
+
+    def test_feedback_rejects_timestamp_before_event(self) -> None:
+        with self.assertRaises(ValueError):
+            self.service.submit_feedback(
+                event=self.event,
+                actor_id="operator_001",
+                actual_event_label="assisted_transfer",
+                routine=True,
+                created_at=datetime(2026, 8, 26, 11, 59, tzinfo=timezone.utc),
+            )
+
+    def test_memory_correction_requires_auditable_ordered_fields(self) -> None:
+        decision = self.service.submit_feedback(
+            event=self.event,
+            actor_id="operator_001",
+            actual_event_label="assisted_transfer",
+            routine=True,
+            created_at=datetime(2026, 8, 26, 12, 5, tzinfo=timezone.utc),
+        )
+        entry_id = decision.memory.active_entries[0].entry_id
+        invalid_inputs = (
+            {"actor_id": "", "reason": "reason", "corrected_at": datetime(2026, 8, 27, 9, tzinfo=timezone.utc)},
+            {"actor_id": "operator", "reason": "", "corrected_at": datetime(2026, 8, 27, 9, tzinfo=timezone.utc)},
+            {"actor_id": "operator", "reason": "reason", "corrected_at": datetime(2026, 8, 27, 9)},
+            {"actor_id": "operator", "reason": "reason", "corrected_at": datetime(2026, 8, 26, 12, tzinfo=timezone.utc)},
+        )
+        for values in invalid_inputs:
+            service = FeedbackService()
+            decision = service.submit_feedback(
+                event=self.event,
+                actor_id="operator_001",
+                actual_event_label="assisted_transfer",
+                routine=True,
+                created_at=datetime(2026, 8, 26, 12, 5, tzinfo=timezone.utc),
+            )
+            with self.subTest(values=values), self.assertRaises(ValueError):
+                service.correct_memory(
+                    resident_id="resident_demo_a",
+                    entry_id=decision.memory.active_entries[0].entry_id,
+                    **values,
+                )
+
 
 if __name__ == "__main__":
     unittest.main()
