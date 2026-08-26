@@ -1,6 +1,6 @@
 """Episode-aware, in-memory event lifecycle for synthetic toy scenarios."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
 from enum import StrEnum
 from uuid import uuid4
@@ -26,7 +26,7 @@ class ResolutionOutcome(StrEnum):
     UNCERTAIN = "uncertain"
 
 
-@dataclass
+@dataclass(frozen=True)
 class MonitoringEvent:
     event_id: str
     episode_id: str
@@ -66,23 +66,31 @@ class EventStore:
         observed_at: datetime,
     ) -> MonitoringEvent:
         active = self._latest_related(resident_id, room_id, objective_family)
+        if active is not None:
+            elapsed = observed_at - active.last_signal_at
+            if elapsed < timedelta(0):
+                raise ValueError("observed_at cannot precede the latest related signal")
         if (
             active is not None
             and active.status != EventStatus.RESOLVED
-            and observed_at - active.last_signal_at <= self.quiet_gap
+            and elapsed <= self.quiet_gap
         ):
-            active.last_signal_at = observed_at
-            active.signal_count += 1
-            active.priority = max(
-                active.priority,
-                priority,
-                key=lambda value: (
-                    EventPriority.WATCH,
-                    EventPriority.HIGH,
-                    EventPriority.CRITICAL,
-                ).index(value),
+            updated = replace(
+                active,
+                last_signal_at=observed_at,
+                signal_count=active.signal_count + 1,
+                priority=max(
+                    active.priority,
+                    priority,
+                    key=lambda value: (
+                        EventPriority.WATCH,
+                        EventPriority.HIGH,
+                        EventPriority.CRITICAL,
+                    ).index(value),
+                ),
             )
-            return active
+            self._events[updated.event_id] = updated
+            return updated
 
         related = self._related_events(resident_id, room_id, objective_family)
         event_id = f"evt_{uuid4().hex}"
@@ -124,9 +132,11 @@ class EventStore:
         event_id: str,
         outcome: ResolutionOutcome,
     ) -> MonitoringEvent:
+        outcome = ResolutionOutcome(outcome)
         event = self._transition(event_id, EventStatus.CHECKED, EventStatus.RESOLVED)
-        event.resolution_outcome = outcome
-        return event
+        resolved = replace(event, resolution_outcome=outcome)
+        self._events[resolved.event_id] = resolved
+        return resolved
 
     def mark_overdue(self, event_id: str, *, at: datetime) -> MonitoringEvent:
         event = self.get(event_id)
@@ -136,8 +146,9 @@ class EventStore:
             raise ValueError("only unacknowledged open events become overdue")
         if at <= event.created_at:
             raise ValueError("overdue time must follow event creation")
-        event.overdue = True
-        return event
+        overdue = replace(event, overdue=True)
+        self._events[overdue.event_id] = overdue
+        return overdue
 
     def _transition(
         self,
@@ -150,8 +161,9 @@ class EventStore:
             raise ValueError(
                 f"Cannot move event {event_id} from {event.status} to {target}"
             )
-        event.status = target
-        return event
+        transitioned = replace(event, status=target)
+        self._events[transitioned.event_id] = transitioned
+        return transitioned
 
     def _related_events(
         self,
