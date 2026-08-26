@@ -2,7 +2,7 @@
 
 **Status:** Pre-build source of truth
 **Audience:** Founders, Codex, engineering collaborators, future research/clinical advisors
-**Version:** 1.3
+**Version:** 1.4
 **Purpose:** Define what the product is, what V1 must do, and what is intentionally left flexible until hardware testing and customer discovery.
 
 ---
@@ -382,6 +382,24 @@ The baseline may learn:
 
 Calibration should depend on sufficient valid data, not a hard-coded number of calendar days.
 
+### Behavior during calibration
+
+- data collection and device-health monitoring begin immediately;
+- broad obvious patterns may still create events during `new`/`calibrating`, but personalized conclusions are limited and visibly lower-confidence;
+- extreme-value warnings require strong signal quality and a versioned rule; prototype rules are synthetic/test-only until validated;
+- `partial` may enable personalized monitoring for some dimensions while others remain provisional or unavailable;
+- resident-away, possible-multiple-person, poor-quality, concerning-event, and unresolved-anomaly windows are excluded from baseline learning.
+
+### Presence and setup changes
+
+- resident-away is an awareness/timeline state, not a resident warning;
+- resident-specific measurements and baseline learning pause while the resident is away;
+- possible caregiver/visitor presence limits resident-specific monitoring and pauses baseline learning;
+- an extremely unusual room-level pattern during possible multi-person presence may create a low-confidence verification event without claiming resident-specific attribution;
+- moving the resident, materially moving the device, replacing a core sensor, or materially changing the room starts partial or full recalibration;
+- resident history and semantic memory remain, while affected physical-sensing baseline dimensions recalibrate;
+- the dashboard provides an explicit setup-change/recalibration action and reason.
+
 ---
 
 ## 12. Anomaly and Event System
@@ -409,6 +427,13 @@ The implementation should support configurable priority levels such as:
 - `critical`
 
 Exact medical thresholds and clinical warning rules are **not** invented during software development. They remain configurable until validated.
+
+Priority and confidence are separate. Priority may consider objective severity, confidence/quality, duration, rate of change, sensor agreement, personal-baseline deviation, recurrence, and missing information.
+
+- `watch` is awareness/review and may be grouped, summarized, hidden, or auto-closed by settings;
+- `high` needs timely staff attention and always remains visible in the dashboard;
+- `critical` needs immediate staff attention and cannot be hidden in the dashboard;
+- administrators configure notification delivery channels and low-priority noise controls.
 
 ### LLM-independent warning path
 
@@ -453,6 +478,10 @@ Core lifecycle:
 
 `detected → open → acknowledged → checked → resolved`
 
+`detected` is internal; `open` is the first user-visible state. Related signals within a configurable quiet-time gap update one active event episode. A recurrence after the gap creates a new linked event. Resolved events remain immutable and do not reopen; later occurrences become new linked events.
+
+`watch` items may auto-close when the condition returns to normal and remain in history. Unacknowledged `high` and `critical` events never silently expire; they become overdue and may escalate according to configurable policy. Repeated related events show a recurrence/pattern indicator.
+
 Resolution outcome:
 
 - `confirmed`
@@ -495,7 +524,7 @@ Structured result:
 
 ### Feedback confidence
 
-Human feedback should capture who/what confirmed the event and how certain they are. A person who directly checked the resident is higher-confidence ground truth than an unverified guess.
+V1 treats authenticated clinic dashboard operators as authorized, trusted feedback sources. Every feedback change records actor, time, source event, and version. Authorized operators may correct or supersede earlier feedback without deleting history.
 
 ---
 
@@ -506,6 +535,8 @@ There are three different learning speeds.
 ### A. Fast: Resident memory
 
 Relevant feedback and routines may update resident context promptly.
+
+Authorized operators can view, add, correct, or retire resident routines/context from resident settings. Memory changes remain versioned and auditable.
 
 ### B. Controlled: Personal baseline
 

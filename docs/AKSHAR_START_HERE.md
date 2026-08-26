@@ -321,9 +321,9 @@ If we cannot answer those questions, the feature is not ready to build.
 
 ## Current starting point
 
-The repository currently contains the product requirements, architecture, contracts, and build plan. The first backend slice now defines and tests the event lifecycle.
+The repository contains the product requirements, architecture, contracts, build plan, and the approved V1 product-logic design. The first backend slice defines and tests the basic event lifecycle.
 
-The next step is to wrap that behavior with a real API and database, then connect the first UI flow.
+The next step is to review `docs/superpowers/specs/2026-08-26-v1-product-logic-design.md`, turn it into the implementation sequence, and then build the complete toy-data slice from setup and calibration through feedback and learning.
 
 ## Source-of-truth documents
 

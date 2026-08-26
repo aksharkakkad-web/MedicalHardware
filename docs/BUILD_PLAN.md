@@ -2,7 +2,7 @@
 
 **Status:** Execution plan
 **Strategy:** Contract-first, UI/UX-first, back-to-front, simulator-backed
-**Version:** 1.4
+**Version:** 1.5
 
 ---
 
@@ -266,6 +266,10 @@ Build:
 - valid one-resident room assignment;
 - missing/conflicting room assignment;
 - suspected multi-person presence;
+- resident away and return;
+- setup change and recalibration;
+- recurring/linked event and overdue high-priority event;
+- editable resident memory and notification preferences;
 - device issue;
 - LLM pending/unavailable;
 - event acknowledged/checked/resolved;
@@ -304,6 +308,10 @@ Implement durable domain APIs behind the exact contracts already exercised by th
 - migrations;
 - CRUD/query APIs needed by UIs;
 - event lifecycle state transitions;
+- event episode grouping, recurrence links, overdue state, and priority history;
+- resident presence/monitoring awareness timeline;
+- monitoring-setup versions and recalibration reasons;
+- administrator notification preferences;
 - audit-friendly timestamps/actor fields.
 
 ### Acceptance criteria
@@ -358,13 +366,15 @@ Close the user feedback loop before real sensors exist.
 - actor confidence/provenance;
 - `prompts/resident_memory_updater.md`;
 - versioned resident memory;
-- relevant-memory retrieval for future interpretation.
+- relevant-memory retrieval for future interpretation;
+- operator memory review, correction, and retirement with audit history.
 
 ### Acceptance criteria
 
 - feedback takes only a few interactions;
 - previous similar feedback can be retrieved for a later event;
 - memory update is auditable;
+- authorized operators can correct an inaccurate routine without deleting history;
 - feedback never directly edits warning thresholds.
 
 ---
@@ -405,7 +415,10 @@ Do not prematurely build a trained event classifier.
 - clearly unusual but unclassified scenario can produce `unknown_anomaly`;
 - low-quality data can suppress/qualify derived features without inventing values;
 - warning-policy demo rules are explicitly synthetic/test-only;
-- baseline versions are stored.
+- baseline versions are stored;
+- calibration behavior is exercised across `new`, `calibrating`, `partial`, and `established`;
+- away, possible-multi-person, poor-quality, and unresolved-event windows do not update the baseline;
+- setup changes return affected baseline dimensions to calibration while preserving resident memory;
 
 ---
 
@@ -454,6 +467,8 @@ At minimum:
 - collapse-like sequence;
 - repetitive movement;
 - multi-person/interference;
+- resident away and return;
+- monitoring setup change/recalibration;
 - radar missing/noisy;
 - thermal missing/noisy;
 - CSI missing/noisy;
@@ -462,7 +477,8 @@ At minimum:
 - unknown/unclassified anomaly;
 - valid room/resident assignment;
 - missing/conflicting room/resident assignment;
-- recovery.
+- recovery;
+- related event recurrence inside and outside the configured episode gap.
 
 ### Deliverables
 

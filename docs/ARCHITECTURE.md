@@ -1,7 +1,7 @@
 # Contactless Adaptive Care Platform — Technical Architecture
 
 **Status:** Pre-build architecture source of truth
-**Version:** 1.3
+**Version:** 1.4
 **Companion docs:** `PRD.md`, `DATA_CONTRACT.md`, `BUILD_PLAN.md`, root `AGENTS.md`
 
 ---
@@ -293,6 +293,7 @@ Responsibilities:
 
 - align observations into common time windows;
 - track which modalities are present;
+- determine monitoring suitability: resident present, resident away, possible multi-person, or unavailable;
 - compare independent evidence;
 - represent disagreement;
 - calculate per-feature quality;
@@ -327,6 +328,15 @@ Baseline updates only use eligible data:
 - bounded against runaway adaptation.
 
 Every baseline update creates a new version or auditable revision.
+
+Calibration behavior:
+
+- device health and broad/test-only warning paths may run before a personal baseline is established;
+- personalized conclusions remain limited and visibly lower-confidence during `new` and `calibrating`;
+- `partial` enables only the dimensions with sufficient eligible coverage;
+- away, possible-multi-person, poor-quality, concerning-event, and unresolved-anomaly windows are ineligible for learning;
+- room moves, material device moves, core-sensor replacement, or material layout changes create a new monitoring-setup version and return affected dimensions to `calibrating` or `partial`;
+- resident history and semantic memory survive recalibration.
 
 ---
 
@@ -399,6 +409,15 @@ Responsibilities:
 - trigger deterministic/LLM-independent warning policy;
 - trigger optional LLM interpretation;
 - route event to product surfaces.
+
+Episode and recurrence rules:
+
+- `detected` is internal and `open` is the first user-visible state;
+- related evidence inside a configurable quiet-time gap updates one active episode;
+- recurrence after that gap creates a new event linked to prior events;
+- resolved events remain immutable and never reopen;
+- repeated linked events expose recurrence/pattern information;
+- watch items may auto-close into history, while high/critical events become overdue and never silently expire.
 
 ### Deterministic warning policy
 
@@ -474,6 +493,10 @@ Expose shared domain APIs while keeping product behavior separate. Frontends con
 - trends;
 - feedback submission;
 - device status.
+- resident monitoring/presence status;
+- recurrence and overdue state;
+- notification preferences;
+- editable, versioned resident memory settings.
 
 ### Clinic-specific
 
@@ -508,6 +531,8 @@ Flow:
 5. resident memory updater may run;
 6. baseline eligibility is recalculated;
 7. labeled outcome becomes evaluation/training data.
+
+Authenticated clinic operators are treated as trusted V1 feedback sources. Corrections supersede prior feedback/memory versions without deleting audit history.
 
 The AI feedback agent asks questions; it does not directly mutate safety configuration.
 

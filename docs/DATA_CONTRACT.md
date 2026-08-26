@@ -1,7 +1,7 @@
 # Contactless Adaptive Care Platform — Data & API Contract
 
 **Status:** V1 contract for UI-first and simulator-first development
-**Version:** 1.3
+**Version:** 1.4
 **Important:** Final vendor-specific radar/CSI raw shapes are intentionally hardware-dependent. Production software stabilizes around a versioned **EdgeTelemetryEnvelope** emitted after lightweight on-device preprocessing. Optional raw/debug capture is separate and bounded.
 
 ---
@@ -313,13 +313,30 @@ Represents the system's cross-sensor understanding of a time window.
   },
   "modalities_present": ["radar", "thermal", "wifi_csi"],
   "sensor_agreement": 0.88,
+  "presence_state": "resident_present",
+  "monitoring_state": "active",
   "multi_person_state": "unlikely",
+  "limitations": [],
   "overall_quality": 0.87,
   "fusion_version": "fusion_v1"
 }
 ```
 
 Values in examples are synthetic and not clinical thresholds.
+
+Presence states:
+
+- `unknown`
+- `resident_present`
+- `resident_away`
+- `possible_multi_person`
+
+Monitoring states:
+
+- `active` — resident-specific monitoring may run subject to quality;
+- `limited` — some outputs are low-confidence or unavailable;
+- `paused` — awareness/history continues but resident-specific learning is stopped;
+- `unavailable` — assignment, device, or data conditions prevent resident-specific monitoring.
 
 ---
 
@@ -331,6 +348,8 @@ Values in examples are synthetic and not clinical thresholds.
   "baseline_id": "baseline_a_0042",
   "resident_id": "resident_demo_a",
   "status": "partial",
+  "monitoring_setup_version": "setup_room_214_v1",
+  "calibration_reason": "initial_setup",
   "valid_from": "2026-08-24T20:00:00Z",
   "dimensions": {
     "heart_rate": {
@@ -415,6 +434,7 @@ Durable product object.
   "resident_id": "resident_demo_a",
   "room_id": "room_214",
   "created_at": "2026-08-24T21:02:11Z",
+  "episode_id": "episode_001",
   "status": "open",
   "priority": "high",
   "event_kind": "resident_anomaly",
@@ -431,7 +451,10 @@ Durable product object.
     "matched": false,
     "policy_version": "warning_demo_v1"
   },
-  "interpretation_status": "pending"
+  "interpretation_status": "pending",
+  "related_event_ids": [],
+  "recurrence_count": 1,
+  "overdue_at": null
 }
 ```
 
@@ -442,6 +465,14 @@ Durable product object.
 - `acknowledged`
 - `checked`
 - `resolved`
+
+Episode rules:
+
+- related evidence inside a configurable quiet-time gap updates the same open episode;
+- recurrence outside that gap creates a new event with links in `related_event_ids`;
+- resolved events do not reopen;
+- high/critical events may populate `overdue_at` and never silently expire;
+- watch items may auto-close into history when policy allows.
 
 ### Resolution outcome enum
 
@@ -558,6 +589,7 @@ The LLM must be allowed to return:
   "actual_event_label": "assisted_movement",
   "routine": true,
   "actor_confidence": "high",
+  "supersedes_feedback_id": null,
   "answers": [
     {
       "question": "What actually happened?",
@@ -596,6 +628,7 @@ Semantic context used by the LLM, separate from the numerical baseline.
     {
       "description": "Assisted standing/movement commonly occurs around 8 AM",
       "confidence": 0.86,
+      "status": "active",
       "source_feedback_ids": ["fb_001"]
     }
   ],
@@ -604,7 +637,7 @@ Semantic context used by the LLM, separate from the numerical baseline.
 }
 ```
 
-Memory is versioned and auditable. It is not the same object as the numerical baseline.
+Memory is versioned and auditable. It is not the same object as the numerical baseline. Authorized operators may add, correct, or retire entries; corrections create a new version rather than deleting history.
 
 ---
 
@@ -789,6 +822,10 @@ Mock-only fields must never leak into production API types. Ground-truth labels 
 ### V1.3 breaking scope decision
 
 V1.3 removes the wearable/reader identity source from the production ingestion contract. Resident attribution now comes from an authorized one-resident-per-room assignment. Simulators, backend models, frontend fixtures, and future firmware must use only radar, thermal, and Wi-Fi CSI as core sensor sources and must represent suspected multi-person presence as ambiguous or unavailable resident-specific monitoring.
+
+### V1.4 product-logic expansion
+
+V1.4 adds resident presence/monitoring states, setup-versioned calibration, linked event episodes and recurrence, overdue behavior, correctable feedback, and editable/versioned resident memory semantics.
 
 When changing any domain object:
 

@@ -56,6 +56,10 @@ Agents should stay inside the requesting founder's owned areas unless the task e
 - The LLM interprets already-created events; it does not monitor sensor telemetry streams.
 - The LLM cannot suppress deterministic events/warnings.
 - Low-quality data must be shown as low-confidence/unavailable, not as fake precision.
+- Resident-away and possible-multi-person periods pause resident-specific baseline learning.
+- Material room/device/sensor setup changes create a new setup version and recalibrate affected baseline dimensions without deleting resident history or semantic memory.
+- Resolved events remain immutable; recurrences create new linked events rather than reopening history.
+- Watch items may auto-close into history, but high/critical events never silently expire.
 - Resident memory and numerical baseline are separate concepts.
 - Feedback can update resident context quickly; baseline updates are controlled; global behavior changes are evaluated/versioned.
 - Clinic dashboard and home app are separate product experiences sharing the core engine.
