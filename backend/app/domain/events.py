@@ -1,12 +1,9 @@
-"""The first product slice: a durable monitoring event and its lifecycle.
-
-This in-memory store is deliberately small. It lets us agree on product
-behavior before adding the database and HTTP API around the same rules.
-"""
+"""Episode-aware, in-memory event lifecycle for synthetic toy scenarios."""
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta
 from enum import StrEnum
+from uuid import uuid4
 
 
 class EventStatus(StrEnum):
@@ -15,6 +12,12 @@ class EventStatus(StrEnum):
     ACKNOWLEDGED = "acknowledged"
     CHECKED = "checked"
     RESOLVED = "resolved"
+
+
+class EventPriority(StrEnum):
+    WATCH = "watch"
+    HIGH = "high"
+    CRITICAL = "critical"
 
 
 class ResolutionOutcome(StrEnum):
@@ -26,44 +29,76 @@ class ResolutionOutcome(StrEnum):
 @dataclass
 class MonitoringEvent:
     event_id: str
+    episode_id: str
     resident_id: str
     room_id: str
+    objective_family: str
     headline: str
-    status: EventStatus = EventStatus.DETECTED
+    priority: EventPriority
+    status: EventStatus
+    created_at: datetime
+    last_signal_at: datetime
+    signal_count: int = 1
+    related_event_ids: tuple[str, ...] = ()
+    recurrence_count: int = 1
+    overdue: bool = False
     resolution_outcome: ResolutionOutcome | None = None
-    created_at: datetime | None = None
     schema_version: str = "1.0"
 
 
 class EventStore:
-    """Stores events and enforces the user-facing lifecycle."""
+    """Groups related synthetic signals and enforces the caregiver lifecycle."""
 
-    _allowed_transitions = {
-        EventStatus.DETECTED: EventStatus.OPEN,
-        EventStatus.OPEN: EventStatus.ACKNOWLEDGED,
-        EventStatus.ACKNOWLEDGED: EventStatus.CHECKED,
-        EventStatus.CHECKED: EventStatus.RESOLVED,
-    }
-
-    def __init__(self) -> None:
+    def __init__(self, quiet_gap: timedelta = timedelta(minutes=5)) -> None:
+        if quiet_gap <= timedelta(0):
+            raise ValueError("quiet_gap must be positive")
+        self.quiet_gap = quiet_gap
         self._events: dict[str, MonitoringEvent] = {}
 
-    def create_event(
+    def record_signal(
         self,
         *,
-        event_id: str,
         resident_id: str,
         room_id: str,
+        objective_family: str,
         headline: str,
+        priority: EventPriority,
+        observed_at: datetime,
     ) -> MonitoringEvent:
-        if event_id in self._events:
-            raise ValueError(f"Event already exists: {event_id}")
+        active = self._latest_related(resident_id, room_id, objective_family)
+        if (
+            active is not None
+            and active.status != EventStatus.RESOLVED
+            and observed_at - active.last_signal_at <= self.quiet_gap
+        ):
+            active.last_signal_at = observed_at
+            active.signal_count += 1
+            active.priority = max(
+                active.priority,
+                priority,
+                key=lambda value: (
+                    EventPriority.WATCH,
+                    EventPriority.HIGH,
+                    EventPriority.CRITICAL,
+                ).index(value),
+            )
+            return active
+
+        related = self._related_events(resident_id, room_id, objective_family)
+        event_id = f"evt_{uuid4().hex}"
         event = MonitoringEvent(
             event_id=event_id,
+            episode_id=f"episode_{uuid4().hex}",
             resident_id=resident_id,
             room_id=room_id,
+            objective_family=objective_family,
             headline=headline,
-            created_at=datetime.now(timezone.utc),
+            priority=priority,
+            status=EventStatus.OPEN,
+            created_at=observed_at,
+            last_signal_at=observed_at,
+            related_event_ids=tuple(item.event_id for item in related),
+            recurrence_count=len(related) + 1,
         )
         self._events[event_id] = event
         return event
@@ -74,28 +109,72 @@ class EventStore:
         except KeyError as exc:
             raise KeyError(f"Unknown event: {event_id}") from exc
 
-    def open_event(self, event_id: str) -> MonitoringEvent:
-        return self._transition(event_id, EventStatus.OPEN)
-
     def acknowledge(self, event_id: str) -> MonitoringEvent:
-        return self._transition(event_id, EventStatus.ACKNOWLEDGED)
+        return self._transition(event_id, EventStatus.OPEN, EventStatus.ACKNOWLEDGED)
 
     def check(self, event_id: str) -> MonitoringEvent:
-        return self._transition(event_id, EventStatus.CHECKED)
+        return self._transition(
+            event_id,
+            EventStatus.ACKNOWLEDGED,
+            EventStatus.CHECKED,
+        )
 
     def resolve(
-        self, event_id: str, outcome: ResolutionOutcome
+        self,
+        event_id: str,
+        outcome: ResolutionOutcome,
     ) -> MonitoringEvent:
-        event = self._transition(event_id, EventStatus.RESOLVED)
+        event = self._transition(event_id, EventStatus.CHECKED, EventStatus.RESOLVED)
         event.resolution_outcome = outcome
         return event
 
-    def _transition(self, event_id: str, target: EventStatus) -> MonitoringEvent:
+    def mark_overdue(self, event_id: str, *, at: datetime) -> MonitoringEvent:
         event = self.get(event_id)
-        expected = self._allowed_transitions.get(event.status)
-        if expected != target:
+        if event.priority == EventPriority.WATCH:
+            raise ValueError("watch events do not use overdue escalation")
+        if event.status != EventStatus.OPEN:
+            raise ValueError("only unacknowledged open events become overdue")
+        if at <= event.created_at:
+            raise ValueError("overdue time must follow event creation")
+        event.overdue = True
+        return event
+
+    def _transition(
+        self,
+        event_id: str,
+        expected: EventStatus,
+        target: EventStatus,
+    ) -> MonitoringEvent:
+        event = self.get(event_id)
+        if event.status != expected:
             raise ValueError(
                 f"Cannot move event {event_id} from {event.status} to {target}"
             )
         event.status = target
         return event
+
+    def _related_events(
+        self,
+        resident_id: str,
+        room_id: str,
+        objective_family: str,
+    ) -> list[MonitoringEvent]:
+        return sorted(
+            (
+                event
+                for event in self._events.values()
+                if event.resident_id == resident_id
+                and event.room_id == room_id
+                and event.objective_family == objective_family
+            ),
+            key=lambda event: event.created_at,
+        )
+
+    def _latest_related(
+        self,
+        resident_id: str,
+        room_id: str,
+        objective_family: str,
+    ) -> MonitoringEvent | None:
+        related = self._related_events(resident_id, room_id, objective_family)
+        return related[-1] if related else None

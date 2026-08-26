@@ -1,38 +1,63 @@
 import unittest
+from datetime import datetime, timedelta, timezone
 
-from backend.app.domain.events import EventStatus, ResolutionOutcome, EventStore
+from backend.app.domain.events import (
+    EventPriority,
+    EventStatus,
+    EventStore,
+    ResolutionOutcome,
+)
 
 
 class EventFlowTests(unittest.TestCase):
-    def test_event_can_move_through_the_caregiver_flow(self) -> None:
-        store = EventStore()
-        event = store.create_event(
-            event_id="evt_001",
+    def setUp(self) -> None:
+        self.store = EventStore(quiet_gap=timedelta(minutes=5))
+        self.started = datetime(2026, 8, 26, 12, 0, tzinfo=timezone.utc)
+
+    def record(self, *, at: datetime, priority: EventPriority = EventPriority.HIGH):
+        return self.store.record_signal(
             resident_id="resident_demo_a",
             room_id="room_214",
+            objective_family="unusual_movement",
             headline="Unusual movement detected",
+            priority=priority,
+            observed_at=at,
         )
 
-        self.assertEqual(event.status, EventStatus.DETECTED)
-        store.open_event(event.event_id)
-        store.acknowledge(event.event_id)
-        store.check(event.event_id)
-        resolved = store.resolve(event.event_id, ResolutionOutcome.CONFIRMED)
+    def test_related_signals_inside_gap_update_one_episode(self) -> None:
+        first = self.record(at=self.started)
+        updated = self.record(at=self.started + timedelta(minutes=2))
 
-        self.assertEqual(resolved.status, EventStatus.RESOLVED)
-        self.assertEqual(resolved.resolution_outcome, ResolutionOutcome.CONFIRMED)
+        self.assertEqual(updated.event_id, first.event_id)
+        self.assertEqual(updated.signal_count, 2)
+
+    def test_recurrence_after_resolution_creates_linked_event(self) -> None:
+        first = self.record(at=self.started)
+        self.store.acknowledge(first.event_id)
+        self.store.check(first.event_id)
+        self.store.resolve(first.event_id, ResolutionOutcome.FALSE_POSITIVE)
+
+        recurrence = self.record(at=self.started + timedelta(minutes=10))
+
+        self.assertNotEqual(recurrence.event_id, first.event_id)
+        self.assertEqual(recurrence.related_event_ids, (first.event_id,))
+        self.assertEqual(recurrence.recurrence_count, 2)
+        self.assertEqual(first.status, EventStatus.RESOLVED)
+
+    def test_high_event_becomes_overdue_instead_of_expiring(self) -> None:
+        event = self.record(at=self.started)
+        overdue = self.store.mark_overdue(
+            event.event_id,
+            at=self.started + timedelta(minutes=6),
+        )
+
+        self.assertTrue(overdue.overdue)
+        self.assertEqual(overdue.status, EventStatus.OPEN)
 
     def test_invalid_status_jump_is_rejected(self) -> None:
-        store = EventStore()
-        event = store.create_event(
-            event_id="evt_002",
-            resident_id="resident_demo_a",
-            room_id="room_214",
-            headline="Unusual movement detected",
-        )
-
+        event = self.record(at=self.started)
         with self.assertRaises(ValueError):
-            store.resolve(event.event_id, ResolutionOutcome.FALSE_POSITIVE)
+            self.store.resolve(event.event_id, ResolutionOutcome.CONFIRMED)
 
 
 if __name__ == "__main__":
