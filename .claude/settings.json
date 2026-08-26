@@ -1,0 +1,24 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if command -v graphify >/dev/null 2>&1; then graphify hook-guard search; fi"
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if command -v graphify >/dev/null 2>&1; then graphify hook-guard read; fi"
+          }
+        ]
+      }
+    ]
+  }
+}

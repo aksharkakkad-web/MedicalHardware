@@ -1,0 +1,28 @@
+{
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "description": "Repository-wide agent rules, ownership boundaries, and safety invariants"
+    },
+    {
+      "path": "docs/PRD.md",
+      "description": "Product requirements and scope"
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "description": "System boundaries and architectural decisions"
+    },
+    {
+      "path": "docs/DATA_CONTRACT.md",
+      "description": "Versioned schemas, domain objects, and API semantics"
+    },
+    {
+      "path": "docs/BUILD_PLAN.md",
+      "description": "Implementation order and acceptance criteria"
+    },
+    {
+      "path": "docs/TEAM_OWNERSHIP.md",
+      "description": "Human ownership and parallel-development rules"
+    }
+  ]
+}

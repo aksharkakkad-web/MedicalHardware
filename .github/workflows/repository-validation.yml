@@ -1,0 +1,28 @@
+name: repository-validation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  repository-policy:
+    name: repository-policy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate repository policy
+        run: python3 -m unittest discover -s tests -p 'test_*.py'
+
+      - name: Reject committed generated files
+        run: |
+          if git ls-files | grep -E '(^|/)(__pycache__/|[^/]+\.py[co]$|\.DS_Store$)'; then
+            echo 'Generated local files must not be committed.' >&2
+            exit 1
+          fi

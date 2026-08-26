@@ -1,0 +1,7 @@
+interface:
+  display_name: "Check Before Build"
+  short_description: "Find existing work before adding features"
+  default_prompt: "Use $check-before-build to inspect existing repository work before implementation."
+
+policy:
+  allow_implicit_invocation: true

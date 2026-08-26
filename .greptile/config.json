@@ -1,0 +1,39 @@
+{
+  "strictness": 1,
+  "commentTypes": [
+    "logic",
+    "syntax",
+    "style",
+    "info"
+  ],
+  "triggerOnUpdates": true,
+  "triggerOnDrafts": false,
+  "statusCheck": true,
+  "statusCommentsEnabled": true,
+  "fixWithAI": true,
+  "shouldUpdateDescription": false,
+  "updateExistingSummaryComment": true,
+  "includeConfidenceScore": true,
+  "autoApprove": {
+    "enabled": true,
+    "riskCeiling": "high",
+    "filters": {
+      "includeBranches": [
+        "main"
+      ],
+      "excludePaths": [
+        ".github/workflows/**",
+        ".greptile/**",
+        "docs/PRD.md",
+        "docs/ARCHITECTURE.md",
+        "docs/DATA_CONTRACT.md",
+        "firmware/**",
+        "backend/migrations/**",
+        "**/auth/**",
+        "**/security/**",
+        ".env*"
+      ]
+    }
+  },
+  "instructions": "Review against AGENTS.md and the source-of-truth files listed in .greptile/files.json. Treat safety, medical-claim, data-contract, privacy, deterministic-warning, and unavailable-data violations as blocking. Require relevant tests for behavior changes. A clean review means 5/5 confidence with zero unresolved actionable comments."
+}
