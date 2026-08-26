@@ -75,12 +75,30 @@ if git show-ref --verify --quiet "refs/heads/$branch"; then
   exit 4
 fi
 
-git fetch origin main --quiet
-if git ls-remote --exit-code --heads origin "refs/heads/$branch" >/dev/null 2>&1; then
+if ! git fetch origin refs/heads/main:refs/remotes/origin/main --quiet; then
+  printf 'Cannot verify origin/main. Check remote access before creating a branch.\n' >&2
+  exit 3
+fi
+
+if ! remote_branch=$(git ls-remote --heads origin "refs/heads/$branch"); then
+  printf 'Cannot verify remote branch availability. Check remote access before creating a branch.\n' >&2
+  exit 3
+fi
+
+if [[ -n "$remote_branch" ]]; then
   printf 'Branch already exists on origin: %s\n' "$branch" >&2
   exit 4
 fi
 
-git pull --ff-only origin main --quiet
+if ! git pull --ff-only origin main --quiet; then
+  printf 'Cannot fast-forward main from origin/main. Resolve the local branch before creating a branch.\n' >&2
+  exit 3
+fi
+
+if [[ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]]; then
+  printf 'Local main does not match origin/main. Push or discard local commits before creating a branch.\n' >&2
+  exit 3
+fi
+
 git switch -c "$branch"
 printf 'Ready to work on %s (%s lane).\n' "$branch" "$lane"
