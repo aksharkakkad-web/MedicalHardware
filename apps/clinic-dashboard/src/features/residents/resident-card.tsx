@@ -23,6 +23,15 @@ const attentionPresentation: Record<
   critical: { label: "Critical attention", tone: "critical" },
 };
 
+const deviceHeadline: Record<
+  Exclude<ResidentOverviewItem["device"]["status"], "online">,
+  string
+> = {
+  degraded: "Device degraded",
+  offline: "Device offline",
+  unknown: "Device status unknown",
+};
+
 function formattedTime(timestamp: string): string {
   return new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
@@ -45,8 +54,10 @@ export function ResidentCard({ resident }: Readonly<{ resident: ResidentOverview
         <StatusPill label={monitoring.label} tone={monitoring.tone} />
       </div>
 
-      {resident.monitoring.state === "limited" && (
-        <p className={styles.contextLabel}>Possible visitor or another person</p>
+      {resident.monitoring.contextLabel && (
+        <p className={styles.contextLabel}>
+          {resident.monitoring.contextLabel}
+        </p>
       )}
       <p className={styles.reason}>{resident.monitoring.reason}</p>
 
@@ -60,7 +71,7 @@ export function ResidentCard({ resident }: Readonly<{ resident: ResidentOverview
 
         {resident.device.status !== "online" && (
           <div className={styles.deviceWarning}>
-            <strong>Device offline</strong>
+            <strong>{deviceHeadline[resident.device.status]}</strong>
             <span>{resident.device.label}</span>
           </div>
         )}

@@ -18,6 +18,7 @@ export interface ResidentOverviewItem {
   monitoring: {
     state: MonitoringState;
     reason: string;
+    contextLabel?: string;
     lastUpdatedAt: string;
   };
   attention: {

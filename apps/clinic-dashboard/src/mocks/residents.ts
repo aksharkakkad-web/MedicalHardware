@@ -86,6 +86,7 @@ export function createResidentOverviewFixture(
         assignmentStatus: "active",
         monitoring: {
           state: "limited",
+          contextLabel: "Possible visitor or another person",
           reason:
             "Possible multiple-person presence limits resident-specific monitoring.",
           lastUpdatedAt: timestampBefore(now, 110_000),
