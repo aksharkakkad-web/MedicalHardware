@@ -1,4 +1,10 @@
-from backend.app.contracts.common import ContractModel, ErrorDetail, ErrorEnvelope, HealthResponse
+from backend.app.contracts.common import (
+    ContractModel,
+    ErrorDetail,
+    ErrorEnvelope,
+    HealthResponse,
+    UTCDateTime,
+)
 from backend.app.contracts.events import (
     EventActionResponse,
     EventListResponse,
@@ -21,4 +27,5 @@ __all__ = [
     "ResidentListResponse",
     "ResidentMemoryResponse",
     "ResidentSummary",
+    "UTCDateTime",
 ]

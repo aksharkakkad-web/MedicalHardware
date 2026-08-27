@@ -1,7 +1,6 @@
-from datetime import datetime
 from typing import Literal
 
-from backend.app.contracts.common import ContractModel
+from backend.app.contracts.common import ContractModel, UTCDateTime
 
 
 class MemoryEntryResponse(ContractModel):
@@ -10,9 +9,9 @@ class MemoryEntryResponse(ContractModel):
     source_feedback_id: str
     status: Literal["active", "retired"]
     created_by: str
-    created_at: datetime
+    created_at: UTCDateTime
     retired_by: str | None
-    retired_at: datetime | None
+    retired_at: UTCDateTime | None
     retirement_reason: str | None
 
 

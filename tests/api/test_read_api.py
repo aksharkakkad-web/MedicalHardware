@@ -228,7 +228,7 @@ def test_cross_tenant_resources_use_the_same_not_found_response(
 
     assert [response.status_code for response in responses] == [404] * len(paths)
     assert {response.text for response in responses} == {
-        '{"error":{"schema_version":"1.0","code":"not_found",'
+        '{"schema_version":"1.0","error":{"code":"not_found",'
         '"message":"Resource not found","field":null}}'
     }
 
@@ -278,8 +278,8 @@ def test_missing_access_header_uses_the_versioned_error_contract(
 
     assert response.status_code == 422
     assert response.json() == {
+        "schema_version": "1.0",
         "error": {
-            "schema_version": "1.0",
             "code": "invalid_input",
             "message": "Invalid request",
             "field": "X-Actor-Id",
@@ -297,8 +297,8 @@ def test_blank_access_header_uses_the_versioned_error_contract(
 
     assert response.status_code == 422
     assert response.json() == {
+        "schema_version": "1.0",
         "error": {
-            "schema_version": "1.0",
             "code": "invalid_input",
             "message": "Invalid request",
             "field": "X-Tenant-Id",
@@ -321,11 +321,43 @@ def test_unexpected_errors_return_a_versioned_generic_response(
 
     assert response.status_code == 500
     assert response.json() == {
+        "schema_version": "1.0",
         "error": {
-            "schema_version": "1.0",
             "code": "internal_error",
             "message": "Internal server error",
             "field": None,
         }
     }
     assert "private database" not in response.text
+
+
+def test_unmatched_v1_path_uses_the_versioned_not_found_envelope(
+    api_client: TestClient,
+) -> None:
+    response = api_client.get("/v1/not-a-product-route")
+
+    assert response.status_code == 404
+    assert response.json() == {
+        "schema_version": "1.0",
+        "error": {
+            "code": "not_found",
+            "message": "Resource not found",
+            "field": None,
+        },
+    }
+
+
+def test_unsupported_method_uses_the_versioned_method_not_allowed_envelope(
+    api_client: TestClient,
+) -> None:
+    response = api_client.post("/v1/residents", headers=ACCESS_HEADERS)
+
+    assert response.status_code == 405
+    assert response.json() == {
+        "schema_version": "1.0",
+        "error": {
+            "code": "method_not_allowed",
+            "message": "Method not allowed",
+            "field": None,
+        },
+    }

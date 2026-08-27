@@ -1,6 +1,16 @@
-from typing import Literal
+from datetime import datetime, timedelta
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import AfterValidator, AwareDatetime, BaseModel, ConfigDict
+
+
+def _require_utc(value: datetime) -> datetime:
+    if value.utcoffset() != timedelta(0):
+        raise ValueError("datetime must use UTC")
+    return value
+
+
+UTCDateTime = Annotated[AwareDatetime, AfterValidator(_require_utc)]
 
 
 class ContractModel(BaseModel):
@@ -13,12 +23,12 @@ class HealthResponse(ContractModel):
     service: Literal["product-api"]
 
 
-class ErrorDetail(ContractModel):
+class ErrorDetail(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     code: str
     message: str
     field: str | None = None
 
 
-class ErrorEnvelope(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+class ErrorEnvelope(ContractModel):
     error: ErrorDetail

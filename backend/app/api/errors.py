@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from backend.app.contracts.common import ErrorDetail, ErrorEnvelope
 from backend.app.services.errors import (
@@ -75,6 +76,25 @@ def register_error_handlers(app: FastAPI) -> None:
             code="invalid_input",
             message="Invalid request",
             field=field,
+        )
+
+    @app.exception_handler(StarletteHTTPException)
+    async def http_error_handler(
+        _: Request,
+        error: StarletteHTTPException,
+    ) -> JSONResponse:
+        error_contracts = {
+            404: ("not_found", "Resource not found"),
+            405: ("method_not_allowed", "Method not allowed"),
+        }
+        code, message = error_contracts.get(
+            error.status_code,
+            ("http_error", "The request could not be completed"),
+        )
+        return error_response(
+            error.status_code,
+            code=code,
+            message=message,
         )
 
     @app.exception_handler(Exception)
