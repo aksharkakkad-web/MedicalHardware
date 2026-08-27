@@ -1,5 +1,4 @@
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
 from threading import Event, Lock, get_ident
 
 import pytest
@@ -18,6 +17,13 @@ from backend.app.db.models import (
 EVENT_ID = "evt_phase2_demo"
 EVENT_PATH = f"/v1/events/{EVENT_ID}"
 ACTION_TIME = "2026-08-24T21:03:00Z"
+
+
+def _action_body(
+    occurred_at: str = ACTION_TIME,
+    **extra: object,
+) -> dict[str, object]:
+    return {"schema_version": "1.0", "occurred_at": occurred_at, **extra}
 
 
 def _headers(
@@ -146,20 +152,20 @@ def test_complete_caregiver_lifecycle_is_persisted_and_auditable(
     acknowledged = api_client.post(
         f"{EVENT_PATH}/acknowledge",
         headers=_headers("ack-1"),
-        json={"occurred_at": ACTION_TIME},
+        json=_action_body(),
     )
     checked = api_client.post(
         f"{EVENT_PATH}/checked",
         headers=_headers("check-1"),
-        json={"occurred_at": "2026-08-24T21:04:00Z"},
+        json=_action_body("2026-08-24T21:04:00Z"),
     )
     resolved = api_client.post(
         f"{EVENT_PATH}/resolve",
         headers=_headers("resolve-1"),
-        json={
-            "occurred_at": "2026-08-24T21:05:00Z",
-            "outcome": "false_positive",
-        },
+        json=_action_body(
+            "2026-08-24T21:05:00Z",
+            outcome="false_positive",
+        ),
     )
 
     assert [response.status_code for response in (acknowledged, checked, resolved)] == [
@@ -209,12 +215,12 @@ def test_same_idempotency_key_replays_original_response_once(
     first = api_client.post(
         f"{EVENT_PATH}/acknowledge",
         headers=headers,
-        json={"occurred_at": ACTION_TIME},
+        json=_action_body(),
     )
     second = api_client.post(
         f"{EVENT_PATH}/acknowledge",
         headers=headers,
-        json={"occurred_at": ACTION_TIME},
+        json=_action_body(),
     )
 
     assert second.status_code == first.status_code == 200
@@ -229,8 +235,8 @@ def test_concurrent_same_key_and_request_replays_one_success(
 ) -> None:
     first, replay = _race_same_idempotency_key(
         api_client,
-        first_body={"occurred_at": ACTION_TIME},
-        second_body={"occurred_at": ACTION_TIME},
+        first_body=_action_body(),
+        second_body=_action_body(),
     )
 
     assert first.status_code == replay.status_code == 200
@@ -245,8 +251,8 @@ def test_concurrent_same_key_and_different_request_returns_canonical_conflict(
 ) -> None:
     first, conflict = _race_same_idempotency_key(
         api_client,
-        first_body={"occurred_at": ACTION_TIME},
-        second_body={"occurred_at": "2026-08-24T21:04:00Z"},
+        first_body=_action_body(),
+        second_body=_action_body("2026-08-24T21:04:00Z"),
     )
 
     assert first.status_code == 200
@@ -271,13 +277,13 @@ def test_changed_request_reusing_an_idempotency_key_is_rejected_without_effects(
     first = api_client.post(
         f"{EVENT_PATH}/acknowledge",
         headers=headers,
-        json={"occurred_at": ACTION_TIME},
+        json=_action_body(),
     )
 
     conflict = api_client.post(
         f"{EVENT_PATH}/acknowledge",
         headers=headers,
-        json={"occurred_at": "2026-08-24T21:04:00Z"},
+        json=_action_body("2026-08-24T21:04:00Z"),
     )
 
     assert first.status_code == 200
@@ -300,13 +306,13 @@ def test_same_key_on_a_different_path_is_a_conflict(api_client: TestClient) -> N
     first = api_client.post(
         f"{EVENT_PATH}/acknowledge",
         headers=headers,
-        json={"occurred_at": ACTION_TIME},
+        json=_action_body(),
     )
 
     conflict = api_client.post(
         f"{EVENT_PATH}/checked",
         headers=headers,
-        json={"occurred_at": ACTION_TIME},
+        json=_action_body(),
     )
 
     assert first.status_code == 200
@@ -321,13 +327,13 @@ def test_idempotency_keys_are_scoped_by_actor(api_client: TestClient) -> None:
     first = api_client.post(
         f"{EVENT_PATH}/acknowledge",
         headers=_headers("actor-scoped"),
-        json={"occurred_at": ACTION_TIME},
+        json=_action_body(),
     )
 
     second_actor = api_client.post(
         f"{EVENT_PATH}/acknowledge",
         headers=_headers("actor-scoped", actor_id="operator_2"),
-        json={"occurred_at": ACTION_TIME},
+        json=_action_body(),
     )
 
     assert first.status_code == 200
@@ -363,7 +369,7 @@ def test_mutations_require_all_access_and_idempotency_headers(
     response = api_client.post(
         f"{EVENT_PATH}/acknowledge",
         headers=headers,
-        json={"occurred_at": ACTION_TIME},
+        json=_action_body(),
     )
 
     assert response.status_code == 422
@@ -381,7 +387,7 @@ def test_blank_idempotency_key_is_invalid_input(api_client: TestClient) -> None:
     response = api_client.post(
         f"{EVENT_PATH}/acknowledge",
         headers=_headers("   "),
-        json={"occurred_at": ACTION_TIME},
+        json=_action_body(),
     )
 
     assert response.status_code == 422
@@ -398,22 +404,32 @@ def test_blank_idempotency_key_is_invalid_input(api_client: TestClient) -> None:
     (
         (
             f"{EVENT_PATH}/acknowledge",
-            {"occurred_at": ACTION_TIME, "unexpected": True},
+            _action_body(unexpected=True),
             "unexpected",
         ),
         (
             f"{EVENT_PATH}/acknowledge",
-            {"occurred_at": "2026-08-24T21:03:00"},
+            _action_body("2026-08-24T21:03:00"),
             "occurred_at",
         ),
         (
             f"{EVENT_PATH}/resolve",
-            {"occurred_at": ACTION_TIME, "outcome": "invented"},
+            _action_body(outcome="invented"),
             "outcome",
+        ),
+        (
+            f"{EVENT_PATH}/acknowledge",
+            {"occurred_at": ACTION_TIME},
+            "schema_version",
+        ),
+        (
+            f"{EVENT_PATH}/acknowledge",
+            _action_body(schema_version="2.0"),
+            "schema_version",
         ),
     ),
 )
-def test_action_requests_are_strict_and_timezone_aware(
+def test_action_requests_are_strict_versioned_and_utc(
     api_client: TestClient,
     path: str,
     body: dict[str, object],
@@ -438,7 +454,7 @@ def test_invalid_transition_rolls_back_every_caregiver_effect(
     response = api_client.post(
         f"{EVENT_PATH}/checked",
         headers=_headers("check-before-ack"),
-        json={"occurred_at": ACTION_TIME},
+        json=_action_body(),
     )
 
     assert response.status_code == 409
@@ -479,7 +495,7 @@ def test_failure_after_event_and_audit_flush_rolls_back_the_whole_action(
         response = safe_client.post(
             f"{EVENT_PATH}/acknowledge",
             headers=_headers("rollback-after-flush"),
-            json={"occurred_at": ACTION_TIME},
+            json=_action_body(),
         )
     finally:
         sqlalchemy_event.remove(
@@ -508,7 +524,7 @@ def test_action_timestamp_cannot_precede_event_history(
     response = api_client.post(
         f"{EVENT_PATH}/acknowledge",
         headers=_headers("ack-before-open"),
-        json={"occurred_at": "2026-08-24T21:02:10Z"},
+        json=_action_body("2026-08-24T21:02:10Z"),
     )
 
     assert response.status_code == 409
@@ -524,17 +540,17 @@ def test_cross_tenant_mutation_is_tenant_safe_not_found(
     success = api_client.post(
         f"{EVENT_PATH}/acknowledge",
         headers=_headers("tenant-scoped"),
-        json={"occurred_at": ACTION_TIME},
+        json=_action_body(),
     )
     missing = api_client.post(
         "/v1/events/evt_missing/acknowledge",
         headers=_headers("missing-event"),
-        json={"occurred_at": ACTION_TIME},
+        json=_action_body(),
     )
     cross_tenant = api_client.post(
         f"{EVENT_PATH}/acknowledge",
         headers=_headers("tenant-scoped", tenant_id="tenant_other"),
-        json={"occurred_at": ACTION_TIME},
+        json=_action_body(),
     )
 
     assert success.status_code == 200
@@ -545,19 +561,15 @@ def test_cross_tenant_mutation_is_tenant_safe_not_found(
     assert _row_count(api_client, IdempotencyRecordRow) == 1
 
 
-def test_offset_request_timestamp_is_returned_as_utc(
+def test_offset_request_timestamp_is_rejected(
     api_client: TestClient,
 ) -> None:
     response = api_client.post(
         f"{EVENT_PATH}/acknowledge",
         headers=_headers("ack-offset"),
-        json={"occurred_at": "2026-08-24T17:03:00-04:00"},
+        json=_action_body("2026-08-24T17:03:00-04:00"),
     )
 
-    assert response.status_code == 200
-    action = response.json()["action_history"][-1]
-    assert action["occurred_at"] == "2026-08-24T21:03:00Z"
-    parsed_timestamp = datetime.fromisoformat(
-        action["occurred_at"].replace("Z", "+00:00")
-    )
-    assert parsed_timestamp.tzinfo is timezone.utc
+    assert response.status_code == 422
+    assert response.json()["error"]["field"] == "occurred_at"
+    assert _row_count(api_client, EventActionRow) == 1

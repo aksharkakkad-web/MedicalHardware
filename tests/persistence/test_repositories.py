@@ -12,6 +12,7 @@ from backend.app.db.models import (
     FeedbackRecordRow,
     ResidentMemoryEntryRow,
     ResidentMemorySnapshotRow,
+    ResidentRow,
     RoomResidentAssignmentRow,
     RoomRow,
     TenantRow,
@@ -108,12 +109,21 @@ def test_resident_reads_filter_every_joined_table_by_tenant(session: Session) ->
     story = seed_synthetic_story(session)
     session.add(TenantRow(tenant_id="tenant_other"))
     session.flush()
+    session.add(RoomRow(room_id="room_other", tenant_id="tenant_other", label="Room Other"))
+    session.add(
+        ResidentRow(
+            resident_id="resident_other",
+            tenant_id="tenant_other",
+            display_label="Resident Other",
+        )
+    )
+    session.flush()
     session.add(
         RoomResidentAssignmentRow(
-            assignment_id="assignment_cross_tenant",
+            assignment_id="assignment_other",
             tenant_id="tenant_other",
-            room_id=story.room_id,
-            resident_id=story.resident_id,
+            room_id="room_other",
+            resident_id="resident_other",
             status="active",
             effective_from=datetime(2026, 8, 24, tzinfo=timezone.utc),
             effective_to=None,
@@ -123,7 +133,9 @@ def test_resident_reads_filter_every_joined_table_by_tenant(session: Session) ->
 
     repository = ResidentRepository(session)
 
-    assert repository.list("tenant_other") == []
+    assert [record.resident_id for record in repository.list("tenant_other")] == [
+        "resident_other"
+    ]
     assert repository.find("tenant_other", story.resident_id) is None
     assert repository.list(story.tenant_id)[0].room_label == "Room 214"
 

@@ -1,5 +1,3 @@
-from datetime import datetime, timezone
-
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
@@ -18,6 +16,7 @@ EVENT_ID = "evt_phase2_demo"
 EVENT_PATH = f"/v1/events/{EVENT_ID}"
 FEEDBACK_PATH = f"{EVENT_PATH}/feedback"
 FEEDBACK_BODY = {
+    "schema_version": "1.0",
     "actual_event_label": "Assisted movement",
     "routine": True,
     "created_at": "2026-08-24T21:06:00Z",
@@ -42,17 +41,18 @@ def _resolve_event(api_client: TestClient) -> None:
         (
             "acknowledge",
             "resolve-feedback-ack",
-            {"occurred_at": "2026-08-24T21:03:00Z"},
+            {"schema_version": "1.0", "occurred_at": "2026-08-24T21:03:00Z"},
         ),
         (
             "checked",
             "resolve-feedback-check",
-            {"occurred_at": "2026-08-24T21:04:00Z"},
+            {"schema_version": "1.0", "occurred_at": "2026-08-24T21:04:00Z"},
         ),
         (
             "resolve",
             "resolve-feedback-resolve",
             {
+                "schema_version": "1.0",
                 "occurred_at": "2026-08-24T21:05:00Z",
                 "outcome": "false_positive",
             },
@@ -289,7 +289,7 @@ def test_invalid_feedback_times_fail_without_persisting_effects(
     assert _row_count(api_client, IdempotencyRecordRow) == 3
 
 
-def test_offset_feedback_time_is_normalized_to_utc_in_every_output(
+def test_offset_feedback_time_is_rejected(
     api_client: TestClient,
 ) -> None:
     _resolve_event(api_client)
@@ -300,37 +300,11 @@ def test_offset_feedback_time_is_normalized_to_utc_in_every_output(
         json={**FEEDBACK_BODY, "created_at": "2026-08-24T17:06:00-04:00"},
     )
 
-    assert response.status_code == 200
-    payload = response.json()
-    timestamps = (
-        payload["feedback"]["created_at"],
-        payload["memory"]["entries"][0]["created_at"],
-    )
-    assert timestamps == ("2026-08-24T21:06:00Z",) * 2
-    for value in timestamps:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-        assert parsed.tzinfo is timezone.utc
-
-    with api_client.app.state.session_factory() as session:
-        audit = session.scalar(
-            select(AuditLogRow).where(
-                AuditLogRow.action == "feedback.submitted"
-            )
-        )
-        assert audit is not None
-        persisted_at = audit.occurred_at
-        if persisted_at.tzinfo is None:
-            persisted_at = persisted_at.replace(tzinfo=timezone.utc)
-        else:
-            persisted_at = persisted_at.astimezone(timezone.utc)
-        assert persisted_at == datetime(
-            2026,
-            8,
-            24,
-            21,
-            6,
-            tzinfo=timezone.utc,
-        )
+    assert response.status_code == 422
+    assert response.json()["error"]["field"] == "created_at"
+    assert _row_count(api_client, FeedbackRecordRow) == 0
+    assert _row_count(api_client, ResidentMemorySnapshotRow) == 0
+    assert _feedback_audit_count(api_client) == 0
 
 
 @pytest.mark.parametrize("actual_event_label", ("", "   ", "--- !!!"))

@@ -1,18 +1,16 @@
 from typing import Literal
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, field_validator
+from pydantic import field_validator
 
-from backend.app.contracts.common import ContractModel, UTCDateTime
+from backend.app.contracts.common import ContractModel, RequestContractModel, UTCDateTime
 from backend.app.domain.events import ResolutionOutcome
 from backend.app.domain.feedback import normalize_event_label
 
 
-class SubmitFeedbackRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
+class SubmitFeedbackRequest(RequestContractModel):
     actual_event_label: str
     routine: bool
-    created_at: AwareDatetime
+    created_at: UTCDateTime
 
     @field_validator("actual_event_label")
     @classmethod

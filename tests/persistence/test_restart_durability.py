@@ -37,7 +37,7 @@ def _post(
     return client.post(
         f"{EVENT_PATH}/{suffix}",
         headers={**ACCESS_HEADERS, "Idempotency-Key": key},
-        json=body,
+        json={"schema_version": "1.0", **body},
     )
 
 

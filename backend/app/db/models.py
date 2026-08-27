@@ -1,6 +1,17 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, JSON, String, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    ForeignKeyConstraint,
+    Index,
+    Integer,
+    JSON,
+    String,
+    UniqueConstraint,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from backend.app.db.base import Base
@@ -14,6 +25,7 @@ class TenantRow(Base):
 
 class RoomRow(Base):
     __tablename__ = "rooms"
+    __table_args__ = (UniqueConstraint("tenant_id", "room_id"),)
 
     room_id: Mapped[str] = mapped_column(String(255), primary_key=True)
     tenant_id: Mapped[str] = mapped_column(ForeignKey("tenants.tenant_id"), index=True)
@@ -22,6 +34,7 @@ class RoomRow(Base):
 
 class ResidentRow(Base):
     __tablename__ = "residents"
+    __table_args__ = (UniqueConstraint("tenant_id", "resident_id"),)
 
     resident_id: Mapped[str] = mapped_column(String(255), primary_key=True)
     tenant_id: Mapped[str] = mapped_column(ForeignKey("tenants.tenant_id"), index=True)
@@ -31,7 +44,30 @@ class ResidentRow(Base):
 class RoomResidentAssignmentRow(Base):
     __tablename__ = "room_resident_assignments"
     __table_args__ = (
-        UniqueConstraint("tenant_id", "room_id", "status"),
+        Index(
+            "uq_active_room_assignment",
+            "tenant_id",
+            "room_id",
+            unique=True,
+            sqlite_where=text("status = 'active'"),
+            postgresql_where=text("status = 'active'"),
+        ),
+        Index(
+            "uq_active_resident_assignment",
+            "tenant_id",
+            "resident_id",
+            unique=True,
+            sqlite_where=text("status = 'active'"),
+            postgresql_where=text("status = 'active'"),
+        ),
+        ForeignKeyConstraint(
+            ("tenant_id", "room_id"),
+            ("rooms.tenant_id", "rooms.room_id"),
+        ),
+        ForeignKeyConstraint(
+            ("tenant_id", "resident_id"),
+            ("residents.tenant_id", "residents.resident_id"),
+        ),
     )
 
     assignment_id: Mapped[str] = mapped_column(String(255), primary_key=True)
@@ -45,6 +81,16 @@ class RoomResidentAssignmentRow(Base):
 
 class MonitoringEventRow(Base):
     __tablename__ = "monitoring_events"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ("tenant_id", "room_id"),
+            ("rooms.tenant_id", "rooms.room_id"),
+        ),
+        ForeignKeyConstraint(
+            ("tenant_id", "resident_id"),
+            ("residents.tenant_id", "residents.resident_id"),
+        ),
+    )
 
     event_id: Mapped[str] = mapped_column(String(255), primary_key=True)
     tenant_id: Mapped[str] = mapped_column(ForeignKey("tenants.tenant_id"), index=True)

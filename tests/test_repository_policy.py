@@ -1,5 +1,6 @@
 import json
 import shutil
+import re
 import subprocess
 import tempfile
 import unittest
@@ -41,7 +42,10 @@ class RepositoryPolicyTests(unittest.TestCase):
         validation = (ROOT / ".github/workflows/repository-validation.yml").read_text(encoding="utf-8")
         automerge = (ROOT / ".github/workflows/enable-automerge.yml").read_text(encoding="utf-8")
         self.assertIn("pull_request:", validation)
-        self.assertIn("actions/setup-python@v5", validation)
+        action_references = re.findall(r"uses:\s+([^@\s]+)@([^\s#]+)", validation)
+        self.assertGreaterEqual(len(action_references), 2)
+        for action, reference in action_references:
+            self.assertRegex(reference, r"^[0-9a-f]{40}$", action)
         self.assertIn("python3 -m pip install -e '.[dev]'", validation)
         self.assertIn("python3 -m pytest -q", validation)
         self.assertIn("python3 -m unittest discover", validation)

@@ -714,10 +714,12 @@ Implemented caregiver action paths:
 
 Every `/v1` request requires the development-only `X-Tenant-Id` and
 `X-Actor-Id` headers. Every caregiver action also requires
-`Idempotency-Key`. Repeating the same key with the same method, path, actor,
-tenant, and logical request returns the originally stored response without
-repeating event, feedback, memory, or audit effects. Reusing the key for a
-different logical request returns `idempotency_conflict`. Cross-tenant reads
+`Idempotency-Key`. Every caregiver action body requires
+`"schema_version": "1.0"`, and its timestamp must be explicitly UTC (`Z` or
+`+00:00`), not merely convertible to UTC. Repeating the same key with the same
+method, path, actor, tenant, and logical request returns the originally stored
+response without repeating event, feedback, memory, or audit effects. Reusing
+the key for a different logical request returns `idempotency_conflict`. Cross-tenant reads
 and actions return the same not-found response as a missing identifier.
 Production authentication is not implemented by these headers.
 

@@ -18,6 +18,11 @@ class ContractModel(BaseModel):
     schema_version: Literal["1.0"] = "1.0"
 
 
+class RequestContractModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    schema_version: Literal["1.0"]
+
+
 class HealthResponse(ContractModel):
     status: Literal["ready"]
     service: Literal["product-api"]

@@ -38,6 +38,10 @@ from backend.app.services.feedback_commands import FeedbackCommandService
 from backend.app.services.queries import AccessContext
 
 
+def _versioned(body: dict[str, object]) -> dict[str, object]:
+    return {"schema_version": "1.0", **body}
+
+
 class FaultingFeedbackRepository(FeedbackRepository):
     """Stage the feedback row, then fail at the memory persistence boundary."""
 
@@ -256,7 +260,7 @@ def test_route_failure_rolls_back_feedback_and_idempotency_reservation(
         response = api_client.post(
             f"{event_path}/{action}",
             headers={**headers, "Idempotency-Key": key},
-            json=body,
+            json=_versioned(body),
         )
         assert response.status_code == 200
 
@@ -266,11 +270,11 @@ def test_route_failure_rolls_back_feedback_and_idempotency_reservation(
             response = safe_client.post(
                 f"{event_path}/feedback",
                 headers=headers,
-                json={
+                json=_versioned({
                     "actual_event_label": "Assisted movement",
                     "routine": True,
                     "created_at": "2026-08-24T21:06:00Z",
-                },
+                }),
             )
     finally:
         del api_client.app.state.feedback_repository_factory
@@ -427,7 +431,7 @@ def test_memory_snapshot_collision_is_a_stable_api_conflict(
         response = api_client.post(
             f"{event_path}/{action}",
             headers={**headers, "Idempotency-Key": key},
-            json=body,
+            json=_versioned(body),
         )
         assert response.status_code == 200
 
@@ -441,11 +445,11 @@ def test_memory_snapshot_collision_is_a_stable_api_conflict(
     winner = api_client.post(
         f"{event_path}/feedback",
         headers={**headers, "Idempotency-Key": "collision-winner"},
-        json={
+        json=_versioned({
             "actual_event_label": "Assisted movement",
             "routine": True,
             "created_at": "2026-08-24T21:06:00Z",
-        },
+        }),
     )
 
     def inject_snapshot_collision(
@@ -480,11 +484,11 @@ def test_memory_snapshot_collision_is_a_stable_api_conflict(
             loser = safe_client.post(
                 "/v1/events/evt_phase2_collision/feedback",
                 headers={**headers, "Idempotency-Key": "collision-loser"},
-                json={
+                json=_versioned({
                     "actual_event_label": "Assisted movement",
                     "routine": True,
                     "created_at": "2026-08-24T21:07:00Z",
-                },
+                }),
             )
     finally:
         sqlalchemy_event.remove(
@@ -613,7 +617,7 @@ def test_same_event_feedback_race_has_one_versioned_concurrent_loser(
         response = api_client.post(
             f"{event_path}/{action}",
             headers={**base_headers, "Idempotency-Key": key},
-            json=body,
+            json=_versioned(body),
         )
         assert response.status_code == 200
 
@@ -628,11 +632,11 @@ def test_same_event_feedback_race_has_one_versioned_concurrent_loser(
             return client.post(
                 f"{event_path}/feedback",
                 headers={**base_headers, "Idempotency-Key": key},
-                json={
+                json=_versioned({
                     "actual_event_label": actual_event_label,
                     "routine": True,
                     "created_at": "2026-08-24T21:06:00Z",
-                },
+                }),
             )
 
     api_client.app.state.feedback_repository_factory = (

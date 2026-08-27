@@ -25,6 +25,7 @@ def upgrade() -> None:
         sa.Column("label", sa.String(length=255), nullable=False),
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.tenant_id"]),
         sa.PrimaryKeyConstraint("room_id"),
+        sa.UniqueConstraint("tenant_id", "room_id"),
     )
     op.create_index("ix_rooms_tenant_id", "rooms", ["tenant_id"])
     op.create_table(
@@ -34,6 +35,7 @@ def upgrade() -> None:
         sa.Column("display_label", sa.String(length=255), nullable=False),
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.tenant_id"]),
         sa.PrimaryKeyConstraint("resident_id"),
+        sa.UniqueConstraint("tenant_id", "resident_id"),
     )
     op.create_index("ix_residents_tenant_id", "residents", ["tenant_id"])
     op.create_table(
@@ -48,12 +50,35 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["resident_id"], ["residents.resident_id"]),
         sa.ForeignKeyConstraint(["room_id"], ["rooms.room_id"]),
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.tenant_id"]),
+        sa.ForeignKeyConstraint(
+            ["tenant_id", "room_id"],
+            ["rooms.tenant_id", "rooms.room_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["tenant_id", "resident_id"],
+            ["residents.tenant_id", "residents.resident_id"],
+        ),
         sa.PrimaryKeyConstraint("assignment_id"),
-        sa.UniqueConstraint("tenant_id", "room_id", "status"),
     )
     op.create_index("ix_room_resident_assignments_tenant_id", "room_resident_assignments", ["tenant_id"])
     op.create_index("ix_room_resident_assignments_room_id", "room_resident_assignments", ["room_id"])
     op.create_index("ix_room_resident_assignments_resident_id", "room_resident_assignments", ["resident_id"])
+    op.create_index(
+        "uq_active_room_assignment",
+        "room_resident_assignments",
+        ["tenant_id", "room_id"],
+        unique=True,
+        sqlite_where=sa.text("status = 'active'"),
+        postgresql_where=sa.text("status = 'active'"),
+    )
+    op.create_index(
+        "uq_active_resident_assignment",
+        "room_resident_assignments",
+        ["tenant_id", "resident_id"],
+        unique=True,
+        sqlite_where=sa.text("status = 'active'"),
+        postgresql_where=sa.text("status = 'active'"),
+    )
     op.create_table(
         "monitoring_events",
         sa.Column("event_id", sa.String(length=255), nullable=False),
@@ -80,6 +105,14 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["resident_id"], ["residents.resident_id"]),
         sa.ForeignKeyConstraint(["room_id"], ["rooms.room_id"]),
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.tenant_id"]),
+        sa.ForeignKeyConstraint(
+            ["tenant_id", "room_id"],
+            ["rooms.tenant_id", "rooms.room_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["tenant_id", "resident_id"],
+            ["residents.tenant_id", "residents.resident_id"],
+        ),
         sa.PrimaryKeyConstraint("event_id"),
     )
     op.create_index("ix_monitoring_events_tenant_id", "monitoring_events", ["tenant_id"])

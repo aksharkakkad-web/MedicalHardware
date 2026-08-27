@@ -20,6 +20,10 @@ ACCESS_HEADERS = {
 EVENT_PATH = "/v1/events/evt_phase2_demo"
 
 
+def _versioned(body: dict[str, object]) -> dict[str, object]:
+    return {"schema_version": "1.0", **body}
+
+
 def _migrate(database_url: str) -> None:
     config = Config("alembic.ini")
     config.set_main_option("sqlalchemy.url", database_url)
@@ -54,7 +58,7 @@ def _post_action(
     return client.post(
         f"{EVENT_PATH}/{action}",
         headers={**ACCESS_HEADERS, "Idempotency-Key": key},
-        json={"occurred_at": occurred_at},
+        json=_versioned({"occurred_at": occurred_at}),
     )
 
 
@@ -62,10 +66,10 @@ def _resolve_event(client: TestClient, key: str) -> Response:
     return client.post(
         f"{EVENT_PATH}/resolve",
         headers={**ACCESS_HEADERS, "Idempotency-Key": key},
-        json={
+        json=_versioned({
             "occurred_at": "2026-08-24T21:05:00Z",
             "outcome": "false_positive",
-        },
+        }),
     )
 
 
@@ -73,11 +77,11 @@ def _submit_feedback(client: TestClient, key: str) -> Response:
     return client.post(
         f"{EVENT_PATH}/feedback",
         headers={**ACCESS_HEADERS, "Idempotency-Key": key},
-        json={
+        json=_versioned({
             "actual_event_label": "assisted_movement",
             "routine": True,
             "created_at": "2026-08-24T21:06:00Z",
-        },
+        }),
     )
 
 

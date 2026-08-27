@@ -2,7 +2,9 @@ from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import create_engine, inspect
+import pytest
+from sqlalchemy import create_engine, inspect, text
+from sqlalchemy.exc import IntegrityError
 
 
 EXPECTED_TABLES = {
@@ -156,11 +158,15 @@ EXPECTED_FOREIGN_KEYS = {
     "residents": {("tenant_id", "tenants", "tenant_id")},
     "room_resident_assignments": {
         ("tenant_id", "tenants", "tenant_id"),
+        ("tenant_id", "rooms", "tenant_id"),
+        ("tenant_id", "residents", "tenant_id"),
         ("room_id", "rooms", "room_id"),
         ("resident_id", "residents", "resident_id"),
     },
     "monitoring_events": {
         ("tenant_id", "tenants", "tenant_id"),
+        ("tenant_id", "rooms", "tenant_id"),
+        ("tenant_id", "residents", "tenant_id"),
         ("resident_id", "residents", "resident_id"),
         ("room_id", "rooms", "room_id"),
     },
@@ -191,7 +197,8 @@ EXPECTED_FOREIGN_KEYS = {
 }
 
 EXPECTED_UNIQUES = {
-    "room_resident_assignments": {("tenant_id", "room_id", "status")},
+    "rooms": {("tenant_id", "room_id")},
+    "residents": {("tenant_id", "resident_id")},
     "event_actions": {("event_id", "sequence")},
     "event_priority_history": {("event_id", "sequence")},
     "feedback_records": {("tenant_id", "event_id")},
@@ -203,7 +210,13 @@ EXPECTED_UNIQUES = {
 EXPECTED_INDEXES = {
     "rooms": {("tenant_id",)},
     "residents": {("tenant_id",)},
-    "room_resident_assignments": {("tenant_id",), ("room_id",), ("resident_id",)},
+    "room_resident_assignments": {
+        ("tenant_id",),
+        ("room_id",),
+        ("resident_id",),
+        ("tenant_id", "room_id"),
+        ("tenant_id", "resident_id"),
+    },
     "monitoring_events": {("tenant_id",), ("episode_id",), ("resident_id",), ("room_id",)},
     "event_actions": {("tenant_id",), ("event_id",)},
     "event_priority_history": {("tenant_id",), ("event_id",)},
@@ -212,6 +225,25 @@ EXPECTED_INDEXES = {
     "resident_memory_entries": {("tenant_id",), ("resident_id",), ("source_feedback_id",)},
     "idempotency_records": {("tenant_id",)},
     "audit_log": {("tenant_id",)},
+}
+
+EXPECTED_COMPOSITE_OWNERSHIP_FOREIGN_KEYS = {
+    "room_resident_assignments": {
+        (("tenant_id", "room_id"), "rooms", ("tenant_id", "room_id")),
+        (
+            ("tenant_id", "resident_id"),
+            "residents",
+            ("tenant_id", "resident_id"),
+        ),
+    },
+    "monitoring_events": {
+        (("tenant_id", "room_id"), "rooms", ("tenant_id", "room_id")),
+        (
+            ("tenant_id", "resident_id"),
+            "residents",
+            ("tenant_id", "resident_id"),
+        ),
+    },
 }
 
 
@@ -248,6 +280,19 @@ def test_initial_migration_creates_product_backbone(tmp_path: Path) -> None:
         }
         assert actual_foreign_keys == EXPECTED_FOREIGN_KEYS.get(table_name, set())
 
+    for table_name, expected_foreign_keys in (
+        EXPECTED_COMPOSITE_OWNERSHIP_FOREIGN_KEYS.items()
+    ):
+        actual_foreign_keys = {
+            (
+                tuple(foreign_key["constrained_columns"]),
+                foreign_key["referred_table"],
+                tuple(foreign_key["referred_columns"]),
+            )
+            for foreign_key in inspector.get_foreign_keys(table_name)
+        }
+        assert expected_foreign_keys <= actual_foreign_keys
+
     for table_name in EXPECTED_TABLES:
         actual_uniques = {
             tuple(constraint["column_names"])
@@ -262,7 +307,118 @@ def test_initial_migration_creates_product_backbone(tmp_path: Path) -> None:
         }
         assert actual_indexes == EXPECTED_INDEXES.get(table_name, set())
 
+    assignment_indexes = {
+        index["name"]: index
+        for index in inspector.get_indexes("room_resident_assignments")
+    }
+    assert bool(assignment_indexes["uq_active_room_assignment"]["unique"])
+    assert bool(assignment_indexes["uq_active_resident_assignment"]["unique"])
+
     command.downgrade(config, "base")
 
     assert set(inspect(engine).get_table_names()) == {"alembic_version"}
+    engine.dispose()
+
+
+def test_assignment_cannot_cross_tenant_boundaries(tmp_path: Path) -> None:
+    database_url = f"sqlite+pysqlite:///{tmp_path / 'tenant-integrity.db'}"
+    config = Config("alembic.ini")
+    config.set_main_option("sqlalchemy.url", database_url)
+    command.upgrade(config, "head")
+
+    engine = create_engine(database_url)
+    with engine.begin() as connection:
+        connection.execute(text("PRAGMA foreign_keys=ON"))
+        connection.execute(
+            text("INSERT INTO tenants (tenant_id) VALUES ('tenant_a'), ('tenant_b')")
+        )
+        connection.execute(
+            text(
+                "INSERT INTO rooms (room_id, tenant_id, label) "
+                "VALUES ('room_b', 'tenant_b', 'Room B')"
+            )
+        )
+        connection.execute(
+            text(
+                "INSERT INTO residents (resident_id, tenant_id, display_label) "
+                "VALUES ('resident_b', 'tenant_b', 'Resident B')"
+            )
+        )
+
+        with pytest.raises(IntegrityError):
+            connection.execute(
+                text(
+                    "INSERT INTO room_resident_assignments "
+                    "(assignment_id, tenant_id, room_id, resident_id, status, "
+                    "effective_from, effective_to) VALUES "
+                    "('assignment_cross_tenant', 'tenant_a', 'room_b', "
+                    "'resident_b', 'active', '2026-08-24T00:00:00Z', NULL)"
+                )
+            )
+
+    engine.dispose()
+
+
+def test_active_assignment_uniqueness_preserves_history(tmp_path: Path) -> None:
+    database_url = f"sqlite+pysqlite:///{tmp_path / 'assignment-history.db'}"
+    config = Config("alembic.ini")
+    config.set_main_option("sqlalchemy.url", database_url)
+    command.upgrade(config, "head")
+
+    engine = create_engine(database_url)
+    with engine.begin() as connection:
+        connection.execute(text("PRAGMA foreign_keys=ON"))
+        connection.execute(text("INSERT INTO tenants (tenant_id) VALUES ('tenant_a')"))
+        connection.execute(
+            text(
+                "INSERT INTO rooms (room_id, tenant_id, label) VALUES "
+                "('room_a', 'tenant_a', 'Room A'), "
+                "('room_b', 'tenant_a', 'Room B')"
+            )
+        )
+        connection.execute(
+            text(
+                "INSERT INTO residents (resident_id, tenant_id, display_label) VALUES "
+                "('resident_a', 'tenant_a', 'Resident A'), "
+                "('resident_b', 'tenant_a', 'Resident B')"
+            )
+        )
+        connection.execute(
+            text(
+                "INSERT INTO room_resident_assignments "
+                "(assignment_id, tenant_id, room_id, resident_id, status, "
+                "effective_from, effective_to) VALUES "
+                "('history_1', 'tenant_a', 'room_a', 'resident_a', 'inactive', "
+                "'2026-08-20T00:00:00Z', '2026-08-21T00:00:00Z'), "
+                "('history_2', 'tenant_a', 'room_a', 'resident_a', 'inactive', "
+                "'2026-08-22T00:00:00Z', '2026-08-23T00:00:00Z'), "
+                "('active_1', 'tenant_a', 'room_a', 'resident_a', 'active', "
+                "'2026-08-24T00:00:00Z', NULL)"
+            )
+        )
+
+    with engine.begin() as connection, pytest.raises(IntegrityError):
+        connection.execute(text("PRAGMA foreign_keys=ON"))
+        connection.execute(
+            text(
+                "INSERT INTO room_resident_assignments "
+                "(assignment_id, tenant_id, room_id, resident_id, status, "
+                "effective_from, effective_to) VALUES "
+                "('active_duplicate_resident', 'tenant_a', 'room_b', "
+                "'resident_a', 'active', '2026-08-25T00:00:00Z', NULL)"
+            )
+        )
+
+    with engine.begin() as connection, pytest.raises(IntegrityError):
+        connection.execute(text("PRAGMA foreign_keys=ON"))
+        connection.execute(
+            text(
+                "INSERT INTO room_resident_assignments "
+                "(assignment_id, tenant_id, room_id, resident_id, status, "
+                "effective_from, effective_to) VALUES "
+                "('active_duplicate_room', 'tenant_a', 'room_a', "
+                "'resident_b', 'active', '2026-08-25T00:00:00Z', NULL)"
+            )
+        )
+
     engine.dispose()

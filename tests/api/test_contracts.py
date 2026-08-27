@@ -5,11 +5,12 @@ from fastapi.testclient import TestClient
 from pydantic import BaseModel, ValidationError
 
 from backend.app.contracts.events import (
+    EventActionRequest,
     EventActionResponse,
     EventPriorityHistoryResponse,
     EventResponse,
 )
-from backend.app.contracts.feedback import MemoryEntryResponse
+from backend.app.contracts.feedback import MemoryEntryResponse, SubmitFeedbackRequest
 
 
 UTC_TIMESTAMP = datetime(2026, 8, 24, 21, 2, 11, tzinfo=timezone.utc)
@@ -134,6 +135,58 @@ def test_public_datetime_contracts_reject_values_that_are_not_utc(
 
     with pytest.raises(ValidationError):
         model_type.model_validate(payload)
+
+
+@pytest.mark.parametrize(
+    ("model_type", "valid_payload", "datetime_field"),
+    (
+        (
+            EventActionRequest,
+            {"schema_version": "1.0", "occurred_at": UTC_TIMESTAMP},
+            "occurred_at",
+        ),
+        (
+            SubmitFeedbackRequest,
+            {
+                "schema_version": "1.0",
+                "actual_event_label": "assisted_movement",
+                "routine": True,
+                "created_at": UTC_TIMESTAMP,
+            },
+            "created_at",
+        ),
+    ),
+)
+def test_public_command_contracts_require_version_and_utc(
+    model_type: type[BaseModel],
+    valid_payload: dict[str, object],
+    datetime_field: str,
+) -> None:
+    model_type.model_validate(valid_payload)
+
+    without_version = dict(valid_payload)
+    without_version.pop("schema_version")
+    with pytest.raises(ValidationError):
+        model_type.model_validate(without_version)
+
+    with pytest.raises(ValidationError):
+        model_type.model_validate({**valid_payload, "schema_version": "2.0"})
+
+    with pytest.raises(ValidationError):
+        model_type.model_validate(
+            {
+                **valid_payload,
+                datetime_field: datetime(
+                    2026,
+                    8,
+                    24,
+                    17,
+                    2,
+                    11,
+                    tzinfo=timezone(-timedelta(hours=4)),
+                ),
+            }
+        )
 
 
 def test_every_read_operation_documents_versioned_method_not_allowed(
