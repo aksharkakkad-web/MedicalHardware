@@ -31,6 +31,7 @@ class FeedbackRecord:
     actual_event_label: str
     routine: bool
     created_at: datetime
+    schema_version: str = "1.0"
 
 
 @dataclass(frozen=True)
@@ -44,6 +45,7 @@ class MemoryEntry:
     retired_by: str | None = None
     retired_at: datetime | None = None
     retirement_reason: str | None = None
+    schema_version: str = "1.0"
 
 
 @dataclass(frozen=True)
@@ -51,6 +53,7 @@ class ResidentMemory:
     resident_id: str
     version: int
     entries: tuple[MemoryEntry, ...]
+    schema_version: str = "1.0"
 
     @property
     def active_entries(self) -> tuple[MemoryEntry, ...]:
@@ -64,12 +67,14 @@ class LearningDecision:
     memory_updated: bool
     baseline_window_eligible: bool
     global_label_recorded: bool
+    schema_version: str = "1.0"
 
 
 class FeedbackService:
     def __init__(self) -> None:
         self._memories: dict[str, ResidentMemory] = {}
         self._feedback: dict[str, FeedbackRecord] = {}
+        self._decisions_by_event_id: dict[str, LearningDecision] = {}
 
     def submit_feedback(
         self,
@@ -92,6 +97,22 @@ class FeedbackService:
         )
         if created_at < event_timestamp:
             raise ValueError("created_at cannot precede the event timestamp")
+
+        existing = self._decisions_by_event_id.get(event.event_id)
+        if existing is not None:
+            same_submission = (
+                existing.feedback.resident_id == event.resident_id
+                and existing.feedback.actor_id == actor_id
+                and existing.feedback.outcome == event.resolution_outcome
+                and existing.feedback.actual_event_label == actual_event_label
+                and existing.feedback.routine == routine
+                and existing.feedback.created_at == created_at
+            )
+            if same_submission:
+                return existing
+            raise ValueError(
+                "feedback already exists for this event; use explicit correction"
+            )
 
         feedback = FeedbackRecord(
             feedback_id=f"fb_{uuid4().hex}",
@@ -123,7 +144,15 @@ class FeedbackService:
             event.resolution_outcome == ResolutionOutcome.FALSE_POSITIVE
             and memory_updated
         )
-        return LearningDecision(feedback, memory, memory_updated, baseline_window_eligible, True)
+        decision = LearningDecision(
+            feedback,
+            memory,
+            memory_updated,
+            baseline_window_eligible,
+            True,
+        )
+        self._decisions_by_event_id[event.event_id] = decision
+        return decision
 
     def correct_memory(
         self,

@@ -43,6 +43,7 @@ class SyntheticMonitoringQualityPolicy:
     TEST_ONLY: ClassVar[bool] = True
     minimum_quality: float = 0.6
     policy_version: str = "synthetic_monitoring_quality_v1"
+    schema_version: str = "1.0"
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -75,6 +76,7 @@ class MonitoringSnapshot:
     reasons: tuple[MonitoringReason, ...]
     quality_policy_version: str = "synthetic_monitoring_quality_v1"
     quality_policy_test_only: bool = True
+    schema_version: str = "1.0"
 
 
 def derive_monitoring_snapshot(

@@ -59,6 +59,7 @@ class EventAction:
     previous_status: EventStatus
     status: EventStatus
     resolution_outcome: ResolutionOutcome | None = None
+    schema_version: str = "1.0"
 
 
 @dataclass(frozen=True)
@@ -67,6 +68,7 @@ class EventPriorityHistoryEntry:
     priority: EventPriority
     actor_id: str
     changed_at: datetime
+    schema_version: str = "1.0"
 
 
 @dataclass(frozen=True)
@@ -76,6 +78,7 @@ class SyntheticEventEpisodePolicy:
     TEST_ONLY: ClassVar[bool] = True
     quiet_gap: timedelta = timedelta(minutes=5)
     policy_version: str = "synthetic_event_episode_v1"
+    schema_version: str = "1.0"
 
     def __post_init__(self) -> None:
         if not isinstance(self.quiet_gap, timedelta):

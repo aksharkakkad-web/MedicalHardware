@@ -57,6 +57,50 @@ class FeedbackLearningTests(unittest.TestCase):
             "assisted_transfer",
         )
 
+    def test_exact_feedback_retry_does_not_duplicate_learning(self) -> None:
+        submitted_at = datetime(2026, 8, 26, 12, 5, tzinfo=timezone.utc)
+        first = self.service.submit_feedback(
+            event=self.event,
+            actor_id="operator_001",
+            actual_event_label="assisted_transfer",
+            routine=True,
+            created_at=submitted_at,
+        )
+        retried = self.service.submit_feedback(
+            event=self.event,
+            actor_id="operator_001",
+            actual_event_label="assisted_transfer",
+            routine=True,
+            created_at=submitted_at,
+        )
+
+        self.assertIs(retried, first)
+        self.assertEqual(retried.memory.version, 1)
+        self.assertEqual(len(retried.memory.entries), 1)
+        self.assertTrue(retried.baseline_window_eligible)
+
+    def test_conflicting_second_feedback_requires_explicit_correction(self) -> None:
+        submitted_at = datetime(2026, 8, 26, 12, 5, tzinfo=timezone.utc)
+        first = self.service.submit_feedback(
+            event=self.event,
+            actor_id="operator_001",
+            actual_event_label="assisted_transfer",
+            routine=True,
+            created_at=submitted_at,
+        )
+
+        with self.assertRaises(ValueError):
+            self.service.submit_feedback(
+                event=self.event,
+                actor_id="operator_001",
+                actual_event_label="false_alarm",
+                routine=True,
+                created_at=submitted_at,
+            )
+
+        self.assertEqual(first.memory.version, 1)
+        self.assertEqual(len(first.memory.entries), 1)
+
     def test_uncertain_event_never_makes_baseline_window_eligible(self) -> None:
         self.event = replace(self.event, resolution_outcome=ResolutionOutcome.UNCERTAIN)
         decision = self.service.submit_feedback(

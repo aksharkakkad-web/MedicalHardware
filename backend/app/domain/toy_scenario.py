@@ -35,6 +35,7 @@ from backend.app.domain.monitoring import (
 class ToyScenarioStep:
     name: str
     occurred_at: datetime
+    schema_version: str = "1.0"
 
 
 @dataclass(frozen=True)
@@ -55,6 +56,7 @@ class ToyScenarioResult:
     recurrence_event: MonitoringEvent
     recalibration: CalibrationProgress
     corrected_memory: ResidentMemory
+    schema_version: str = "1.0"
 
     @property
     def calibration_status(self) -> BaselineStatus:

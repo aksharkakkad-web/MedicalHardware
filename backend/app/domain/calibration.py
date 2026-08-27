@@ -25,6 +25,7 @@ class CalibrationPolicy:
     SYNTHETIC_TEST_ONLY: ClassVar[bool] = True
     partial_eligible_windows: int
     established_eligible_windows: int
+    schema_version: str = "1.0"
 
     def __post_init__(self) -> None:
         if self.partial_eligible_windows < 1:
@@ -39,6 +40,7 @@ class CalibrationDimensionProgress:
     status: BaselineStatus
     eligible_windows: int = 0
     excluded_windows: int = 0
+    schema_version: str = "1.0"
 
 
 @dataclass(frozen=True)
@@ -49,6 +51,7 @@ class SetupChangeAction:
     reason: str
     actor_id: str
     changed_at: datetime
+    schema_version: str = "1.0"
 
 
 @dataclass(frozen=True)
@@ -61,6 +64,7 @@ class CalibrationProgress:
     prior_setup_versions: tuple[str, ...] = ()
     dimension_progress: tuple[CalibrationDimensionProgress, ...] = ()
     setup_change_history: tuple[SetupChangeAction, ...] = ()
+    schema_version: str = "1.0"
 
     @classmethod
     def new(
