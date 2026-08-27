@@ -36,7 +36,7 @@
 - Consumes: `ContractModel`, `RequestContractModel`, `UTCDateTime`, `PresenceState`, `MonitoringState`, `MonitoringReason`, and `BaselineStatus`.
 - Produces: `ResidentStatusResponse`, `AwarenessTimelineResponse`, `CalibrationResponse`, and `SetupChangeRequest` used by Tasks 4–6.
 
-- [ ] **Step 1: Write failing strict-contract tests**
+- [x] **Step 1: Write failing strict-contract tests**
 
 Create tests that validate exact fields, reject missing/wrong schema versions,
 reject non-UTC timestamps, reject unknown fields, and verify nested objects also
@@ -66,14 +66,14 @@ def test_setup_change_requires_version_utc_and_known_dimensions() -> None:
         )
 ```
 
-- [ ] **Step 2: Run the contract tests and verify RED**
+- [x] **Step 2: Run the contract tests and verify RED**
 
 Run: `python3 -m pytest -q tests/api/test_status_contracts.py`
 
 Expected: collection fails because `backend.app.contracts.status` does not
 exist.
 
-- [ ] **Step 3: Implement the strict public models**
+- [x] **Step 3: Implement the strict public models**
 
 Create focused Pydantic models with these exact public fields:
 
@@ -143,13 +143,13 @@ class SetupChangeRequest(RequestContractModel):
 Require nonblank reason/dimensions, unique dimensions, and a non-negative
 expected version. Response list fields remain ordered and never use sets.
 
-- [ ] **Step 4: Document exact JSON examples and semantics**
+- [x] **Step 4: Document exact JSON examples and semantics**
 
 Add a "Phase 2 Checkpoint A" subsection to `docs/DATA_CONTRACT.md` containing
 the four paths, exact request/response examples, awareness ordering, and the
 rule that timestamps and policies are synthetic/test-only where applicable.
 
-- [ ] **Step 5: Run contract and full contract suites**
+- [x] **Step 5: Run contract and full contract suites**
 
 Run:
 
@@ -160,7 +160,7 @@ python3 -m unittest discover -s tests -p 'test_*.py'
 
 Expected: all pass.
 
-- [ ] **Step 6: Commit Task 1**
+- [x] **Step 6: Commit Task 1**
 
 ```bash
 git add backend/app/contracts docs/DATA_CONTRACT.md tests/api/test_status_contracts.py

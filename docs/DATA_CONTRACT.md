@@ -4,6 +4,85 @@
 **Version:** 1.4
 **Important:** Final vendor-specific radar/CSI raw shapes are intentionally hardware-dependent. Production software stabilizes around a versioned **EdgeTelemetryEnvelope** emitted after lightweight on-device preprocessing. Optional raw/debug capture is separate and bounded.
 
+## Phase 2 Checkpoint A — Resident Status and Calibration
+
+These Product API paths give the dashboard a stable view of whether monitoring
+is usable, what awareness states occurred, and how much resident-specific
+calibration is available:
+
+- `GET /v1/residents/{resident_id}/status`
+- `GET /v1/residents/{resident_id}/awareness`
+- `GET /v1/residents/{resident_id}/calibration`
+- `POST /v1/residents/{resident_id}/setup-changes`
+
+Resident-away and possible-multi-person are awareness states. They do not
+become warning events. The awareness list is chronological and the current
+status is the newest item. Unknown or unavailable data stays explicit.
+
+Example status response:
+
+```json
+{
+  "schema_version": "1.0",
+  "resident_id": "resident_demo_a",
+  "room_id": "room_214",
+  "monitoring": {
+    "schema_version": "1.0",
+    "resident_id": "resident_demo_a",
+    "room_id": "room_214",
+    "observed_at": "2026-08-24T21:02:11Z",
+    "monitoring_state": "active",
+    "presence_state": "resident_present",
+    "baseline_learning_allowed": true,
+    "resident_measurements_allowed": true,
+    "reasons": [],
+    "quality_policy_version": "synthetic_monitoring_quality_v1",
+    "quality_policy_test_only": true
+  },
+  "calibration": {
+    "schema_version": "1.0",
+    "resident_id": "resident_demo_a",
+    "version": 1,
+    "recorded_at": "2026-08-24T21:02:11Z",
+    "setup_version": "setup_room_214_v1",
+    "status": "established",
+    "eligible_windows": 12,
+    "excluded_windows": 2,
+    "reason": "calibration_complete",
+    "prior_setup_versions": [],
+    "dimensions": [
+      {
+        "schema_version": "1.0",
+        "dimension": "movement",
+        "status": "established",
+        "eligible_windows": 12,
+        "excluded_windows": 2
+      }
+    ],
+    "setup_changes": []
+  }
+}
+```
+
+Example setup-change request:
+
+```json
+{
+  "schema_version": "1.0",
+  "reason": "device_moved",
+  "affected_dimensions": ["movement"],
+  "changed_at": "2026-08-24T22:00:00Z",
+  "expected_calibration_version": 1
+}
+```
+
+The server creates the next setup/calibration version. Only the named
+dimensions restart calibration; unaffected dimensions, prior setup history,
+and resident memory remain intact. Setup changes require an idempotency key so
+retries cannot create duplicate history. All timestamps are UTC. Quality and
+calibration policies in the toy-data checkpoint are synthetic and test-only,
+not clinical thresholds.
+
 ---
 
 ## 1. Contract Principles
