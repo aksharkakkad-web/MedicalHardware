@@ -405,7 +405,7 @@ git commit -m "feat: add tenant-scoped status repositories"
 - Consumes: Task 1 response models and Task 3 repositories.
 - Produces: three tenant-scoped GET routes used by the acceptance story and Rishit's clinic client.
 
-- [ ] **Step 1: Write failing API story tests**
+- [x] **Step 1: Write failing API story tests**
 
 Prove exact response bodies, chronological awareness ordering, nested schema
 versions, current calibration composition, OpenAPI response references,
@@ -426,19 +426,19 @@ def test_away_is_timeline_awareness_not_an_event(api_client):
     assert all(item["objective_family"] != "resident_away" for item in events["items"])
 ```
 
-- [ ] **Step 2: Run API tests and verify RED**
+- [x] **Step 2: Run API tests and verify RED**
 
 Run: `python3 -m pytest -q tests/api/test_status_read_api.py`
 
 Expected: the three routes return 404.
 
-- [ ] **Step 3: Implement response mapping service**
+- [x] **Step 3: Implement response mapping service**
 
 `ProductStatusQueryService` checks the resident assignment first, then maps
 the latest status/calibration or ordered timeline into Task 1 contracts. It
 does not expose rows or synthesize measurements.
 
-- [ ] **Step 4: Add dependency provider and router**
+- [x] **Step 4: Add dependency provider and router**
 
 Register:
 
@@ -451,7 +451,7 @@ Register:
 Reuse `access_context`, `database_session`, and the standard read-error
 responses.
 
-- [ ] **Step 5: Run API/OpenAPI/full read suites**
+- [x] **Step 5: Run API/OpenAPI/full read suites**
 
 Run:
 
@@ -461,7 +461,7 @@ python3 -m pytest -q tests/api/test_status_read_api.py tests/api/test_read_api.p
 
 Expected: all pass.
 
-- [ ] **Step 6: Commit Task 4**
+- [x] **Step 6: Commit Task 4**
 
 ```bash
 git add backend/app/services/status_queries.py backend/app/api tests/api/test_status_read_api.py
