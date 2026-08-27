@@ -8,18 +8,24 @@ from sqlalchemy.orm import Session
 
 from backend.app.db.base import Base
 from backend.app.db.models import (
+    DeviceHealthObservationRow,
+    DeviceRoomAssignmentRow,
+    DeviceRow,
     EventActionRow,
     EventPriorityHistoryRow,
     CalibrationSnapshotRow,
     MonitoringEventRow,
     MonitoringStatusSnapshotRow,
+    LocationRow,
     ResidentRow,
     RoomResidentAssignmentRow,
     RoomRow,
     TenantRow,
 )
 from backend.app.db.seed import (
+    DEVICE_ID,
     EVENT_ID,
+    LOCATION_ID,
     RESIDENT_ID,
     ROOM_ID,
     TENANT_ID,
@@ -42,6 +48,7 @@ def test_seed_is_deterministic_and_idempotent() -> None:
             RESIDENT_ID,
             EVENT_ID,
         )
+        assert (LOCATION_ID, DEVICE_ID) == ("location_demo", "device_room_214")
         for row_type in (
             TenantRow,
             RoomRow,
@@ -50,6 +57,10 @@ def test_seed_is_deterministic_and_idempotent() -> None:
             MonitoringEventRow,
             EventActionRow,
             EventPriorityHistoryRow,
+            LocationRow,
+            DeviceRow,
+            DeviceRoomAssignmentRow,
+            DeviceHealthObservationRow,
         ):
             assert session.scalar(select(func.count()).select_from(row_type)) == 1
         assert session.scalar(

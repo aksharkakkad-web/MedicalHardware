@@ -1230,9 +1230,9 @@
     "semantic_hash": ""
   },
   "tests/persistence/test_seed.py": {
-    "mtime": 1787873943.2834268,
-    "seen": 1787874241.134645,
-    "ast_hash": "9de425b323e5825697cb303c89f3a061",
+    "mtime": 1787875057.0988333,
+    "seen": 1787875176.943603,
+    "ast_hash": "971779291b18b6a68d3707bdba54f8a0",
     "semantic_hash": ""
   },
   "tests/persistence/test_session.py": {
@@ -1620,15 +1620,15 @@
     "semantic_hash": ""
   },
   "docs/BUILD_PLAN.md": {
-    "mtime": 1787836491.5953505,
-    "seen": 1787872525.195334,
-    "ast_hash": "e7d55d431714d54e90b4722e4f4b1a42",
+    "mtime": 1787875135.5901606,
+    "seen": 1787875176.943635,
+    "ast_hash": "4e5ba134766a05f30c8e874e8492fc56",
     "semantic_hash": ""
   },
   "docs/CURRENT_STAGE.md": {
-    "mtime": 1787873943.2412274,
-    "seen": 1787874241.134676,
-    "ast_hash": "1a58bdfbedccf68f007b2393ad017d2d",
+    "mtime": 1787875151.9322312,
+    "seen": 1787875176.943635,
+    "ast_hash": "9634c6f5d8c2cacc161a987b848c06d0",
     "semantic_hash": ""
   },
   "docs/DATA_CONTRACT.md": {
@@ -1644,15 +1644,15 @@
     "semantic_hash": ""
   },
   "docs/PHASE_2_REVIEW.md": {
-    "mtime": 1787873943.2415476,
-    "seen": 1787874241.134677,
-    "ast_hash": "667f681cb210ec678f84333e8179cad3",
+    "mtime": 1787875135.589602,
+    "seen": 1787875176.943637,
+    "ast_hash": "76dcc6614e54ece98eab455e26de618b",
     "semantic_hash": ""
   },
   "docs/PHASE_GATES.md": {
-    "mtime": 1787873943.2417128,
-    "seen": 1787874241.1346781,
-    "ast_hash": "7a3110a6295893441ea6a84bc7c48f05",
+    "mtime": 1787875135.588974,
+    "seen": 1787875176.943638,
+    "ast_hash": "87d57cc3a2bbdda724ed5792e9cfe5f9",
     "semantic_hash": ""
   },
   "docs/PRD.md": {
@@ -1956,9 +1956,9 @@
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-08-27-phase2-checkpoint-b-device-health.md": {
-    "mtime": 1787874060.529521,
-    "seen": 1787874241.134681,
-    "ast_hash": "a415b49159699bebc3d49849ac949725",
+    "mtime": 1787875135.5905797,
+    "seen": 1787875176.9436412,
+    "ast_hash": "d7eb0142ccdc88babd7e9f87c035327a",
     "semantic_hash": ""
   },
   "backend/app/db/device_mappers.py": {
@@ -2013,6 +2013,24 @@
     "mtime": 1787874756.3174355,
     "seen": 1787874976.831757,
     "ast_hash": "b521c644c67d02d148882dbaa0e33c78",
+    "semantic_hash": ""
+  },
+  "backend/app/checkpoints/device_health.py": {
+    "mtime": 1787875041.5186532,
+    "seen": 1787875176.9435678,
+    "ast_hash": "6d4ea68f3654387e7e36914f5bdcdccf",
+    "semantic_hash": ""
+  },
+  "tests/api/test_device_health_story.py": {
+    "mtime": 1787874992.7892604,
+    "seen": 1787875176.9435892,
+    "ast_hash": "103dceeee2e39aaa15279b282ba9be0a",
+    "semantic_hash": ""
+  },
+  "docs/PHASE_2_CHECKPOINT_B_REVIEW.md": {
+    "mtime": 1787875135.587476,
+    "seen": 1787875176.943637,
+    "ast_hash": "ffe2e65573bcfff4699ade7a9bac4d73",
     "semantic_hash": ""
   }
 }

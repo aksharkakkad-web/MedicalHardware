@@ -3,23 +3,24 @@
 **Updated:** August 27, 2026
 
 **Operating status:** Phase 1 product logic is complete. Phase 2 is **In
-progress**. The first durable event slice and backend Checkpoint A (resident
-status, awareness, calibration, and setup history) are complete. Backend
-Checkpoint B—device assignment and health—is next. Frontend and hardware work
-continue independently. See `docs/PHASE_GATES.md` for the shared start → build
-→ review → merge → next-checkpoint process.
+progress**. The first durable event slice plus backend Checkpoints A (resident
+status/calibration) and B (device assignment/health) are complete. Backend
+Checkpoint C—preferences and resident-memory administration—is next. Frontend
+and hardware work continue independently. See `docs/PHASE_GATES.md` for the
+shared start → build → review → merge → next-checkpoint process.
 
 ## Where we are now
 
 We have finished the Phase 1 behavior milestone, the first durable Phase 2
-event slice, and Phase 2 backend Checkpoint A using synthetic data.
+event slice, and Phase 2 backend Checkpoints A and B using synthetic data.
 
 This is not the complete deployed product yet. The caregiver product backbone
 now has a file-backed database, versioned Product API, durable lifecycle and
 feedback transactions, resident monitoring/awareness history, versioned
-calibration/setup history, tenant isolation, idempotency, audit history, and
-restart proofs. The frontend, device-health checkpoint, settings/memory-admin
-checkpoint, final clinic handoff, and real hardware remain unfinished.
+calibration/setup history, device/location/room assignment history, append-only
+device health, tenant isolation, idempotency, audit history, and restart proofs.
+The frontend, settings/memory-admin checkpoint, final clinic handoff, and real
+hardware remain unfinished.
 
 The tested journey is:
 
@@ -30,6 +31,10 @@ The tested journey is:
 5. Operator feedback can update resident context without rewriting event history or automatically changing safety rules.
 6. A repeated pattern creates a new linked event instead of reopening the resolved one.
 7. Setup changes can recalibrate only the affected sensing dimensions while preserving resident history and unaffected progress.
+8. Current device assignment and health are composed into resident status, so
+   known device trouble stops current monitoring without rewriting history.
+9. Device recovery restores the latest otherwise-valid resident monitoring
+   view.
 
 The Product API now also persists and exposes active, away, return,
 possible-multi-person, and unavailable/limited monitoring history. A setup
@@ -38,6 +43,11 @@ unaffected progress and all history. An assigned resident whose histories have
 not started is shown honestly as not yet available instead of being mistaken
 for a missing resident. The plain-language verification command is
 `python3 -m backend.app.checkpoints.status_calibration`.
+
+The Product API also exposes device lists and health detail. Online, offline,
+degraded, buffering, retrying, assignment-unavailable, and not-yet-available
+conditions stay explicit. The device verification command is
+`python3 -m backend.app.checkpoints.device_health`.
 
 ## What Rishit can build now
 
@@ -51,7 +61,8 @@ He can build the real clinic dashboard and separate home experience against cont
 - event priority, recurrence, overdue state, and history;
 - acknowledge, check, and resolve actions;
 - feedback and resident-context editing;
-- settings for awareness items and notifications.
+- settings for awareness items and notifications;
+- device assignment, health, last-seen, and honest per-source limitations.
 
 The frontend should place mock data behind a replaceable client/provider. Later, the real backend API replaces that mock provider without redesigning the screens.
 
@@ -59,11 +70,9 @@ The clinic caregiver experience is the first complete user journey. Rishit can b
 
 ## What Akshar builds next
 
-The first durable Product API slice and Checkpoint A are implemented. Akshar's
+The first durable Product API slice and Checkpoints A–B are implemented. Akshar's
 remaining Phase 2 backend checkpoints are:
 
-- **Checkpoint B:** device identity, room assignment history, and honest
-  online/offline/degraded/buffering/retrying state;
 - **Checkpoint C:** notification/awareness preferences and versioned resident
   memory administration;
 - **Checkpoint D:** clinic-wide event filters/pagination, complete OpenAPI
@@ -103,3 +112,4 @@ Real hardware later replaces the simulator as the telemetry producer. It should 
 - Build order: `docs/BUILD_PLAN.md`
 - Ownership: `docs/TEAM_OWNERSHIP.md`
 - Checkpoint A evidence: `docs/PHASE_2_CHECKPOINT_A_REVIEW.md`
+- Checkpoint B evidence: `docs/PHASE_2_CHECKPOINT_B_REVIEW.md`

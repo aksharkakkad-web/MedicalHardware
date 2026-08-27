@@ -1,6 +1,6 @@
 # Phase 2 Checkpoint B Device Assignment and Health Plan
 
-**Status:** In progress
+**Status:** Complete
 **Owner:** Akshar — backend and product intelligence
 **Depends on:** Checkpoint A merged on `main`
 **Outcome:** The clinic product can show which device belongs to a room, its
