@@ -861,21 +861,58 @@ Memory is versioned and auditable. It is not the same object as the numerical ba
 
 ## 18. Device Health Record
 
+Device health is operational product state, not resident health. Phase 2
+supports `online`, `offline`, `degraded`, `buffering`, `retrying`, and
+`assignment_unavailable`. Health observations and assignments are historical
+facts; current state is the newest tenant-owned record. All examples in this
+checkpoint are synthetic and test-only.
+
+Example current health response:
+
 ```json
 {
   "schema_version": "1.0",
-  "device_id": "dev_room_214",
-  "observed_at": "2026-08-24T21:10:00Z",
-  "overall_status": "degraded",
-  "sources": {
-    "radar": "ok",
-    "thermal": "ok",
-    "wifi_csi": "missing"
-  },
-  "last_seen": "2026-08-24T21:09:59Z",
-  "notes": ["CSI stream missing for 60 seconds"]
+  "device_id": "device_room_214",
+  "data_availability": "available",
+  "state": "degraded",
+  "observed_at": "2026-08-25T14:00:00Z",
+  "last_seen_at": "2026-08-25T13:59:55Z",
+  "sources": [
+    {
+      "schema_version": "1.0",
+      "source": "thermal",
+      "state": "degraded",
+      "limitations": ["reduced_frame_rate"]
+    }
+  ],
+  "limitations": ["thermal_detail_reduced"],
+  "policy_version": "synthetic_device_health_v1",
+  "policy_test_only": true
 }
 ```
+
+A known device with no health history returns `200` without inventing a state:
+
+```json
+{
+  "schema_version": "1.0",
+  "device_id": "device_new",
+  "data_availability": "not_yet_available",
+  "state": null,
+  "observed_at": null,
+  "last_seen_at": null,
+  "sources": [],
+  "limitations": [],
+  "policy_version": null,
+  "policy_test_only": null
+}
+```
+
+Each `GET /v1/devices` item contains `device_id`, `display_label`, the current
+nullable `assignment`, and the same `health` object. An assignment contains
+`location_id`, `location_label`, `room_id`, `room_label`, and UTC
+`assigned_at`. One active room is allowed per device and one active device per
+room. Missing assignment is explicit and never guessed from telemetry.
 
 ---
 

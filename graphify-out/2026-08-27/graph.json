@@ -238,6 +238,19 @@
       "source_location": "L92"
     },
     {
+      "id": "claude_skills_last30days_scripts_lib_dedupe_preparedtext",
+      "label": "_PreparedText",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Candidate",
+      "file_type": "code",
+      "norm_label": "_preparedtext",
+      "source_file": ".claude/skills/last30days/scripts/lib/dedupe.py",
+      "source_location": "L89"
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_schema_candidate",
       "label": "Candidate",
       "_callable": true,
@@ -249,6 +262,19 @@
       "norm_label": "candidate",
       "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
       "source_location": "L102"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_nomination",
+      "label": "Nomination",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 103,
+      "community_name": "nominate_topic_pool",
+      "file_type": "code",
+      "norm_label": "nomination",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L671"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_ui_progressdisplay",
@@ -823,45 +849,6 @@
       "source_location": "L122"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_sourcerunerror",
-      "label": "SourceRunError",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "code",
-      "norm_label": "sourcerunerror",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3243"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_schema_discoveryplan",
-      "label": "DiscoveryPlan",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "code",
-      "norm_label": "discoveryplan",
-      "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
-      "source_location": "L270"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_schema_providerruntime",
-      "label": "ProviderRuntime",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "code",
-      "norm_label": "providerruntime",
-      "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
-      "source_location": "L36"
-    },
-    {
       "id": "apps_clinic_dashboard_src_components_status_pill_status_pill_statustone",
       "label": "StatusTone",
       "_callable": true,
@@ -1029,19 +1016,6 @@
       "norm_label": "keylessfetchresult",
       "source_file": ".claude/skills/last30days/scripts/lib/web_fetch_keyless.py",
       "source_location": "L34"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_dedupe_preparedtext",
-      "label": "_PreparedText",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "dedupe.py",
-      "file_type": "code",
-      "norm_label": "_preparedtext",
-      "source_file": ".claude/skills/last30days/scripts/lib/dedupe.py",
-      "source_location": "L89"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_planner_drilltargeterror",
@@ -1765,11 +1739,24 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 45,
-      "community_name": "_discovery_sweep",
+      "community_name": "run",
       "file_type": "code",
       "norm_label": "_discoverysweep",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
       "source_location": "L1085"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_schema_providerruntime",
+      "label": "ProviderRuntime",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 45,
+      "community_name": "run",
+      "file_type": "code",
+      "norm_label": "providerruntime",
+      "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
+      "source_location": "L36"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_schema_retrievalbundle",
@@ -1778,7 +1765,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 45,
-      "community_name": "_discovery_sweep",
+      "community_name": "run",
       "file_type": "code",
       "norm_label": "retrievalbundle",
       "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
@@ -1791,7 +1778,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 45,
-      "community_name": "_discovery_sweep",
+      "community_name": "run",
       "file_type": "code",
       "norm_label": "sourceoutcome",
       "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
@@ -2201,17 +2188,30 @@
       "source_location": "L915"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_nomination",
-      "label": "Nomination",
+      "id": "claude_skills_last30days_scripts_lib_pipeline_sourcerunerror",
+      "label": "SourceRunError",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 8,
       "community_name": "pipeline.py",
       "file_type": "code",
-      "norm_label": "nomination",
+      "norm_label": "sourcerunerror",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L671"
+      "source_location": "L3243"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_schema_discoveryplan",
+      "label": "DiscoveryPlan",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "pipeline.py",
+      "file_type": "code",
+      "norm_label": "discoveryplan",
+      "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
+      "source_location": "L270"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_schema_discoverytopic",
@@ -3753,6 +3753,90 @@
       "source_location": "L1786"
     },
     {
+      "id": "claude_skills_last30days_scripts_lib_cluster_candidate_text",
+      "label": "_candidate_text()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Candidate",
+      "file_type": "code",
+      "norm_label": "_candidate_text()",
+      "source_file": ".claude/skills/last30days/scripts/lib/cluster.py",
+      "source_location": "L21"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_cluster_cluster_candidates",
+      "label": "cluster_candidates()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Candidate",
+      "file_type": "code",
+      "norm_label": "cluster_candidates()",
+      "source_file": ".claude/skills/last30days/scripts/lib/cluster.py",
+      "source_location": "L61"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_cluster_cluster_sort_key",
+      "label": "_cluster_sort_key()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Candidate",
+      "file_type": "code",
+      "norm_label": "_cluster_sort_key()",
+      "source_file": ".claude/skills/last30days/scripts/lib/cluster.py",
+      "source_location": "L8"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_cluster_cluster_uncertainty",
+      "label": "_cluster_uncertainty()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Candidate",
+      "file_type": "code",
+      "norm_label": "_cluster_uncertainty()",
+      "source_file": ".claude/skills/last30days/scripts/lib/cluster.py",
+      "source_location": "L242"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_cluster_merge_entity_clusters",
+      "label": "_merge_entity_clusters()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Candidate",
+      "file_type": "code",
+      "norm_label": "_merge_entity_clusters()",
+      "source_file": ".claude/skills/last30days/scripts/lib/cluster.py",
+      "source_location": "L135"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_cluster_mmr_representatives",
+      "label": "_mmr_representatives()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Candidate",
+      "file_type": "code",
+      "norm_label": "_mmr_representatives()",
+      "source_file": ".claude/skills/last30days/scripts/lib/cluster.py",
+      "source_location": "L24"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_warnings",
+      "label": "_warnings()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Candidate",
+      "file_type": "code",
+      "norm_label": "_warnings()",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L3204"
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_rerank_apply_engagement_rescue",
       "label": "_apply_engagement_rescue()",
       "_callable": true,
@@ -4089,6 +4173,18 @@
       "source_location": "L461"
     },
     {
+      "id": "claude_skills_last30days_scripts_lib_rerank_judge_blended_score",
+      "label": "judge_blended_score()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Candidate",
+      "file_type": "code",
+      "norm_label": "judge_blended_score()",
+      "source_file": ".claude/skills/last30days/scripts/lib/rerank.py",
+      "source_location": "L165"
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_rerank_normalized_rrf",
       "label": "_normalized_rrf()",
       "_callable": true,
@@ -4099,6 +4195,18 @@
       "norm_label": "_normalized_rrf()",
       "source_file": ".claude/skills/last30days/scripts/lib/rerank.py",
       "source_location": "L943"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_rerank_passes_discovery_floor",
+      "label": "passes_discovery_floor()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Candidate",
+      "file_type": "code",
+      "norm_label": "passes_discovery_floor()",
+      "source_file": ".claude/skills/last30days/scripts/lib/rerank.py",
+      "source_location": "L122"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_rerank_primary_entity",
@@ -4173,6 +4281,18 @@
       "source_location": "L626"
     },
     {
+      "id": "claude_skills_last30days_scripts_lib_schema_candidate_out_of_window",
+      "label": "candidate_out_of_window()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Candidate",
+      "file_type": "code",
+      "norm_label": "candidate_out_of_window()",
+      "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
+      "source_location": "L594"
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_schema_candidate_source_label",
       "label": "candidate_source_label()",
       "_callable": true,
@@ -4183,6 +4303,30 @@
       "norm_label": "candidate_source_label()",
       "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
       "source_location": "L589"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_schema_candidate_sources",
+      "label": "candidate_sources()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Candidate",
+      "file_type": "code",
+      "norm_label": "candidate_sources()",
+      "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
+      "source_location": "L583"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_store_finding_from_candidate",
+      "label": "finding_from_candidate()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Candidate",
+      "file_type": "code",
+      "norm_label": "finding_from_candidate()",
+      "source_file": ".claude/skills/last30days/scripts/store.py",
+      "source_location": "L1133"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_reddit_rss_build_urls",
@@ -4281,12 +4425,24 @@
       "source_location": "L75"
     },
     {
+      "id": "claude_skills_last30days_scripts_lib_discovery_handoff_resolve_name_collisions",
+      "label": "resolve_name_collisions()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 103,
+      "community_name": "nominate_topic_pool",
+      "file_type": "code",
+      "norm_label": "resolve_name_collisions()",
+      "source_file": ".claude/skills/last30days/scripts/lib/discovery_handoff.py",
+      "source_location": "L839"
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_fusion_apply_per_author_cap",
       "label": "_apply_per_author_cap()",
       "_callable": true,
       "_origin": "ast",
       "community": 103,
-      "community_name": "weighted_rrf",
+      "community_name": "nominate_topic_pool",
       "file_type": "code",
       "norm_label": "_apply_per_author_cap()",
       "source_file": ".claude/skills/last30days/scripts/lib/fusion.py",
@@ -4298,7 +4454,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 103,
-      "community_name": "weighted_rrf",
+      "community_name": "nominate_topic_pool",
       "file_type": "code",
       "norm_label": "candidate_key()",
       "source_file": ".claude/skills/last30days/scripts/lib/fusion.py",
@@ -4310,7 +4466,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 103,
-      "community_name": "weighted_rrf",
+      "community_name": "nominate_topic_pool",
       "file_type": "code",
       "norm_label": "_candidate_sort_key()",
       "source_file": ".claude/skills/last30days/scripts/lib/fusion.py",
@@ -4322,7 +4478,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 103,
-      "community_name": "weighted_rrf",
+      "community_name": "nominate_topic_pool",
       "file_type": "code",
       "norm_label": "_diversify_pool()",
       "source_file": ".claude/skills/last30days/scripts/lib/fusion.py",
@@ -4334,7 +4490,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 103,
-      "community_name": "weighted_rrf",
+      "community_name": "nominate_topic_pool",
       "file_type": "code",
       "norm_label": "_extract_author()",
       "source_file": ".claude/skills/last30days/scripts/lib/fusion.py",
@@ -4346,7 +4502,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 103,
-      "community_name": "weighted_rrf",
+      "community_name": "nominate_topic_pool",
       "file_type": "code",
       "norm_label": "_normalize_url()",
       "source_file": ".claude/skills/last30days/scripts/lib/fusion.py",
@@ -4358,11 +4514,83 @@
       "_callable": true,
       "_origin": "ast",
       "community": 103,
-      "community_name": "weighted_rrf",
+      "community_name": "nominate_topic_pool",
       "file_type": "code",
       "norm_label": "weighted_rrf()",
       "source_file": ".claude/skills/last30days/scripts/lib/fusion.py",
       "source_location": "L148"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_disambiguated_topic_name",
+      "label": "_disambiguated_topic_name()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 103,
+      "community_name": "nominate_topic_pool",
+      "file_type": "code",
+      "norm_label": "_disambiguated_topic_name()",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L714"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_nominate_topic_pool",
+      "label": "nominate_topic_pool()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 103,
+      "community_name": "nominate_topic_pool",
+      "file_type": "code",
+      "norm_label": "nominate_topic_pool()",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L779"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_nominate_topics",
+      "label": "nominate_topics()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 103,
+      "community_name": "nominate_topic_pool",
+      "file_type": "code",
+      "norm_label": "nominate_topics()",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L886"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_rerank_discovery_engagement_total",
+      "label": "discovery_engagement_total()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 103,
+      "community_name": "nominate_topic_pool",
+      "file_type": "code",
+      "norm_label": "discovery_engagement_total()",
+      "source_file": ".claude/skills/last30days/scripts/lib/rerank.py",
+      "source_location": "L50"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_rerank_discovery_velocity_score",
+      "label": "discovery_velocity_score()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 103,
+      "community_name": "nominate_topic_pool",
+      "file_type": "code",
+      "norm_label": "discovery_velocity_score()",
+      "source_file": ".claude/skills/last30days/scripts/lib/rerank.py",
+      "source_location": "L88"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_rerank_engagement_velocity_score",
+      "label": "engagement_velocity_score()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 103,
+      "community_name": "nominate_topic_pool",
+      "file_type": "code",
+      "norm_label": "engagement_velocity_score()",
+      "source_file": ".claude/skills/last30days/scripts/lib/rerank.py",
+      "source_location": "L67"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_grok_x_clean_handle",
@@ -12813,18 +13041,6 @@
       "source_location": "L3360"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_render_defang_corpus_sentinels",
-      "label": "_defang_corpus_sentinels()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 22,
-      "community_name": "render.py",
-      "file_type": "code",
-      "norm_label": "_defang_corpus_sentinels()",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L552"
-    },
-    {
       "id": "claude_skills_last30days_scripts_lib_render_digg_posts_for",
       "label": "_digg_posts_for()",
       "_callable": true,
@@ -13970,59 +14186,11 @@
       "_callable": true,
       "_origin": "ast",
       "community": 25,
-      "community_name": "run",
+      "community_name": "_normalize_score_dedupe",
       "file_type": "code",
       "norm_label": "_batch_subject_handles()",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
       "source_location": "L2898"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_inner_max_workers",
-      "label": "_inner_max_workers()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "run",
-      "file_type": "code",
-      "norm_label": "_inner_max_workers()",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L1883"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_is_rate_limit_error",
-      "label": "_is_rate_limit_error()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "run",
-      "file_type": "code",
-      "norm_label": "_is_rate_limit_error()",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3236"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_is_transient_error",
-      "label": "_is_transient_error()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "run",
-      "file_type": "code",
-      "norm_label": "_is_transient_error()",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3439"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_load_library_context",
-      "label": "_load_library_context()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "run",
-      "file_type": "code",
-      "norm_label": "_load_library_context()",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L1895"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_pipeline_normalize_score_dedupe",
@@ -14030,71 +14198,11 @@
       "_callable": true,
       "_origin": "ast",
       "community": 25,
-      "community_name": "run",
+      "community_name": "_normalize_score_dedupe",
       "file_type": "code",
       "norm_label": "_normalize_score_dedupe()",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
       "source_location": "L2918"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_resolve_depth_settings",
-      "label": "_resolve_depth_settings()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "run",
-      "file_type": "code",
-      "norm_label": "_resolve_depth_settings()",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L157"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_run",
-      "label": "run()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "run",
-      "file_type": "code",
-      "norm_label": "run()",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L1979"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_source_fetch_cap",
-      "label": "_source_fetch_cap()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "run",
-      "file_type": "code",
-      "norm_label": "_source_fetch_cap()",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L141"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_topic_first_party_candidates",
-      "label": "_topic_first_party_candidates()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "run",
-      "file_type": "code",
-      "norm_label": "_topic_first_party_candidates()",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3461"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_topic_handle_mentions",
-      "label": "_topic_handle_mentions()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "run",
-      "file_type": "code",
-      "norm_label": "_topic_handle_mentions()",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3448"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_signals_prune_low_relevance",
@@ -14102,7 +14210,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 25,
-      "community_name": "run",
+      "community_name": "_normalize_score_dedupe",
       "file_type": "code",
       "norm_label": "prune_low_relevance()",
       "source_file": ".claude/skills/last30days/scripts/lib/signals.py",
@@ -14114,7 +14222,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 25,
-      "community_name": "run",
+      "community_name": "_normalize_score_dedupe",
       "file_type": "code",
       "norm_label": "extract_best_snippet()",
       "source_file": ".claude/skills/last30days/scripts/lib/snippet.py",
@@ -14126,7 +14234,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 25,
-      "community_name": "run",
+      "community_name": "_normalize_score_dedupe",
       "file_type": "code",
       "norm_label": "_truncate_words()",
       "source_file": ".claude/skills/last30days/scripts/lib/snippet.py",
@@ -14138,23 +14246,11 @@
       "_callable": true,
       "_origin": "ast",
       "community": 25,
-      "community_name": "run",
+      "community_name": "_normalize_score_dedupe",
       "file_type": "code",
       "norm_label": "_windows()",
       "source_file": ".claude/skills/last30days/scripts/lib/snippet.py",
       "source_location": "L15"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_youtube_yt_reset_search_cache",
-      "label": "reset_search_cache()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "run",
-      "file_type": "code",
-      "norm_label": "reset_search_cache()",
-      "source_file": ".claude/skills/last30days/scripts/lib/youtube_yt.py",
-      "source_location": "L163"
     },
     {
       "id": "tests_api_test_event_lifecycle_api_action_body",
@@ -14407,138 +14503,6 @@
       "norm_label": "subrun_kwargs_for()",
       "source_file": ".claude/skills/last30days/scripts/last30days.py",
       "source_location": "L929"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_render_best_take_relevance_ok",
-      "label": "_best_take_relevance_ok()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 268,
-      "community_name": "render_brief",
-      "file_type": "code",
-      "norm_label": "_best_take_relevance_ok()",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L3412"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_render_effective_fun_score",
-      "label": "_effective_fun_score()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 268,
-      "community_name": "render_brief",
-      "file_type": "code",
-      "norm_label": "_effective_fun_score()",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L3423"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_render_escape_atx_heading_prefix",
-      "label": "_escape_atx_heading_prefix()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 268,
-      "community_name": "render_brief",
-      "file_type": "code",
-      "norm_label": "_escape_atx_heading_prefix()",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L3651"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_render_extract_audience_questions",
-      "label": "_extract_audience_questions()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 268,
-      "community_name": "render_brief",
-      "file_type": "code",
-      "norm_label": "_extract_audience_questions()",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L2193"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_render_format_explanation",
-      "label": "_format_explanation()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 268,
-      "community_name": "render_brief",
-      "file_type": "code",
-      "norm_label": "_format_explanation()",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L3277"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_render_format_untrusted_evidence",
-      "label": "_format_untrusted_evidence()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 268,
-      "community_name": "render_brief",
-      "file_type": "code",
-      "norm_label": "_format_untrusted_evidence()",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L3665"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_render_qualifying_representative_ids",
-      "label": "_qualifying_representative_ids()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 268,
-      "community_name": "render_brief",
-      "file_type": "code",
-      "norm_label": "_qualifying_representative_ids()",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L368"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_render_render_best_takes",
-      "label": "_render_best_takes()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 268,
-      "community_name": "render_brief",
-      "file_type": "code",
-      "norm_label": "_render_best_takes()",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L3439"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_render_render_brief",
-      "label": "render_brief()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 268,
-      "community_name": "render_brief",
-      "file_type": "code",
-      "norm_label": "render_brief()",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L2045"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_render_render_library_context",
-      "label": "_render_library_context()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 268,
-      "community_name": "render_brief",
-      "file_type": "code",
-      "norm_label": "_render_library_context()",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L298"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_render_truncate",
-      "label": "_truncate()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 268,
-      "community_name": "render_brief",
-      "file_type": "code",
-      "norm_label": "_truncate()",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L3641"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_ui_progressdisplay_end_web_only",
@@ -14865,220 +14829,28 @@
       "source_location": "L744"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_bird_x_classify_run_failure",
-      "label": "classify_run_failure()",
+      "id": "claude_skills_last30days_scripts_lib_render_skill_version",
+      "label": "_skill_version()",
       "_callable": true,
       "_origin": "ast",
       "community": 28,
-      "community_name": "_retrieve_stream_impl",
+      "community_name": "_skill_version",
       "file_type": "code",
-      "norm_label": "classify_run_failure()",
-      "source_file": ".claude/skills/last30days/scripts/lib/bird_x.py",
-      "source_location": "L90"
+      "norm_label": "_skill_version()",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L27"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_http_classify_failure",
-      "label": "classify_failure()",
+      "id": "claude_skills_last30days_scripts_lib_skill_meta_read_skill_version",
+      "label": "read_skill_version()",
       "_callable": true,
       "_origin": "ast",
       "community": 28,
-      "community_name": "_retrieve_stream_impl",
+      "community_name": "_skill_version",
       "file_type": "code",
-      "norm_label": "classify_failure()",
-      "source_file": ".claude/skills/last30days/scripts/lib/http.py",
-      "source_location": "L498"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_classify_source_failure",
-      "label": "_classify_source_failure()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "code",
-      "norm_label": "_classify_source_failure()",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3251"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_fetch_discovery_source",
-      "label": "_fetch_discovery_source()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "code",
-      "norm_label": "_fetch_discovery_source()",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L471"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_legacy_artifact_outcome",
-      "label": "_legacy_artifact_outcome()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "code",
-      "norm_label": "_legacy_artifact_outcome()",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3318"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_matches_discovery_domain",
-      "label": "_matches_discovery_domain()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "code",
-      "norm_label": "_matches_discovery_domain()",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L452"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_mock_discovery_items",
-      "label": "_mock_discovery_items()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "code",
-      "norm_label": "_mock_discovery_items()",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L384"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_nominate_candidates",
-      "label": "nominate_candidates()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "code",
-      "norm_label": "nominate_candidates()",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L589"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_outcome_artifact",
-      "label": "_outcome_artifact()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "code",
-      "norm_label": "_outcome_artifact()",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3278"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_resolve_stream_outcome",
-      "label": "_resolve_stream_outcome()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "code",
-      "norm_label": "_resolve_stream_outcome()",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3378"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_result_outcome_artifact",
-      "label": "_result_outcome_artifact()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "code",
-      "norm_label": "_result_outcome_artifact()",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3293"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_retrieve_stream",
-      "label": "_retrieve_stream()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "code",
-      "norm_label": "_retrieve_stream()",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L4110"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_retrieve_stream_impl",
-      "label": "_retrieve_stream_impl()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "code",
-      "norm_label": "_retrieve_stream_impl()",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L4163"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_retry_thin_sources",
-      "label": "_retry_thin_sources()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "code",
-      "norm_label": "_retry_thin_sources()",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3901"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_run_supplemental_searches",
-      "label": "_run_supplemental_searches()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "code",
-      "norm_label": "_run_supplemental_searches()",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3507"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_sourcerunerror_init",
-      "label": ".__init__()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "code",
-      "norm_label": ".__init__()",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3246"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_reddit_classify_run_failure",
-      "label": "classify_run_failure()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "code",
-      "norm_label": "classify_run_failure()",
-      "source_file": ".claude/skills/last30days/scripts/lib/reddit.py",
-      "source_location": "L82"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_youtube_yt_classify_run_failure",
-      "label": "classify_run_failure()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "code",
-      "norm_label": "classify_run_failure()",
-      "source_file": ".claude/skills/last30days/scripts/lib/youtube_yt.py",
-      "source_location": "L268"
+      "norm_label": "read_skill_version()",
+      "source_file": ".claude/skills/last30days/scripts/lib/skill_meta.py",
+      "source_location": "L19"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_http_submit_with_context",
@@ -16161,78 +15933,6 @@
       "source_location": "L86"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_cluster_candidate_text",
-      "label": "_candidate_text()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "dedupe.py",
-      "file_type": "code",
-      "norm_label": "_candidate_text()",
-      "source_file": ".claude/skills/last30days/scripts/lib/cluster.py",
-      "source_location": "L21"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_cluster_cluster_candidates",
-      "label": "cluster_candidates()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "dedupe.py",
-      "file_type": "code",
-      "norm_label": "cluster_candidates()",
-      "source_file": ".claude/skills/last30days/scripts/lib/cluster.py",
-      "source_location": "L61"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_cluster_cluster_sort_key",
-      "label": "_cluster_sort_key()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "dedupe.py",
-      "file_type": "code",
-      "norm_label": "_cluster_sort_key()",
-      "source_file": ".claude/skills/last30days/scripts/lib/cluster.py",
-      "source_location": "L8"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_cluster_cluster_uncertainty",
-      "label": "_cluster_uncertainty()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "dedupe.py",
-      "file_type": "code",
-      "norm_label": "_cluster_uncertainty()",
-      "source_file": ".claude/skills/last30days/scripts/lib/cluster.py",
-      "source_location": "L242"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_cluster_merge_entity_clusters",
-      "label": "_merge_entity_clusters()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "dedupe.py",
-      "file_type": "code",
-      "norm_label": "_merge_entity_clusters()",
-      "source_file": ".claude/skills/last30days/scripts/lib/cluster.py",
-      "source_location": "L135"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_cluster_mmr_representatives",
-      "label": "_mmr_representatives()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "dedupe.py",
-      "file_type": "code",
-      "norm_label": "_mmr_representatives()",
-      "source_file": ".claude/skills/last30days/scripts/lib/cluster.py",
-      "source_location": "L24"
-    },
-    {
       "id": "claude_skills_last30days_scripts_lib_dedupe_dedupe_items",
       "label": "dedupe_items()",
       "_callable": true,
@@ -16377,6 +16077,18 @@
       "source_location": "L2724"
     },
     {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_finalize_items_by_source",
+      "label": "_finalize_items_by_source()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 31,
+      "community_name": "dedupe.py",
+      "file_type": "code",
+      "norm_label": "_finalize_items_by_source()",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L2979"
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_pipeline_merge_drill_report",
       "label": "merge_drill_report()",
       "_callable": true,
@@ -16389,52 +16101,16 @@
       "source_location": "L2742"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_warnings",
-      "label": "_warnings()",
+      "id": "claude_skills_last30days_scripts_lib_pipeline_merge_replayed_enrichment",
+      "label": "_merge_replayed_enrichment()",
       "_callable": true,
       "_origin": "ast",
       "community": 31,
       "community_name": "dedupe.py",
       "file_type": "code",
-      "norm_label": "_warnings()",
+      "norm_label": "_merge_replayed_enrichment()",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3204"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_schema_candidate_out_of_window",
-      "label": "candidate_out_of_window()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "dedupe.py",
-      "file_type": "code",
-      "norm_label": "candidate_out_of_window()",
-      "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
-      "source_location": "L594"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_schema_candidate_sources",
-      "label": "candidate_sources()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "dedupe.py",
-      "file_type": "code",
-      "norm_label": "candidate_sources()",
-      "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
-      "source_location": "L583"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_store_finding_from_candidate",
-      "label": "finding_from_candidate()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "dedupe.py",
-      "file_type": "code",
-      "norm_label": "finding_from_candidate()",
-      "source_file": ".claude/skills/last30days/scripts/store.py",
-      "source_location": "L1133"
+      "source_location": "L3061"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_trustpilot_reset_state_for_tests",
@@ -18717,6 +18393,18 @@
       "source_location": "L123"
     },
     {
+      "id": "claude_skills_last30days_scripts_lib_render_best_take_relevance_ok",
+      "label": "_best_take_relevance_ok()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 40,
+      "community_name": "render_compact",
+      "file_type": "code",
+      "norm_label": "_best_take_relevance_ok()",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L3412"
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_render_candidates_for_auxiliary_sections",
       "label": "_candidates_for_auxiliary_sections()",
       "_callable": true,
@@ -18741,6 +18429,18 @@
       "source_location": "L435"
     },
     {
+      "id": "claude_skills_last30days_scripts_lib_render_effective_fun_score",
+      "label": "_effective_fun_score()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 40,
+      "community_name": "render_compact",
+      "file_type": "code",
+      "norm_label": "_effective_fun_score()",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L3423"
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_render_format_outcome",
       "label": "_format_outcome()",
       "_callable": true,
@@ -18753,6 +18453,18 @@
       "source_location": "L2528"
     },
     {
+      "id": "claude_skills_last30days_scripts_lib_render_qualifying_representative_ids",
+      "label": "_qualifying_representative_ids()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 40,
+      "community_name": "render_compact",
+      "file_type": "code",
+      "norm_label": "_qualifying_representative_ids()",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L368"
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_render_render_badge",
       "label": "_render_badge()",
       "_callable": true,
@@ -18763,6 +18475,18 @@
       "norm_label": "_render_badge()",
       "source_file": ".claude/skills/last30days/scripts/lib/render.py",
       "source_location": "L61"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_render_render_best_takes",
+      "label": "_render_best_takes()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 40,
+      "community_name": "render_compact",
+      "file_type": "code",
+      "norm_label": "_render_best_takes()",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L3439"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_render_render_compact",
@@ -18799,18 +18523,6 @@
       "norm_label": "render_context()",
       "source_file": ".claude/skills/last30days/scripts/lib/render.py",
       "source_location": "L1962"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_render_render_corpus_section",
-      "label": "_render_corpus_section()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 40,
-      "community_name": "render_compact",
-      "file_type": "code",
-      "norm_label": "_render_corpus_section()",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L517"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_render_render_drill_context",
@@ -19430,7 +19142,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 45,
-      "community_name": "_discovery_sweep",
+      "community_name": "run",
       "file_type": "code",
       "norm_label": "get_date_range()",
       "source_file": ".claude/skills/last30days/scripts/lib/dates.py",
@@ -19442,7 +19154,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 45,
-      "community_name": "_discovery_sweep",
+      "community_name": "run",
       "file_type": "code",
       "norm_label": "_apply_hiring_signal_gate()",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
@@ -19454,7 +19166,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 45,
-      "community_name": "_discovery_sweep",
+      "community_name": "run",
       "file_type": "code",
       "norm_label": "_discovery_sweep()",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
@@ -19466,11 +19178,59 @@
       "_callable": true,
       "_origin": "ast",
       "community": 45,
-      "community_name": "_discovery_sweep",
+      "community_name": "run",
       "file_type": "code",
       "norm_label": "_finalize_source_status()",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
       "source_location": "L3408"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_inner_max_workers",
+      "label": "_inner_max_workers()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 45,
+      "community_name": "run",
+      "file_type": "code",
+      "norm_label": "_inner_max_workers()",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L1883"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_is_rate_limit_error",
+      "label": "_is_rate_limit_error()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 45,
+      "community_name": "run",
+      "file_type": "code",
+      "norm_label": "_is_rate_limit_error()",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L3236"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_is_transient_error",
+      "label": "_is_transient_error()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 45,
+      "community_name": "run",
+      "file_type": "code",
+      "norm_label": "_is_transient_error()",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L3439"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_load_library_context",
+      "label": "_load_library_context()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 45,
+      "community_name": "run",
+      "file_type": "code",
+      "norm_label": "_load_library_context()",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L1895"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_pipeline_mock_stream_results",
@@ -19478,7 +19238,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 45,
-      "community_name": "_discovery_sweep",
+      "community_name": "run",
       "file_type": "code",
       "norm_label": "_mock_stream_results()",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
@@ -19490,11 +19250,71 @@
       "_callable": true,
       "_origin": "ast",
       "community": 45,
-      "community_name": "_discovery_sweep",
+      "community_name": "run",
       "file_type": "code",
       "norm_label": "normalize_requested_sources()",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
       "source_location": "L223"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_retry_thin_sources",
+      "label": "_retry_thin_sources()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 45,
+      "community_name": "run",
+      "file_type": "code",
+      "norm_label": "_retry_thin_sources()",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L3901"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_run",
+      "label": "run()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 45,
+      "community_name": "run",
+      "file_type": "code",
+      "norm_label": "run()",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L1979"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_run_supplemental_searches",
+      "label": "_run_supplemental_searches()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 45,
+      "community_name": "run",
+      "file_type": "code",
+      "norm_label": "_run_supplemental_searches()",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L3507"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_topic_first_party_candidates",
+      "label": "_topic_first_party_candidates()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 45,
+      "community_name": "run",
+      "file_type": "code",
+      "norm_label": "_topic_first_party_candidates()",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L3461"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_topic_handle_mentions",
+      "label": "_topic_handle_mentions()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 45,
+      "community_name": "run",
+      "file_type": "code",
+      "norm_label": "_topic_handle_mentions()",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L3448"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_schema_retrievalbundle_add_items",
@@ -19502,7 +19322,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 45,
-      "community_name": "_discovery_sweep",
+      "community_name": "run",
       "file_type": "code",
       "norm_label": ".add_items()",
       "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
@@ -19514,7 +19334,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 45,
-      "community_name": "_discovery_sweep",
+      "community_name": "run",
       "file_type": "code",
       "norm_label": ".mark_attempted()",
       "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
@@ -19526,7 +19346,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 45,
-      "community_name": "_discovery_sweep",
+      "community_name": "run",
       "file_type": "code",
       "norm_label": ".record_failure()",
       "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
@@ -19538,11 +19358,23 @@
       "_callable": true,
       "_origin": "ast",
       "community": 45,
-      "community_name": "_discovery_sweep",
+      "community_name": "run",
       "file_type": "code",
       "norm_label": ".__post_init__()",
       "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
       "source_location": "L197"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_youtube_yt_reset_search_cache",
+      "label": "reset_search_cache()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 45,
+      "community_name": "run",
+      "file_type": "code",
+      "norm_label": "reset_search_cache()",
+      "source_file": ".claude/skills/last30days/scripts/lib/youtube_yt.py",
+      "source_location": "L163"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_health_clear_dependency_probe_cache",
@@ -25281,6 +25113,54 @@
       "source_location": "L266"
     },
     {
+      "id": "claude_skills_last30days_scripts_lib_render_defang_corpus_sentinels",
+      "label": "_defang_corpus_sentinels()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "render_full",
+      "file_type": "code",
+      "norm_label": "_defang_corpus_sentinels()",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L552"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_render_escape_atx_heading_prefix",
+      "label": "_escape_atx_heading_prefix()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "render_full",
+      "file_type": "code",
+      "norm_label": "_escape_atx_heading_prefix()",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L3651"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_render_extract_audience_questions",
+      "label": "_extract_audience_questions()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "render_full",
+      "file_type": "code",
+      "norm_label": "_extract_audience_questions()",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L2193"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_render_format_explanation",
+      "label": "_format_explanation()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "render_full",
+      "file_type": "code",
+      "norm_label": "_format_explanation()",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L3277"
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_render_format_item_engagement",
       "label": "_format_item_engagement()",
       "_callable": true,
@@ -25291,6 +25171,30 @@
       "norm_label": "_format_item_engagement()",
       "source_file": ".claude/skills/last30days/scripts/lib/render.py",
       "source_location": "L1926"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_render_format_untrusted_evidence",
+      "label": "_format_untrusted_evidence()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "render_full",
+      "file_type": "code",
+      "norm_label": "_format_untrusted_evidence()",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L3665"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_render_render_brief",
+      "label": "render_brief()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "render_full",
+      "file_type": "code",
+      "norm_label": "render_brief()",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L2045"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_render_render_canonical_boundary",
@@ -25317,6 +25221,18 @@
       "source_location": "L1368"
     },
     {
+      "id": "claude_skills_last30days_scripts_lib_render_render_corpus_section",
+      "label": "_render_corpus_section()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "render_full",
+      "file_type": "code",
+      "norm_label": "_render_corpus_section()",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L517"
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_render_render_freshness_verdicts",
       "label": "_render_freshness_verdicts()",
       "_callable": true,
@@ -25339,6 +25255,18 @@
       "norm_label": "render_full()",
       "source_file": ".claude/skills/last30days/scripts/lib/render.py",
       "source_location": "L1716"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_render_render_library_context",
+      "label": "_render_library_context()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "render_full",
+      "file_type": "code",
+      "norm_label": "_render_library_context()",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L298"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_render_render_resolved_entities_block",
@@ -25365,28 +25293,16 @@
       "source_location": "L1104"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_render_skill_version",
-      "label": "_skill_version()",
+      "id": "claude_skills_last30days_scripts_lib_render_truncate",
+      "label": "_truncate()",
       "_callable": true,
       "_origin": "ast",
       "community": 70,
       "community_name": "render_full",
       "file_type": "code",
-      "norm_label": "_skill_version()",
+      "norm_label": "_truncate()",
       "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L27"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_skill_meta_read_skill_version",
-      "label": "read_skill_version()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 70,
-      "community_name": "render_full",
-      "file_type": "code",
-      "norm_label": "read_skill_version()",
-      "source_file": ".claude/skills/last30days/scripts/lib/skill_meta.py",
-      "source_location": "L19"
+      "source_location": "L3641"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_telegram_fetch_channel_posts",
@@ -26025,16 +25941,28 @@
       "source_location": "L229"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_discovery_handoff_resolve_name_collisions",
-      "label": "resolve_name_collisions()",
+      "id": "claude_skills_last30days_scripts_lib_bird_x_classify_run_failure",
+      "label": "classify_run_failure()",
       "_callable": true,
       "_origin": "ast",
       "community": 8,
       "community_name": "pipeline.py",
       "file_type": "code",
-      "norm_label": "resolve_name_collisions()",
-      "source_file": ".claude/skills/last30days/scripts/lib/discovery_handoff.py",
-      "source_location": "L839"
+      "norm_label": "classify_run_failure()",
+      "source_file": ".claude/skills/last30days/scripts/lib/bird_x.py",
+      "source_location": "L90"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_http_classify_failure",
+      "label": "classify_failure()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "pipeline.py",
+      "file_type": "code",
+      "norm_label": "classify_failure()",
+      "source_file": ".claude/skills/last30days/scripts/lib/http.py",
+      "source_location": "L498"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_pipeline_best_community_comment",
@@ -26047,6 +25975,18 @@
       "norm_label": "_best_community_comment()",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
       "source_location": "L1048"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_classify_source_failure",
+      "label": "_classify_source_failure()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "pipeline.py",
+      "file_type": "code",
+      "norm_label": "_classify_source_failure()",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L3251"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_pipeline_company_topic_likely",
@@ -26083,18 +26023,6 @@
       "norm_label": "_degraded_discovery_sources()",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
       "source_location": "L1191"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_disambiguated_topic_name",
-      "label": "_disambiguated_topic_name()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 8,
-      "community_name": "pipeline.py",
-      "file_type": "code",
-      "norm_label": "_disambiguated_topic_name()",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L714"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_pipeline_discovery_engagement",
@@ -26169,16 +26097,16 @@
       "source_location": "L3103"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_finalize_items_by_source",
-      "label": "_finalize_items_by_source()",
+      "id": "claude_skills_last30days_scripts_lib_pipeline_fetch_discovery_source",
+      "label": "_fetch_discovery_source()",
       "_callable": true,
       "_origin": "ast",
       "community": 8,
       "community_name": "pipeline.py",
       "file_type": "code",
-      "norm_label": "_finalize_items_by_source()",
+      "norm_label": "_fetch_discovery_source()",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L2979"
+      "source_location": "L471"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_pipeline_floor_survivor_records",
@@ -26229,6 +26157,30 @@
       "source_location": "L187"
     },
     {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_legacy_artifact_outcome",
+      "label": "_legacy_artifact_outcome()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "pipeline.py",
+      "file_type": "code",
+      "norm_label": "_legacy_artifact_outcome()",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L3318"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_matches_discovery_domain",
+      "label": "_matches_discovery_domain()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "pipeline.py",
+      "file_type": "code",
+      "norm_label": "_matches_discovery_domain()",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L452"
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_pipeline_merge_reddit_items",
       "label": "_merge_reddit_items()",
       "_callable": true,
@@ -26241,16 +26193,28 @@
       "source_location": "L4094"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_merge_replayed_enrichment",
-      "label": "_merge_replayed_enrichment()",
+      "id": "claude_skills_last30days_scripts_lib_pipeline_mock_discovery_items",
+      "label": "_mock_discovery_items()",
       "_callable": true,
       "_origin": "ast",
       "community": 8,
       "community_name": "pipeline.py",
       "file_type": "code",
-      "norm_label": "_merge_replayed_enrichment()",
+      "norm_label": "_mock_discovery_items()",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3061"
+      "source_location": "L384"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_nominate_candidates",
+      "label": "nominate_candidates()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "pipeline.py",
+      "file_type": "code",
+      "norm_label": "nominate_candidates()",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L589"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_pipeline_nominate_nothing_solid_report",
@@ -26265,28 +26229,16 @@
       "source_location": "L1260"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_nominate_topic_pool",
-      "label": "nominate_topic_pool()",
+      "id": "claude_skills_last30days_scripts_lib_pipeline_outcome_artifact",
+      "label": "_outcome_artifact()",
       "_callable": true,
       "_origin": "ast",
       "community": 8,
       "community_name": "pipeline.py",
       "file_type": "code",
-      "norm_label": "nominate_topic_pool()",
+      "norm_label": "_outcome_artifact()",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L779"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_nominate_topics",
-      "label": "nominate_topics()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 8,
-      "community_name": "pipeline.py",
-      "file_type": "code",
-      "norm_label": "nominate_topics()",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L886"
+      "source_location": "L3278"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_pipeline_records_to_discovery_topics",
@@ -26313,6 +26265,42 @@
       "source_location": "L4087"
     },
     {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_resolve_depth_settings",
+      "label": "_resolve_depth_settings()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "pipeline.py",
+      "file_type": "code",
+      "norm_label": "_resolve_depth_settings()",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L157"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_resolve_stream_outcome",
+      "label": "_resolve_stream_outcome()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "pipeline.py",
+      "file_type": "code",
+      "norm_label": "_resolve_stream_outcome()",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L3378"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_result_outcome_artifact",
+      "label": "_result_outcome_artifact()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "pipeline.py",
+      "file_type": "code",
+      "norm_label": "_result_outcome_artifact()",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L3293"
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_pipeline_resume_enrich_budget_seconds",
       "label": "_resume_enrich_budget_seconds()",
       "_callable": true,
@@ -26323,6 +26311,30 @@
       "norm_label": "_resume_enrich_budget_seconds()",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
       "source_location": "L1583"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_retrieve_stream",
+      "label": "_retrieve_stream()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "pipeline.py",
+      "file_type": "code",
+      "norm_label": "_retrieve_stream()",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L4110"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_retrieve_stream_impl",
+      "label": "_retrieve_stream_impl()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "pipeline.py",
+      "file_type": "code",
+      "norm_label": "_retrieve_stream_impl()",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L4163"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_pipeline_run_discover",
@@ -26361,64 +26373,52 @@
       "source_location": "L1611"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_rerank_discovery_engagement_total",
-      "label": "discovery_engagement_total()",
+      "id": "claude_skills_last30days_scripts_lib_pipeline_source_fetch_cap",
+      "label": "_source_fetch_cap()",
       "_callable": true,
       "_origin": "ast",
       "community": 8,
       "community_name": "pipeline.py",
       "file_type": "code",
-      "norm_label": "discovery_engagement_total()",
-      "source_file": ".claude/skills/last30days/scripts/lib/rerank.py",
-      "source_location": "L50"
+      "norm_label": "_source_fetch_cap()",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L141"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_rerank_discovery_velocity_score",
-      "label": "discovery_velocity_score()",
+      "id": "claude_skills_last30days_scripts_lib_pipeline_sourcerunerror_init",
+      "label": ".__init__()",
       "_callable": true,
       "_origin": "ast",
       "community": 8,
       "community_name": "pipeline.py",
       "file_type": "code",
-      "norm_label": "discovery_velocity_score()",
-      "source_file": ".claude/skills/last30days/scripts/lib/rerank.py",
-      "source_location": "L88"
+      "norm_label": ".__init__()",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L3246"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_rerank_engagement_velocity_score",
-      "label": "engagement_velocity_score()",
+      "id": "claude_skills_last30days_scripts_lib_reddit_classify_run_failure",
+      "label": "classify_run_failure()",
       "_callable": true,
       "_origin": "ast",
       "community": 8,
       "community_name": "pipeline.py",
       "file_type": "code",
-      "norm_label": "engagement_velocity_score()",
-      "source_file": ".claude/skills/last30days/scripts/lib/rerank.py",
-      "source_location": "L67"
+      "norm_label": "classify_run_failure()",
+      "source_file": ".claude/skills/last30days/scripts/lib/reddit.py",
+      "source_location": "L82"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_rerank_judge_blended_score",
-      "label": "judge_blended_score()",
+      "id": "claude_skills_last30days_scripts_lib_youtube_yt_classify_run_failure",
+      "label": "classify_run_failure()",
       "_callable": true,
       "_origin": "ast",
       "community": 8,
       "community_name": "pipeline.py",
       "file_type": "code",
-      "norm_label": "judge_blended_score()",
-      "source_file": ".claude/skills/last30days/scripts/lib/rerank.py",
-      "source_location": "L165"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_rerank_passes_discovery_floor",
-      "label": "passes_discovery_floor()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 8,
-      "community_name": "pipeline.py",
-      "file_type": "code",
-      "norm_label": "passes_discovery_floor()",
-      "source_file": ".claude/skills/last30days/scripts/lib/rerank.py",
-      "source_location": "L122"
+      "norm_label": "classify_run_failure()",
+      "source_file": ".claude/skills/last30days/scripts/lib/youtube_yt.py",
+      "source_location": "L268"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_youtube_yt_clean_vtt",
@@ -29358,6 +29358,17 @@
       "source_location": "L241"
     },
     {
+      "id": "claude_skills_last30days_scripts_lib_cluster",
+      "label": "cluster.py",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Candidate",
+      "file_type": "code",
+      "norm_label": "cluster.py",
+      "source_file": ".claude/skills/last30days/scripts/lib/cluster.py",
+      "source_location": "L1"
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_rerank",
       "label": "rerank.py",
       "_origin": "ast",
@@ -29369,6 +29380,61 @@
       "source_location": "L1"
     },
     {
+      "id": "claude_skills_last30days_scripts_lib_cluster_rationale_1",
+      "label": "Candidate clustering and representative selection.",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Candidate",
+      "file_type": "rationale",
+      "norm_label": "candidate clustering and representative selection.",
+      "source_file": ".claude/skills/last30days/scripts/lib/cluster.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_cluster_rationale_141",
+      "label": "Merge small clusters that cover the same story across different sources. The\u2026",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Candidate",
+      "file_type": "rationale",
+      "norm_label": "merge small clusters that cover the same story across different sources. the...",
+      "source_file": ".claude/skills/last30days/scripts/lib/cluster.py",
+      "source_location": "L141"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_cluster_rationale_65",
+      "label": "Greedy clustering around high-ranked leaders.",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Candidate",
+      "file_type": "rationale",
+      "norm_label": "greedy clustering around high-ranked leaders.",
+      "source_file": ".claude/skills/last30days/scripts/lib/cluster.py",
+      "source_location": "L65"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_cluster_rationale_9",
+      "label": "Sort key that partitions stale candidates below fresh ones. Stale items (all\u2026",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Candidate",
+      "file_type": "rationale",
+      "norm_label": "sort key that partitions stale candidates below fresh ones. stale items (all...",
+      "source_file": ".claude/skills/last30days/scripts/lib/cluster.py",
+      "source_location": "L9"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_dedupe_rationale_90",
+      "label": "Pre-computed text representations for fast repeated similarity checks.",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Candidate",
+      "file_type": "rationale",
+      "norm_label": "pre-computed text representations for fast repeated similarity checks.",
+      "source_file": ".claude/skills/last30days/scripts/lib/dedupe.py",
+      "source_location": "L90"
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_rerank_rationale_1",
       "label": "Reranking with LLM-scored relevance and demotion of low-confidence candidates.",
       "_origin": "ast",
@@ -29378,6 +29444,28 @@
       "norm_label": "reranking with llm-scored relevance and demotion of low-confidence candidates.",
       "source_file": ".claude/skills/last30days/scripts/lib/rerank.py",
       "source_location": "L1"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_rerank_rationale_130",
+      "label": "Whether a discovery topic's evidence is strong enough to show a user. Below\u2026",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Candidate",
+      "file_type": "rationale",
+      "norm_label": "whether a discovery topic's evidence is strong enough to show a user. below...",
+      "source_file": ".claude/skills/last30days/scripts/lib/rerank.py",
+      "source_location": "L130"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_rerank_rationale_166",
+      "label": "Velocity-dominant, worthiness-weighted ranking score (constants above).",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Candidate",
+      "file_type": "rationale",
+      "norm_label": "velocity-dominant, worthiness-weighted ranking score (constants above).",
+      "source_file": ".claude/skills/last30days/scripts/lib/rerank.py",
+      "source_location": "L166"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_rerank_rationale_266",
@@ -29611,11 +29699,33 @@
       "source_location": "L103"
     },
     {
+      "id": "claude_skills_last30days_scripts_lib_schema_rationale_595",
+      "label": "True when every dated item behind this candidate falls outside the window.\u2026",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Candidate",
+      "file_type": "rationale",
+      "norm_label": "true when every dated item behind this candidate falls outside the window....",
+      "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
+      "source_location": "L595"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_store_rationale_1134",
+      "label": "Convert a ranked candidate into a persisted finding.",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Candidate",
+      "file_type": "rationale",
+      "norm_label": "convert a ranked candidate into a persisted finding.",
+      "source_file": ".claude/skills/last30days/scripts/store.py",
+      "source_location": "L1134"
+    },
+    {
       "id": "claude_skills_agent_reach_references_video_b\u7ad9_bilibili_bili_cli_\u4e3a\u4e3b_opencli_\u8865\u5b57\u5e55",
       "label": "B\u7ad9 / Bilibili\uff08bili-cli \u4e3a\u4e3b\uff0cOpenCLI \u8865\u5b57\u5e55\uff09",
       "_origin": "ast",
       "community": 100,
-      "community_name": "\u89c6\u9891/\u64ad\u5ba2",
+      "community_name": "YouTube (yt-dlp)",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "b\u7ad9 / bilibili(bili-cli \u4e3a\u4e3b,opencli \u8865\u5b57\u5e55)",
@@ -29623,11 +29733,35 @@
       "source_location": "L71"
     },
     {
+      "id": "claude_skills_agent_reach_references_video_youtube_yt_dlp",
+      "label": "YouTube (yt-dlp)",
+      "_origin": "ast",
+      "community": 100,
+      "community_name": "YouTube (yt-dlp)",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "youtube (yt-dlp)",
+      "source_file": ".claude/skills/agent-reach/references/video.md",
+      "source_location": "L5"
+    },
+    {
+      "id": "claude_skills_agent_reach_references_video_\u4e0b\u8f7d\u5b57\u5e55",
+      "label": "\u4e0b\u8f7d\u5b57\u5e55",
+      "_origin": "ast",
+      "community": 100,
+      "community_name": "YouTube (yt-dlp)",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "\u4e0b\u8f7d\u5b57\u5e55",
+      "source_file": ".claude/skills/agent-reach/references/video.md",
+      "source_location": "L13"
+    },
+    {
       "id": "claude_skills_agent_reach_references_video_\u524d\u7f6e\u8981\u6c42",
       "label": "\u524d\u7f6e\u8981\u6c42",
       "_origin": "ast",
       "community": 100,
-      "community_name": "\u89c6\u9891/\u64ad\u5ba2",
+      "community_name": "YouTube (yt-dlp)",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "\u524d\u7f6e\u8981\u6c42",
@@ -29639,7 +29773,7 @@
       "label": "\u5b57\u5e55 (OpenCLI\uff0c\u9700\u8981\u684c\u9762 Chrome)",
       "_origin": "ast",
       "community": 100,
-      "community_name": "\u89c6\u9891/\u64ad\u5ba2",
+      "community_name": "YouTube (yt-dlp)",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "\u5b57\u5e55 (opencli,\u9700\u8981\u684c\u9762 chrome)",
@@ -29647,11 +29781,23 @@
       "source_location": "L92"
     },
     {
+      "id": "claude_skills_agent_reach_references_video_\u5b57\u5e55\u5931\u8d25\u65f6\u7684\u91cd\u8bd5\u94fe_\u6309\u5e8f\u6267\u884c_\u62ff\u5230\u5b9e\u8d28\u5185\u5bb9\u5373\u505c",
+      "label": "\u5b57\u5e55\u5931\u8d25\u65f6\u7684\u91cd\u8bd5\u94fe\uff08\u6309\u5e8f\u6267\u884c\uff0c\u62ff\u5230\u5b9e\u8d28\u5185\u5bb9\u5373\u505c\uff09",
+      "_origin": "ast",
+      "community": 100,
+      "community_name": "YouTube (yt-dlp)",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "\u5b57\u5e55\u5931\u8d25\u65f6\u7684\u91cd\u8bd5\u94fe(\u6309\u5e8f\u6267\u884c,\u62ff\u5230\u5b9e\u8d28\u5185\u5bb9\u5373\u505c)",
+      "source_file": ".claude/skills/agent-reach/references/video.md",
+      "source_location": "L42"
+    },
+    {
       "id": "claude_skills_agent_reach_references_video_\u5c0f\u5b87\u5b99\u64ad\u5ba2_xiaoyuzhou_podcast",
       "label": "\u5c0f\u5b87\u5b99\u64ad\u5ba2 / Xiaoyuzhou Podcast",
       "_origin": "ast",
       "community": 100,
-      "community_name": "\u89c6\u9891/\u64ad\u5ba2",
+      "community_name": "YouTube (yt-dlp)",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "\u5c0f\u5b87\u5b99\u64ad\u5ba2 / xiaoyuzhou podcast",
@@ -29659,11 +29805,35 @@
       "source_location": "L114"
     },
     {
+      "id": "claude_skills_agent_reach_references_video_\u641c\u7d22\u89c6\u9891",
+      "label": "\u641c\u7d22\u89c6\u9891",
+      "_origin": "ast",
+      "community": 100,
+      "community_name": "YouTube (yt-dlp)",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "\u641c\u7d22\u89c6\u9891",
+      "source_file": ".claude/skills/agent-reach/references/video.md",
+      "source_location": "L33"
+    },
+    {
+      "id": "claude_skills_agent_reach_references_video_\u65e0\u5b57\u5e55\u515c\u5e95_whisper_\u97f3\u9891\u8f6c\u5199",
+      "label": "\u65e0\u5b57\u5e55\u515c\u5e95\uff1aWhisper \u97f3\u9891\u8f6c\u5199",
+      "_origin": "ast",
+      "community": 100,
+      "community_name": "YouTube (yt-dlp)",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "\u65e0\u5b57\u5e55\u515c\u5e95:whisper \u97f3\u9891\u8f6c\u5199",
+      "source_file": ".claude/skills/agent-reach/references/video.md",
+      "source_location": "L56"
+    },
+    {
       "id": "claude_skills_agent_reach_references_video_\u68c0\u67e5\u72b6\u6001",
       "label": "\u68c0\u67e5\u72b6\u6001",
       "_origin": "ast",
       "community": 100,
-      "community_name": "\u89c6\u9891/\u64ad\u5ba2",
+      "community_name": "YouTube (yt-dlp)",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "\u68c0\u67e5\u72b6\u6001",
@@ -29671,11 +29841,35 @@
       "source_location": "L132"
     },
     {
+      "id": "claude_skills_agent_reach_references_video_\u83b7\u53d6\u89c6\u9891\u5143\u6570\u636e",
+      "label": "\u83b7\u53d6\u89c6\u9891\u5143\u6570\u636e",
+      "_origin": "ast",
+      "community": 100,
+      "community_name": "YouTube (yt-dlp)",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "\u83b7\u53d6\u89c6\u9891\u5143\u6570\u636e",
+      "source_file": ".claude/skills/agent-reach/references/video.md",
+      "source_location": "L7"
+    },
+    {
+      "id": "claude_skills_agent_reach_references_video_\u83b7\u53d6\u8bc4\u8bba",
+      "label": "\u83b7\u53d6\u8bc4\u8bba",
+      "_origin": "ast",
+      "community": 100,
+      "community_name": "YouTube (yt-dlp)",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "\u83b7\u53d6\u8bc4\u8bba",
+      "source_file": ".claude/skills/agent-reach/references/video.md",
+      "source_location": "L23"
+    },
+    {
       "id": "claude_skills_agent_reach_references_video_\u89c6\u9891_\u64ad\u5ba2",
       "label": "\u89c6\u9891/\u64ad\u5ba2",
       "_origin": "ast",
       "community": 100,
-      "community_name": "\u89c6\u9891/\u64ad\u5ba2",
+      "community_name": "YouTube (yt-dlp)",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "\u89c6\u9891/\u64ad\u5ba2",
@@ -29687,7 +29881,7 @@
       "label": "\u89c6\u9891\u8be6\u60c5/\u641c\u7d22/\u70ed\u95e8/\u6392\u884c (bili-cli\uff0c\u53ea\u8bfb\u65e0\u9700\u767b\u5f55)",
       "_origin": "ast",
       "community": 100,
-      "community_name": "\u89c6\u9891/\u64ad\u5ba2",
+      "community_name": "YouTube (yt-dlp)",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "\u89c6\u9891\u8be6\u60c5/\u641c\u7d22/\u70ed\u95e8/\u6392\u884c (bili-cli,\u53ea\u8bfb\u65e0\u9700\u767b\u5f55)",
@@ -29699,7 +29893,7 @@
       "label": "\u8f6c\u5f55\u5355\u96c6\u64ad\u5ba2\uff08\u53ef\u9009 --polish \u589e\u5f3a\u6807\u70b9\uff09",
       "_origin": "ast",
       "community": 100,
-      "community_name": "\u89c6\u9891/\u64ad\u5ba2",
+      "community_name": "YouTube (yt-dlp)",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "\u8f6c\u5f55\u5355\u96c6\u64ad\u5ba2(\u53ef\u9009 --polish \u589e\u5f3a\u6807\u70b9)",
@@ -29711,7 +29905,7 @@
       "label": "\u9009\u62e9\u6307\u5357",
       "_origin": "ast",
       "community": 100,
-      "community_name": "\u89c6\u9891/\u64ad\u5ba2",
+      "community_name": "YouTube (yt-dlp)",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "\u9009\u62e9\u6307\u5357",
@@ -29723,7 +29917,7 @@
       "label": "\u96f6\u914d\u7f6e\u515c\u5e95\uff1a\u641c\u7d22 API \u76f4\u8fde",
       "_origin": "ast",
       "community": 100,
-      "community_name": "\u89c6\u9891/\u64ad\u5ba2",
+      "community_name": "YouTube (yt-dlp)",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "\u96f6\u914d\u7f6e\u515c\u5e95:\u641c\u7d22 api \u76f4\u8fde",
@@ -30026,18 +30220,29 @@
       "label": "fusion.py",
       "_origin": "ast",
       "community": 103,
-      "community_name": "weighted_rrf",
+      "community_name": "nominate_topic_pool",
       "file_type": "code",
       "norm_label": "fusion.py",
       "source_file": ".claude/skills/last30days/scripts/lib/fusion.py",
       "source_location": "L1"
     },
     {
+      "id": "claude_skills_last30days_scripts_lib_discovery_handoff_rationale_842",
+      "label": "Re-run the nominate-stage casefold/entity-token collision rules over host-\u2026",
+      "_origin": "ast",
+      "community": 103,
+      "community_name": "nominate_topic_pool",
+      "file_type": "rationale",
+      "norm_label": "re-run the nominate-stage casefold/entity-token collision rules over host-...",
+      "source_file": ".claude/skills/last30days/scripts/lib/discovery_handoff.py",
+      "source_location": "L842"
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_fusion_rationale_1",
       "label": "Weighted reciprocal rank fusion for per-(subquery, source) streams.",
       "_origin": "ast",
       "community": 103,
-      "community_name": "weighted_rrf",
+      "community_name": "nominate_topic_pool",
       "file_type": "rationale",
       "norm_label": "weighted reciprocal rank fusion for per-(subquery, source) streams.",
       "source_file": ".claude/skills/last30days/scripts/lib/fusion.py",
@@ -30048,7 +30253,7 @@
       "label": "Ensure at least *min_per_source* items per qualifying source survive\u2026",
       "_origin": "ast",
       "community": 103,
-      "community_name": "weighted_rrf",
+      "community_name": "nominate_topic_pool",
       "file_type": "rationale",
       "norm_label": "ensure at least *min_per_source* items per qualifying source survive...",
       "source_file": ".claude/skills/last30days/scripts/lib/fusion.py",
@@ -30059,7 +30264,7 @@
       "label": "Fuse ranked lists into a single candidate pool. When ``range_from`` and\u2026",
       "_origin": "ast",
       "community": 103,
-      "community_name": "weighted_rrf",
+      "community_name": "nominate_topic_pool",
       "file_type": "rationale",
       "norm_label": "fuse ranked lists into a single candidate pool. when ``range_from`` and...",
       "source_file": ".claude/skills/last30days/scripts/lib/fusion.py",
@@ -30070,7 +30275,7 @@
       "label": "Normalize URL for dedup: lowercase, strip www/old/m prefixes, remove tracking\u2026",
       "_origin": "ast",
       "community": 103,
-      "community_name": "weighted_rrf",
+      "community_name": "nominate_topic_pool",
       "file_type": "rationale",
       "norm_label": "normalize url for dedup: lowercase, strip www/old/m prefixes, remove tracking...",
       "source_file": ".claude/skills/last30days/scripts/lib/fusion.py",
@@ -30081,7 +30286,7 @@
       "label": "Return a normalized author key from a candidate's source items.",
       "_origin": "ast",
       "community": 103,
-      "community_name": "weighted_rrf",
+      "community_name": "nominate_topic_pool",
       "file_type": "rationale",
       "norm_label": "return a normalized author key from a candidate's source items.",
       "source_file": ".claude/skills/last30days/scripts/lib/fusion.py",
@@ -30092,11 +30297,88 @@
       "label": "Keep at most *max_per_author* items from any single author. Authors named in\u2026",
       "_origin": "ast",
       "community": 103,
-      "community_name": "weighted_rrf",
+      "community_name": "nominate_topic_pool",
       "file_type": "rationale",
       "norm_label": "keep at most *max_per_author* items from any single author. authors named in...",
       "source_file": ".claude/skills/last30days/scripts/lib/fusion.py",
       "source_location": "L79"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_672",
+      "label": "A named candidate topic produced by the nominate stage. ``seed_score`` is the\u2026",
+      "_origin": "ast",
+      "community": 103,
+      "community_name": "nominate_topic_pool",
+      "file_type": "rationale",
+      "norm_label": "a named candidate topic produced by the nominate stage. ``seed_score`` is the...",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L672"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_722",
+      "label": "Disambiguate a colliding topic name by appending the later cluster's strongest\u2026",
+      "_origin": "ast",
+      "community": 103,
+      "community_name": "nominate_topic_pool",
+      "file_type": "rationale",
+      "norm_label": "disambiguate a colliding topic name by appending the later cluster's strongest...",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L722"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_788",
+      "label": "Stage 1b of discovery: cluster nominated items into named candidate topics,\u2026",
+      "_origin": "ast",
+      "community": 103,
+      "community_name": "nominate_topic_pool",
+      "file_type": "rationale",
+      "norm_label": "stage 1b of discovery: cluster nominated items into named candidate topics,...",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L788"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_895",
+      "label": "``nominate_topic_pool`` without the cluster ids: the one-shot discovery path's\u2026",
+      "_origin": "ast",
+      "community": 103,
+      "community_name": "nominate_topic_pool",
+      "file_type": "rationale",
+      "norm_label": "``nominate_topic_pool`` without the cluster ids: the one-shot discovery path's...",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L895"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_rerank_rationale_51",
+      "label": "Return comparable native interaction counts for discovery evidence.",
+      "_origin": "ast",
+      "community": 103,
+      "community_name": "nominate_topic_pool",
+      "file_type": "rationale",
+      "norm_label": "return comparable native interaction counts for discovery evidence.",
+      "source_file": ".claude/skills/last30days/scripts/lib/rerank.py",
+      "source_location": "L51"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_rerank_rationale_72",
+      "label": "Weight native engagement by age, with an explicit first-week boost.",
+      "_origin": "ast",
+      "community": 103,
+      "community_name": "nominate_topic_pool",
+      "file_type": "rationale",
+      "norm_label": "weight native engagement by age, with an explicit first-week boost.",
+      "source_file": ".claude/skills/last30days/scripts/lib/rerank.py",
+      "source_location": "L72"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_rerank_rationale_93",
+      "label": "Score a topic cluster and reward independent cross-source confirmation.",
+      "_origin": "ast",
+      "community": 103,
+      "community_name": "nominate_topic_pool",
+      "file_type": "rationale",
+      "norm_label": "score a topic cluster and reward independent cross-source confirmation.",
+      "source_file": ".claude/skills/last30days/scripts/lib/rerank.py",
+      "source_location": "L93"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_grok_x_py_any",
@@ -35496,90 +35778,6 @@
       "source_location": "L33"
     },
     {
-      "id": "claude_skills_agent_reach_references_video_youtube_yt_dlp",
-      "label": "YouTube (yt-dlp)",
-      "_origin": "ast",
-      "community": 150,
-      "community_name": "YouTube (yt-dlp)",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "youtube (yt-dlp)",
-      "source_file": ".claude/skills/agent-reach/references/video.md",
-      "source_location": "L5"
-    },
-    {
-      "id": "claude_skills_agent_reach_references_video_\u4e0b\u8f7d\u5b57\u5e55",
-      "label": "\u4e0b\u8f7d\u5b57\u5e55",
-      "_origin": "ast",
-      "community": 150,
-      "community_name": "YouTube (yt-dlp)",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "\u4e0b\u8f7d\u5b57\u5e55",
-      "source_file": ".claude/skills/agent-reach/references/video.md",
-      "source_location": "L13"
-    },
-    {
-      "id": "claude_skills_agent_reach_references_video_\u5b57\u5e55\u5931\u8d25\u65f6\u7684\u91cd\u8bd5\u94fe_\u6309\u5e8f\u6267\u884c_\u62ff\u5230\u5b9e\u8d28\u5185\u5bb9\u5373\u505c",
-      "label": "\u5b57\u5e55\u5931\u8d25\u65f6\u7684\u91cd\u8bd5\u94fe\uff08\u6309\u5e8f\u6267\u884c\uff0c\u62ff\u5230\u5b9e\u8d28\u5185\u5bb9\u5373\u505c\uff09",
-      "_origin": "ast",
-      "community": 150,
-      "community_name": "YouTube (yt-dlp)",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "\u5b57\u5e55\u5931\u8d25\u65f6\u7684\u91cd\u8bd5\u94fe(\u6309\u5e8f\u6267\u884c,\u62ff\u5230\u5b9e\u8d28\u5185\u5bb9\u5373\u505c)",
-      "source_file": ".claude/skills/agent-reach/references/video.md",
-      "source_location": "L42"
-    },
-    {
-      "id": "claude_skills_agent_reach_references_video_\u641c\u7d22\u89c6\u9891",
-      "label": "\u641c\u7d22\u89c6\u9891",
-      "_origin": "ast",
-      "community": 150,
-      "community_name": "YouTube (yt-dlp)",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "\u641c\u7d22\u89c6\u9891",
-      "source_file": ".claude/skills/agent-reach/references/video.md",
-      "source_location": "L33"
-    },
-    {
-      "id": "claude_skills_agent_reach_references_video_\u65e0\u5b57\u5e55\u515c\u5e95_whisper_\u97f3\u9891\u8f6c\u5199",
-      "label": "\u65e0\u5b57\u5e55\u515c\u5e95\uff1aWhisper \u97f3\u9891\u8f6c\u5199",
-      "_origin": "ast",
-      "community": 150,
-      "community_name": "YouTube (yt-dlp)",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "\u65e0\u5b57\u5e55\u515c\u5e95:whisper \u97f3\u9891\u8f6c\u5199",
-      "source_file": ".claude/skills/agent-reach/references/video.md",
-      "source_location": "L56"
-    },
-    {
-      "id": "claude_skills_agent_reach_references_video_\u83b7\u53d6\u89c6\u9891\u5143\u6570\u636e",
-      "label": "\u83b7\u53d6\u89c6\u9891\u5143\u6570\u636e",
-      "_origin": "ast",
-      "community": 150,
-      "community_name": "YouTube (yt-dlp)",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "\u83b7\u53d6\u89c6\u9891\u5143\u6570\u636e",
-      "source_file": ".claude/skills/agent-reach/references/video.md",
-      "source_location": "L7"
-    },
-    {
-      "id": "claude_skills_agent_reach_references_video_\u83b7\u53d6\u8bc4\u8bba",
-      "label": "\u83b7\u53d6\u8bc4\u8bba",
-      "_origin": "ast",
-      "community": 150,
-      "community_name": "YouTube (yt-dlp)",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "\u83b7\u53d6\u8bc4\u8bba",
-      "source_file": ".claude/skills/agent-reach/references/video.md",
-      "source_location": "L23"
-    },
-    {
       "id": "claude_skills_last30days_scripts_lib_registers",
       "label": "registers.py",
       "_origin": "ast",
@@ -36914,7 +37112,7 @@
       "node_kind": "heading",
       "norm_label": "important locked decisions",
       "source_file": "docs/CURRENT_STAGE.md",
-      "source_location": "L85"
+      "source_location": "L87"
     },
     {
       "id": "docs_current_stage_source_of_truth_handoff",
@@ -36926,7 +37124,7 @@
       "node_kind": "heading",
       "norm_label": "source-of-truth handoff",
       "source_file": "docs/CURRENT_STAGE.md",
-      "source_location": "L95"
+      "source_location": "L97"
     },
     {
       "id": "docs_current_stage_what_akshar_builds_next",
@@ -36938,7 +37136,7 @@
       "node_kind": "heading",
       "norm_label": "what akshar builds next",
       "source_file": "docs/CURRENT_STAGE.md",
-      "source_location": "L58"
+      "source_location": "L60"
     },
     {
       "id": "docs_current_stage_what_rishit_can_build_now",
@@ -36950,7 +37148,7 @@
       "node_kind": "heading",
       "norm_label": "what rishit can build now",
       "source_file": "docs/CURRENT_STAGE.md",
-      "source_location": "L40"
+      "source_location": "L42"
     },
     {
       "id": "docs_current_stage_what_the_hardware_track_builds_in_parallel",
@@ -36962,7 +37160,7 @@
       "node_kind": "heading",
       "norm_label": "what the hardware track builds in parallel",
       "source_file": "docs/CURRENT_STAGE.md",
-      "source_location": "L73"
+      "source_location": "L75"
     },
     {
       "id": "docs_current_stage_where_the_tracks_reconnect",
@@ -36974,7 +37172,7 @@
       "node_kind": "heading",
       "norm_label": "where the tracks reconnect",
       "source_file": "docs/CURRENT_STAGE.md",
-      "source_location": "L79"
+      "source_location": "L81"
     },
     {
       "id": "docs_current_stage_where_we_are_now",
@@ -37250,7 +37448,7 @@
       "node_kind": "heading",
       "norm_label": "how akshar can verify it",
       "source_file": "docs/PHASE_2_CHECKPOINT_A_REVIEW.md",
-      "source_location": "L48"
+      "source_location": "L50"
     },
     {
       "id": "docs_phase_2_checkpoint_a_review_phase_2_backend_checkpoint_a_review",
@@ -37286,7 +37484,7 @@
       "node_kind": "heading",
       "norm_label": "verification evidence",
       "source_file": "docs/PHASE_2_CHECKPOINT_A_REVIEW.md",
-      "source_location": "L60"
+      "source_location": "L62"
     },
     {
       "id": "docs_phase_2_checkpoint_a_review_what_now_works",
@@ -37310,7 +37508,7 @@
       "node_kind": "heading",
       "norm_label": "what remains",
       "source_file": "docs/PHASE_2_CHECKPOINT_A_REVIEW.md",
-      "source_location": "L67"
+      "source_location": "L69"
     },
     {
       "id": "docs_phase_2_checkpoint_a_review_what_the_frontend_can_rely_on",
@@ -42259,17 +42457,6 @@
       "source_location": "L3543"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_render_rationale_553",
-      "label": "Source content must not be able to terminate the private-block markers. A note\u2026",
-      "_origin": "ast",
-      "community": 22,
-      "community_name": "render.py",
-      "file_type": "rationale",
-      "norm_label": "source content must not be able to terminate the private-block markers. a note...",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L553"
-    },
-    {
       "id": "claude_skills_last30days_scripts_lib_render_rationale_79",
       "label": "1 -> 1st, 2 -> 2nd, 3 -> 3rd, 11-13 -> th (Pipeline card line).",
       "_origin": "ast",
@@ -43821,88 +44008,22 @@
       "source_location": "L208"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_py_exception",
-      "label": "Exception",
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "run",
-      "file_type": "code",
-      "norm_label": "exception",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_py_path",
-      "label": "Path",
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "run",
-      "file_type": "code",
-      "norm_label": "path",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
       "id": "claude_skills_last30days_scripts_lib_snippet",
       "label": "snippet.py",
       "_origin": "ast",
       "community": 25,
-      "community_name": "run",
+      "community_name": "_normalize_score_dedupe",
       "file_type": "code",
       "norm_label": "snippet.py",
       "source_file": ".claude/skills/last30days/scripts/lib/snippet.py",
       "source_location": "L1"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_142",
-      "label": "Return the effective per-run cap for one source. Every Perplexity adapter call\u2026",
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "run",
-      "file_type": "rationale",
-      "norm_label": "return the effective per-run cap for one source. every perplexity adapter call...",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L142"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_158",
-      "label": "Depth profile with optional CLI cap overrides applied (issue #716). Returns a\u2026",
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "run",
-      "file_type": "rationale",
-      "norm_label": "depth profile with optional cli cap overrides applied (issue #716). returns a...",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L158"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_1884",
-      "label": "Worker-pool size for the per-stream fanout inside a single pipeline run. Top-\u2026",
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "run",
-      "file_type": "rationale",
-      "norm_label": "worker-pool size for the per-stream fanout inside a single pipeline run. top-...",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L1884"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_1906",
-      "label": "Resolve compact prior-run context without making a research run depend on it.",
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "run",
-      "file_type": "rationale",
-      "norm_label": "resolve compact prior-run context without making a research run depend on it.",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L1906"
-    },
-    {
       "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_2899",
       "label": "Most-mentioned handles in a batch of X items, as first-party candidates.\u2026",
       "_origin": "ast",
       "community": 25,
-      "community_name": "run",
+      "community_name": "_normalize_score_dedupe",
       "file_type": "rationale",
       "norm_label": "most-mentioned handles in a batch of x items, as first-party candidates....",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
@@ -43913,62 +44034,18 @@
       "label": "Normalize, annotate, prune, dedupe, and extract snippets for a batch of raw\u2026",
       "_origin": "ast",
       "community": 25,
-      "community_name": "run",
+      "community_name": "_normalize_score_dedupe",
       "file_type": "rationale",
       "norm_label": "normalize, annotate, prune, dedupe, and extract snippets for a batch of raw...",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
       "source_location": "L2928"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_3237",
-      "label": "Detect 429 rate-limit errors by status code or message text.",
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "run",
-      "file_type": "rationale",
-      "norm_label": "detect 429 rate-limit errors by status code or message text.",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3237"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_3440",
-      "label": "Detect 5xx server errors that are worth retrying.",
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "run",
-      "file_type": "rationale",
-      "norm_label": "detect 5xx server errors that are worth retrying.",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3440"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_3449",
-      "label": "@mentions in the topic, which are real X handles. These are used to determine\u2026",
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "run",
-      "file_type": "rationale",
-      "norm_label": "@mentions in the topic, which are real x handles. these are used to determine...",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3449"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_3462",
-      "label": "Handle-shaped tokens in the topic itself, usable before any retrieval. Phase 1\u2026",
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "run",
-      "file_type": "rationale",
-      "norm_label": "handle-shaped tokens in the topic itself, usable before any retrieval. phase 1...",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3462"
-    },
-    {
       "id": "claude_skills_last30days_scripts_lib_signals_rationale_339",
       "label": "Drop weak lexical matches when stronger evidence exists. Social-source items\u2026",
       "_origin": "ast",
       "community": 25,
-      "community_name": "run",
+      "community_name": "_normalize_score_dedupe",
       "file_type": "rationale",
       "norm_label": "drop weak lexical matches when stronger evidence exists. social-source items...",
       "source_file": ".claude/skills/last30days/scripts/lib/signals.py",
@@ -43979,7 +44056,7 @@
       "label": "Best-window extraction for rerankable evidence snippets.",
       "_origin": "ast",
       "community": 25,
-      "community_name": "run",
+      "community_name": "_normalize_score_dedupe",
       "file_type": "rationale",
       "norm_label": "best-window extraction for rerankable evidence snippets.",
       "source_file": ".claude/skills/last30days/scripts/lib/snippet.py",
@@ -43990,22 +44067,11 @@
       "label": "Prefer existing snippets, else extract the best matching evidence window.",
       "_origin": "ast",
       "community": 25,
-      "community_name": "run",
+      "community_name": "_normalize_score_dedupe",
       "file_type": "rationale",
       "norm_label": "prefer existing snippets, else extract the best matching evidence window.",
       "source_file": ".claude/skills/last30days/scripts/lib/snippet.py",
       "source_location": "L32"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_youtube_yt_rationale_164",
-      "label": "Clear the in-run ytsearch cache. Call at the start of each top-level research\u2026",
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "run",
-      "file_type": "rationale",
-      "norm_label": "clear the in-run ytsearch cache. call at the start of each top-level research...",
-      "source_file": ".claude/skills/last30days/scripts/lib/youtube_yt.py",
-      "source_location": "L164"
     },
     {
       "id": "docs_architecture_cloud",
@@ -44541,83 +44607,6 @@
       "source_location": "L935"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_render_rationale_2046",
-      "label": "Production brief for downstream pipelines (video, scripting, structured\u2026",
-      "_origin": "ast",
-      "community": 268,
-      "community_name": "render_brief",
-      "file_type": "rationale",
-      "norm_label": "production brief for downstream pipelines (video, scripting, structured...",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L2046"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_render_rationale_2194",
-      "label": "Return titles that read as audience questions, deduped and in ranked order.",
-      "_origin": "ast",
-      "community": 268,
-      "community_name": "render_brief",
-      "file_type": "rationale",
-      "norm_label": "return titles that read as audience questions, deduped and in ranked order.",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L2194"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_render_rationale_3413",
-      "label": "Exclude off-topic-but-viral candidates from Best Takes. Delegates to\u2026",
-      "_origin": "ast",
-      "community": 268,
-      "community_name": "render_brief",
-      "file_type": "rationale",
-      "norm_label": "exclude off-topic-but-viral candidates from best takes. delegates to...",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L3413"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_render_rationale_3424",
-      "label": "LLM humor score plus a bounded, relevance-confidence-scaled crowd nudge.\u2026",
-      "_origin": "ast",
-      "community": 268,
-      "community_name": "render_brief",
-      "file_type": "rationale",
-      "norm_label": "llm humor score plus a bounded, relevance-confidence-scaled crowd nudge....",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L3424"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_render_rationale_3652",
-      "label": "Neutralize leading ATX heading markers so scraped text cannot mint sections.",
-      "_origin": "ast",
-      "community": 268,
-      "community_name": "render_brief",
-      "file_type": "rationale",
-      "norm_label": "neutralize leading atx heading markers so scraped text cannot mint sections.",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L3652"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_render_rationale_3671",
-      "label": "Truncate scraped text and keep it from injecting markdown structure. Multi-line\u2026",
-      "_origin": "ast",
-      "community": 268,
-      "community_name": "render_brief",
-      "file_type": "rationale",
-      "norm_label": "truncate scraped text and keep it from injecting markdown structure. multi-line...",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L3671"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_render_rationale_375",
-      "label": "Keep qualifying MMR representatives, or promote a conservative fallback.",
-      "_origin": "ast",
-      "community": 268,
-      "community_name": "render_brief",
-      "file_type": "rationale",
-      "norm_label": "keep qualifying mmr representatives, or promote a conservative fallback.",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L375"
-    },
-    {
       "id": "claude_skills_last30days_scripts_lib_ui_rationale_464",
       "label": "End web-only spinner.",
       "_origin": "ast",
@@ -45135,246 +45124,59 @@
       "source_location": "L422"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_py_any",
-      "label": "Any",
+      "id": "claude_skills_last30days_scripts_lib_skill_meta",
+      "label": "skill_meta.py",
       "_origin": "ast",
       "community": 28,
-      "community_name": "_retrieve_stream_impl",
+      "community_name": "_skill_version",
       "file_type": "code",
-      "norm_label": "any",
+      "norm_label": "skill_meta.py",
+      "source_file": ".claude/skills/last30days/scripts/lib/skill_meta.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_skill_meta_py_path",
+      "label": "Path",
+      "_origin": "ast",
+      "community": 28,
+      "community_name": "_skill_version",
+      "file_type": "code",
+      "norm_label": "path",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_py_runoutcomestate",
-      "label": "RunOutcomeState",
+      "id": "claude_skills_last30days_scripts_lib_render_rationale_28",
+      "label": "Read plugin version from .claude-plugin/plugin.json, falling back to SKILL.md\u2026",
       "_origin": "ast",
       "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "code",
-      "norm_label": "runoutcomestate",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_py_runtimeerror",
-      "label": "RuntimeError",
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "code",
-      "norm_label": "runtimeerror",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "lock",
-      "label": "Lock",
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "code",
-      "norm_label": "lock",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_bird_x_rationale_91",
-      "label": "Map Bird's subprocess-only failure shapes to run outcome states.",
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
+      "community_name": "_skill_version",
       "file_type": "rationale",
-      "norm_label": "map bird's subprocess-only failure shapes to run outcome states.",
-      "source_file": ".claude/skills/last30days/scripts/lib/bird_x.py",
-      "source_location": "L91"
+      "norm_label": "read plugin version from .claude-plugin/plugin.json, falling back to skill.md...",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L28"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_http_rationale_499",
-      "label": "Map a request failure to the doctor-aligned per-run vocabulary.",
+      "id": "claude_skills_last30days_scripts_lib_skill_meta_rationale_1",
+      "label": "SKILL.md metadata helpers \u2014 single source of truth for parsing skill\u2026",
       "_origin": "ast",
       "community": 28,
-      "community_name": "_retrieve_stream_impl",
+      "community_name": "_skill_version",
       "file_type": "rationale",
-      "norm_label": "map a request failure to the doctor-aligned per-run vocabulary.",
-      "source_file": ".claude/skills/last30days/scripts/lib/http.py",
-      "source_location": "L499"
+      "norm_label": "skill.md metadata helpers \u2014 single source of truth for parsing skill...",
+      "source_file": ".claude/skills/last30days/scripts/lib/skill_meta.py",
+      "source_location": "L1"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_3244",
-      "label": "Source-specific failure that survived a module's fallback logic.",
+      "id": "claude_skills_last30days_scripts_lib_skill_meta_rationale_20",
+      "label": "Return the version string from a SKILL.md's frontmatter, or None. Returns None\u2026",
       "_origin": "ast",
       "community": 28,
-      "community_name": "_retrieve_stream_impl",
+      "community_name": "_skill_version",
       "file_type": "rationale",
-      "norm_label": "source-specific failure that survived a module's fallback logic.",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3244"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_3252",
-      "label": "Classify HTTP, subprocess, and module-specific failures consistently.",
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "rationale",
-      "norm_label": "classify http, subprocess, and module-specific failures consistently.",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3252"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_3294",
-      "label": "Convert a legacy ``{\"error\": ...}`` source result into typed status.",
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "rationale",
-      "norm_label": "convert a legacy ``{\"error\": ...}`` source result into typed status.",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3294"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_3322",
-      "label": "Map known pre-outcome artifact contracts to a typed outcome note.",
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "rationale",
-      "norm_label": "map known pre-outcome artifact contracts to a typed outcome note.",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3322"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_3383",
-      "label": "Choose the most specific artifact or captured HTTP outcome.",
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "rationale",
-      "norm_label": "choose the most specific artifact or captured http outcome.",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3383"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_3523",
-      "label": "Phase 2: extract entities from Phase 1 results, run targeted supplemental\u2026",
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "rationale",
-      "norm_label": "phase 2: extract entities from phase 1 results, run targeted supplemental...",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3523"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_389",
-      "label": "Deterministic listing fixtures for the public --mock CLI contract.",
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "rationale",
-      "norm_label": "deterministic listing fixtures for the public --mock cli contract.",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L389"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_3923",
-      "label": "Retry sources with thin results using simplified core subject query.",
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "rationale",
-      "norm_label": "retry sources with thin results using simplified core subject query.",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3923"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_4111",
-      "label": "Run one stream and retain HTTP failures swallowed by source adapters.",
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "rationale",
-      "norm_label": "run one stream and retain http failures swallowed by source adapters.",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L4111"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_453",
-      "label": "Require a distinctive domain term, not a generic token such as ``AI``.",
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "rationale",
-      "norm_label": "require a distinctive domain term, not a generic token such as ``ai``.",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L453"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_482",
-      "label": "Fetch one listing/river source for the nominate stage. ``keyword_gate``\u2026",
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "rationale",
-      "norm_label": "fetch one listing/river source for the nominate stage. ``keyword_gate``...",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L482"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_600",
-      "label": "Stage 1 of discovery: fetch, normalize, and bundle candidate hot items from the\u2026",
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "rationale",
-      "norm_label": "stage 1 of discovery: fetch, normalize, and bundle candidate hot items from the...",
-      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L600"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_reddit_rationale_83",
-      "label": "Map Reddit auth and anti-bot responses that do not carry HTTP status.",
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "rationale",
-      "norm_label": "map reddit auth and anti-bot responses that do not carry http status.",
-      "source_file": ".claude/skills/last30days/scripts/lib/reddit.py",
-      "source_location": "L83"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_schema_rationale_271",
-      "label": "Topic-less listing feeds selected for a domain sweep.",
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "rationale",
-      "norm_label": "topic-less listing feeds selected for a domain sweep.",
-      "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
-      "source_location": "L271"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_schema_rationale_37",
-      "label": "Resolved runtime provider selection.",
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "rationale",
-      "norm_label": "resolved runtime provider selection.",
-      "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
-      "source_location": "L37"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_youtube_yt_rationale_269",
-      "label": "Map yt-dlp's text-only throttling and bot-gate errors.",
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "_retrieve_stream_impl",
-      "file_type": "rationale",
-      "norm_label": "map yt-dlp's text-only throttling and bot-gate errors.",
-      "source_file": ".claude/skills/last30days/scripts/lib/youtube_yt.py",
-      "source_location": "L269"
+      "norm_label": "return the version string from a skill.md's frontmatter, or none. returns none...",
+      "source_file": ".claude/skills/last30days/scripts/lib/skill_meta.py",
+      "source_location": "L20"
     },
     {
       "id": "docs_architecture_9_layer_6_personal_baseline_engine",
@@ -47026,17 +46828,6 @@
       "source_location": "L1"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_cluster",
-      "label": "cluster.py",
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "dedupe.py",
-      "file_type": "code",
-      "norm_label": "cluster.py",
-      "source_file": ".claude/skills/last30days/scripts/lib/cluster.py",
-      "source_location": "L1"
-    },
-    {
       "id": "claude_skills_last30days_scripts_lib_dedupe",
       "label": "dedupe.py",
       "_origin": "ast",
@@ -47081,50 +46872,6 @@
       "source_location": "L87"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_cluster_rationale_1",
-      "label": "Candidate clustering and representative selection.",
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "dedupe.py",
-      "file_type": "rationale",
-      "norm_label": "candidate clustering and representative selection.",
-      "source_file": ".claude/skills/last30days/scripts/lib/cluster.py",
-      "source_location": "L1"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_cluster_rationale_141",
-      "label": "Merge small clusters that cover the same story across different sources. The\u2026",
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "dedupe.py",
-      "file_type": "rationale",
-      "norm_label": "merge small clusters that cover the same story across different sources. the...",
-      "source_file": ".claude/skills/last30days/scripts/lib/cluster.py",
-      "source_location": "L141"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_cluster_rationale_65",
-      "label": "Greedy clustering around high-ranked leaders.",
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "dedupe.py",
-      "file_type": "rationale",
-      "norm_label": "greedy clustering around high-ranked leaders.",
-      "source_file": ".claude/skills/last30days/scripts/lib/cluster.py",
-      "source_location": "L65"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_cluster_rationale_9",
-      "label": "Sort key that partitions stale candidates below fresh ones. Stale items (all\u2026",
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "dedupe.py",
-      "file_type": "rationale",
-      "norm_label": "sort key that partitions stale candidates below fresh ones. stale items (all...",
-      "source_file": ".claude/skills/last30days/scripts/lib/cluster.py",
-      "source_location": "L9"
-    },
-    {
       "id": "claude_skills_last30days_scripts_lib_dedupe_rationale_1",
       "label": "Within-source near-duplicate detection.",
       "_origin": "ast",
@@ -47147,17 +46894,6 @@
       "source_location": "L113"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_dedupe_rationale_90",
-      "label": "Pre-computed text representations for fast repeated similarity checks.",
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "dedupe.py",
-      "file_type": "rationale",
-      "norm_label": "pre-computed text representations for fast repeated similarity checks.",
-      "source_file": ".claude/skills/last30days/scripts/lib/dedupe.py",
-      "source_location": "L90"
-    },
-    {
       "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_2749",
       "label": "Merge a narrow follow-up into its cached report while preserving other clusters.",
       "_origin": "ast",
@@ -47169,26 +46905,15 @@
       "source_location": "L2749"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_schema_rationale_595",
-      "label": "True when every dated item behind this candidate falls outside the window.\u2026",
+      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_3065",
+      "label": "Apply recorded post-ranking enrichment onto freshly computed items. Enrichment\u2026",
       "_origin": "ast",
       "community": 31,
       "community_name": "dedupe.py",
       "file_type": "rationale",
-      "norm_label": "true when every dated item behind this candidate falls outside the window....",
-      "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
-      "source_location": "L595"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_store_rationale_1134",
-      "label": "Convert a ranked candidate into a persisted finding.",
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "dedupe.py",
-      "file_type": "rationale",
-      "norm_label": "convert a ranked candidate into a persisted finding.",
-      "source_file": ".claude/skills/last30days/scripts/store.py",
-      "source_location": "L1134"
+      "norm_label": "apply recorded post-ranking enrichment onto freshly computed items. enrichment...",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L3065"
     },
     {
       "id": "apps_clinic_dashboard_next_config",
@@ -49062,6 +48787,39 @@
       "source_location": "L2507"
     },
     {
+      "id": "claude_skills_last30days_scripts_lib_render_rationale_3413",
+      "label": "Exclude off-topic-but-viral candidates from Best Takes. Delegates to\u2026",
+      "_origin": "ast",
+      "community": 40,
+      "community_name": "render_compact",
+      "file_type": "rationale",
+      "norm_label": "exclude off-topic-but-viral candidates from best takes. delegates to...",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L3413"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_render_rationale_3424",
+      "label": "LLM humor score plus a bounded, relevance-confidence-scaled crowd nudge.\u2026",
+      "_origin": "ast",
+      "community": 40,
+      "community_name": "render_compact",
+      "file_type": "rationale",
+      "norm_label": "llm humor score plus a bounded, relevance-confidence-scaled crowd nudge....",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L3424"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_render_rationale_375",
+      "label": "Keep qualifying MMR representatives, or promote a conservative fallback.",
+      "_origin": "ast",
+      "community": 40,
+      "community_name": "render_compact",
+      "file_type": "rationale",
+      "norm_label": "keep qualifying mmr representatives, or promote a conservative fallback.",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L375"
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_render_rationale_439",
       "label": "Return visible clusters with positive, non-entity-miss evidence. A zero-score\u2026",
       "_origin": "ast",
@@ -49082,17 +48840,6 @@
       "norm_label": "exclude rejected cluster members while preserving unclustered evidence.",
       "source_file": ".claude/skills/last30days/scripts/lib/render.py",
       "source_location": "L488"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_render_rationale_518",
-      "label": "Render private local evidence in one removable, clearly badged block.",
-      "_origin": "ast",
-      "community": 40,
-      "community_name": "render_compact",
-      "file_type": "rationale",
-      "norm_label": "render private local evidence in one removable, clearly badged block.",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L518"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_render_rationale_62",
@@ -49948,13 +49695,46 @@
       "source_location": "L419"
     },
     {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_py_exception",
+      "label": "Exception",
+      "_origin": "ast",
+      "community": 45,
+      "community_name": "run",
+      "file_type": "code",
+      "norm_label": "exception",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_py_path",
+      "label": "Path",
+      "_origin": "ast",
+      "community": 45,
+      "community_name": "run",
+      "file_type": "code",
+      "norm_label": "path",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_schema_py_runoutcomestate",
       "label": "RunOutcomeState",
       "_origin": "ast",
       "community": 45,
-      "community_name": "_discovery_sweep",
+      "community_name": "run",
       "file_type": "code",
       "norm_label": "runoutcomestate",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "lock",
+      "label": "Lock",
+      "_origin": "ast",
+      "community": 45,
+      "community_name": "run",
+      "file_type": "code",
+      "norm_label": "lock",
       "source_file": "",
       "source_location": ""
     },
@@ -49963,7 +49743,7 @@
       "label": "Get the date range for the last N days. When as_of_date is provided, the range\u2026",
       "_origin": "ast",
       "community": 45,
-      "community_name": "_discovery_sweep",
+      "community_name": "run",
       "file_type": "rationale",
       "norm_label": "get the date range for the last n days. when as_of_date is provided, the range...",
       "source_file": ".claude/skills/last30days/scripts/lib/dates.py",
@@ -49974,7 +49754,7 @@
       "label": "The shared front half of both discovery entry points: the resolved plan and\u2026",
       "_origin": "ast",
       "community": 45,
-      "community_name": "_discovery_sweep",
+      "community_name": "run",
       "file_type": "rationale",
       "norm_label": "the shared front half of both discovery entry points: the resolved plan and...",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
@@ -49985,29 +49765,117 @@
       "label": "Resolve the momentum window, validate/bound the listing sources, build the\u2026",
       "_origin": "ast",
       "community": 45,
-      "community_name": "_discovery_sweep",
+      "community_name": "run",
       "file_type": "rationale",
       "norm_label": "resolve the momentum window, validate/bound the listing sources, build the...",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
       "source_location": "L1110"
     },
     {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_1884",
+      "label": "Worker-pool size for the per-stream fanout inside a single pipeline run. Top-\u2026",
+      "_origin": "ast",
+      "community": 45,
+      "community_name": "run",
+      "file_type": "rationale",
+      "norm_label": "worker-pool size for the per-stream fanout inside a single pipeline run. top-...",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L1884"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_1906",
+      "label": "Resolve compact prior-run context without making a research run depend on it.",
+      "_origin": "ast",
+      "community": 45,
+      "community_name": "run",
+      "file_type": "rationale",
+      "norm_label": "resolve compact prior-run context without making a research run depend on it.",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L1906"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_3237",
+      "label": "Detect 429 rate-limit errors by status code or message text.",
+      "_origin": "ast",
+      "community": 45,
+      "community_name": "run",
+      "file_type": "rationale",
+      "norm_label": "detect 429 rate-limit errors by status code or message text.",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L3237"
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_3412",
       "label": "Sync outcome counts to the final post-filter evidence set.",
       "_origin": "ast",
       "community": 45,
-      "community_name": "_discovery_sweep",
+      "community_name": "run",
       "file_type": "rationale",
       "norm_label": "sync outcome counts to the final post-filter evidence set.",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
       "source_location": "L3412"
     },
     {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_3440",
+      "label": "Detect 5xx server errors that are worth retrying.",
+      "_origin": "ast",
+      "community": 45,
+      "community_name": "run",
+      "file_type": "rationale",
+      "norm_label": "detect 5xx server errors that are worth retrying.",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L3440"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_3449",
+      "label": "@mentions in the topic, which are real X handles. These are used to determine\u2026",
+      "_origin": "ast",
+      "community": 45,
+      "community_name": "run",
+      "file_type": "rationale",
+      "norm_label": "@mentions in the topic, which are real x handles. these are used to determine...",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L3449"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_3462",
+      "label": "Handle-shaped tokens in the topic itself, usable before any retrieval. Phase 1\u2026",
+      "_origin": "ast",
+      "community": 45,
+      "community_name": "run",
+      "file_type": "rationale",
+      "norm_label": "handle-shaped tokens in the topic itself, usable before any retrieval. phase 1...",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L3462"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_3523",
+      "label": "Phase 2: extract entities from Phase 1 results, run targeted supplemental\u2026",
+      "_origin": "ast",
+      "community": 45,
+      "community_name": "run",
+      "file_type": "rationale",
+      "norm_label": "phase 2: extract entities from phase 1 results, run targeted supplemental...",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L3523"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_3923",
+      "label": "Retry sources with thin results using simplified core subject query.",
+      "_origin": "ast",
+      "community": 45,
+      "community_name": "run",
+      "file_type": "rationale",
+      "norm_label": "retry sources with thin results using simplified core subject query.",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L3923"
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_schema_rationale_181",
       "label": "What happened to one source during this run. Doctor predicts whether a source\u2026",
       "_origin": "ast",
       "community": 45,
-      "community_name": "_discovery_sweep",
+      "community_name": "run",
       "file_type": "rationale",
       "norm_label": "what happened to one source during this run. doctor predicts whether a source...",
       "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
@@ -50018,7 +49886,7 @@
       "label": "Structured retrieval output before global ranking.",
       "_origin": "ast",
       "community": 45,
-      "community_name": "_discovery_sweep",
+      "community_name": "run",
       "file_type": "rationale",
       "norm_label": "structured retrieval output before global ranking.",
       "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
@@ -50029,7 +49897,7 @@
       "label": "Register a planned source before its first retrieval starts.",
       "_origin": "ast",
       "community": 45,
-      "community_name": "_discovery_sweep",
+      "community_name": "run",
       "file_type": "rationale",
       "norm_label": "register a planned source before its first retrieval starts.",
       "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
@@ -50040,22 +49908,44 @@
       "label": "Record a failure, preserving already-returned items as partial. AUTH_FAILED is\u2026",
       "_origin": "ast",
       "community": 45,
-      "community_name": "_discovery_sweep",
+      "community_name": "run",
       "file_type": "rationale",
       "norm_label": "record a failure, preserving already-returned items as partial. auth_failed is...",
       "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
       "source_location": "L360"
     },
     {
+      "id": "claude_skills_last30days_scripts_lib_schema_rationale_37",
+      "label": "Resolved runtime provider selection.",
+      "_origin": "ast",
+      "community": 45,
+      "community_name": "run",
+      "file_type": "rationale",
+      "norm_label": "resolved runtime provider selection.",
+      "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
+      "source_location": "L37"
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_schema_rationale_383",
       "label": "Atomically append items to both items_by_source_and_query and items_by_source.",
       "_origin": "ast",
       "community": 45,
-      "community_name": "_discovery_sweep",
+      "community_name": "run",
       "file_type": "rationale",
       "norm_label": "atomically append items to both items_by_source_and_query and items_by_source.",
       "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
       "source_location": "L383"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_youtube_yt_rationale_164",
+      "label": "Clear the in-run ytsearch cache. Call at the start of each top-level research\u2026",
+      "_origin": "ast",
+      "community": 45,
+      "community_name": "run",
+      "file_type": "rationale",
+      "norm_label": "clear the in-run ytsearch cache. call at the start of each top-level research...",
+      "source_file": ".claude/skills/last30days/scripts/lib/youtube_yt.py",
+      "source_location": "L164"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_health",
@@ -55263,28 +55153,6 @@
       "source_location": "L985"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_skill_meta",
-      "label": "skill_meta.py",
-      "_origin": "ast",
-      "community": 70,
-      "community_name": "render_full",
-      "file_type": "code",
-      "norm_label": "skill_meta.py",
-      "source_file": ".claude/skills/last30days/scripts/lib/skill_meta.py",
-      "source_location": "L1"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_skill_meta_py_path",
-      "label": "Path",
-      "_origin": "ast",
-      "community": 70,
-      "community_name": "render_full",
-      "file_type": "code",
-      "norm_label": "path",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
       "id": "claude_skills_last30days_scripts_lib_render_rationale_1105",
       "label": "Echo the synthesis contract at the TOP of the evidence envelope. Added\u2026",
       "_origin": "ast",
@@ -55351,37 +55219,70 @@
       "source_location": "L1927"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_render_rationale_28",
-      "label": "Read plugin version from .claude-plugin/plugin.json, falling back to SKILL.md\u2026",
+      "id": "claude_skills_last30days_scripts_lib_render_rationale_2046",
+      "label": "Production brief for downstream pipelines (video, scripting, structured\u2026",
       "_origin": "ast",
       "community": 70,
       "community_name": "render_full",
       "file_type": "rationale",
-      "norm_label": "read plugin version from .claude-plugin/plugin.json, falling back to skill.md...",
+      "norm_label": "production brief for downstream pipelines (video, scripting, structured...",
       "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L28"
+      "source_location": "L2046"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_skill_meta_rationale_1",
-      "label": "SKILL.md metadata helpers \u2014 single source of truth for parsing skill\u2026",
+      "id": "claude_skills_last30days_scripts_lib_render_rationale_2194",
+      "label": "Return titles that read as audience questions, deduped and in ranked order.",
       "_origin": "ast",
       "community": 70,
       "community_name": "render_full",
       "file_type": "rationale",
-      "norm_label": "skill.md metadata helpers \u2014 single source of truth for parsing skill...",
-      "source_file": ".claude/skills/last30days/scripts/lib/skill_meta.py",
-      "source_location": "L1"
+      "norm_label": "return titles that read as audience questions, deduped and in ranked order.",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L2194"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_skill_meta_rationale_20",
-      "label": "Return the version string from a SKILL.md's frontmatter, or None. Returns None\u2026",
+      "id": "claude_skills_last30days_scripts_lib_render_rationale_3652",
+      "label": "Neutralize leading ATX heading markers so scraped text cannot mint sections.",
       "_origin": "ast",
       "community": 70,
       "community_name": "render_full",
       "file_type": "rationale",
-      "norm_label": "return the version string from a skill.md's frontmatter, or none. returns none...",
-      "source_file": ".claude/skills/last30days/scripts/lib/skill_meta.py",
-      "source_location": "L20"
+      "norm_label": "neutralize leading atx heading markers so scraped text cannot mint sections.",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L3652"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_render_rationale_3671",
+      "label": "Truncate scraped text and keep it from injecting markdown structure. Multi-line\u2026",
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "render_full",
+      "file_type": "rationale",
+      "norm_label": "truncate scraped text and keep it from injecting markdown structure. multi-line...",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L3671"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_render_rationale_518",
+      "label": "Render private local evidence in one removable, clearly badged block.",
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "render_full",
+      "file_type": "rationale",
+      "norm_label": "render private local evidence in one removable, clearly badged block.",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L518"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_render_rationale_553",
+      "label": "Source content must not be able to terminate the private-block markers. A note\u2026",
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "render_full",
+      "file_type": "rationale",
+      "norm_label": "source content must not be able to terminate the private-block markers. a note...",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L553"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_telegram",
@@ -57340,15 +57241,59 @@
       "source_location": "L1"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_discovery_handoff_rationale_842",
-      "label": "Re-run the nominate-stage casefold/entity-token collision rules over host-\u2026",
+      "id": "claude_skills_last30days_scripts_lib_pipeline_py_any",
+      "label": "Any",
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "pipeline.py",
+      "file_type": "code",
+      "norm_label": "any",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_py_runoutcomestate",
+      "label": "RunOutcomeState",
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "pipeline.py",
+      "file_type": "code",
+      "norm_label": "runoutcomestate",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_py_runtimeerror",
+      "label": "RuntimeError",
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "pipeline.py",
+      "file_type": "code",
+      "norm_label": "runtimeerror",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_bird_x_rationale_91",
+      "label": "Map Bird's subprocess-only failure shapes to run outcome states.",
       "_origin": "ast",
       "community": 8,
       "community_name": "pipeline.py",
       "file_type": "rationale",
-      "norm_label": "re-run the nominate-stage casefold/entity-token collision rules over host-...",
-      "source_file": ".claude/skills/last30days/scripts/lib/discovery_handoff.py",
-      "source_location": "L842"
+      "norm_label": "map bird's subprocess-only failure shapes to run outcome states.",
+      "source_file": ".claude/skills/last30days/scripts/lib/bird_x.py",
+      "source_location": "L91"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_http_rationale_499",
+      "label": "Map a request failure to the doctor-aligned per-run vocabulary.",
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "pipeline.py",
+      "file_type": "rationale",
+      "norm_label": "map a request failure to the doctor-aligned per-run vocabulary.",
+      "source_file": ".claude/skills/last30days/scripts/lib/http.py",
+      "source_location": "L499"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_1",
@@ -57450,6 +57395,17 @@
       "source_location": "L1373"
     },
     {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_142",
+      "label": "Return the effective per-run cap for one source. Every Perplexity adapter call\u2026",
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "pipeline.py",
+      "file_type": "rationale",
+      "norm_label": "return the effective per-run cap for one source. every perplexity adapter call...",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L142"
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_1425",
       "label": "Folded survivor records to ranked topics (ranks = 1-based positions).",
       "_origin": "ast",
@@ -57481,6 +57437,17 @@
       "norm_label": "sweep category listings and rank the topics gaining velocity....",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
       "source_location": "L1483"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_158",
+      "label": "Depth profile with optional CLI cap overrides applied (issue #716). Returns a\u2026",
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "pipeline.py",
+      "file_type": "rationale",
+      "norm_label": "depth profile with optional cli cap overrides applied (issue #716). returns a...",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L158"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_1584",
@@ -57516,15 +57483,70 @@
       "source_location": "L1618"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_3065",
-      "label": "Apply recorded post-ranking enrichment onto freshly computed items. Enrichment\u2026",
+      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_3244",
+      "label": "Source-specific failure that survived a module's fallback logic.",
       "_origin": "ast",
       "community": 8,
       "community_name": "pipeline.py",
       "file_type": "rationale",
-      "norm_label": "apply recorded post-ranking enrichment onto freshly computed items. enrichment...",
+      "norm_label": "source-specific failure that survived a module's fallback logic.",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L3065"
+      "source_location": "L3244"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_3252",
+      "label": "Classify HTTP, subprocess, and module-specific failures consistently.",
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "pipeline.py",
+      "file_type": "rationale",
+      "norm_label": "classify http, subprocess, and module-specific failures consistently.",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L3252"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_3294",
+      "label": "Convert a legacy ``{\"error\": ...}`` source result into typed status.",
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "pipeline.py",
+      "file_type": "rationale",
+      "norm_label": "convert a legacy ``{\"error\": ...}`` source result into typed status.",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L3294"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_3322",
+      "label": "Map known pre-outcome artifact contracts to a typed outcome note.",
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "pipeline.py",
+      "file_type": "rationale",
+      "norm_label": "map known pre-outcome artifact contracts to a typed outcome note.",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L3322"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_3383",
+      "label": "Choose the most specific artifact or captured HTTP outcome.",
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "pipeline.py",
+      "file_type": "rationale",
+      "norm_label": "choose the most specific artifact or captured http outcome.",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L3383"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_389",
+      "label": "Deterministic listing fixtures for the public --mock CLI contract.",
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "pipeline.py",
+      "file_type": "rationale",
+      "norm_label": "deterministic listing fixtures for the public --mock cli contract.",
+      "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
+      "source_location": "L389"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_4088",
@@ -57549,48 +57571,48 @@
       "source_location": "L4095"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_672",
-      "label": "A named candidate topic produced by the nominate stage. ``seed_score`` is the\u2026",
+      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_4111",
+      "label": "Run one stream and retain HTTP failures swallowed by source adapters.",
       "_origin": "ast",
       "community": 8,
       "community_name": "pipeline.py",
       "file_type": "rationale",
-      "norm_label": "a named candidate topic produced by the nominate stage. ``seed_score`` is the...",
+      "norm_label": "run one stream and retain http failures swallowed by source adapters.",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L672"
+      "source_location": "L4111"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_722",
-      "label": "Disambiguate a colliding topic name by appending the later cluster's strongest\u2026",
+      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_453",
+      "label": "Require a distinctive domain term, not a generic token such as ``AI``.",
       "_origin": "ast",
       "community": 8,
       "community_name": "pipeline.py",
       "file_type": "rationale",
-      "norm_label": "disambiguate a colliding topic name by appending the later cluster's strongest...",
+      "norm_label": "require a distinctive domain term, not a generic token such as ``ai``.",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L722"
+      "source_location": "L453"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_788",
-      "label": "Stage 1b of discovery: cluster nominated items into named candidate topics,\u2026",
+      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_482",
+      "label": "Fetch one listing/river source for the nominate stage. ``keyword_gate``\u2026",
       "_origin": "ast",
       "community": 8,
       "community_name": "pipeline.py",
       "file_type": "rationale",
-      "norm_label": "stage 1b of discovery: cluster nominated items into named candidate topics,...",
+      "norm_label": "fetch one listing/river source for the nominate stage. ``keyword_gate``...",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L788"
+      "source_location": "L482"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_895",
-      "label": "``nominate_topic_pool`` without the cluster ids: the one-shot discovery path's\u2026",
+      "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_600",
+      "label": "Stage 1 of discovery: fetch, normalize, and bundle candidate hot items from the\u2026",
       "_origin": "ast",
       "community": 8,
       "community_name": "pipeline.py",
       "file_type": "rationale",
-      "norm_label": "``nominate_topic_pool`` without the cluster ids: the one-shot discovery path's...",
+      "norm_label": "stage 1 of discovery: fetch, normalize, and bundle candidate hot items from the...",
       "source_file": ".claude/skills/last30days/scripts/lib/pipeline.py",
-      "source_location": "L895"
+      "source_location": "L600"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_pipeline_rationale_916",
@@ -57615,59 +57637,26 @@
       "source_location": "L940"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_rerank_rationale_130",
-      "label": "Whether a discovery topic's evidence is strong enough to show a user. Below\u2026",
+      "id": "claude_skills_last30days_scripts_lib_reddit_rationale_83",
+      "label": "Map Reddit auth and anti-bot responses that do not carry HTTP status.",
       "_origin": "ast",
       "community": 8,
       "community_name": "pipeline.py",
       "file_type": "rationale",
-      "norm_label": "whether a discovery topic's evidence is strong enough to show a user. below...",
-      "source_file": ".claude/skills/last30days/scripts/lib/rerank.py",
-      "source_location": "L130"
+      "norm_label": "map reddit auth and anti-bot responses that do not carry http status.",
+      "source_file": ".claude/skills/last30days/scripts/lib/reddit.py",
+      "source_location": "L83"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_rerank_rationale_166",
-      "label": "Velocity-dominant, worthiness-weighted ranking score (constants above).",
+      "id": "claude_skills_last30days_scripts_lib_schema_rationale_271",
+      "label": "Topic-less listing feeds selected for a domain sweep.",
       "_origin": "ast",
       "community": 8,
       "community_name": "pipeline.py",
       "file_type": "rationale",
-      "norm_label": "velocity-dominant, worthiness-weighted ranking score (constants above).",
-      "source_file": ".claude/skills/last30days/scripts/lib/rerank.py",
-      "source_location": "L166"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_rerank_rationale_51",
-      "label": "Return comparable native interaction counts for discovery evidence.",
-      "_origin": "ast",
-      "community": 8,
-      "community_name": "pipeline.py",
-      "file_type": "rationale",
-      "norm_label": "return comparable native interaction counts for discovery evidence.",
-      "source_file": ".claude/skills/last30days/scripts/lib/rerank.py",
-      "source_location": "L51"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_rerank_rationale_72",
-      "label": "Weight native engagement by age, with an explicit first-week boost.",
-      "_origin": "ast",
-      "community": 8,
-      "community_name": "pipeline.py",
-      "file_type": "rationale",
-      "norm_label": "weight native engagement by age, with an explicit first-week boost.",
-      "source_file": ".claude/skills/last30days/scripts/lib/rerank.py",
-      "source_location": "L72"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_rerank_rationale_93",
-      "label": "Score a topic cluster and reward independent cross-source confirmation.",
-      "_origin": "ast",
-      "community": 8,
-      "community_name": "pipeline.py",
-      "file_type": "rationale",
-      "norm_label": "score a topic cluster and reward independent cross-source confirmation.",
-      "source_file": ".claude/skills/last30days/scripts/lib/rerank.py",
-      "source_location": "L93"
+      "norm_label": "topic-less listing feeds selected for a domain sweep.",
+      "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
+      "source_location": "L271"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_schema_rationale_281",
@@ -57679,6 +57668,17 @@
       "norm_label": "one engagement-ranked topic produced by a discovery sweep. ``top_comment`` is...",
       "source_file": ".claude/skills/last30days/scripts/lib/schema.py",
       "source_location": "L281"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_youtube_yt_rationale_269",
+      "label": "Map yt-dlp's text-only throttling and bot-gate errors.",
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "pipeline.py",
+      "file_type": "rationale",
+      "norm_label": "map yt-dlp's text-only throttling and bot-gate errors.",
+      "source_file": ".claude/skills/last30days/scripts/lib/youtube_yt.py",
+      "source_location": "L269"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_youtube_yt_py_any",
@@ -165724,7 +165724,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/CURRENT_STAGE.md",
-      "source_location": "L40",
+      "source_location": "L42",
       "weight": 1.0
     },
     {
@@ -165735,7 +165735,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/CURRENT_STAGE.md",
-      "source_location": "L58",
+      "source_location": "L60",
       "weight": 1.0
     },
     {
@@ -165746,7 +165746,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/CURRENT_STAGE.md",
-      "source_location": "L73",
+      "source_location": "L75",
       "weight": 1.0
     },
     {
@@ -165757,7 +165757,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/CURRENT_STAGE.md",
-      "source_location": "L79",
+      "source_location": "L81",
       "weight": 1.0
     },
     {
@@ -165768,7 +165768,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/CURRENT_STAGE.md",
-      "source_location": "L85",
+      "source_location": "L87",
       "weight": 1.0
     },
     {
@@ -165779,7 +165779,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/CURRENT_STAGE.md",
-      "source_location": "L95",
+      "source_location": "L97",
       "weight": 1.0
     },
     {
@@ -166334,17 +166334,6 @@
     },
     {
       "source": "docs_phase_2_checkpoint_a_review_phase_2_backend_checkpoint_a_review",
-      "target": "docs_phase_2_checkpoint_a_review_how_akshar_can_verify_it",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/PHASE_2_CHECKPOINT_A_REVIEW.md",
-      "source_location": "L48",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_phase_2_checkpoint_a_review_phase_2_backend_checkpoint_a_review",
       "target": "docs_phase_2_checkpoint_a_review_what_now_works",
       "relation": "contains",
       "_origin": "ast",
@@ -166356,13 +166345,24 @@
     },
     {
       "source": "docs_phase_2_checkpoint_a_review_phase_2_backend_checkpoint_a_review",
+      "target": "docs_phase_2_checkpoint_a_review_how_akshar_can_verify_it",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/PHASE_2_CHECKPOINT_A_REVIEW.md",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_phase_2_checkpoint_a_review_phase_2_backend_checkpoint_a_review",
       "target": "docs_phase_2_checkpoint_a_review_verification_evidence",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/PHASE_2_CHECKPOINT_A_REVIEW.md",
-      "source_location": "L60",
+      "source_location": "L62",
       "weight": 1.0
     },
     {
@@ -166373,7 +166373,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/PHASE_2_CHECKPOINT_A_REVIEW.md",
-      "source_location": "L67",
+      "source_location": "L69",
       "weight": 1.0
     },
     {

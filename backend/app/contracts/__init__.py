@@ -11,6 +11,14 @@ from backend.app.contracts.events import (
     EventPriorityHistoryResponse,
     EventResponse,
 )
+from backend.app.contracts.devices import (
+    DeviceAssignmentResponse,
+    DeviceHealthDataAvailability,
+    DeviceHealthResponse,
+    DeviceListItemResponse,
+    DeviceListResponse,
+    DeviceSourceHealthResponse,
+)
 from backend.app.contracts.feedback import MemoryEntryResponse, ResidentMemoryResponse
 from backend.app.contracts.residents import ResidentListResponse, ResidentSummary
 from backend.app.contracts.status import (
@@ -28,6 +36,12 @@ __all__ = [
     "CalibrationDimensionResponse",
     "CalibrationResponse",
     "ContractModel",
+    "DeviceAssignmentResponse",
+    "DeviceHealthDataAvailability",
+    "DeviceHealthResponse",
+    "DeviceListItemResponse",
+    "DeviceListResponse",
+    "DeviceSourceHealthResponse",
     "ErrorDetail",
     "ErrorEnvelope",
     "EventActionResponse",
