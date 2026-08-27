@@ -41,7 +41,14 @@ class RepositoryPolicyTests(unittest.TestCase):
         validation = (ROOT / ".github/workflows/repository-validation.yml").read_text(encoding="utf-8")
         automerge = (ROOT / ".github/workflows/enable-automerge.yml").read_text(encoding="utf-8")
         self.assertIn("pull_request:", validation)
+        self.assertIn("actions/setup-python@v5", validation)
+        self.assertIn("python3 -m pip install -e '.[dev]'", validation)
+        self.assertIn("python3 -m pytest -q", validation)
         self.assertIn("python3 -m unittest discover", validation)
+        self.assertLess(
+            validation.index("python3 -m pip install -e '.[dev]'"),
+            validation.index("python3 -m pytest -q"),
+        )
         self.assertIn("pull_request_target:", automerge)
         self.assertIn("gh pr merge --auto --squash", automerge)
         self.assertIn("head.repo.full_name == github.repository", automerge)
