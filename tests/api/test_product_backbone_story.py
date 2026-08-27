@@ -156,6 +156,15 @@ def test_complete_synthetic_caregiver_story_survives_application_restart(
         assert [
             item["action"] for item in recovered_event.json()["action_history"]
         ] == ["opened", "acknowledged", "checked", "resolved"]
+        assert recovered_event.json()["priority_history"] == [
+            {
+                "schema_version": "1.0",
+                "previous_priority": None,
+                "priority": "high",
+                "actor_id": "system:monitoring_event",
+                "changed_at": "2026-08-24T21:02:11Z",
+            }
+        ]
         assert recovered_event.json()["resolution_outcome"] == "false_positive"
         assert recovered_memory.json()["version"] == 1
         assert recovered_memory.json()["entries"][0]["description"] == (

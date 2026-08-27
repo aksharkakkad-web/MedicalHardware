@@ -10,6 +10,7 @@ from backend.app.config import Settings
 from backend.app.db.models import (
     AuditLogRow,
     EventActionRow,
+    EventPriorityHistoryRow,
     FeedbackRecordRow,
     IdempotencyRecordRow,
     ResidentMemoryEntryRow,
@@ -143,6 +144,9 @@ def test_assignment_event_feedback_memory_audit_and_retries_are_durable(
             assert session.scalar(
                 select(func.count()).select_from(EventActionRow)
             ) == 4
+            assert session.scalar(
+                select(func.count()).select_from(EventPriorityHistoryRow)
+            ) == 1
             assert session.scalar(
                 select(func.count()).select_from(FeedbackRecordRow)
             ) == 1
