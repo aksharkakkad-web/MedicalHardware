@@ -1,6 +1,8 @@
 # Current Project Stage
 
-**Updated:** August 26, 2026
+**Updated:** August 27, 2026
+
+**Operating status:** Phase 1 product-logic foundation is complete. Phase 2, the first complete event experience, is ready to start. See `docs/PHASE_GATES.md` for the shared start → build → review → merge → next-phase process.
 
 ## Where we are now
 
@@ -24,7 +26,7 @@ All of this currently runs in memory with deterministic toy data and automated t
 
 Rishit does not need to wait for the database, API, or hardware.
 
-He can build the real clinic dashboard and home experience against contract-valid mock data, including:
+He can build the real clinic dashboard and separate home experience against contract-valid mock data, including:
 
 - room and resident status;
 - active, away, limited, and unavailable monitoring states;
@@ -35,6 +37,8 @@ He can build the real clinic dashboard and home experience against contract-vali
 - settings for awareness items and notifications.
 
 The frontend should place mock data behind a replaceable client/provider. Later, the real backend API replaces that mock provider without redesigning the screens.
+
+The clinic caregiver experience is the first complete user journey. Rishit can build the full separate home experience on mocks now; Phase 7 later connects and validates that existing experience against mature monitoring data and family-safe permissions rather than rebuilding it.
 
 ## What Akshar builds next
 
@@ -72,6 +76,7 @@ Real hardware later replaces the simulator as the telemetry producer. It should 
 
 ## Source-of-truth handoff
 
+- Phase status, review gates, and team cadence: `docs/PHASE_GATES.md`
 - Product behavior: `docs/PRD.md`
 - System boundaries: `docs/ARCHITECTURE.md`
 - Shared frontend/backend/hardware language: `docs/DATA_CONTRACT.md`

@@ -78,6 +78,14 @@ The final market, medical thresholds, LLM provider, exact sensor math, and real 
 
 ## Three-track roadmap
 
+### How phases move forward
+
+Each phase follows one shared rhythm: agree on a clear story and non-goals, build independently in each owner lane, prove the story with tests and a plain-language walkthrough, review it together, update the relevant docs, merge, and explicitly start the next phase. The phase order is a dependency and integration map, not a rule that any founder waits for another.
+
+`docs/PHASE_GATES.md` is the operating dashboard for current status, phase entry criteria, exit checkpoints, and the frontend/backend/hardware tracks together.
+
+**Current status:** the toy-data product-logic foundation is complete. Phase 2 is ready to start; it makes the first caregiver event journey durable and connectable while Rishit builds the clinic flow on contract-valid mocks.
+
 ### Phase 1 — Product and project foundation
 
 **Shared product work**
@@ -175,29 +183,7 @@ The frontend connects to the real backend using toy data without redesigning the
 
 A caregiver can understand an event, explain what actually happened, and see that feedback preserved for future context.
 
-### Phase 5 — Simulated monitoring
-
-**Rishit/product scenario track**
-
-- Generate realistic scenarios for normal activity, unusual movement, physiological deviation, unknown anomaly, sensor failure, multiple people, room-assignment problems, and recovery.
-- Keep the true scenario label outside the product information so the system cannot cheat.
-
-**Backend track**
-
-- Accept simulated radar, thermal, and Wi-Fi CSI information.
-- Handle duplicates, delays, missing sensors, and device connectivity problems.
-- Turn sensor-specific information into a consistent internal form.
-
-**Hardware track**
-
-- Refine device-shaped simulated output and expected quality signals.
-- Prepare firmware modules and test fixtures that can later replace simulated producers.
-
-**Checkpoint**
-
-A simulated room scenario can travel through the backend and appear as a meaningful product state or event.
-
-### Phase 6 — Monitoring intelligence
+### Phase 5 — Monitoring intelligence on normalized simulated data
 
 **Frontend track**
 
@@ -206,7 +192,7 @@ A simulated room scenario can travel through the backend and appear as a meaning
 
 **Backend track**
 
-- Combine the different sensors for the resident assigned to the monitored room.
+- Use normalized simulated fixtures to combine the different sensors for the resident assigned to the monitored room.
 - Learn what is normal for each resident.
 - Detect known unusual patterns and unknown anomalies.
 - Create confidence and deterministic warning decisions.
@@ -221,21 +207,44 @@ A simulated room scenario can travel through the backend and appear as a meaning
 
 Normal scenarios stay mostly quiet, meaningful simulated changes create understandable events, and weak data visibly lowers confidence.
 
-### Phase 7 — Home/family product
+### Phase 6 — Simulated telemetry and ingestion
 
-**Frontend track**
+**Rishit/product scenario track**
 
-- Build a separate, simpler home experience focused on “Are they okay?”
-- Reuse shared product information without copying the clinic workflow or visual style.
+- Generate realistic scenarios for normal activity, unusual movement, physiological deviation, unknown anomaly, sensor failure, multiple people, room-assignment problems, and recovery.
+- Keep the true scenario label outside the product information so the system cannot cheat.
 
 **Backend track**
 
-- Provide a home-appropriate view of the same resident and event information.
-- Keep clinic operations, permissions, and sensitive context out of the home experience.
+- Accept simulated radar, thermal, and Wi-Fi CSI information through the compact edge-telemetry boundary.
+- Handle duplicates, delays, missing sensors, and device connectivity problems.
+- Turn sensor-specific information into a consistent internal form and pass it through the established monitoring/event engine.
+
+**Hardware track**
+
+- Refine device-shaped simulated output and expected quality signals.
+- Prepare firmware modules and test fixtures that can later replace simulated producers.
 
 **Checkpoint**
 
-Clinic staff and families receive different experiences from the same core monitoring engine.
+A simulated room scenario can travel through the future hardware boundary, the established backend intelligence, and the product UI without rewriting the product flow.
+
+### Phase 7 — Home/family real-data connection and validation
+
+**Frontend track**
+
+- Replace the full separate home experience built on mocks in Phase 2 with a family-safe real-data client.
+- Validate “Are they okay?” language, permissions, and data boundaries without copying clinic workflow or visual style.
+- Do not rebuild the Phase 2 home screens unless real-data evidence requires a deliberate product change.
+
+**Backend track**
+
+- Provide a home-appropriate, permissioned view of the same resident and event information.
+- Keep clinic operations and sensitive context out of the home experience.
+
+**Checkpoint**
+
+The existing home experience runs on mature monitoring data; clinic staff and families receive different, safe experiences from the same core monitoring engine.
 
 ### Phase 8 — Evaluation and product learning
 
@@ -327,6 +336,7 @@ This toy slice does not yet prove persistence, HTTP APIs, authentication, notifi
 
 ## Source-of-truth documents
 
+- `docs/PHASE_GATES.md` — current phase, shared review gates, and the complete three-track phase map
 - `docs/CURRENT_STAGE.md` — simple cofounder handoff: current progress, parallel work, and convergence
 - `docs/PRD.md` — what the product should do
 - `docs/ARCHITECTURE.md` — how the major pieces connect

@@ -18,6 +18,8 @@ The three owners work within stable system boundaries rather than taking turns b
 
 The milestone order in `BUILD_PLAN.md` describes dependencies and integration checkpoints. It does **not** mean one founder waits while the other completes a phase.
 
+Use `docs/PHASE_GATES.md` to see the current phase, the frontend/backend/hardware outcome for that phase, and the required review before the team advances.
+
 ---
 
 ## 2. Akshar — Backend & Intelligence Owner
