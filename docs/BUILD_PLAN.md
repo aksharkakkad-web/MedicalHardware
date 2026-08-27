@@ -247,7 +247,7 @@ Build:
 
 ### Home app — production UI backed by mock client
 
-This early mock-backed surface establishes the separate home data/client boundary and family-safe language. The full home/family product becomes a later shared-product phase after the core monitoring experience is mature; it must not copy clinic operations.
+This is the full mock-backed home experience: it establishes its separate data/client boundary and family-safe language, and it must not copy clinic operations. A later phase switches this existing experience to mature real monitoring data and family-safe permissions; it does not rebuild the same screens.
 
 Build:
 
