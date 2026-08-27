@@ -930,9 +930,9 @@
     "semantic_hash": ""
   },
   "backend/app/db/models.py": {
-    "mtime": 1787873943.2407265,
-    "seen": 1787874241.1346219,
-    "ast_hash": "dcf68056cd69eeaec5acdd372abd20b5",
+    "mtime": 1787874449.9623933,
+    "seen": 1787874556.420804,
+    "ast_hash": "51bbdce76c77e4df3d909be4a4b1b8dc",
     "semantic_hash": ""
   },
   "backend/app/db/repositories.py": {
@@ -1206,9 +1206,9 @@
     "semantic_hash": ""
   },
   "tests/persistence/test_migrations.py": {
-    "mtime": 1787873943.2832484,
-    "seen": 1787874241.134644,
-    "ast_hash": "536e771deaf0b5bfdce3d467f0e6876f",
+    "mtime": 1787874499.0363457,
+    "seen": 1787874556.420827,
+    "ast_hash": "6016004876e9661d82f007d078760422",
     "semantic_hash": ""
   },
   "tests/persistence/test_optimistic_concurrency.py": {
@@ -1224,9 +1224,9 @@
     "semantic_hash": ""
   },
   "tests/persistence/test_restart_durability.py": {
-    "mtime": 1787873943.2833385,
-    "seen": 1787874241.134645,
-    "ast_hash": "00b28acd2abab23808efc2a1dde04580",
+    "mtime": 1787874532.0837708,
+    "seen": 1787874556.4208279,
+    "ast_hash": "8654c0e161c9dc8dc2b5c19826f59e0b",
     "semantic_hash": ""
   },
   "tests/persistence/test_seed.py": {
@@ -1959,6 +1959,36 @@
     "mtime": 1787874060.529521,
     "seen": 1787874241.134681,
     "ast_hash": "a415b49159699bebc3d49849ac949725",
+    "semantic_hash": ""
+  },
+  "backend/app/db/device_mappers.py": {
+    "mtime": 1787874449.9633508,
+    "seen": 1787874556.4208,
+    "ast_hash": "026bdae05744b2651e44e6d7abb95969",
+    "semantic_hash": ""
+  },
+  "backend/app/db/device_repositories.py": {
+    "mtime": 1787874532.0834293,
+    "seen": 1787874556.420801,
+    "ast_hash": "70afefdd8bbc36c5054d70931cdf4a45",
+    "semantic_hash": ""
+  },
+  "backend/app/db/migrations/versions/0003_device_health.py": {
+    "mtime": 1787874449.96316,
+    "seen": 1787874556.420804,
+    "ast_hash": "c75848da8b768cf1650daba4d22c7a9a",
+    "semantic_hash": ""
+  },
+  "tests/persistence/test_device_repositories.py": {
+    "mtime": 1787874338.6535718,
+    "seen": 1787874556.420825,
+    "ast_hash": "a58c500a3a9aad08431bc4c6e1629cae",
+    "semantic_hash": ""
+  },
+  "tests/persistence/test_device_schema.py": {
+    "mtime": 1787874338.6530316,
+    "seen": 1787874556.4208262,
+    "ast_hash": "dd9edc69964f4a7991c0a2a586b7e9d3",
     "semantic_hash": ""
   }
 }

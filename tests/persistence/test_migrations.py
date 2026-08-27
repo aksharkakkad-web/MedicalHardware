@@ -23,6 +23,10 @@ EXPECTED_TABLES = {
     "monitoring_status_snapshots",
     "calibration_snapshots",
     "monitoring_setup_changes",
+    "locations",
+    "devices",
+    "device_room_assignments",
+    "device_health_observations",
 }
 
 EXPECTED_COLUMNS = {
@@ -179,6 +183,38 @@ EXPECTED_COLUMNS = {
         "actor_id": False,
         "changed_at": False,
     },
+    "locations": {
+        "location_id": False,
+        "tenant_id": False,
+        "label": False,
+    },
+    "devices": {
+        "device_id": False,
+        "tenant_id": False,
+        "display_label": False,
+    },
+    "device_room_assignments": {
+        "assignment_id": False,
+        "tenant_id": False,
+        "device_id": False,
+        "location_id": False,
+        "room_id": False,
+        "status": False,
+        "effective_from": False,
+        "effective_to": True,
+    },
+    "device_health_observations": {
+        "device_health_observation_id": False,
+        "tenant_id": False,
+        "device_id": False,
+        "observed_at": False,
+        "last_seen_at": True,
+        "state": False,
+        "sources": False,
+        "limitations": False,
+        "policy_version": False,
+        "policy_test_only": False,
+    },
 }
 
 EXPECTED_PRIMARY_KEYS = {
@@ -197,6 +233,10 @@ EXPECTED_PRIMARY_KEYS = {
     "monitoring_status_snapshots": ("monitoring_status_id",),
     "calibration_snapshots": ("calibration_snapshot_id",),
     "monitoring_setup_changes": ("monitoring_setup_change_id",),
+    "locations": ("location_id",),
+    "devices": ("device_id",),
+    "device_room_assignments": ("assignment_id",),
+    "device_health_observations": ("device_health_observation_id",),
 }
 
 EXPECTED_FOREIGN_KEYS = {
@@ -257,6 +297,22 @@ EXPECTED_FOREIGN_KEYS = {
         ("tenant_id", "residents", "tenant_id"),
         ("resident_id", "residents", "resident_id"),
     },
+    "locations": {("tenant_id", "tenants", "tenant_id")},
+    "devices": {("tenant_id", "tenants", "tenant_id")},
+    "device_room_assignments": {
+        ("tenant_id", "tenants", "tenant_id"),
+        ("tenant_id", "devices", "tenant_id"),
+        ("tenant_id", "locations", "tenant_id"),
+        ("tenant_id", "rooms", "tenant_id"),
+        ("device_id", "devices", "device_id"),
+        ("location_id", "locations", "location_id"),
+        ("room_id", "rooms", "room_id"),
+    },
+    "device_health_observations": {
+        ("tenant_id", "tenants", "tenant_id"),
+        ("tenant_id", "devices", "tenant_id"),
+        ("device_id", "devices", "device_id"),
+    },
 }
 
 EXPECTED_UNIQUES = {
@@ -275,6 +331,8 @@ EXPECTED_UNIQUES = {
     "monitoring_setup_changes": {
         ("tenant_id", "resident_id", "calibration_version"),
     },
+    "locations": {("tenant_id", "location_id")},
+    "devices": {("tenant_id", "device_id")},
 }
 
 EXPECTED_INDEXES = {
@@ -302,6 +360,17 @@ EXPECTED_INDEXES = {
     },
     "calibration_snapshots": {("tenant_id",), ("resident_id",)},
     "monitoring_setup_changes": {("tenant_id",), ("resident_id",)},
+    "locations": {("tenant_id",)},
+    "devices": {("tenant_id",)},
+    "device_room_assignments": {
+        ("tenant_id",),
+        ("device_id",),
+        ("location_id",),
+        ("room_id",),
+        ("tenant_id", "device_id"),
+        ("tenant_id", "room_id"),
+    },
+    "device_health_observations": {("tenant_id",), ("device_id",)},
 }
 
 EXPECTED_COMPOSITE_OWNERSHIP_FOREIGN_KEYS = {
@@ -342,6 +411,18 @@ EXPECTED_COMPOSITE_OWNERSHIP_FOREIGN_KEYS = {
             "residents",
             ("tenant_id", "resident_id"),
         ),
+    },
+    "device_room_assignments": {
+        (("tenant_id", "device_id"), "devices", ("tenant_id", "device_id")),
+        (
+            ("tenant_id", "location_id"),
+            "locations",
+            ("tenant_id", "location_id"),
+        ),
+        (("tenant_id", "room_id"), "rooms", ("tenant_id", "room_id")),
+    },
+    "device_health_observations": {
+        (("tenant_id", "device_id"), "devices", ("tenant_id", "device_id")),
     },
 }
 
@@ -412,6 +493,17 @@ def test_initial_migration_creates_product_backbone(tmp_path: Path) -> None:
     }
     assert bool(assignment_indexes["uq_active_room_assignment"]["unique"])
     assert bool(assignment_indexes["uq_active_resident_assignment"]["unique"])
+
+    device_assignment_indexes = {
+        index["name"]: index
+        for index in inspector.get_indexes("device_room_assignments")
+    }
+    assert bool(
+        device_assignment_indexes["uq_active_device_room_assignment"]["unique"]
+    )
+    assert bool(
+        device_assignment_indexes["uq_active_room_device_assignment"]["unique"]
+    )
 
     command.downgrade(config, "base")
 
