@@ -181,7 +181,7 @@ git commit -m "feat: freeze resident status and calibration contracts"
 - Consumes: existing tenant/resident/room composite ownership keys.
 - Produces: `MonitoringStatusSnapshotRow`, `CalibrationSnapshotRow`, and `MonitoringSetupChangeRow` used by Tasks 3–6.
 
-- [ ] **Step 1: Write failing migration and ownership tests**
+- [x] **Step 1: Write failing migration and ownership tests**
 
 Tests must prove:
 
@@ -206,13 +206,13 @@ def test_calibration_versions_are_unique_per_tenant_resident(...):
 Also upgrade from revision `0001_product_backbone` to `head`, downgrade to
 `0001_product_backbone`, and verify the original tables remain intact.
 
-- [ ] **Step 2: Run migration tests and verify RED**
+- [x] **Step 2: Run migration tests and verify RED**
 
 Run: `python3 -m pytest -q tests/persistence/test_migrations.py tests/persistence/test_status_schema.py`
 
 Expected: the three new tables/revision are absent.
 
-- [ ] **Step 3: Add ORM rows**
+- [x] **Step 3: Add ORM rows**
 
 Implement these durable shapes:
 
@@ -268,12 +268,12 @@ constraints for `(tenant_id, resident_id, observed_at)`,
 `(tenant_id, resident_id, version)`, and
 `(tenant_id, resident_id, calibration_version)`.
 
-- [ ] **Step 4: Add Alembic revision `0002_status_calibration`**
+- [x] **Step 4: Add Alembic revision `0002_status_calibration`**
 
 Create the same schema and indexes in migration form. Its downgrade drops only
 the three Checkpoint A tables in child-first order.
 
-- [ ] **Step 5: Run schema, downgrade, and full migration tests**
+- [x] **Step 5: Run schema, downgrade, and full migration tests**
 
 Run:
 
@@ -284,7 +284,7 @@ python3 -m pytest -q tests/persistence/test_session.py
 
 Expected: all pass on migrated SQLite with foreign keys enabled.
 
-- [ ] **Step 6: Commit Task 2**
+- [x] **Step 6: Commit Task 2**
 
 ```bash
 git add backend/app/db/models.py backend/app/db/migrations tests/persistence

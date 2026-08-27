@@ -20,6 +20,9 @@ EXPECTED_TABLES = {
     "resident_memory_entries",
     "idempotency_records",
     "audit_log",
+    "monitoring_status_snapshots",
+    "calibration_snapshots",
+    "monitoring_setup_changes",
 }
 
 EXPECTED_COLUMNS = {
@@ -136,6 +139,46 @@ EXPECTED_COLUMNS = {
         "occurred_at": False,
         "details": False,
     },
+    "monitoring_status_snapshots": {
+        "monitoring_status_id": False,
+        "tenant_id": False,
+        "resident_id": False,
+        "room_id": False,
+        "observed_at": False,
+        "monitoring_state": False,
+        "presence_state": False,
+        "baseline_learning_allowed": False,
+        "resident_measurements_allowed": False,
+        "reasons": False,
+        "quality_policy_version": False,
+        "quality_policy_test_only": False,
+    },
+    "calibration_snapshots": {
+        "calibration_snapshot_id": False,
+        "tenant_id": False,
+        "resident_id": False,
+        "version": False,
+        "recorded_at": False,
+        "setup_version": False,
+        "status": False,
+        "eligible_windows": False,
+        "excluded_windows": False,
+        "reason": False,
+        "prior_setup_versions": False,
+        "dimension_progress": False,
+    },
+    "monitoring_setup_changes": {
+        "monitoring_setup_change_id": False,
+        "tenant_id": False,
+        "resident_id": False,
+        "calibration_version": False,
+        "previous_setup_version": False,
+        "new_setup_version": False,
+        "affected_dimensions": False,
+        "reason": False,
+        "actor_id": False,
+        "changed_at": False,
+    },
 }
 
 EXPECTED_PRIMARY_KEYS = {
@@ -151,6 +194,9 @@ EXPECTED_PRIMARY_KEYS = {
     "resident_memory_entries": ("memory_entry_row_id",),
     "idempotency_records": ("idempotency_id",),
     "audit_log": ("audit_id",),
+    "monitoring_status_snapshots": ("monitoring_status_id",),
+    "calibration_snapshots": ("calibration_snapshot_id",),
+    "monitoring_setup_changes": ("monitoring_setup_change_id",),
 }
 
 EXPECTED_FOREIGN_KEYS = {
@@ -194,6 +240,23 @@ EXPECTED_FOREIGN_KEYS = {
     },
     "idempotency_records": {("tenant_id", "tenants", "tenant_id")},
     "audit_log": {("tenant_id", "tenants", "tenant_id")},
+    "monitoring_status_snapshots": {
+        ("tenant_id", "tenants", "tenant_id"),
+        ("tenant_id", "rooms", "tenant_id"),
+        ("tenant_id", "residents", "tenant_id"),
+        ("room_id", "rooms", "room_id"),
+        ("resident_id", "residents", "resident_id"),
+    },
+    "calibration_snapshots": {
+        ("tenant_id", "tenants", "tenant_id"),
+        ("tenant_id", "residents", "tenant_id"),
+        ("resident_id", "residents", "resident_id"),
+    },
+    "monitoring_setup_changes": {
+        ("tenant_id", "tenants", "tenant_id"),
+        ("tenant_id", "residents", "tenant_id"),
+        ("resident_id", "residents", "resident_id"),
+    },
 }
 
 EXPECTED_UNIQUES = {
@@ -205,6 +268,13 @@ EXPECTED_UNIQUES = {
     "resident_memory_snapshots": {("resident_id", "version")},
     "resident_memory_entries": {("tenant_id", "resident_id", "memory_version", "entry_id")},
     "idempotency_records": {("tenant_id", "actor_id", "key")},
+    "monitoring_status_snapshots": {
+        ("tenant_id", "resident_id", "observed_at"),
+    },
+    "calibration_snapshots": {("tenant_id", "resident_id", "version")},
+    "monitoring_setup_changes": {
+        ("tenant_id", "resident_id", "calibration_version"),
+    },
 }
 
 EXPECTED_INDEXES = {
@@ -225,6 +295,13 @@ EXPECTED_INDEXES = {
     "resident_memory_entries": {("tenant_id",), ("resident_id",), ("source_feedback_id",)},
     "idempotency_records": {("tenant_id",)},
     "audit_log": {("tenant_id",)},
+    "monitoring_status_snapshots": {
+        ("tenant_id",),
+        ("resident_id",),
+        ("room_id",),
+    },
+    "calibration_snapshots": {("tenant_id",), ("resident_id",)},
+    "monitoring_setup_changes": {("tenant_id",), ("resident_id",)},
 }
 
 EXPECTED_COMPOSITE_OWNERSHIP_FOREIGN_KEYS = {
@@ -238,6 +315,28 @@ EXPECTED_COMPOSITE_OWNERSHIP_FOREIGN_KEYS = {
     },
     "monitoring_events": {
         (("tenant_id", "room_id"), "rooms", ("tenant_id", "room_id")),
+        (
+            ("tenant_id", "resident_id"),
+            "residents",
+            ("tenant_id", "resident_id"),
+        ),
+    },
+    "monitoring_status_snapshots": {
+        (("tenant_id", "room_id"), "rooms", ("tenant_id", "room_id")),
+        (
+            ("tenant_id", "resident_id"),
+            "residents",
+            ("tenant_id", "resident_id"),
+        ),
+    },
+    "calibration_snapshots": {
+        (
+            ("tenant_id", "resident_id"),
+            "residents",
+            ("tenant_id", "resident_id"),
+        ),
+    },
+    "monitoring_setup_changes": {
         (
             ("tenant_id", "resident_id"),
             "residents",

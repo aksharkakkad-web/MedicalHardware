@@ -79,6 +79,110 @@ class RoomResidentAssignmentRow(Base):
     effective_to: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class MonitoringStatusSnapshotRow(Base):
+    __tablename__ = "monitoring_status_snapshots"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "resident_id", "observed_at"),
+        ForeignKeyConstraint(
+            ("tenant_id", "room_id"),
+            ("rooms.tenant_id", "rooms.room_id"),
+        ),
+        ForeignKeyConstraint(
+            ("tenant_id", "resident_id"),
+            ("residents.tenant_id", "residents.resident_id"),
+        ),
+    )
+
+    monitoring_status_id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+    tenant_id: Mapped[str] = mapped_column(
+        ForeignKey("tenants.tenant_id"),
+        index=True,
+    )
+    resident_id: Mapped[str] = mapped_column(
+        ForeignKey("residents.resident_id"),
+        index=True,
+    )
+    room_id: Mapped[str] = mapped_column(ForeignKey("rooms.room_id"), index=True)
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    monitoring_state: Mapped[str] = mapped_column(String(64))
+    presence_state: Mapped[str] = mapped_column(String(64))
+    baseline_learning_allowed: Mapped[bool] = mapped_column(Boolean)
+    resident_measurements_allowed: Mapped[bool] = mapped_column(Boolean)
+    reasons: Mapped[list[str]] = mapped_column(JSON)
+    quality_policy_version: Mapped[str] = mapped_column(String(255))
+    quality_policy_test_only: Mapped[bool] = mapped_column(Boolean)
+
+
+class CalibrationSnapshotRow(Base):
+    __tablename__ = "calibration_snapshots"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "resident_id", "version"),
+        ForeignKeyConstraint(
+            ("tenant_id", "resident_id"),
+            ("residents.tenant_id", "residents.resident_id"),
+        ),
+    )
+
+    calibration_snapshot_id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+    tenant_id: Mapped[str] = mapped_column(
+        ForeignKey("tenants.tenant_id"),
+        index=True,
+    )
+    resident_id: Mapped[str] = mapped_column(
+        ForeignKey("residents.resident_id"),
+        index=True,
+    )
+    version: Mapped[int] = mapped_column(Integer)
+    recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    setup_version: Mapped[str] = mapped_column(String(255))
+    status: Mapped[str] = mapped_column(String(64))
+    eligible_windows: Mapped[int] = mapped_column(Integer)
+    excluded_windows: Mapped[int] = mapped_column(Integer)
+    reason: Mapped[str] = mapped_column(String(500))
+    prior_setup_versions: Mapped[list[str]] = mapped_column(JSON)
+    dimension_progress: Mapped[list[dict[str, object]]] = mapped_column(JSON)
+
+
+class MonitoringSetupChangeRow(Base):
+    __tablename__ = "monitoring_setup_changes"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "resident_id", "calibration_version"),
+        ForeignKeyConstraint(
+            ("tenant_id", "resident_id"),
+            ("residents.tenant_id", "residents.resident_id"),
+        ),
+    )
+
+    monitoring_setup_change_id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+    tenant_id: Mapped[str] = mapped_column(
+        ForeignKey("tenants.tenant_id"),
+        index=True,
+    )
+    resident_id: Mapped[str] = mapped_column(
+        ForeignKey("residents.resident_id"),
+        index=True,
+    )
+    calibration_version: Mapped[int] = mapped_column(Integer)
+    previous_setup_version: Mapped[str] = mapped_column(String(255))
+    new_setup_version: Mapped[str] = mapped_column(String(255))
+    affected_dimensions: Mapped[list[str]] = mapped_column(JSON)
+    reason: Mapped[str] = mapped_column(String(500))
+    actor_id: Mapped[str] = mapped_column(String(255))
+    changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
 class MonitoringEventRow(Base):
     __tablename__ = "monitoring_events"
     __table_args__ = (
