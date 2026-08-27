@@ -23,7 +23,7 @@
 - Create: `apps/clinic-dashboard/src/app/page.tsx`
 - Create: `apps/clinic-dashboard/src/app/globals.css`
 
-- [ ] **Step 1: Scaffold the Next.js application**
+- [x] **Step 1: Scaffold the Next.js application**
 
 Run:
 
@@ -33,7 +33,7 @@ pnpm create next-app@latest apps/clinic-dashboard --ts --eslint --app --src-dir 
 
 Expected: `apps/clinic-dashboard` exists and pnpm installs the generated dependencies.
 
-- [ ] **Step 2: Add focused testing tools**
+- [x] **Step 2: Add focused testing tools**
 
 Run:
 
@@ -43,7 +43,7 @@ pnpm --dir apps/clinic-dashboard add -D vitest jsdom @vitejs/plugin-react @testi
 
 Expected: test dependencies appear in `apps/clinic-dashboard/package.json` and `pnpm-lock.yaml` is updated.
 
-- [ ] **Step 3: Add stable scripts to `package.json`**
+- [x] **Step 3: Add stable scripts to `package.json`**
 
 Use these scripts:
 
@@ -60,7 +60,7 @@ Use these scripts:
 }
 ```
 
-- [ ] **Step 4: Configure Vitest**
+- [x] **Step 4: Configure Vitest**
 
 Create `vitest.config.ts`:
 
@@ -85,7 +85,7 @@ Create `src/test/setup.ts`:
 import "@testing-library/jest-dom/vitest";
 ```
 
-- [ ] **Step 5: Verify the empty application**
+- [x] **Step 5: Verify the empty application**
 
 Run:
 
@@ -97,7 +97,7 @@ pnpm --dir apps/clinic-dashboard build
 
 Expected: all commands exit successfully.
 
-- [ ] **Step 6: Commit the bootstrap**
+- [x] **Step 6: Commit the bootstrap**
 
 ```bash
 git add apps/clinic-dashboard
@@ -114,7 +114,7 @@ git commit -m "chore: bootstrap clinic dashboard"
 - Create: `apps/clinic-dashboard/src/mocks/mock-monitoring-client.ts`
 - Test: `apps/clinic-dashboard/src/mocks/mock-monitoring-client.test.ts`
 
-- [ ] **Step 1: Write the failing mock-client test**
+- [x] **Step 1: Write the failing mock-client test**
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -134,7 +134,7 @@ describe("MockMonitoringClient", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test and confirm it fails**
+- [x] **Step 2: Run the test and confirm it fails**
 
 Run:
 
@@ -144,7 +144,7 @@ pnpm --dir apps/clinic-dashboard test -- src/mocks/mock-monitoring-client.test.t
 
 Expected: FAIL because the mock client does not exist.
 
-- [ ] **Step 3: Define the view models and client interface**
+- [x] **Step 3: Define the view models and client interface**
 
 Create `types.ts` with explicit unions for:
 
@@ -193,7 +193,7 @@ export interface MonitoringClient {
 }
 ```
 
-- [ ] **Step 4: Implement fixtures and `MockMonitoringClient`**
+- [x] **Step 4: Implement fixtures and `MockMonitoringClient`**
 
 Create five fully synthetic records: active/normal, active/high attention, resident away/paused, possible multi-person/limited, and device problem/unavailable. The mock client returns cloned records so UI code cannot mutate the fixture source.
 
@@ -209,7 +209,7 @@ export class MockMonitoringClient implements MonitoringClient {
 }
 ```
 
-- [ ] **Step 5: Run focused tests**
+- [x] **Step 5: Run focused tests**
 
 Run:
 
@@ -219,7 +219,7 @@ pnpm --dir apps/clinic-dashboard test -- src/mocks/mock-monitoring-client.test.t
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit the monitoring boundary**
+- [x] **Step 6: Commit the monitoring boundary**
 
 ```bash
 git add apps/clinic-dashboard/src/lib apps/clinic-dashboard/src/mocks
