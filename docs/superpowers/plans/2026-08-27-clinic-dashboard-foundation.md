@@ -233,7 +233,7 @@ git commit -m "feat: add clinic monitoring client boundary"
 - Create: `apps/clinic-dashboard/src/features/residents/use-resident-overview.ts`
 - Test: `apps/clinic-dashboard/src/features/residents/use-resident-overview.test.tsx`
 
-- [ ] **Step 1: Write failing tests for load, success, and retry**
+- [x] **Step 1: Write failing tests for load, success, and retry**
 
 Create a controllable test client and verify the hook begins in `loading`, stores successful items, exposes an error message on rejection, and calls the client again when `retry()` is used.
 
@@ -243,7 +243,7 @@ await waitFor(() => expect(result.current.status).toBe("success"));
 expect(result.current.items).toHaveLength(5);
 ```
 
-- [ ] **Step 2: Run the focused test and confirm it fails**
+- [x] **Step 2: Run the focused test and confirm it fails**
 
 ```bash
 pnpm --dir apps/clinic-dashboard test -- src/features/residents/use-resident-overview.test.tsx
@@ -251,7 +251,7 @@ pnpm --dir apps/clinic-dashboard test -- src/features/residents/use-resident-ove
 
 Expected: FAIL because the provider and hook do not exist.
 
-- [ ] **Step 3: Implement the client provider**
+- [x] **Step 3: Implement the client provider**
 
 ```tsx
 "use client";
@@ -279,7 +279,7 @@ export function useMonitoringClient(): MonitoringClient {
 }
 ```
 
-- [ ] **Step 4: Implement the resident-overview hook**
+- [x] **Step 4: Implement the resident-overview hook**
 
 The hook must use an explicit state union:
 
@@ -292,7 +292,7 @@ type ResidentOverviewState =
 
 It loads on mount, ignores results after unmount, and exposes `retry()`.
 
-- [ ] **Step 5: Run the focused test and commit**
+- [x] **Step 5: Run the focused test and commit**
 
 ```bash
 pnpm --dir apps/clinic-dashboard test -- src/features/residents/use-resident-overview.test.tsx
