@@ -106,7 +106,6 @@ class FeedbackService:
                 and existing.feedback.outcome == event.resolution_outcome
                 and existing.feedback.actual_event_label == actual_event_label
                 and existing.feedback.routine == routine
-                and existing.feedback.created_at == created_at
             )
             if same_submission:
                 return existing

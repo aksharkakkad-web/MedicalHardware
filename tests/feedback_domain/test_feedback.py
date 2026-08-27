@@ -66,15 +66,19 @@ class FeedbackLearningTests(unittest.TestCase):
             routine=True,
             created_at=submitted_at,
         )
-        retried = self.service.submit_feedback(
-            event=self.event,
-            actor_id="operator_001",
-            actual_event_label="assisted_transfer",
-            routine=True,
-            created_at=submitted_at,
-        )
+        try:
+            retried = self.service.submit_feedback(
+                event=self.event,
+                actor_id="operator_001",
+                actual_event_label="assisted_transfer",
+                routine=True,
+                created_at=submitted_at + timedelta(seconds=30),
+            )
+        except ValueError as exc:
+            self.fail(f"logical retry was rejected: {exc}")
 
         self.assertIs(retried, first)
+        self.assertEqual(retried.feedback.created_at, submitted_at)
         self.assertEqual(retried.memory.version, 1)
         self.assertEqual(len(retried.memory.entries), 1)
         self.assertTrue(retried.baseline_window_eligible)
