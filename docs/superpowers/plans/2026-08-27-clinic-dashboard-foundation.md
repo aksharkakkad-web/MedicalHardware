@@ -364,7 +364,7 @@ git commit -m "feat: add clinic dashboard shell"
 - Create: `apps/clinic-dashboard/src/features/residents/resident-card.module.css`
 - Test: `apps/clinic-dashboard/src/features/residents/resident-overview.test.tsx`
 
-- [ ] **Step 1: Write failing resident-overview tests**
+- [x] **Step 1: Write failing resident-overview tests**
 
 Verify that the screen:
 
@@ -378,25 +378,25 @@ expect(screen.getByText(/needs attention/i)).toBeVisible();
 
 Add separate tests for loading, empty, and failed-client states. The failed state must expose a Retry button.
 
-- [ ] **Step 2: Run the test and confirm it fails**
+- [x] **Step 2: Run the test and confirm it fails**
 
 ```bash
 pnpm --dir apps/clinic-dashboard test -- src/features/residents/resident-overview.test.tsx
 ```
 
-- [ ] **Step 3: Implement providers and page composition**
+- [x] **Step 3: Implement providers and page composition**
 
 Instantiate `MockMonitoringClient` once in `providers.tsx`, wrap the application with `MonitoringClientProvider`, and render `AppShell` around the page content.
 
-- [ ] **Step 4: Implement overview summaries and resident cards**
+- [x] **Step 4: Implement overview summaries and resident cards**
 
 Sort cards by attention priority, then room label. Display high-attention count, active count, and limited/paused/unavailable count. Each card includes resident label, room, monitoring state, plain-language reason, attention headline, device state when relevant, and last-updated time.
 
-- [ ] **Step 5: Implement loading, empty, and error presentations**
+- [x] **Step 5: Implement loading, empty, and error presentations**
 
 Loading uses neutral skeleton cards with an accessible loading label. Empty says no resident information is available. Error says current information could not be loaded and offers Retry; none of these states imply that residents are safe.
 
-- [ ] **Step 6: Run focused and full checks**
+- [x] **Step 6: Run focused and full checks**
 
 ```bash
 pnpm --dir apps/clinic-dashboard test
@@ -407,7 +407,7 @@ pnpm --dir apps/clinic-dashboard build
 
 Expected: all commands pass.
 
-- [ ] **Step 7: Commit the resident overview**
+- [x] **Step 7: Commit the resident overview**
 
 ```bash
 git add apps/clinic-dashboard

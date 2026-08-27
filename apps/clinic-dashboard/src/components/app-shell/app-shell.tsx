@@ -58,7 +58,7 @@ export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
             <p className={styles.eyebrow}>Clinic operations</p>
             <p className={styles.workspaceName}>Northstar demo clinic</p>
           </div>
-          <StatusPill label="Dashboard online" tone="healthy" />
+          <StatusPill label="Demo data loaded" tone="neutral" />
         </div>
         <main className={styles.main}>{children}</main>
       </section>
