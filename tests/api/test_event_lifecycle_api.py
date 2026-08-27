@@ -1,7 +1,10 @@
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
+from threading import Event, Lock, get_ident
 
 import pytest
 from fastapi.testclient import TestClient
+from httpx import Response
 from sqlalchemy import event as sqlalchemy_event
 from sqlalchemy import func, select
 
@@ -33,6 +36,108 @@ def _headers(
 def _row_count(api_client: TestClient, row_type: type[object]) -> int:
     with api_client.app.state.session_factory() as session:
         return session.scalar(select(func.count()).select_from(row_type))
+
+
+def _race_same_idempotency_key(
+    api_client: TestClient,
+    *,
+    first_body: dict[str, object],
+    second_body: dict[str, object],
+) -> tuple[Response, Response]:
+    owner_inserted = Event()
+    contender_reached_idempotency = Event()
+    release_owner = Event()
+    state_lock = Lock()
+    state: dict[str, int | None] = {"owner_thread_id": None}
+
+    def before_cursor_execute(
+        _connection: object,
+        _cursor: object,
+        statement: str,
+        _parameters: object,
+        _context: object,
+        _executemany: object,
+    ) -> None:
+        if "idempotency_records" not in statement.lower():
+            return
+        with state_lock:
+            owner_thread_id = state["owner_thread_id"]
+        if (
+            owner_inserted.is_set()
+            and get_ident() != owner_thread_id
+            and statement.lstrip().lower().startswith(
+                "insert into idempotency_records"
+            )
+        ):
+            contender_reached_idempotency.set()
+
+    def after_cursor_execute(
+        _connection: object,
+        _cursor: object,
+        statement: str,
+        _parameters: object,
+        _context: object,
+        _executemany: object,
+    ) -> None:
+        normalized_statement = statement.lstrip().lower()
+        with state_lock:
+            owner_thread_id = state["owner_thread_id"]
+        if (
+            owner_inserted.is_set()
+            and get_ident() != owner_thread_id
+            and normalized_statement.startswith("select")
+            and "idempotency_records" in normalized_statement
+        ):
+            contender_reached_idempotency.set()
+            return
+        if not normalized_statement.startswith("insert into idempotency_records"):
+            return
+        with state_lock:
+            if state["owner_thread_id"] is not None:
+                return
+            state["owner_thread_id"] = get_ident()
+        owner_inserted.set()
+        if not release_owner.wait(timeout=5):
+            raise RuntimeError("timed out while coordinating idempotency race")
+
+    engine = api_client.app.state.engine
+    sqlalchemy_event.listen(engine, "before_cursor_execute", before_cursor_execute)
+    sqlalchemy_event.listen(engine, "after_cursor_execute", after_cursor_execute)
+
+    def post(body: dict[str, object]) -> Response:
+        with TestClient(api_client.app) as client:
+            return client.post(
+                f"{EVENT_PATH}/acknowledge",
+                headers=_headers("concurrent-key"),
+                json=body,
+            )
+
+    executor = ThreadPoolExecutor(max_workers=2)
+    try:
+        first_future = executor.submit(post, first_body)
+        owner_ready = owner_inserted.wait(timeout=5)
+        second_future = executor.submit(post, second_body)
+        contender_ready = contender_reached_idempotency.wait(timeout=5)
+        release_owner.set()
+        first = first_future.result(timeout=10)
+        second = second_future.result(timeout=10)
+    finally:
+        release_owner.set()
+        executor.shutdown(wait=True)
+        sqlalchemy_event.remove(
+            engine,
+            "before_cursor_execute",
+            before_cursor_execute,
+        )
+        sqlalchemy_event.remove(
+            engine,
+            "after_cursor_execute",
+            after_cursor_execute,
+        )
+
+    assert owner_ready, "the first request never reached its idempotency insert"
+    assert contender_ready, "the contender never reached idempotency handling"
+    return first, second
 
 
 def test_complete_caregiver_lifecycle_is_persisted_and_auditable(
@@ -114,6 +219,46 @@ def test_same_idempotency_key_replays_original_response_once(
 
     assert second.status_code == first.status_code == 200
     assert second.json() == first.json()
+    assert _row_count(api_client, EventActionRow) == 2
+    assert _row_count(api_client, AuditLogRow) == 1
+    assert _row_count(api_client, IdempotencyRecordRow) == 1
+
+
+def test_concurrent_same_key_and_request_replays_one_success(
+    api_client: TestClient,
+) -> None:
+    first, replay = _race_same_idempotency_key(
+        api_client,
+        first_body={"occurred_at": ACTION_TIME},
+        second_body={"occurred_at": ACTION_TIME},
+    )
+
+    assert first.status_code == replay.status_code == 200
+    assert first.json() == replay.json()
+    assert _row_count(api_client, EventActionRow) == 2
+    assert _row_count(api_client, AuditLogRow) == 1
+    assert _row_count(api_client, IdempotencyRecordRow) == 1
+
+
+def test_concurrent_same_key_and_different_request_returns_canonical_conflict(
+    api_client: TestClient,
+) -> None:
+    first, conflict = _race_same_idempotency_key(
+        api_client,
+        first_body={"occurred_at": ACTION_TIME},
+        second_body={"occurred_at": "2026-08-24T21:04:00Z"},
+    )
+
+    assert first.status_code == 200
+    assert conflict.status_code == 409
+    assert conflict.json() == {
+        "schema_version": "1.0",
+        "error": {
+            "code": "idempotency_conflict",
+            "message": "Idempotency key was already used for a different request",
+            "field": None,
+        },
+    }
     assert _row_count(api_client, EventActionRow) == 2
     assert _row_count(api_client, AuditLogRow) == 1
     assert _row_count(api_client, IdempotencyRecordRow) == 1
@@ -310,13 +455,24 @@ def test_invalid_transition_rolls_back_every_caregiver_effect(
 def test_failure_after_event_and_audit_flush_rolls_back_the_whole_action(
     api_client: TestClient,
 ) -> None:
-    def fail_idempotency_insert(*_: object) -> None:
-        raise RuntimeError("injected idempotency persistence failure")
+    def fail_idempotency_response_update(
+        _connection: object,
+        _cursor: object,
+        statement: str,
+        _parameters: object,
+        _context: object,
+        _executemany: object,
+    ) -> None:
+        if statement.lstrip().lower().startswith(
+            "update idempotency_records"
+        ):
+            raise RuntimeError("injected idempotency persistence failure")
 
+    engine = api_client.app.state.engine
     sqlalchemy_event.listen(
-        IdempotencyRecordRow,
-        "before_insert",
-        fail_idempotency_insert,
+        engine,
+        "before_cursor_execute",
+        fail_idempotency_response_update,
     )
     try:
         safe_client = TestClient(api_client.app, raise_server_exceptions=False)
@@ -327,9 +483,9 @@ def test_failure_after_event_and_audit_flush_rolls_back_the_whole_action(
         )
     finally:
         sqlalchemy_event.remove(
-            IdempotencyRecordRow,
-            "before_insert",
-            fail_idempotency_insert,
+            engine,
+            "before_cursor_execute",
+            fail_idempotency_response_update,
         )
 
     assert response.status_code == 500
