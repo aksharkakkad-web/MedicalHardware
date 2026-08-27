@@ -152,3 +152,20 @@ def test_setup_change_validates_input_and_tenant_scope(
     assert _count(api_client, CalibrationSnapshotRow) == 1
     assert _count(api_client, MonitoringSetupChangeRow) == 0
     assert _count(api_client, AuditLogRow) == 0
+
+
+def test_setup_change_cannot_move_calibration_history_backward(
+    api_client: TestClient,
+) -> None:
+    response = api_client.post(
+        PATH,
+        headers=_headers("backdated-move"),
+        json=_body(changed_at="2026-08-24T20:59:00Z"),
+    )
+
+    assert response.status_code == 409
+    assert response.json()["error"]["code"] == "invalid_transition"
+    assert _count(api_client, CalibrationSnapshotRow) == 1
+    assert _count(api_client, MonitoringSetupChangeRow) == 0
+    assert _count(api_client, AuditLogRow) == 0
+    assert _count(api_client, IdempotencyRecordRow) == 0

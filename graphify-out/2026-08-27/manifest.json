@@ -846,9 +846,9 @@
     "semantic_hash": ""
   },
   "backend/app/checkpoints/status_calibration.py": {
-    "mtime": 1787872955.873863,
-    "seen": 1787873007.057025,
-    "ast_hash": "c0ca8dbc9b18ab4767264cdd3812dce3",
+    "mtime": 1787872335.524797,
+    "seen": 1787872525.195287,
+    "ast_hash": "1ccf60d020fb83a2079131033e2d80be",
     "semantic_hash": ""
   },
   "backend/app/config.py": {
@@ -954,9 +954,9 @@
     "semantic_hash": ""
   },
   "backend/app/db/status_mappers.py": {
-    "mtime": 1787872907.7805538,
-    "seen": 1787873007.057033,
-    "ast_hash": "51ed5e3046902bdfb8a105a762140d20",
+    "mtime": 1787871840.0412247,
+    "seen": 1787872525.195294,
+    "ast_hash": "f8f1580d7edcc9e59092abec26030c59",
     "semantic_hash": ""
   },
   "backend/app/db/status_repositories.py": {
@@ -1050,9 +1050,9 @@
     "semantic_hash": ""
   },
   "backend/app/services/setup_commands.py": {
-    "mtime": 1787872932.7621226,
-    "seen": 1787873007.05704,
-    "ast_hash": "bd8e7915d76dce2328a8eef9e1450c73",
+    "mtime": 1787872202.1586359,
+    "seen": 1787872525.1953,
+    "ast_hash": "f767a0b53fc403ebd17c9c787c776c9a",
     "semantic_hash": ""
   },
   "backend/app/services/status_queries.py": {
@@ -1116,15 +1116,15 @@
     "semantic_hash": ""
   },
   "tests/api/test_setup_change_api.py": {
-    "mtime": 1787872922.393911,
-    "seen": 1787873007.057045,
-    "ast_hash": "fe346c9bab56b96da2ab0904969765a6",
+    "mtime": 1787872417.4339826,
+    "seen": 1787872525.195304,
+    "ast_hash": "47e0f23cb88b523bfbac5382d7409a5a",
     "semantic_hash": ""
   },
   "tests/api/test_status_calibration_story.py": {
-    "mtime": 1787872955.8744376,
-    "seen": 1787873007.057045,
-    "ast_hash": "ac14ad3322d5ba4856d09b4af35d2f19",
+    "mtime": 1787872279.5484025,
+    "seen": 1787872525.1953049,
+    "ast_hash": "0291354b144919469cdf165613e9fb6a",
     "semantic_hash": ""
   },
   "tests/api/test_status_contracts.py": {
@@ -1248,9 +1248,9 @@
     "semantic_hash": ""
   },
   "tests/persistence/test_status_repositories.py": {
-    "mtime": 1787872876.9902568,
-    "seen": 1787873007.057054,
-    "ast_hash": "e0e73e1c8e6e68c98141a9463ba8f3e5",
+    "mtime": 1787872431.8651068,
+    "seen": 1787872525.195312,
+    "ast_hash": "77339cd76f3ad350200eed69956036d4",
     "semantic_hash": ""
   },
   "tests/persistence/test_status_schema.py": {
@@ -1632,9 +1632,9 @@
     "semantic_hash": ""
   },
   "docs/DATA_CONTRACT.md": {
-    "mtime": 1787872988.231431,
-    "seen": 1787873007.057083,
-    "ast_hash": "b4372ead5c35db2258b2d21522ab1020",
+    "mtime": 1787872516.2495735,
+    "seen": 1787872525.195335,
+    "ast_hash": "21ae46da0301d6801e33aab7aea3c2ba",
     "semantic_hash": ""
   },
   "docs/PHASE_2_CHECKPOINT_A_REVIEW.md": {
@@ -1680,9 +1680,9 @@
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-08-27-phase2-checkpoint-a-status-calibration.md": {
-    "mtime": 1787872535.03518,
-    "seen": 1787873007.057087,
-    "ast_hash": "947888bfaefb4e90ba269673d063bdf1",
+    "mtime": 1787872217.5857282,
+    "seen": 1787872525.195338,
+    "ast_hash": "e192906f1a5f36fff638255fbda8870b",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-08-27-phase2-product-backbone.md": {
@@ -1698,9 +1698,9 @@
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-08-27-phase2-backend-readiness-design.md": {
-    "mtime": 1787872603.5607522,
-    "seen": 1787873007.057088,
-    "ast_hash": "0929e578991273598e666fe90aa34983",
+    "mtime": 1787870493.3751776,
+    "seen": 1787872525.195339,
+    "ast_hash": "be93159ffd0b100b3aefc61d9c47290d",
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-08-27-phase2-product-backbone-design.md": {

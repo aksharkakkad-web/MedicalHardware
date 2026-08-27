@@ -60,7 +60,7 @@ restarts the app, verifies exact retry behavior, and ends with
 ## Verification evidence
 
 - founder Checkpoint A walkthrough: passed;
-- full pytest suite: 202 passed plus 83 subtests;
+- full pytest suite: 212 passed plus 83 subtests;
 - compatibility unittest suite: 75 passed;
 - backend/test compilation and diff checks: passed.
 

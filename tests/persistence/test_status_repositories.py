@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.db.base import Base
 from backend.app.db.models import (
+    CalibrationSnapshotRow,
     MonitoringSetupChangeRow,
     MonitoringStatusSnapshotRow,
     ResidentRow,
@@ -306,3 +307,101 @@ def test_monitoring_repository_rejects_malformed_stored_enum(
 
     with pytest.raises(ValueError):
         repository.latest(story.tenant_id, story.resident_id)
+
+
+@pytest.mark.parametrize(
+    "malformed_dimension",
+    (
+        {
+            "dimension": 42,
+            "status": "established",
+            "eligible_windows": 12,
+            "excluded_windows": 2,
+        },
+        {
+            "dimension": "movement",
+            "status": "established",
+            "eligible_windows": "12",
+            "excluded_windows": 2,
+        },
+        {
+            "dimension": "movement",
+            "status": "established",
+            "eligible_windows": True,
+            "excluded_windows": 2,
+        },
+        {
+            "dimension": "movement",
+            "status": "established",
+            "eligible_windows": 12,
+            "excluded_windows": 2.5,
+        },
+        {
+            "dimension": "movement",
+            "status": "established",
+            "eligible_windows": -1,
+            "excluded_windows": 2,
+        },
+    ),
+)
+def test_calibration_repository_rejects_malformed_dimension_json(
+    session: Session,
+    malformed_dimension: dict[str, object],
+) -> None:
+    story = _seed_ownership(session)
+    repository = CalibrationRepository(session)
+    repository.save(
+        story.tenant_id,
+        _established_calibration(story.resident_id),
+        expected_version=0,
+    )
+    row = session.scalar(select(CalibrationSnapshotRow))
+    assert row is not None
+    row.dimension_progress = [malformed_dimension]
+    session.commit()
+
+    with pytest.raises(ValueError):
+        repository.current(story.tenant_id, story.resident_id)
+
+
+@pytest.mark.parametrize(
+    "malformed_dimensions",
+    (
+        "movement",
+        ["movement", "movement"],
+        [""],
+        [42],
+    ),
+)
+def test_calibration_repository_rejects_malformed_setup_dimension_json(
+    session: Session,
+    malformed_dimensions: object,
+) -> None:
+    story = _seed_ownership(session)
+    repository = CalibrationRepository(session)
+    initial = _established_calibration(story.resident_id)
+    repository.save(story.tenant_id, initial, expected_version=0)
+    repository.save(
+        story.tenant_id,
+        StoredCalibration(
+            resident_id=story.resident_id,
+            version=2,
+            recorded_at=datetime(2026, 8, 24, 22, 0, tzinfo=timezone.utc),
+            progress=start_recalibration(
+                initial.progress,
+                new_setup_version="setup_room_214_v2",
+                reason="device_moved",
+                actor_id="operator_001",
+                changed_at=datetime(2026, 8, 24, 22, 0, tzinfo=timezone.utc),
+                affected_dimensions=("movement",),
+            ),
+        ),
+        expected_version=1,
+    )
+    setup = session.scalar(select(MonitoringSetupChangeRow))
+    assert setup is not None
+    setup.affected_dimensions = malformed_dimensions
+    session.commit()
+
+    with pytest.raises(ValueError):
+        repository.current(story.tenant_id, story.resident_id)

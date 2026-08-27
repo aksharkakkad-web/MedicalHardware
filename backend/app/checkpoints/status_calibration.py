@@ -6,9 +6,16 @@ from tempfile import TemporaryDirectory
 from alembic import command
 from alembic.config import Config
 from fastapi.testclient import TestClient
+from sqlalchemy import func, select
 
 from backend.app.config import Settings
 from backend.app.db.seed import seed_synthetic_story
+from backend.app.db.models import (
+    AuditLogRow,
+    CalibrationSnapshotRow,
+    IdempotencyRecordRow,
+    MonitoringSetupChangeRow,
+)
 from backend.app.main import create_app
 
 
@@ -120,6 +127,29 @@ def run_checkpoint() -> list[str]:
             _require(calibration.json() == replay.json() == setup_body)
             _require(len(calibration.json()["setup_changes"]) == 1)
             _require(len(awareness.json()["items"]) == 5)
+            with second_app.state.session_factory() as session:
+                _require(
+                    session.scalar(
+                        select(func.count()).select_from(CalibrationSnapshotRow)
+                    )
+                    == 2
+                )
+                _require(
+                    session.scalar(
+                        select(func.count()).select_from(MonitoringSetupChangeRow)
+                    )
+                    == 1
+                )
+                _require(
+                    session.scalar(select(func.count()).select_from(AuditLogRow))
+                    == 1
+                )
+                _require(
+                    session.scalar(
+                        select(func.count()).select_from(IdempotencyRecordRow)
+                    )
+                    == 1
+                )
 
     return [
         "PASS resident active monitoring is available",

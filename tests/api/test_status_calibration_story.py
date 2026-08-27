@@ -5,9 +5,16 @@ import sys
 from alembic import command
 from alembic.config import Config
 from fastapi.testclient import TestClient
+from sqlalchemy import func, select
 
 from backend.app.config import Settings
 from backend.app.db.seed import seed_synthetic_story
+from backend.app.db.models import (
+    AuditLogRow,
+    CalibrationSnapshotRow,
+    IdempotencyRecordRow,
+    MonitoringSetupChangeRow,
+)
 from backend.app.main import create_app
 
 
@@ -99,6 +106,19 @@ def test_seeded_status_calibration_story_survives_restart(tmp_path: Path) -> Non
         assert calibration.json() == original_setup
         assert len(calibration.json()["setup_changes"]) == 1
         assert len(awareness.json()["items"]) == 5
+        with second_app.state.session_factory() as session:
+            assert session.scalar(
+                select(func.count()).select_from(CalibrationSnapshotRow)
+            ) == 2
+            assert session.scalar(
+                select(func.count()).select_from(MonitoringSetupChangeRow)
+            ) == 1
+            assert session.scalar(
+                select(func.count()).select_from(AuditLogRow)
+            ) == 1
+            assert session.scalar(
+                select(func.count()).select_from(IdempotencyRecordRow)
+            ) == 1
 
 
 def test_founder_checkpoint_command_prints_plain_language_proof() -> None:

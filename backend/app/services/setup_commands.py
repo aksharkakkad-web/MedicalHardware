@@ -47,6 +47,8 @@ class SetupChangeCommandService:
         current = self._calibration.current(context.tenant_id, resident_id)
         if current.version != expected_calibration_version:
             raise ConcurrentUpdateError()
+        if changed_at < current.recorded_at:
+            raise InvalidTransitionError()
         next_version = current.version + 1
         try:
             progress = start_recalibration(

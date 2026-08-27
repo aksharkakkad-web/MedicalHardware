@@ -45,6 +45,37 @@ def _utc(value: datetime) -> datetime:
     return value.astimezone(timezone.utc)
 
 
+def _stored_nonblank_string(value: object, field: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"stored {field} must be a nonblank string")
+    return value.strip()
+
+
+def _stored_counter(value: object, field: str) -> int:
+    if type(value) is not int or value < 0:
+        raise ValueError(f"stored {field} must be a non-negative integer")
+    return value
+
+
+def _stored_unique_strings(
+    value: object,
+    field: str,
+    *,
+    allow_empty: bool,
+) -> tuple[str, ...]:
+    if not isinstance(value, list):
+        raise ValueError(f"stored {field} must be a list")
+    normalized = tuple(
+        _stored_nonblank_string(item, field)
+        for item in value
+    )
+    if not allow_empty and not normalized:
+        raise ValueError(f"stored {field} must not be empty")
+    if len(set(normalized)) != len(normalized):
+        raise ValueError(f"stored {field} must not contain duplicates")
+    return normalized
+
+
 def monitoring_to_row(
     tenant_id: str,
     stored: StoredMonitoringStatus,
@@ -138,14 +169,16 @@ def calibration_from_rows(
     row: CalibrationSnapshotRow,
     setup_rows: Iterable[MonitoringSetupChangeRow],
 ) -> StoredCalibration:
-    if not isinstance(row.prior_setup_versions, list) or not all(
-        isinstance(version, str) for version in row.prior_setup_versions
-    ):
-        raise ValueError("stored prior setup versions must be a list of strings")
+    prior_setup_versions = _stored_unique_strings(
+        row.prior_setup_versions,
+        "prior setup versions",
+        allow_empty=True,
+    )
     if not isinstance(row.dimension_progress, list):
         raise ValueError("stored dimension progress must be a list")
 
     dimensions: list[CalibrationDimensionProgress] = []
+    seen_dimensions: set[str] = set()
     required_dimension_keys = {
         "dimension",
         "status",
@@ -155,26 +188,42 @@ def calibration_from_rows(
     for item in row.dimension_progress:
         if not isinstance(item, dict) or set(item) != required_dimension_keys:
             raise ValueError("stored dimension progress is malformed")
+        dimension = _stored_nonblank_string(item["dimension"], "dimension")
+        if dimension in seen_dimensions:
+            raise ValueError("stored dimensions must not contain duplicates")
+        seen_dimensions.add(dimension)
+        status_value = _stored_nonblank_string(item["status"], "dimension status")
         dimensions.append(
             CalibrationDimensionProgress(
-                dimension=str(item["dimension"]),
-                status=BaselineStatus(str(item["status"])),
-                eligible_windows=int(item["eligible_windows"]),
-                excluded_windows=int(item["excluded_windows"]),
+                dimension=dimension,
+                status=BaselineStatus(status_value),
+                eligible_windows=_stored_counter(
+                    item["eligible_windows"],
+                    "dimension eligible_windows",
+                ),
+                excluded_windows=_stored_counter(
+                    item["excluded_windows"],
+                    "dimension excluded_windows",
+                ),
             )
         )
 
-    actions = tuple(
-        SetupChangeAction(
-            previous_setup_version=setup.previous_setup_version,
-            new_setup_version=setup.new_setup_version,
-            affected_dimensions=tuple(setup.affected_dimensions),
-            reason=setup.reason,
-            actor_id=setup.actor_id,
-            changed_at=_utc(setup.changed_at),
+    actions: list[SetupChangeAction] = []
+    for setup in setup_rows:
+        actions.append(
+            SetupChangeAction(
+                previous_setup_version=setup.previous_setup_version,
+                new_setup_version=setup.new_setup_version,
+                affected_dimensions=_stored_unique_strings(
+                    setup.affected_dimensions,
+                    "affected dimensions",
+                    allow_empty=False,
+                ),
+                reason=setup.reason,
+                actor_id=setup.actor_id,
+                changed_at=_utc(setup.changed_at),
+            )
         )
-        for setup in setup_rows
-    )
     return StoredCalibration(
         resident_id=row.resident_id,
         version=row.version,
@@ -182,11 +231,17 @@ def calibration_from_rows(
         progress=CalibrationProgress(
             setup_version=row.setup_version,
             status=BaselineStatus(row.status),
-            eligible_windows=row.eligible_windows,
-            excluded_windows=row.excluded_windows,
+            eligible_windows=_stored_counter(
+                row.eligible_windows,
+                "eligible_windows",
+            ),
+            excluded_windows=_stored_counter(
+                row.excluded_windows,
+                "excluded_windows",
+            ),
             reason=row.reason,
-            prior_setup_versions=tuple(row.prior_setup_versions),
+            prior_setup_versions=prior_setup_versions,
             dimension_progress=tuple(dimensions),
-            setup_change_history=actions,
+            setup_change_history=tuple(actions),
         ),
     )
