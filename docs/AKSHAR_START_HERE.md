@@ -327,6 +327,7 @@ This toy slice does not yet prove persistence, HTTP APIs, authentication, notifi
 
 ## Source-of-truth documents
 
+- `docs/CURRENT_STAGE.md` — simple cofounder handoff: current progress, parallel work, and convergence
 - `docs/PRD.md` — what the product should do
 - `docs/ARCHITECTURE.md` — how the major pieces connect
 - `docs/DATA_CONTRACT.md` — the shared language between frontend, backend, simulator, and hardware

@@ -65,6 +65,58 @@ class EventFlowTests(unittest.TestCase):
         self.assertEqual(stored.created_at, self.started + timedelta(minutes=10))
         self.assertEqual(stored.last_signal_at, self.started + timedelta(minutes=10))
 
+    def test_grouped_signal_cannot_precede_latest_caregiver_action(self) -> None:
+        event = self.record(at=self.started)
+        acknowledged = self.store.acknowledge(
+            event.event_id,
+            actor_id="operator_001",
+            at=self.started + timedelta(minutes=4),
+        )
+
+        with self.assertRaises(ValueError):
+            self.record(at=self.started + timedelta(minutes=2))
+
+        self.assertEqual(self.store.get(event.event_id), acknowledged)
+
+    def test_recurrence_cannot_precede_predecessor_resolution(self) -> None:
+        event = self.record(at=self.started)
+        self.store.acknowledge(
+            event.event_id,
+            actor_id="operator_001",
+            at=self.started + timedelta(minutes=1),
+        )
+        self.store.check(
+            event.event_id,
+            actor_id="operator_001",
+            at=self.started + timedelta(minutes=2),
+        )
+        resolved = self.store.resolve(
+            event.event_id,
+            ResolutionOutcome.FALSE_POSITIVE,
+            actor_id="operator_001",
+            at=self.started + timedelta(minutes=3),
+        )
+
+        with self.assertRaises(ValueError):
+            self.record(at=self.started + timedelta(minutes=2, seconds=30))
+
+        self.assertEqual(self.store.get(event.event_id), resolved)
+
+    def test_signal_cannot_precede_history_on_an_older_related_episode(self) -> None:
+        first = self.record(at=self.started)
+        second = self.record(at=self.started + timedelta(minutes=6))
+        acknowledged_first = self.store.acknowledge(
+            first.event_id,
+            actor_id="operator_001",
+            at=self.started + timedelta(minutes=10),
+        )
+
+        with self.assertRaises(ValueError):
+            self.record(at=self.started + timedelta(minutes=7))
+
+        self.assertEqual(self.store.get(first.event_id), acknowledged_first)
+        self.assertEqual(self.store.get(second.event_id), second)
+
     def test_recurrence_after_resolution_creates_linked_event(self) -> None:
         first = self.record(at=self.started)
         self.store.acknowledge(

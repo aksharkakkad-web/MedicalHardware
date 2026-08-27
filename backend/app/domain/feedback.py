@@ -87,7 +87,7 @@ class FeedbackService:
         routine = require_strict_bool(routine, "routine")
         created_at = require_aware_datetime(created_at, "created_at")
         event_timestamp = require_aware_datetime(
-            event.last_signal_at,
+            event.latest_recorded_at,
             "event timestamp",
         )
         if created_at < event_timestamp:

@@ -166,6 +166,24 @@ class FeedbackLearningTests(unittest.TestCase):
                 created_at=datetime(2026, 8, 26, 11, 59, tzinfo=timezone.utc),
             )
 
+    def test_feedback_cannot_precede_event_resolution(self) -> None:
+        with self.assertRaises(ValueError):
+            self.service.submit_feedback(
+                event=self.event,
+                actor_id="operator_001",
+                actual_event_label="assisted_transfer",
+                routine=True,
+                created_at=datetime(
+                    2026,
+                    8,
+                    26,
+                    12,
+                    2,
+                    30,
+                    tzinfo=timezone.utc,
+                ),
+            )
+
     def test_feedback_datetime_boundaries_consistently_raise_value_error(self) -> None:
         with self.assertRaises(ValueError):
             self.service.submit_feedback(

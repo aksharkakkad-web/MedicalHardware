@@ -123,6 +123,18 @@ class MonitoringEvent:
         """Compatibility view; the timestamp is the auditable source of truth."""
         return self.overdue_at is not None
 
+    @property
+    def latest_recorded_at(self) -> datetime:
+        """Latest timestamp across signals, priority changes, and actions."""
+        timestamps = [self.created_at, self.last_signal_at]
+        timestamps.extend(action.occurred_at for action in self.action_history)
+        timestamps.extend(
+            change.changed_at for change in self.priority_history
+        )
+        if self.overdue_at is not None:
+            timestamps.append(self.overdue_at)
+        return max(timestamps)
+
 
 class EventStore:
     """Groups related synthetic signals and enforces the caregiver lifecycle."""
@@ -187,11 +199,22 @@ class EventStore:
         resident_memory_version, resident_memory_entry_ids = (
             self._memory_references(resident_id, resident_memory)
         )
-        active = self._latest_related(resident_id, room_id, objective_family)
+        related = self._related_events(
+            resident_id,
+            room_id,
+            objective_family,
+        )
+        active = related[-1] if related else None
         if active is not None:
             elapsed = observed_at - active.last_signal_at
+            latest_related_history_at = max(
+                event.latest_recorded_at for event in related
+            )
+            history_elapsed = observed_at - latest_related_history_at
             if elapsed < timedelta(0):
                 raise ValueError("observed_at cannot precede the latest related signal")
+            if history_elapsed < timedelta(0):
+                raise ValueError("observed_at cannot precede related event history")
         if (
             active is not None
             and active.status != EventStatus.RESOLVED
@@ -227,7 +250,6 @@ class EventStore:
             self._events[updated.event_id] = updated
             return updated
 
-        related = self._related_events(resident_id, room_id, objective_family)
         event_id = f"evt_{uuid4().hex}"
         event = MonitoringEvent(
             event_id=event_id,
