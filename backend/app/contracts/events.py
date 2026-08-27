@@ -1,3 +1,5 @@
+from pydantic import AwareDatetime, BaseModel, ConfigDict
+
 from backend.app.contracts.common import ContractModel, UTCDateTime
 from backend.app.domain.events import (
     EventActionType,
@@ -5,6 +7,16 @@ from backend.app.domain.events import (
     EventStatus,
     ResolutionOutcome,
 )
+
+
+class EventActionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    occurred_at: AwareDatetime
+
+
+class ResolveEventRequest(EventActionRequest):
+    outcome: ResolutionOutcome
 
 
 class EventActionResponse(ContractModel):

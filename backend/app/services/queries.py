@@ -25,6 +25,51 @@ class AccessContext:
     actor_id: str
 
 
+def event_response(stored: StoredEvent) -> EventResponse:
+    event = stored.event
+    return EventResponse(
+        event_id=event.event_id,
+        episode_id=event.episode_id,
+        resident_id=event.resident_id,
+        room_id=event.room_id,
+        objective_family=event.objective_family,
+        headline=event.headline,
+        priority=event.priority,
+        status=event.status,
+        created_at=event.created_at,
+        last_signal_at=event.last_signal_at,
+        signal_count=event.signal_count,
+        related_event_ids=list(event.related_event_ids),
+        recurrence_count=event.recurrence_count,
+        overdue_at=event.overdue_at,
+        overdue=event.overdue,
+        resolution_outcome=event.resolution_outcome,
+        action_history=[
+            EventActionResponse(
+                action=action.action,
+                actor_id=action.actor_id,
+                occurred_at=action.occurred_at,
+                previous_status=action.previous_status,
+                status=action.status,
+                resolution_outcome=action.resolution_outcome,
+            )
+            for action in event.action_history
+        ],
+        priority_history=[
+            EventPriorityHistoryResponse(
+                previous_priority=item.previous_priority,
+                priority=item.priority,
+                actor_id=item.actor_id,
+                changed_at=item.changed_at,
+            )
+            for item in event.priority_history
+        ],
+        resident_memory_version=event.resident_memory_version,
+        resident_memory_entry_ids=list(event.resident_memory_entry_ids),
+        version=stored.version,
+    )
+
+
 class ProductQueryService:
     def __init__(
         self,
@@ -62,7 +107,7 @@ class ProductQueryService:
         self.get_resident(context, resident_id)
         return EventListResponse(
             items=[
-                self._event_response(stored)
+                event_response(stored)
                 for stored in self._events.list_for_resident(
                     context.tenant_id,
                     resident_id,
@@ -75,7 +120,7 @@ class ProductQueryService:
         context: AccessContext,
         event_id: str,
     ) -> EventResponse:
-        return self._event_response(
+        return event_response(
             self._events.get(context.tenant_id, event_id)
         )
 
@@ -92,51 +137,6 @@ class ProductQueryService:
     @staticmethod
     def _resident_response(record: ResidentRecord) -> ResidentSummary:
         return ResidentSummary.model_validate(record, from_attributes=True)
-
-    @staticmethod
-    def _event_response(stored: StoredEvent) -> EventResponse:
-        event = stored.event
-        return EventResponse(
-            event_id=event.event_id,
-            episode_id=event.episode_id,
-            resident_id=event.resident_id,
-            room_id=event.room_id,
-            objective_family=event.objective_family,
-            headline=event.headline,
-            priority=event.priority,
-            status=event.status,
-            created_at=event.created_at,
-            last_signal_at=event.last_signal_at,
-            signal_count=event.signal_count,
-            related_event_ids=list(event.related_event_ids),
-            recurrence_count=event.recurrence_count,
-            overdue_at=event.overdue_at,
-            overdue=event.overdue,
-            resolution_outcome=event.resolution_outcome,
-            action_history=[
-                EventActionResponse(
-                    action=action.action,
-                    actor_id=action.actor_id,
-                    occurred_at=action.occurred_at,
-                    previous_status=action.previous_status,
-                    status=action.status,
-                    resolution_outcome=action.resolution_outcome,
-                )
-                for action in event.action_history
-            ],
-            priority_history=[
-                EventPriorityHistoryResponse(
-                    previous_priority=item.previous_priority,
-                    priority=item.priority,
-                    actor_id=item.actor_id,
-                    changed_at=item.changed_at,
-                )
-                for item in event.priority_history
-            ],
-            resident_memory_version=event.resident_memory_version,
-            resident_memory_entry_ids=list(event.resident_memory_entry_ids),
-            version=stored.version,
-        )
 
     @staticmethod
     def _memory_response(memory: ResidentMemory) -> ResidentMemoryResponse:

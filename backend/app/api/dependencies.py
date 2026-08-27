@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from dataclasses import dataclass
 from typing import Annotated
 
 from fastapi import Depends, Header, Request
@@ -10,7 +11,9 @@ from backend.app.db.repositories import (
     ResidentRepository,
 )
 from backend.app.domain._validation import require_nonblank_text
+from backend.app.services.event_commands import EventCommandService
 from backend.app.services.errors import InvalidInputError
+from backend.app.services.idempotency import IdempotencyService
 from backend.app.services.queries import AccessContext, ProductQueryService
 
 
@@ -28,6 +31,15 @@ def access_context(
         raise InvalidInputError(field=field) from error
 
 
+def request_idempotency_key(
+    idempotency_key: Annotated[str, Header(alias="Idempotency-Key")],
+) -> str:
+    try:
+        return require_nonblank_text(idempotency_key, "Idempotency-Key")
+    except ValueError as error:
+        raise InvalidInputError(field="Idempotency-Key") from error
+
+
 def database_session(request: Request) -> Iterator[Session]:
     with request.app.state.session_factory() as session:
         yield session
@@ -40,4 +52,21 @@ def query_service(
         ResidentRepository(session),
         EventRepository(session),
         FeedbackRepository(session),
+    )
+
+
+@dataclass(frozen=True)
+class EventMutationServices:
+    session: Session
+    commands: EventCommandService
+    idempotency: IdempotencyService
+
+
+def event_mutation_services(
+    session: Annotated[Session, Depends(database_session)],
+) -> EventMutationServices:
+    return EventMutationServices(
+        session=session,
+        commands=EventCommandService(session, EventRepository(session)),
+        idempotency=IdempotencyService(session),
     )
