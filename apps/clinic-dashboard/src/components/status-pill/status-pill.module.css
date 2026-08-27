@@ -1,0 +1,47 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: fit-content;
+  min-height: 1.75rem;
+  padding: 0.25rem 0.65rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 650;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.dot {
+  width: 0.42rem;
+  height: 0.42rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.neutral {
+  color: var(--color-status-neutral-text);
+  background: var(--color-status-neutral-bg);
+}
+
+.healthy {
+  color: var(--color-status-healthy-text);
+  background: var(--color-status-healthy-bg);
+}
+
+.attention {
+  color: var(--color-status-attention-text);
+  background: var(--color-status-attention-bg);
+}
+
+.critical {
+  color: var(--color-status-critical-text);
+  background: var(--color-status-critical-bg);
+}
+
+.unavailable {
+  color: var(--color-status-unavailable-text);
+  background: var(--color-status-unavailable-bg);
+}

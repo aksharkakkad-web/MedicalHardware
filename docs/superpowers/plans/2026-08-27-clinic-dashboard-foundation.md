@@ -313,7 +313,7 @@ Expected: tests pass and the commit succeeds.
 - Create: `apps/clinic-dashboard/src/components/status-pill/status-pill.module.css`
 - Test: `apps/clinic-dashboard/src/components/app-shell/app-shell.test.tsx`
 
-- [ ] **Step 1: Write a failing shell accessibility test**
+- [x] **Step 1: Write a failing shell accessibility test**
 
 ```tsx
 render(<AppShell><p>Residents content</p></AppShell>);
@@ -322,21 +322,21 @@ expect(screen.getByRole("main")).toHaveTextContent("Residents content");
 expect(screen.getByRole("link", { name: /residents/i })).toHaveAttribute("aria-current", "page");
 ```
 
-- [ ] **Step 2: Run the test and confirm it fails**
+- [x] **Step 2: Run the test and confirm it fails**
 
 ```bash
 pnpm --dir apps/clinic-dashboard test -- src/components/app-shell/app-shell.test.tsx
 ```
 
-- [ ] **Step 3: Implement design tokens and the responsive shell**
+- [x] **Step 3: Implement design tokens and the responsive shell**
 
 Define CSS variables for canvas, surface, text, muted text, border, accent, healthy, attention, critical, radii, shadows, and focus ring. Build a desktop sidebar and compact mobile header. Residents is the active link; Events, Devices, and Settings are visibly marked “Soon” and are not clickable dead routes.
 
-- [ ] **Step 4: Implement `StatusPill`**
+- [x] **Step 4: Implement `StatusPill`**
 
 The component accepts a visible label and a semantic tone: `neutral`, `healthy`, `attention`, `critical`, or `unavailable`. It always renders text in addition to color.
 
-- [ ] **Step 5: Run tests, lint, and typecheck**
+- [x] **Step 5: Run tests, lint, and typecheck**
 
 ```bash
 pnpm --dir apps/clinic-dashboard test
@@ -346,7 +346,7 @@ pnpm --dir apps/clinic-dashboard typecheck
 
 Expected: all commands pass.
 
-- [ ] **Step 6: Commit the shell**
+- [x] **Step 6: Commit the shell**
 
 ```bash
 git add apps/clinic-dashboard/src/app apps/clinic-dashboard/src/components

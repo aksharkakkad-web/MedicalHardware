@@ -1,0 +1,237 @@
+.shell {
+  min-height: 100svh;
+  display: grid;
+  grid-template-columns: 16.5rem minmax(0, 1fr);
+  background: var(--color-canvas);
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  height: 100svh;
+  flex-direction: column;
+  padding: 1.5rem 1.15rem;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0 0.45rem;
+}
+
+.brandMark {
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 0.7rem;
+  color: #fff;
+  background: var(--color-accent-strong);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.brandName,
+.brandSubtitle {
+  display: block;
+}
+
+.brandName {
+  color: var(--color-text);
+  font-size: 0.96rem;
+  letter-spacing: -0.015em;
+}
+
+.brandSubtitle {
+  margin-top: 0.12rem;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
+.navigation {
+  margin-top: 2.2rem;
+}
+
+.navigationList {
+  display: grid;
+  gap: 0.35rem;
+  list-style: none;
+}
+
+.activeLink,
+.futureItem {
+  display: grid;
+  grid-template-columns: 1.9rem minmax(0, 1fr) auto;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.activeLink {
+  color: var(--color-accent-strong);
+  border-color: var(--color-accent-border);
+  background: var(--color-accent-soft);
+}
+
+.activeLink:hover {
+  background: var(--color-accent-soft-hover);
+}
+
+.futureItem {
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.navIcon {
+  display: grid;
+  width: 1.75rem;
+  height: 1.75rem;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 0.5rem;
+  font-size: 0.64rem;
+  font-weight: 800;
+}
+
+.soon {
+  color: var(--color-text-soft);
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sidebarFooter {
+  margin-top: auto;
+  padding: 1rem 0.7rem 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.footerLabel,
+.footerNote {
+  color: var(--color-text-muted);
+  font-size: 0.7rem;
+}
+
+.footerLabel {
+  margin-bottom: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.footerNote {
+  margin-top: 0.55rem;
+}
+
+.workspace {
+  min-width: 0;
+}
+
+.topbar {
+  display: flex;
+  min-height: 4.7rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 2.5rem;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.eyebrow {
+  color: var(--color-text-muted);
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.workspaceName {
+  margin-top: 0.18rem;
+  color: var(--color-text);
+  font-size: 0.92rem;
+  font-weight: 650;
+}
+
+.main {
+  width: 100%;
+  max-width: 96rem;
+  min-height: calc(100svh - 4.7rem);
+  margin: 0 auto;
+  padding: 2.5rem;
+}
+
+@media (max-width: 800px) {
+  .shell {
+    display: block;
+  }
+
+  .sidebar {
+    height: auto;
+    padding: 0.85rem 1rem 0.7rem;
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .brand {
+    padding: 0;
+  }
+
+  .brandMark {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.6rem;
+  }
+
+  .brandSubtitle,
+  .sidebarFooter,
+  .topbar {
+    display: none;
+  }
+
+  .navigation {
+    margin-top: 0.8rem;
+    overflow-x: auto;
+  }
+
+  .navigationList {
+    display: flex;
+    width: max-content;
+    min-width: 100%;
+    gap: 0.25rem;
+  }
+
+  .activeLink,
+  .futureItem {
+    display: flex;
+    min-height: 2.35rem;
+    padding: 0.35rem 0.6rem;
+    font-size: 0.78rem;
+  }
+
+  .navIcon {
+    display: none;
+  }
+
+  .soon {
+    font-size: 0.52rem;
+  }
+
+  .main {
+    min-height: calc(100svh - 7.3rem);
+    padding: 1.5rem 1rem 2rem;
+  }
+}
