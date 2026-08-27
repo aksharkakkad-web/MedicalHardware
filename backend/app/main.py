@@ -1,3 +1,6 @@
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 
 from backend.app.api.errors import register_error_handlers
@@ -8,7 +11,18 @@ from backend.app.db.session import create_engine_for_url, create_session_factory
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
-    app = FastAPI(title="Contactless Monitoring Product API", version="0.1.0")
+    @asynccontextmanager
+    async def lifespan(application: FastAPI) -> AsyncIterator[None]:
+        try:
+            yield
+        finally:
+            application.state.engine.dispose()
+
+    app = FastAPI(
+        title="Contactless Monitoring Product API",
+        version="0.1.0",
+        lifespan=lifespan,
+    )
     app.state.settings = settings or Settings()
     app.state.engine = create_engine_for_url(app.state.settings.database_url)
     app.state.session_factory = create_session_factory(app.state.engine)

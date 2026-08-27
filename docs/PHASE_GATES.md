@@ -22,7 +22,7 @@ All three tracks work in parallel. A phase is not a rule that Akshar, Rishit, or
 | Current gate | Status | What this means |
 | --- | --- | --- |
 | Phase 1 — product-logic foundation | **Complete** | The agreed monitoring, calibration, event, feedback, recurrence, and resident-memory behavior runs with deterministic toy data. |
-| Phase 2 — first complete event experience | **In progress** | Backend makes the product flow durable and accessible; Rishit builds the actual clinic experience on contract-valid mocks; hardware defines product-facing device states. |
+| Phase 2 — first complete event experience | **In progress** | The first durable backend Product API slice works. Rishit's clinic/home mock experiences, hardware's product-facing device states, and later Phase 2 backend slices remain open. |
 
 ### Why Phase 2 is ready
 
@@ -31,16 +31,27 @@ All three tracks work in parallel. A phase is not a rule that Akshar, Rishit, or
 - The toy-data flow has automated coverage and is a repeatable shared scenario.
 - Team ownership is clear, and there is no competing active work.
 
+### First durable backend checkpoint
+
+The synthetic caregiver story now preserves its room/resident assignment,
+event action history, trusted feedback, resident memory, idempotency records,
+and audit history across an application restart. The first Product API read and
+caregiver-action paths are frozen in `docs/DATA_CONTRACT.md`.
+
 ### What Phase 2 does **not** claim
 
-The database, real API, real frontend app, sensor ingestion, hardware intelligence, authentication, notifications, clinical validation, and deployment are not finished. They are the work ahead, not missing prerequisites for starting Phase 2.
+The complete frontend experiences, product-facing hardware state model,
+broader database/API surface, production authentication, sensor ingestion,
+hardware intelligence, notifications, clinical validation, and deployment are
+not finished. They remain open work, so the overall Phase 2 gate stays
+**In progress**.
 
 ## The phase-by-phase roadmap
 
 | Phase | Shared outcome | Frontend / Rishit | Backend / Akshar | Hardware | Exit checkpoint |
 | --- | --- | --- | --- | --- | --- |
 | 1. Product-logic foundation | Agree on the product's core behavior and prove it with toy data. | Product flow and mock direction defined. | Monitoring, calibration, event, feedback, and memory rules proved in toy scenarios. | Device responsibilities and future boundary defined. | **Complete:** everyone uses the same meaning for resident status and events. |
-| 2. First complete event experience | Make the clinic and home user experiences real enough to build against. | Build the full clinic and separate home experiences on contract-valid mocks: clinic operations stay clinic-only, while the home experience uses family-safe language and simple feedback. | Durable room/resident/event/feedback history and the first Product API around the agreed journey. | Product-facing device states: online, offline, poor quality, buffering, retrying, assignment unavailable. | Clinic and home mock experiences complete their agreed stories without contradicting backend rules or each other. |
+| 2. First complete event experience | Make the clinic and home user experiences real enough to build against. | Build the full clinic and separate home experiences on contract-valid mocks: clinic operations stay clinic-only, while the home experience uses family-safe language and simple feedback. | **First slice complete:** durable room/resident/event/feedback history and the first Product API around the agreed journey. Later Phase 2 backend breadth remains open. | Product-facing device states: online, offline, poor quality, buffering, retrying, assignment unavailable. | Clinic and home mock experiences complete their agreed stories without contradicting backend rules or each other. |
 | 3. First convergence on toy data | Connect the user experience to the real backend with no product redesign. | Replace one mock path with the real API; preserve mock mode and clear loading/failure states. | Serve the same contract, actions, audit history, and access boundaries. | Produce device-shaped toy messages at the agreed boundary. | The clinic experience runs on real backend toy data; the simulator can plug in later. |
 | 4. Feedback and understandable explanations | Make events understandable and feedback useful. | Fast feedback, clear uncertainty, event explanation, resident-context editing. | Trusted feedback history, resident memory, recommendation/explanation support; deterministic warnings remain independent of AI. | Continue independent research and edge preparation. | A caregiver understands an event, records what happened, and sees that context preserved. |
 | 5. Monitoring intelligence on normalized simulated data | Personalize responsibly and make confidence meaningful before edge transport is introduced. | Show calibration, trends, confidence, degraded monitoring, and device health clearly. | Use normalized simulated fixtures for fusion, personal baselines, anomaly logic, confidence, and deterministic event decisions. | Validate sensor availability/quality reporting. | Normal situations stay mostly quiet; meaningful simulated changes create understandable events, and weak data visibly lowers confidence. |
