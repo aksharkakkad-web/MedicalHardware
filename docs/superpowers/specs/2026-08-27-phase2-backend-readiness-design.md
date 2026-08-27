@@ -1,8 +1,8 @@
 # Phase 2 Backend Readiness Design
 
-**Status:** Approved in conversation on August 27, 2026  
-**Owner:** Akshar — backend and intelligence  
-**Frontend handoff owner:** Rishit  
+**Status:** Approved in conversation on August 27, 2026
+**Owner:** Akshar — backend and intelligence
+**Frontend handoff owner:** Rishit
 **Target gate:** Backend ready for the first clinic-dashboard API connection
 
 ## 1. Outcome
