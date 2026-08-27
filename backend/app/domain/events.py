@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
 from enum import StrEnum
@@ -147,6 +148,7 @@ class EventStore:
         quiet_gap: timedelta | None = None,
         *,
         policy: SyntheticEventEpisodePolicy | None = None,
+        initial_events: Sequence[MonitoringEvent] = (),
     ) -> None:
         if quiet_gap is not None and policy is not None:
             raise ValueError("provide quiet_gap or policy, not both")
@@ -162,7 +164,9 @@ class EventStore:
             raise ValueError("policy must be a SyntheticEventEpisodePolicy")
         self.policy = policy
         self.quiet_gap = policy.quiet_gap
-        self._events: dict[str, MonitoringEvent] = {}
+        self._events = {event.event_id: event for event in initial_events}
+        if len(self._events) != len(initial_events):
+            raise ValueError("initial_events must have unique event IDs")
 
     def record_signal(
         self,

@@ -1,5 +1,6 @@
 """Trusted operator feedback and versioned resident context for toy scenarios."""
 
+from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from datetime import datetime
 import re
@@ -13,7 +14,7 @@ from backend.app.domain._validation import (
 from backend.app.domain.events import EventStatus, MonitoringEvent, ResolutionOutcome
 
 
-def _normalize_event_label(value: object) -> str:
+def normalize_event_label(value: object) -> str:
     value = require_nonblank_text(value, "actual_event_label")
     normalized = re.sub(r"[^a-z0-9]+", "_", value.casefold()).strip("_")
     if not normalized:
@@ -71,10 +72,23 @@ class LearningDecision:
 
 
 class FeedbackService:
-    def __init__(self) -> None:
-        self._memories: dict[str, ResidentMemory] = {}
-        self._feedback: dict[str, FeedbackRecord] = {}
-        self._decisions_by_event_id: dict[str, LearningDecision] = {}
+    def __init__(
+        self,
+        *,
+        initial_memories: Sequence[ResidentMemory] = (),
+        initial_decisions: Sequence[LearningDecision] = (),
+    ) -> None:
+        self._memories = {
+            memory.resident_id: memory for memory in initial_memories
+        }
+        self._feedback = {
+            decision.feedback.feedback_id: decision.feedback
+            for decision in initial_decisions
+        }
+        self._decisions_by_event_id = {
+            decision.feedback.event_id: decision
+            for decision in initial_decisions
+        }
 
     def submit_feedback(
         self,
@@ -88,7 +102,7 @@ class FeedbackService:
         if event.status != EventStatus.RESOLVED or event.resolution_outcome is None:
             raise ValueError("feedback requires a resolved event")
         actor_id = require_nonblank_text(actor_id, "actor_id")
-        actual_event_label = _normalize_event_label(actual_event_label)
+        actual_event_label = normalize_event_label(actual_event_label)
         routine = require_strict_bool(routine, "routine")
         created_at = require_aware_datetime(created_at, "created_at")
         event_timestamp = require_aware_datetime(

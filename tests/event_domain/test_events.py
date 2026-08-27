@@ -548,6 +548,31 @@ class EventFlowTests(unittest.TestCase):
                 resident_memory=mismatched,
             )
 
+    def test_hydrated_event_preserves_lifecycle_transition_history(self) -> None:
+        opened = self.record(at=self.started)
+        hydrated = EventStore(
+            quiet_gap=timedelta(minutes=5),
+            initial_events=(opened,),
+        )
+
+        acknowledged = hydrated.acknowledge(
+            opened.event_id,
+            actor_id="operator_001",
+            at=self.started + timedelta(minutes=1),
+        )
+
+        self.assertEqual(acknowledged.status, EventStatus.ACKNOWLEDGED)
+        self.assertEqual(
+            [action.action.value for action in acknowledged.action_history],
+            ["opened", "acknowledged"],
+        )
+
+    def test_hydration_rejects_duplicate_event_ids(self) -> None:
+        opened = self.record(at=self.started)
+
+        with self.assertRaises(ValueError):
+            EventStore(initial_events=(opened, opened))
+
 
 if __name__ == "__main__":
     unittest.main()

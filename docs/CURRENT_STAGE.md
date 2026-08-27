@@ -2,13 +2,22 @@
 
 **Updated:** August 27, 2026
 
-**Operating status:** Phase 1 product-logic foundation is complete. Phase 2, the first complete event experience, is ready to start. See `docs/PHASE_GATES.md` for the shared start → build → review → merge → next-phase process.
+**Operating status:** Phase 1 product-logic foundation is complete. Phase 2,
+the first complete event experience, is **In progress**. Its first durable
+backend slice now works; the frontend, hardware, and later Phase 2 slices
+remain open. See `docs/PHASE_GATES.md` for the shared start → build → review →
+merge → next-phase process.
 
 ## Where we are now
 
-We have finished the first backend behavior milestone using synthetic data.
+We have finished the Phase 1 backend behavior milestone and implemented the
+first durable Phase 2 backend slice using synthetic data.
 
-This is not the complete deployed product yet. It is the working product logic that proves how the main monitoring journey should behave before we connect a database, product API, frontend, and real hardware.
+This is not the complete deployed product yet. The caregiver product backbone
+now has a file-backed database, versioned Product API, durable lifecycle and
+feedback transactions, tenant isolation, idempotency, audit history, and a
+restart proof. The frontend, product-facing hardware states, broader backend
+views, and real hardware remain unfinished.
 
 The tested journey is:
 
@@ -20,7 +29,10 @@ The tested journey is:
 6. A repeated pattern creates a new linked event instead of reopening the resolved one.
 7. Setup changes can recalibrate only the affected sensing dimensions while preserving resident history and unaffected progress.
 
-All of this currently runs in memory with deterministic toy data and automated tests.
+The Phase 1 rules still run deterministically in memory. The first Phase 2
+caregiver story now persists its room/resident assignment, event actions,
+feedback, resident memory, idempotency records, and audit history through an
+application restart.
 
 ## What Rishit can build now
 
@@ -42,15 +54,17 @@ The clinic caregiver experience is the first complete user journey. Rishit can b
 
 ## What Akshar builds next
 
-Akshar's next backend milestone is durable persistence and the Product API:
+The first durable Product API slice is implemented. Akshar's remaining Phase 2
+backend work and later roadmap work include:
 
-- store rooms, residents, calibration, events, audit history, feedback, and resident memory;
-- expose the shared contract through the real API;
-- add authentication and authorization boundaries;
-- return the same shapes and lifecycle behavior the frontend already uses;
-- keep the synthetic scenario as a repeatable backend evaluation.
+- broaden persistence beyond the first room/resident/event/feedback story;
+- add calibration/setup history, awareness, device health, and notification settings;
+- replace development headers with production authentication and authorization;
+- connect frontend clients to the frozen first-slice contract without redesign;
+- keep the synthetic restart scenario as a repeatable backend evaluation.
 
-After that come simulated telemetry ingestion, fusion, baselines, anomaly/confidence logic, notifications, and selective AI interpretation.
+Simulated telemetry ingestion, fusion, baselines, anomaly/confidence logic,
+notifications, and selective AI interpretation remain later slices and phases.
 
 ## What the hardware track builds in parallel
 

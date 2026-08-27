@@ -690,6 +690,190 @@ Memory is versioned and auditable. It is not the same object as the numerical ba
 
 Exact REST paths may change, but domain objects and semantics should remain stable.
 
+### Phase 2 first durable slice
+
+This subsection freezes the Product API surface implemented by the first
+durable Phase 2 backend slice. All values shown are synthetic. Public
+timestamps are UTC-only and use the `Z` form in JSON.
+
+Implemented read paths:
+
+- `GET /health`
+- `GET /v1/residents`
+- `GET /v1/residents/{resident_id}`
+- `GET /v1/residents/{resident_id}/events`
+- `GET /v1/residents/{resident_id}/memory`
+- `GET /v1/events/{event_id}`
+
+Implemented caregiver action paths:
+
+- `POST /v1/events/{event_id}/acknowledge`
+- `POST /v1/events/{event_id}/checked`
+- `POST /v1/events/{event_id}/resolve`
+- `POST /v1/events/{event_id}/feedback`
+
+Every `/v1` request requires the development-only `X-Tenant-Id` and
+`X-Actor-Id` headers. Every caregiver action also requires
+`Idempotency-Key`. Every caregiver action body requires
+`"schema_version": "1.0"`, and its timestamp must be explicitly UTC (`Z` or
+`+00:00`), not merely convertible to UTC. Repeating the same key with the same
+method, path, actor, tenant, and logical request returns the originally stored
+response without repeating event, feedback, memory, or audit effects. Reusing
+the key for a different logical request returns `idempotency_conflict`. Cross-tenant reads
+and actions return the same not-found response as a missing identifier.
+Production authentication is not implemented by these headers.
+
+`ResidentSummary` has exactly these fields:
+
+```json
+{
+  "schema_version": "1.0",
+  "resident_id": "resident_demo_a",
+  "display_label": "Resident A",
+  "room_id": "room_214",
+  "room_label": "Room 214",
+  "assignment_status": "active"
+}
+```
+
+`EventResponse` has exactly these fields, including the shown nested action
+and priority-history fields:
+
+```json
+{
+  "schema_version": "1.0",
+  "event_id": "evt_phase2_demo",
+  "episode_id": "episode_phase2_demo",
+  "resident_id": "resident_demo_a",
+  "room_id": "room_214",
+  "objective_family": "unusual_movement",
+  "headline": "Unusual movement detected",
+  "priority": "high",
+  "status": "resolved",
+  "created_at": "2026-08-24T21:02:11Z",
+  "last_signal_at": "2026-08-24T21:02:11Z",
+  "signal_count": 1,
+  "related_event_ids": [],
+  "recurrence_count": 1,
+  "overdue_at": null,
+  "overdue": false,
+  "resolution_outcome": "false_positive",
+  "action_history": [
+    {
+      "schema_version": "1.0",
+      "action": "opened",
+      "actor_id": "system:monitoring_event",
+      "occurred_at": "2026-08-24T21:02:11Z",
+      "previous_status": "detected",
+      "status": "open",
+      "resolution_outcome": null
+    },
+    {
+      "schema_version": "1.0",
+      "action": "acknowledged",
+      "actor_id": "operator_1",
+      "occurred_at": "2026-08-24T21:03:00Z",
+      "previous_status": "open",
+      "status": "acknowledged",
+      "resolution_outcome": null
+    },
+    {
+      "schema_version": "1.0",
+      "action": "checked",
+      "actor_id": "operator_1",
+      "occurred_at": "2026-08-24T21:04:00Z",
+      "previous_status": "acknowledged",
+      "status": "checked",
+      "resolution_outcome": null
+    },
+    {
+      "schema_version": "1.0",
+      "action": "resolved",
+      "actor_id": "operator_1",
+      "occurred_at": "2026-08-24T21:05:00Z",
+      "previous_status": "checked",
+      "status": "resolved",
+      "resolution_outcome": "false_positive"
+    }
+  ],
+  "priority_history": [
+    {
+      "schema_version": "1.0",
+      "previous_priority": null,
+      "priority": "high",
+      "actor_id": "system:monitoring_event",
+      "changed_at": "2026-08-24T21:02:11Z"
+    }
+  ],
+  "resident_memory_version": null,
+  "resident_memory_entry_ids": [],
+  "version": 4
+}
+```
+
+`LearningDecisionResponse` has exactly these fields, including the shown
+nested feedback, memory, and memory-entry fields:
+
+```json
+{
+  "schema_version": "1.0",
+  "feedback": {
+    "schema_version": "1.0",
+    "feedback_id": "fb_synthetic_example",
+    "event_id": "evt_phase2_demo",
+    "resident_id": "resident_demo_a",
+    "actor_id": "operator_1",
+    "outcome": "false_positive",
+    "actual_event_label": "assisted_movement",
+    "routine": true,
+    "created_at": "2026-08-24T21:06:00Z"
+  },
+  "memory": {
+    "schema_version": "1.0",
+    "resident_id": "resident_demo_a",
+    "version": 1,
+    "entries": [
+      {
+        "schema_version": "1.0",
+        "entry_id": "memory_synthetic_example",
+        "description": "assisted_movement",
+        "source_feedback_id": "fb_synthetic_example",
+        "status": "active",
+        "created_by": "operator_1",
+        "created_at": "2026-08-24T21:06:00Z",
+        "retired_by": null,
+        "retired_at": null,
+        "retirement_reason": null
+      }
+    ]
+  },
+  "memory_updated": true,
+  "baseline_window_eligible": true,
+  "global_label_recorded": true
+}
+```
+
+All Product API failures use this strict error envelope. The outer envelope
+is versioned with `schema_version: "1.0"`; the nested detail is strict and
+intentionally unversioned:
+
+```json
+{
+  "schema_version": "1.0",
+  "error": {
+    "code": "invalid_transition",
+    "message": "The requested transition is not allowed",
+    "field": null
+  }
+}
+```
+
+This first slice does not yet return event evidence, resident trends, device
+health, AI interpretation, production authentication, or home real-data
+views. Those capabilities remain deferred inside Phase 2 or to their later
+roadmap phases; existing telemetry, anomaly, AI, and hardware contracts remain
+the future implementation boundary.
+
 ---
 
 ## 20. Database Entities

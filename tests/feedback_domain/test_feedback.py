@@ -323,6 +323,34 @@ class FeedbackLearningTests(unittest.TestCase):
                     **values,
                 )
 
+    def test_hydrated_feedback_retry_preserves_idempotent_behavior(self) -> None:
+        submitted_at = datetime(2026, 8, 26, 12, 5, tzinfo=timezone.utc)
+        first = self.service.submit_feedback(
+            event=self.event,
+            actor_id="operator_001",
+            actual_event_label="assisted_transfer",
+            routine=True,
+            created_at=submitted_at,
+        )
+        hydrated = FeedbackService(
+            initial_memories=(first.memory,),
+            initial_decisions=(first,),
+        )
+
+        retried = hydrated.submit_feedback(
+            event=self.event,
+            actor_id="operator_001",
+            actual_event_label="assisted_transfer",
+            routine=True,
+            created_at=submitted_at + timedelta(minutes=1),
+        )
+
+        self.assertEqual(retried.feedback, first.feedback)
+        self.assertEqual(retried.memory, first.memory)
+        self.assertFalse(retried.memory_updated)
+        self.assertFalse(retried.baseline_window_eligible)
+        self.assertFalse(retried.global_label_recorded)
+
 
 if __name__ == "__main__":
     unittest.main()
