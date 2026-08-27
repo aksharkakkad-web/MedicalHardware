@@ -1,5 +1,9 @@
 # Phase 2 Review — Product Backbone Slice
 
+> Historical review of the first durable event slice. Backend Checkpoint A was
+> completed afterward; see `docs/PHASE_2_CHECKPOINT_A_REVIEW.md` for current
+> resident-status/calibration evidence.
+
 ## What now works
 
 The first durable backend slice runs one synthetic caregiver journey through a

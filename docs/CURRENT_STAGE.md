@@ -2,22 +2,24 @@
 
 **Updated:** August 27, 2026
 
-**Operating status:** Phase 1 product-logic foundation is complete. Phase 2,
-the first complete event experience, is **In progress**. Its first durable
-backend slice now works; the frontend, hardware, and later Phase 2 slices
-remain open. See `docs/PHASE_GATES.md` for the shared start → build → review →
-merge → next-phase process.
+**Operating status:** Phase 1 product logic is complete. Phase 2 is **In
+progress**. The first durable event slice and backend Checkpoint A (resident
+status, awareness, calibration, and setup history) are complete. Backend
+Checkpoint B—device assignment and health—is next. Frontend and hardware work
+continue independently. See `docs/PHASE_GATES.md` for the shared start → build
+→ review → merge → next-checkpoint process.
 
 ## Where we are now
 
-We have finished the Phase 1 backend behavior milestone and implemented the
-first durable Phase 2 backend slice using synthetic data.
+We have finished the Phase 1 behavior milestone, the first durable Phase 2
+event slice, and Phase 2 backend Checkpoint A using synthetic data.
 
 This is not the complete deployed product yet. The caregiver product backbone
 now has a file-backed database, versioned Product API, durable lifecycle and
-feedback transactions, tenant isolation, idempotency, audit history, and a
-restart proof. The frontend, product-facing hardware states, broader backend
-views, and real hardware remain unfinished.
+feedback transactions, resident monitoring/awareness history, versioned
+calibration/setup history, tenant isolation, idempotency, audit history, and
+restart proofs. The frontend, device-health checkpoint, settings/memory-admin
+checkpoint, final clinic handoff, and real hardware remain unfinished.
 
 The tested journey is:
 
@@ -29,10 +31,13 @@ The tested journey is:
 6. A repeated pattern creates a new linked event instead of reopening the resolved one.
 7. Setup changes can recalibrate only the affected sensing dimensions while preserving resident history and unaffected progress.
 
-The Phase 1 rules still run deterministically in memory. The first Phase 2
-caregiver story now persists its room/resident assignment, event actions,
-feedback, resident memory, idempotency records, and audit history through an
-application restart.
+The Product API now also persists and exposes active, away, return,
+possible-multi-person, and unavailable/limited monitoring history. A setup
+change can restart only an affected calibration dimension while preserving
+unaffected progress and all history. An assigned resident whose histories have
+not started is shown honestly as not yet available instead of being mistaken
+for a missing resident. The plain-language verification command is
+`python3 -m backend.app.checkpoints.status_calibration`.
 
 ## What Rishit can build now
 
@@ -54,14 +59,15 @@ The clinic caregiver experience is the first complete user journey. Rishit can b
 
 ## What Akshar builds next
 
-The first durable Product API slice is implemented. Akshar's remaining Phase 2
-backend work and later roadmap work include:
+The first durable Product API slice and Checkpoint A are implemented. Akshar's
+remaining Phase 2 backend checkpoints are:
 
-- broaden persistence beyond the first room/resident/event/feedback story;
-- add calibration/setup history, awareness, device health, and notification settings;
-- replace development headers with production authentication and authorization;
-- connect frontend clients to the frozen first-slice contract without redesign;
-- keep the synthetic restart scenario as a repeatable backend evaluation.
+- **Checkpoint B:** device identity, room assignment history, and honest
+  online/offline/degraded/buffering/retrying state;
+- **Checkpoint C:** notification/awareness preferences and versioned resident
+  memory administration;
+- **Checkpoint D:** clinic-wide event filters/pagination, complete OpenAPI
+  handoff, and a real-client connection boundary for Rishit.
 
 Simulated telemetry ingestion, fusion, baselines, anomaly/confidence logic,
 notifications, and selective AI interpretation remain later slices and phases.
@@ -96,3 +102,4 @@ Real hardware later replaces the simulator as the telemetry producer. It should 
 - Shared frontend/backend/hardware language: `docs/DATA_CONTRACT.md`
 - Build order: `docs/BUILD_PLAN.md`
 - Ownership: `docs/TEAM_OWNERSHIP.md`
+- Checkpoint A evidence: `docs/PHASE_2_CHECKPOINT_A_REVIEW.md`

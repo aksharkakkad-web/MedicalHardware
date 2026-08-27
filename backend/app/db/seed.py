@@ -1,7 +1,7 @@
 """Deterministic, non-PHI synthetic product story for local development."""
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from alembic import command
@@ -17,6 +17,17 @@ from backend.app.db.models import (
     TenantRow,
 )
 from backend.app.db.session import create_engine_for_url, create_session_factory
+from backend.app.db.status_repositories import (
+    CalibrationRepository,
+    MonitoringStatusRepository,
+    StoredCalibration,
+    StoredMonitoringStatus,
+)
+from backend.app.domain.calibration import (
+    BaselineStatus,
+    CalibrationDimensionProgress,
+    CalibrationProgress,
+)
 from backend.app.domain.events import (
     EventAction,
     EventActionType,
@@ -25,6 +36,7 @@ from backend.app.domain.events import (
     EventStatus,
     MonitoringEvent,
 )
+from backend.app.domain.monitoring import PresenceState, derive_monitoring_snapshot
 
 
 TENANT_ID = "tenant_demo"
@@ -103,6 +115,63 @@ def seed_synthetic_story(session: Session) -> SeededStory:
     session.flush()
     session.add_all(event_bundle.actions)
     session.add_all(event_bundle.priorities)
+
+    status_started_at = datetime(2026, 8, 24, 20, 55, tzinfo=timezone.utc)
+    monitoring_repository = MonitoringStatusRepository(session)
+    for offset, presence in enumerate(
+        (
+            PresenceState.RESIDENT_PRESENT,
+            PresenceState.RESIDENT_AWAY,
+            PresenceState.RESIDENT_PRESENT,
+            PresenceState.POSSIBLE_MULTI_PERSON,
+            PresenceState.RESIDENT_PRESENT,
+        )
+    ):
+        monitoring_repository.record(
+            TENANT_ID,
+            StoredMonitoringStatus(
+                resident_id=RESIDENT_ID,
+                room_id=ROOM_ID,
+                observed_at=status_started_at + timedelta(minutes=offset),
+                snapshot=derive_monitoring_snapshot(
+                    assignment_valid=True,
+                    device_healthy=True,
+                    presence=presence,
+                    signal_quality=0.9,
+                ),
+            ),
+        )
+
+    CalibrationRepository(session).save(
+        TENANT_ID,
+        StoredCalibration(
+            resident_id=RESIDENT_ID,
+            version=1,
+            recorded_at=datetime(2026, 8, 24, 21, 0, tzinfo=timezone.utc),
+            progress=CalibrationProgress(
+                setup_version="setup_room_214_v1",
+                status=BaselineStatus.ESTABLISHED,
+                eligible_windows=12,
+                excluded_windows=2,
+                reason="calibration_complete",
+                dimension_progress=(
+                    CalibrationDimensionProgress(
+                        dimension="movement",
+                        status=BaselineStatus.ESTABLISHED,
+                        eligible_windows=12,
+                        excluded_windows=2,
+                    ),
+                    CalibrationDimensionProgress(
+                        dimension="respiratory_rate",
+                        status=BaselineStatus.ESTABLISHED,
+                        eligible_windows=12,
+                        excluded_windows=2,
+                    ),
+                ),
+            ),
+        ),
+        expected_version=0,
+    )
     session.commit()
     return story
 

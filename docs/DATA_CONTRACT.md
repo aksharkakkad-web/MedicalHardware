@@ -4,6 +4,224 @@
 **Version:** 1.4
 **Important:** Final vendor-specific radar/CSI raw shapes are intentionally hardware-dependent. Production software stabilizes around a versioned **EdgeTelemetryEnvelope** emitted after lightweight on-device preprocessing. Optional raw/debug capture is separate and bounded.
 
+## Phase 2 Checkpoint A — Resident Status and Calibration
+
+These Product API paths give the dashboard a stable view of whether monitoring
+is usable, what awareness states occurred, and how much resident-specific
+calibration is available:
+
+- `GET /v1/residents/{resident_id}/status`
+- `GET /v1/residents/{resident_id}/awareness`
+- `GET /v1/residents/{resident_id}/calibration`
+- `POST /v1/residents/{resident_id}/setup-changes`
+
+Resident-away and possible-multi-person are awareness states. They do not
+become warning events. The awareness list is chronological and the current
+status is the newest item. Unknown or unavailable data stays explicit. An
+assigned resident with no monitoring or calibration history still returns a
+status response: unavailable parts are `null`, `data_availability` explains
+whether the response is complete or partial, and `unavailable_reasons` says
+which histories have not started. This is distinct from a missing or
+cross-tenant resident, which returns `404`.
+
+Example status response:
+
+```json
+{
+  "schema_version": "1.0",
+  "resident_id": "resident_demo_a",
+  "room_id": "room_214",
+  "data_availability": "available",
+  "unavailable_reasons": [],
+  "monitoring": {
+    "schema_version": "1.0",
+    "resident_id": "resident_demo_a",
+    "room_id": "room_214",
+    "observed_at": "2026-08-24T21:02:11Z",
+    "monitoring_state": "active",
+    "presence_state": "resident_present",
+    "baseline_learning_allowed": true,
+    "resident_measurements_allowed": true,
+    "reasons": [],
+    "quality_policy_version": "synthetic_monitoring_quality_v1",
+    "quality_policy_test_only": true
+  },
+  "calibration": {
+    "schema_version": "1.0",
+    "resident_id": "resident_demo_a",
+    "version": 1,
+    "recorded_at": "2026-08-24T21:02:11Z",
+    "setup_version": "setup_room_214_v1",
+    "status": "established",
+    "eligible_windows": 12,
+    "excluded_windows": 2,
+    "reason": "calibration_complete",
+    "prior_setup_versions": [],
+    "dimensions": [
+      {
+        "schema_version": "1.0",
+        "dimension": "movement",
+        "status": "established",
+        "eligible_windows": 12,
+        "excluded_windows": 2
+      }
+    ],
+    "setup_changes": []
+  }
+}
+```
+
+Example status before monitoring and calibration histories exist:
+
+```json
+{
+  "schema_version": "1.0",
+  "resident_id": "resident_new",
+  "room_id": "room_new",
+  "data_availability": "not_yet_available",
+  "unavailable_reasons": [
+    "monitoring_not_yet_available",
+    "calibration_not_yet_available"
+  ],
+  "monitoring": null,
+  "calibration": null
+}
+```
+
+Example setup-change request:
+
+```json
+{
+  "schema_version": "1.0",
+  "reason": "device_moved",
+  "affected_dimensions": ["movement"],
+  "changed_at": "2026-08-24T22:00:00Z",
+  "expected_calibration_version": 1
+}
+```
+
+Example awareness response (items are oldest to newest):
+
+```json
+{
+  "schema_version": "1.0",
+  "resident_id": "resident_demo_a",
+  "items": [
+    {
+      "schema_version": "1.0",
+      "resident_id": "resident_demo_a",
+      "room_id": "room_214",
+      "observed_at": "2026-08-24T20:55:00Z",
+      "monitoring_state": "active",
+      "presence_state": "resident_present",
+      "baseline_learning_allowed": true,
+      "resident_measurements_allowed": true,
+      "reasons": [],
+      "quality_policy_version": "synthetic_monitoring_quality_v1",
+      "quality_policy_test_only": true
+    },
+    {
+      "schema_version": "1.0",
+      "resident_id": "resident_demo_a",
+      "room_id": "room_214",
+      "observed_at": "2026-08-24T20:56:00Z",
+      "monitoring_state": "paused",
+      "presence_state": "resident_away",
+      "baseline_learning_allowed": false,
+      "resident_measurements_allowed": false,
+      "reasons": ["resident_away"],
+      "quality_policy_version": "synthetic_monitoring_quality_v1",
+      "quality_policy_test_only": true
+    }
+  ]
+}
+```
+
+Example standalone calibration response:
+
+```json
+{
+  "schema_version": "1.0",
+  "resident_id": "resident_demo_a",
+  "version": 1,
+  "recorded_at": "2026-08-24T21:00:00Z",
+  "setup_version": "setup_room_214_v1",
+  "status": "established",
+  "eligible_windows": 12,
+  "excluded_windows": 2,
+  "reason": "calibration_complete",
+  "prior_setup_versions": [],
+  "dimensions": [
+    {
+      "schema_version": "1.0",
+      "dimension": "movement",
+      "status": "established",
+      "eligible_windows": 12,
+      "excluded_windows": 2
+    },
+    {
+      "schema_version": "1.0",
+      "dimension": "respiratory_rate",
+      "status": "established",
+      "eligible_windows": 12,
+      "excluded_windows": 2
+    }
+  ],
+  "setup_changes": []
+}
+```
+
+Example setup-change response:
+
+```json
+{
+  "schema_version": "1.0",
+  "resident_id": "resident_demo_a",
+  "version": 2,
+  "recorded_at": "2026-08-24T22:00:00Z",
+  "setup_version": "setup_room_214_v2",
+  "status": "partial",
+  "eligible_windows": 12,
+  "excluded_windows": 2,
+  "reason": "device_moved",
+  "prior_setup_versions": ["setup_room_214_v1"],
+  "dimensions": [
+    {
+      "schema_version": "1.0",
+      "dimension": "movement",
+      "status": "calibrating",
+      "eligible_windows": 0,
+      "excluded_windows": 0
+    },
+    {
+      "schema_version": "1.0",
+      "dimension": "respiratory_rate",
+      "status": "established",
+      "eligible_windows": 12,
+      "excluded_windows": 2
+    }
+  ],
+  "setup_changes": [
+    {
+      "schema_version": "1.0",
+      "previous_setup_version": "setup_room_214_v1",
+      "new_setup_version": "setup_room_214_v2",
+      "affected_dimensions": ["movement"],
+      "reason": "device_moved",
+      "actor_id": "operator_1",
+      "changed_at": "2026-08-24T22:00:00Z"
+    }
+  ]
+}
+```
+
+The server creates the next setup/calibration version. Only the named
+dimensions restart calibration; unaffected dimensions, prior setup history,
+and resident memory remain intact. Setup changes require an idempotency key so
+retries cannot create duplicate history. All timestamps are UTC. Quality and
+calibration policies in the toy-data checkpoint are synthetic and test-only,
+not clinical thresholds.
+
 ---
 
 ## 1. Contract Principles
@@ -703,6 +921,9 @@ Implemented read paths:
 - `GET /v1/residents/{resident_id}`
 - `GET /v1/residents/{resident_id}/events`
 - `GET /v1/residents/{resident_id}/memory`
+- `GET /v1/residents/{resident_id}/status`
+- `GET /v1/residents/{resident_id}/awareness`
+- `GET /v1/residents/{resident_id}/calibration`
 - `GET /v1/events/{event_id}`
 
 Implemented caregiver action paths:
@@ -711,6 +932,7 @@ Implemented caregiver action paths:
 - `POST /v1/events/{event_id}/checked`
 - `POST /v1/events/{event_id}/resolve`
 - `POST /v1/events/{event_id}/feedback`
+- `POST /v1/residents/{resident_id}/setup-changes`
 
 Every `/v1` request requires the development-only `X-Tenant-Id` and
 `X-Actor-Id` headers. Every caregiver action also requires

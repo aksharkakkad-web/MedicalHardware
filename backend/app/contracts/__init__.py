@@ -13,8 +13,20 @@ from backend.app.contracts.events import (
 )
 from backend.app.contracts.feedback import MemoryEntryResponse, ResidentMemoryResponse
 from backend.app.contracts.residents import ResidentListResponse, ResidentSummary
+from backend.app.contracts.status import (
+    AwarenessTimelineResponse,
+    CalibrationDimensionResponse,
+    CalibrationResponse,
+    MonitoringStatusResponse,
+    ResidentStatusResponse,
+    SetupChangeRequest,
+    SetupChangeResponse,
+)
 
 __all__ = [
+    "AwarenessTimelineResponse",
+    "CalibrationDimensionResponse",
+    "CalibrationResponse",
     "ContractModel",
     "ErrorDetail",
     "ErrorEnvelope",
@@ -24,8 +36,12 @@ __all__ = [
     "EventResponse",
     "HealthResponse",
     "MemoryEntryResponse",
+    "MonitoringStatusResponse",
     "ResidentListResponse",
     "ResidentMemoryResponse",
     "ResidentSummary",
+    "ResidentStatusResponse",
+    "SetupChangeRequest",
+    "SetupChangeResponse",
     "UTCDateTime",
 ]

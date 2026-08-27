@@ -10,11 +10,17 @@ from backend.app.db.repositories import (
     FeedbackRepository,
     ResidentRepository,
 )
+from backend.app.db.status_repositories import (
+    CalibrationRepository,
+    MonitoringStatusRepository,
+)
 from backend.app.domain._validation import require_nonblank_text
 from backend.app.services.event_commands import EventCommandService
 from backend.app.services.errors import InvalidInputError
 from backend.app.services.idempotency import IdempotencyService
 from backend.app.services.queries import AccessContext, ProductQueryService
+from backend.app.services.setup_commands import SetupChangeCommandService
+from backend.app.services.status_queries import ProductStatusQueryService
 
 
 def access_context(
@@ -55,10 +61,27 @@ def query_service(
     )
 
 
+def status_query_service(
+    session: Annotated[Session, Depends(database_session)],
+) -> ProductStatusQueryService:
+    return ProductStatusQueryService(
+        ResidentRepository(session),
+        MonitoringStatusRepository(session),
+        CalibrationRepository(session),
+    )
+
+
 @dataclass(frozen=True)
 class EventMutationServices:
     session: Session
     commands: EventCommandService
+    idempotency: IdempotencyService
+
+
+@dataclass(frozen=True)
+class SetupMutationServices:
+    session: Session
+    commands: SetupChangeCommandService
     idempotency: IdempotencyService
 
 
@@ -68,5 +91,25 @@ def event_mutation_services(
     return EventMutationServices(
         session=session,
         commands=EventCommandService(session, EventRepository(session)),
+        idempotency=IdempotencyService(session),
+    )
+
+
+def setup_mutation_services(
+    request: Request,
+    session: Annotated[Session, Depends(database_session)],
+) -> SetupMutationServices:
+    repository_factory = getattr(
+        request.app.state,
+        "calibration_repository_factory",
+        CalibrationRepository,
+    )
+    return SetupMutationServices(
+        session=session,
+        commands=SetupChangeCommandService(
+            session,
+            residents=ResidentRepository(session),
+            calibration=repository_factory(session),
+        ),
         idempotency=IdempotencyService(session),
     )

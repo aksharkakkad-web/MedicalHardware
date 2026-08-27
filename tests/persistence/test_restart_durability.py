@@ -9,10 +9,12 @@ from sqlalchemy import func, select
 from backend.app.config import Settings
 from backend.app.db.models import (
     AuditLogRow,
+    CalibrationSnapshotRow,
     EventActionRow,
     EventPriorityHistoryRow,
     FeedbackRecordRow,
     IdempotencyRecordRow,
+    MonitoringStatusSnapshotRow,
     ResidentMemoryEntryRow,
     ResidentMemorySnapshotRow,
     RoomResidentAssignmentRow,
@@ -123,6 +125,14 @@ def test_assignment_event_feedback_memory_audit_and_retries_are_durable(
             "/v1/residents/resident_demo_a/memory",
             headers=ACCESS_HEADERS,
         )
+        status = second_client.get(
+            "/v1/residents/resident_demo_a/status",
+            headers=ACCESS_HEADERS,
+        )
+        awareness = second_client.get(
+            "/v1/residents/resident_demo_a/awareness",
+            headers=ACCESS_HEADERS,
+        )
 
         assert replayed_acknowledgement.status_code == 200
         assert replayed_acknowledgement.json() == original_acknowledgement
@@ -130,6 +140,9 @@ def test_assignment_event_feedback_memory_audit_and_retries_are_durable(
         assert replayed_feedback.json() == original_feedback
         assert memory.json()["version"] == 1
         assert len(memory.json()["entries"]) == 1
+        assert status.status_code == awareness.status_code == 200
+        assert status.json()["monitoring"]["monitoring_state"] == "active"
+        assert len(awareness.json()["items"]) == 5
 
         with second_app.state.session_factory() as session:
             assignment = session.scalar(
@@ -162,4 +175,10 @@ def test_assignment_event_feedback_memory_audit_and_retries_are_durable(
             assert session.scalar(
                 select(func.count()).select_from(IdempotencyRecordRow)
             ) == 4
+            assert session.scalar(
+                select(func.count()).select_from(MonitoringStatusSnapshotRow)
+            ) == 5
+            assert session.scalar(
+                select(func.count()).select_from(CalibrationSnapshotRow)
+            ) == 1
     second_app.state.engine.dispose()
