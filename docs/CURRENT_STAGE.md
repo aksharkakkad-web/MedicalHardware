@@ -26,7 +26,7 @@ All of this currently runs in memory with deterministic toy data and automated t
 
 Rishit does not need to wait for the database, API, or hardware.
 
-He can build the real clinic dashboard and home experience against contract-valid mock data, including:
+He can build the real clinic dashboard and a separate home-experience mock foundation against contract-valid mock data, including:
 
 - room and resident status;
 - active, away, limited, and unavailable monitoring states;
@@ -37,6 +37,8 @@ He can build the real clinic dashboard and home experience against contract-vali
 - settings for awareness items and notifications.
 
 The frontend should place mock data behind a replaceable client/provider. Later, the real backend API replaces that mock provider without redesigning the screens.
+
+The clinic caregiver experience is the first complete user journey. The early home mock establishes its separate data/client and language boundary; the full family product is a later Phase 7 outcome after monitoring intelligence is mature.
 
 ## What Akshar builds next
 
