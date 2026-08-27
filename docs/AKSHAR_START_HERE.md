@@ -183,29 +183,7 @@ The frontend connects to the real backend using toy data without redesigning the
 
 A caregiver can understand an event, explain what actually happened, and see that feedback preserved for future context.
 
-### Phase 5 — Simulated monitoring
-
-**Rishit/product scenario track**
-
-- Generate realistic scenarios for normal activity, unusual movement, physiological deviation, unknown anomaly, sensor failure, multiple people, room-assignment problems, and recovery.
-- Keep the true scenario label outside the product information so the system cannot cheat.
-
-**Backend track**
-
-- Accept simulated radar, thermal, and Wi-Fi CSI information.
-- Handle duplicates, delays, missing sensors, and device connectivity problems.
-- Turn sensor-specific information into a consistent internal form.
-
-**Hardware track**
-
-- Refine device-shaped simulated output and expected quality signals.
-- Prepare firmware modules and test fixtures that can later replace simulated producers.
-
-**Checkpoint**
-
-A simulated room scenario can travel through the backend and appear as a meaningful product state or event.
-
-### Phase 6 — Monitoring intelligence
+### Phase 5 — Monitoring intelligence on normalized simulated data
 
 **Frontend track**
 
@@ -214,7 +192,7 @@ A simulated room scenario can travel through the backend and appear as a meaning
 
 **Backend track**
 
-- Combine the different sensors for the resident assigned to the monitored room.
+- Use normalized simulated fixtures to combine the different sensors for the resident assigned to the monitored room.
 - Learn what is normal for each resident.
 - Detect known unusual patterns and unknown anomalies.
 - Create confidence and deterministic warning decisions.
@@ -228,6 +206,28 @@ A simulated room scenario can travel through the backend and appear as a meaning
 **Checkpoint**
 
 Normal scenarios stay mostly quiet, meaningful simulated changes create understandable events, and weak data visibly lowers confidence.
+
+### Phase 6 — Simulated telemetry and ingestion
+
+**Rishit/product scenario track**
+
+- Generate realistic scenarios for normal activity, unusual movement, physiological deviation, unknown anomaly, sensor failure, multiple people, room-assignment problems, and recovery.
+- Keep the true scenario label outside the product information so the system cannot cheat.
+
+**Backend track**
+
+- Accept simulated radar, thermal, and Wi-Fi CSI information through the compact edge-telemetry boundary.
+- Handle duplicates, delays, missing sensors, and device connectivity problems.
+- Turn sensor-specific information into a consistent internal form and pass it through the established monitoring/event engine.
+
+**Hardware track**
+
+- Refine device-shaped simulated output and expected quality signals.
+- Prepare firmware modules and test fixtures that can later replace simulated producers.
+
+**Checkpoint**
+
+A simulated room scenario can travel through the future hardware boundary, the established backend intelligence, and the product UI without rewriting the product flow.
 
 ### Phase 7 — Home/family product
 
