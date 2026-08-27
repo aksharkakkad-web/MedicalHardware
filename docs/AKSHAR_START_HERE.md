@@ -229,21 +229,22 @@ Normal scenarios stay mostly quiet, meaningful simulated changes create understa
 
 A simulated room scenario can travel through the future hardware boundary, the established backend intelligence, and the product UI without rewriting the product flow.
 
-### Phase 7 — Home/family product
+### Phase 7 — Home/family real-data connection and validation
 
 **Frontend track**
 
-- Build a separate, simpler home experience focused on “Are they okay?”
-- Reuse shared product information without copying the clinic workflow or visual style.
+- Replace the full separate home experience built on mocks in Phase 2 with a family-safe real-data client.
+- Validate “Are they okay?” language, permissions, and data boundaries without copying clinic workflow or visual style.
+- Do not rebuild the Phase 2 home screens unless real-data evidence requires a deliberate product change.
 
 **Backend track**
 
-- Provide a home-appropriate view of the same resident and event information.
-- Keep clinic operations, permissions, and sensitive context out of the home experience.
+- Provide a home-appropriate, permissioned view of the same resident and event information.
+- Keep clinic operations and sensitive context out of the home experience.
 
 **Checkpoint**
 
-Clinic staff and families receive different experiences from the same core monitoring engine.
+The existing home experience runs on mature monitoring data; clinic staff and families receive different, safe experiences from the same core monitoring engine.
 
 ### Phase 8 — Evaluation and product learning
 
