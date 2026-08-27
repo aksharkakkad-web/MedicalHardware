@@ -304,7 +304,7 @@ git commit -m "feat: persist monitoring and calibration history"
 - Consumes: Task 2 rows plus `MonitoringSnapshot`, `CalibrationProgress`, and `SetupChangeAction`.
 - Produces: `StoredMonitoringStatus`, `StoredCalibration`, `MonitoringStatusRepository`, and `CalibrationRepository` used by Tasks 4–6.
 
-- [ ] **Step 1: Write failing round-trip and stale-version tests**
+- [x] **Step 1: Write failing round-trip and stale-version tests**
 
 Cover active, away, limited, and unavailable monitoring snapshots; dimension
 progress; ordered setup history; UTC normalization; missing/cross-tenant
@@ -318,13 +318,13 @@ def test_calibration_repository_rejects_stale_expected_version(session):
         repository.save("tenant_demo", changed_again, expected_version=stored.version)
 ```
 
-- [ ] **Step 2: Run repository tests and verify RED**
+- [x] **Step 2: Run repository tests and verify RED**
 
 Run: `python3 -m pytest -q tests/persistence/test_status_repositories.py`
 
 Expected: imports fail because the focused repository module does not exist.
 
-- [ ] **Step 3: Implement immutable stored wrappers and mappers**
+- [x] **Step 3: Implement immutable stored wrappers and mappers**
 
 ```python
 @dataclass(frozen=True)
@@ -347,7 +347,7 @@ Map enum values explicitly. Normalize database timestamps to `timezone.utc`.
 Reject malformed stored JSON rather than silently dropping reasons or
 dimensions.
 
-- [ ] **Step 4: Implement repository reads and writes**
+- [x] **Step 4: Implement repository reads and writes**
 
 `MonitoringStatusRepository` exposes:
 
@@ -372,7 +372,7 @@ save(
 action for that version, flushes, then rehydrates the full ordered history.
 Convert uniqueness collisions to `ConcurrentUpdateError`.
 
-- [ ] **Step 5: Run focused and regression repository suites**
+- [x] **Step 5: Run focused and regression repository suites**
 
 Run:
 
@@ -383,7 +383,7 @@ python3 -m pytest -q tests/persistence/test_repositories.py
 
 Expected: all pass.
 
-- [ ] **Step 6: Commit Task 3**
+- [x] **Step 6: Commit Task 3**
 
 ```bash
 git add backend/app/db/status_mappers.py backend/app/db/status_repositories.py tests/persistence/test_status_repositories.py
