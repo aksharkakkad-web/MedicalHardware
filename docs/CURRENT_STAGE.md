@@ -1,6 +1,8 @@
 # Current Project Stage
 
-**Updated:** August 26, 2026
+**Updated:** August 27, 2026
+
+**Operating status:** Phase 1 product-logic foundation is complete. Phase 2, the first complete event experience, is ready to start. See `docs/PHASE_GATES.md` for the shared start → build → review → merge → next-phase process.
 
 ## Where we are now
 
@@ -72,6 +74,7 @@ Real hardware later replaces the simulator as the telemetry producer. It should 
 
 ## Source-of-truth handoff
 
+- Phase status, review gates, and team cadence: `docs/PHASE_GATES.md`
 - Product behavior: `docs/PRD.md`
 - System boundaries: `docs/ARCHITECTURE.md`
 - Shared frontend/backend/hardware language: `docs/DATA_CONTRACT.md`

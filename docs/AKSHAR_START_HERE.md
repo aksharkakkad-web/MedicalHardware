@@ -78,6 +78,14 @@ The final market, medical thresholds, LLM provider, exact sensor math, and real 
 
 ## Three-track roadmap
 
+### How phases move forward
+
+Each phase follows one shared rhythm: agree on a clear story and non-goals, build independently in each owner lane, prove the story with tests and a plain-language walkthrough, review it together, update the relevant docs, merge, and explicitly start the next phase. The phase order is a dependency and integration map, not a rule that any founder waits for another.
+
+`docs/PHASE_GATES.md` is the operating dashboard for current status, phase entry criteria, exit checkpoints, and the frontend/backend/hardware tracks together.
+
+**Current status:** the toy-data product-logic foundation is complete. Phase 2 is ready to start; it makes the first caregiver event journey durable and connectable while Rishit builds the clinic flow on contract-valid mocks.
+
 ### Phase 1 — Product and project foundation
 
 **Shared product work**
@@ -327,6 +335,7 @@ This toy slice does not yet prove persistence, HTTP APIs, authentication, notifi
 
 ## Source-of-truth documents
 
+- `docs/PHASE_GATES.md` — current phase, shared review gates, and the complete three-track phase map
 - `docs/CURRENT_STAGE.md` — simple cofounder handoff: current progress, parallel work, and convergence
 - `docs/PRD.md` — what the product should do
 - `docs/ARCHITECTURE.md` — how the major pieces connect

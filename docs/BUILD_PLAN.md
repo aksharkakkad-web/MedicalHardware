@@ -28,11 +28,12 @@ The implementation should always prefer one complete vertical slice over many di
 
 Before coding any feature, read:
 
-1. `docs/PRD.md` — what the product must do
-2. `docs/ARCHITECTURE.md` — how layers are separated
-3. `docs/DATA_CONTRACT.md` — exact domain/message semantics
-4. `docs/TEAM_OWNERSHIP.md` — founder ownership and parallel-development boundaries
-5. this file — build sequence and acceptance criteria
+1. `docs/PHASE_GATES.md` — current phase, shared review gates, and the three-track outcome
+2. `docs/PRD.md` — what the product must do
+3. `docs/ARCHITECTURE.md` — how layers are separated
+4. `docs/DATA_CONTRACT.md` — exact domain/message semantics
+5. `docs/TEAM_OWNERSHIP.md` — founder ownership and parallel-development boundaries
+6. this file — detailed build sequence and acceptance criteria
 
 `AGENTS.md` is the map and operating rules, not the encyclopedia.
 
