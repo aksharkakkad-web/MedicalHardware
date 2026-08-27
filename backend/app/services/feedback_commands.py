@@ -32,13 +32,17 @@ class FeedbackCommandService:
         created_at: datetime,
     ) -> LearningDecision:
         event = self._events.get(context.tenant_id, event_id).event
-        memory = self._feedback.current_memory(
-            context.tenant_id,
-            event.resident_id,
-        )
         existing_decision = self._feedback.find_by_event(
             context.tenant_id,
             event_id,
+        )
+        memory = (
+            existing_decision.memory
+            if existing_decision is not None
+            else self._feedback.current_memory(
+                context.tenant_id,
+                event.resident_id,
+            )
         )
         service = FeedbackService(
             initial_memories=(memory,) if memory.version > 0 else (),

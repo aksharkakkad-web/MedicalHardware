@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 
 from sqlalchemy import func, select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.app.db.mappers import (
@@ -287,5 +288,11 @@ class FeedbackRepository:
                 decision.feedback.created_at,
             )
             self._session.add(bundle.snapshot)
+            # Flush the snapshot alone so only its optimistic version collision
+            # is translated; entry integrity failures remain internal errors.
+            try:
+                self._session.flush((bundle.snapshot,))
+            except IntegrityError as error:
+                raise ConcurrentUpdateError() from error
             self._session.add_all(bundle.entries)
         self._session.flush()
