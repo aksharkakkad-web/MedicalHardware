@@ -1,5 +1,6 @@
 """Trusted operator feedback and versioned resident context for toy scenarios."""
 
+from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from datetime import datetime
 import re
@@ -71,10 +72,23 @@ class LearningDecision:
 
 
 class FeedbackService:
-    def __init__(self) -> None:
-        self._memories: dict[str, ResidentMemory] = {}
-        self._feedback: dict[str, FeedbackRecord] = {}
-        self._decisions_by_event_id: dict[str, LearningDecision] = {}
+    def __init__(
+        self,
+        *,
+        initial_memories: Sequence[ResidentMemory] = (),
+        initial_decisions: Sequence[LearningDecision] = (),
+    ) -> None:
+        self._memories = {
+            memory.resident_id: memory for memory in initial_memories
+        }
+        self._feedback = {
+            decision.feedback.feedback_id: decision.feedback
+            for decision in initial_decisions
+        }
+        self._decisions_by_event_id = {
+            decision.feedback.event_id: decision
+            for decision in initial_decisions
+        }
 
     def submit_feedback(
         self,
