@@ -483,7 +483,7 @@ git commit -m "feat: expose resident status and awareness reads"
 - Consumes: `SetupChangeRequest`, `CalibrationRepository`, `start_recalibration`, `IdempotencyService`, and `AuditLogRow`.
 - Produces: idempotent `POST /v1/residents/{resident_id}/setup-changes` returning `CalibrationResponse`.
 
-- [ ] **Step 1: Write failing lifecycle and rollback tests**
+- [x] **Step 1: Write failing lifecycle and rollback tests**
 
 Tests cover selective dimension reset, generated next setup version,
 preserved unaffected dimensions/history/memory, replay, key conflict, stale
@@ -509,13 +509,13 @@ def test_setup_change_resets_only_selected_dimension(api_client):
     assert dimensions["respiratory_rate"]["status"] == "established"
 ```
 
-- [ ] **Step 2: Run setup tests and verify RED**
+- [x] **Step 2: Run setup tests and verify RED**
 
 Run: `python3 -m pytest -q tests/api/test_setup_change_api.py tests/persistence/test_setup_change_rollback.py`
 
 Expected: POST route is absent.
 
-- [ ] **Step 3: Implement command service**
+- [x] **Step 3: Implement command service**
 
 `SetupChangeCommandService.change_setup(...)`:
 
@@ -528,13 +528,13 @@ Expected: POST route is absent.
 7. appends `monitoring_setup.changed` audit details;
 8. returns the stored calibration.
 
-- [ ] **Step 4: Execute through idempotency in the route**
+- [x] **Step 4: Execute through idempotency in the route**
 
 Follow the existing event mutation pattern: reserve key, execute command,
 store exact response body, commit once, rollback any exception, and return the
 stored response on replay.
 
-- [ ] **Step 5: Run mutation, rollback, concurrency, and regression suites**
+- [x] **Step 5: Run mutation, rollback, concurrency, and regression suites**
 
 Run:
 
@@ -545,7 +545,7 @@ python3 -m pytest -q tests/api/test_event_lifecycle_api.py tests/persistence/tes
 
 Expected: all pass.
 
-- [ ] **Step 6: Commit Task 5**
+- [x] **Step 6: Commit Task 5**
 
 ```bash
 git add backend/app/services/setup_commands.py backend/app/api tests/api/test_setup_change_api.py tests/persistence/test_setup_change_rollback.py

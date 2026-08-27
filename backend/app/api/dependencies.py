@@ -19,6 +19,7 @@ from backend.app.services.event_commands import EventCommandService
 from backend.app.services.errors import InvalidInputError
 from backend.app.services.idempotency import IdempotencyService
 from backend.app.services.queries import AccessContext, ProductQueryService
+from backend.app.services.setup_commands import SetupChangeCommandService
 from backend.app.services.status_queries import ProductStatusQueryService
 
 
@@ -77,11 +78,38 @@ class EventMutationServices:
     idempotency: IdempotencyService
 
 
+@dataclass(frozen=True)
+class SetupMutationServices:
+    session: Session
+    commands: SetupChangeCommandService
+    idempotency: IdempotencyService
+
+
 def event_mutation_services(
     session: Annotated[Session, Depends(database_session)],
 ) -> EventMutationServices:
     return EventMutationServices(
         session=session,
         commands=EventCommandService(session, EventRepository(session)),
+        idempotency=IdempotencyService(session),
+    )
+
+
+def setup_mutation_services(
+    request: Request,
+    session: Annotated[Session, Depends(database_session)],
+) -> SetupMutationServices:
+    repository_factory = getattr(
+        request.app.state,
+        "calibration_repository_factory",
+        CalibrationRepository,
+    )
+    return SetupMutationServices(
+        session=session,
+        commands=SetupChangeCommandService(
+            session,
+            residents=ResidentRepository(session),
+            calibration=repository_factory(session),
+        ),
         idempotency=IdempotencyService(session),
     )
