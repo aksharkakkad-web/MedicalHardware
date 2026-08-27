@@ -108,7 +108,16 @@ class FeedbackService:
                 and existing.feedback.routine == routine
             )
             if same_submission:
-                return existing
+                return replace(
+                    existing,
+                    memory=self._memories.get(
+                        event.resident_id,
+                        existing.memory,
+                    ),
+                    memory_updated=False,
+                    baseline_window_eligible=False,
+                    global_label_recorded=False,
+                )
             raise ValueError(
                 "feedback already exists for this event; use explicit correction"
             )

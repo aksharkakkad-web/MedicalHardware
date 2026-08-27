@@ -77,11 +77,45 @@ class FeedbackLearningTests(unittest.TestCase):
         except ValueError as exc:
             self.fail(f"logical retry was rejected: {exc}")
 
-        self.assertIs(retried, first)
+        self.assertEqual(retried.feedback, first.feedback)
         self.assertEqual(retried.feedback.created_at, submitted_at)
         self.assertEqual(retried.memory.version, 1)
         self.assertEqual(len(retried.memory.entries), 1)
-        self.assertTrue(retried.baseline_window_eligible)
+        self.assertFalse(retried.memory_updated)
+        self.assertFalse(retried.baseline_window_eligible)
+        self.assertFalse(retried.global_label_recorded)
+
+    def test_retry_after_memory_correction_returns_current_memory(self) -> None:
+        submitted_at = datetime(2026, 8, 26, 12, 5, tzinfo=timezone.utc)
+        first = self.service.submit_feedback(
+            event=self.event,
+            actor_id="operator_001",
+            actual_event_label="assisted_transfer",
+            routine=True,
+            created_at=submitted_at,
+        )
+        corrected = self.service.correct_memory(
+            resident_id=self.event.resident_id,
+            entry_id=first.memory.active_entries[0].entry_id,
+            actor_id="operator_002",
+            reason="Routine no longer applies",
+            corrected_at=submitted_at + timedelta(days=1),
+        )
+
+        retried = self.service.submit_feedback(
+            event=self.event,
+            actor_id="operator_001",
+            actual_event_label="assisted_transfer",
+            routine=True,
+            created_at=submitted_at + timedelta(days=2),
+        )
+
+        self.assertEqual(retried.feedback, first.feedback)
+        self.assertEqual(retried.memory, corrected)
+        self.assertEqual(retried.memory.active_entries, ())
+        self.assertFalse(retried.memory_updated)
+        self.assertFalse(retried.baseline_window_eligible)
+        self.assertFalse(retried.global_label_recorded)
 
     def test_conflicting_second_feedback_requires_explicit_correction(self) -> None:
         submitted_at = datetime(2026, 8, 26, 12, 5, tzinfo=timezone.utc)
