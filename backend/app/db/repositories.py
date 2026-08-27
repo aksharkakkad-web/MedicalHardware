@@ -268,8 +268,6 @@ class FeedbackRepository:
         tenant_id: str,
         decision: LearningDecision,
     ) -> None:
-        self._session.add(feedback_to_row(tenant_id, decision))
-        self._session.flush()
         existing_snapshot = self._session.scalar(
             select(ResidentMemorySnapshotRow).where(
                 ResidentMemorySnapshotRow.tenant_id == tenant_id,
@@ -277,6 +275,11 @@ class FeedbackRepository:
                 ResidentMemorySnapshotRow.version == decision.memory.version,
             )
         )
+        if existing_snapshot is not None and decision.memory_updated:
+            raise ConcurrentUpdateError()
+
+        self._session.add(feedback_to_row(tenant_id, decision))
+        self._session.flush()
         if existing_snapshot is None:
             bundle = memory_to_rows(
                 tenant_id,

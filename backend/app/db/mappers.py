@@ -71,12 +71,12 @@ def event_to_rows(
         headline=event.headline,
         priority=event.priority.value,
         status=event.status.value,
-        created_at=event.created_at,
-        last_signal_at=event.last_signal_at,
+        created_at=_utc(event.created_at),
+        last_signal_at=_utc(event.last_signal_at),
         signal_count=event.signal_count,
         related_event_ids=list(event.related_event_ids),
         recurrence_count=event.recurrence_count,
-        overdue_at=event.overdue_at,
+        overdue_at=_utc(event.overdue_at),
         resolution_outcome=(
             None
             if event.resolution_outcome is None
@@ -95,7 +95,7 @@ def event_to_rows(
             sequence=sequence,
             action=action.action.value,
             actor_id=action.actor_id,
-            occurred_at=action.occurred_at,
+            occurred_at=_utc(action.occurred_at),
             previous_status=action.previous_status.value,
             status=action.status.value,
             resolution_outcome=(
@@ -118,7 +118,7 @@ def event_to_rows(
             ),
             priority=item.priority.value,
             actor_id=item.actor_id,
-            changed_at=item.changed_at,
+            changed_at=_utc(item.changed_at),
         )
         for sequence, item in enumerate(event.priority_history, start=1)
     )
@@ -197,7 +197,7 @@ def memory_to_rows(
         tenant_id=tenant_id,
         resident_id=memory.resident_id,
         version=memory.version,
-        created_at=created_at,
+        created_at=_utc(created_at),
     )
     entries = tuple(
         ResidentMemoryEntryRow(
@@ -209,9 +209,9 @@ def memory_to_rows(
             source_feedback_id=entry.source_feedback_id,
             status=entry.status,
             created_by=entry.created_by,
-            created_at=entry.created_at,
+            created_at=_utc(entry.created_at),
             retired_by=entry.retired_by,
-            retired_at=entry.retired_at,
+            retired_at=_utc(entry.retired_at),
             retirement_reason=entry.retirement_reason,
         )
         for entry in memory.entries
@@ -254,7 +254,7 @@ def feedback_to_row(
         outcome=feedback.outcome.value,
         actual_event_label=feedback.actual_event_label,
         routine=feedback.routine,
-        created_at=feedback.created_at,
+        created_at=_utc(feedback.created_at),
         memory_updated=decision.memory_updated,
         baseline_window_eligible=decision.baseline_window_eligible,
         global_label_recorded=decision.global_label_recorded,
