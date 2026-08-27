@@ -10,6 +10,11 @@ from backend.app.contracts.status import (
     ResidentStatusUnavailableReason,
     SetupChangeResponse,
 )
+from backend.app.contracts.devices import DeviceAssignmentState
+from backend.app.db.device_repositories import (
+    DeviceHealthRepository,
+    DeviceRepository,
+)
 from backend.app.db.repositories import ResidentRecord, ResidentRepository
 from backend.app.db.status_repositories import (
     CalibrationRepository,
@@ -18,7 +23,10 @@ from backend.app.db.status_repositories import (
     StoredMonitoringStatus,
 )
 from backend.app.services.errors import NotFoundError
+from backend.app.services.device_queries import device_list_item_response
 from backend.app.services.queries import AccessContext
+from backend.app.domain.device_health import DeviceHealthState
+from backend.app.domain.monitoring import MonitoringReason, MonitoringState
 
 
 def monitoring_status_response(
@@ -80,10 +88,14 @@ class ProductStatusQueryService:
         residents: ResidentRepository,
         monitoring: MonitoringStatusRepository,
         calibration: CalibrationRepository,
+        devices: DeviceRepository,
+        device_health: DeviceHealthRepository,
     ) -> None:
         self._residents = residents
         self._monitoring = monitoring
         self._calibration = calibration
+        self._devices = devices
+        self._device_health = device_health
 
     def get_status(
         self,
@@ -96,6 +108,12 @@ class ProductStatusQueryService:
             context.tenant_id,
             resident_id,
         )
+        device = self._devices.find_for_room(context.tenant_id, resident.room_id)
+        device_observation = (
+            None
+            if device is None
+            else self._device_health.latest(context.tenant_id, device.device_id)
+        )
         unavailable_reasons: list[ResidentStatusUnavailableReason] = []
         if monitoring is None:
             unavailable_reasons.append(
@@ -105,22 +123,66 @@ class ProductStatusQueryService:
             unavailable_reasons.append(
                 ResidentStatusUnavailableReason.CALIBRATION_NOT_YET_AVAILABLE
             )
-        if not unavailable_reasons:
-            availability = ResidentStatusDataAvailability.AVAILABLE
-        elif monitoring is None and calibration is None:
-            availability = ResidentStatusDataAvailability.NOT_YET_AVAILABLE
+        if device is None:
+            unavailable_reasons.append(
+                ResidentStatusUnavailableReason.DEVICE_ASSIGNMENT_UNAVAILABLE
+            )
+            device_assignment_state = DeviceAssignmentState.ASSIGNMENT_UNAVAILABLE
+            device_response = None
+            operational_reason = MonitoringReason.ASSIGNMENT_INVALID
         else:
+            device_assignment_state = DeviceAssignmentState.ASSIGNED
+            device_response = device_list_item_response(
+                device,
+                device_observation,
+            )
+            if device_observation is None:
+                unavailable_reasons.append(
+                    ResidentStatusUnavailableReason.DEVICE_HEALTH_NOT_YET_AVAILABLE
+                )
+                operational_reason = MonitoringReason.DEVICE_HEALTH_UNAVAILABLE
+            elif device_observation.state is DeviceHealthState.ONLINE:
+                operational_reason = None
+            elif (
+                device_observation.state
+                is DeviceHealthState.ASSIGNMENT_UNAVAILABLE
+            ):
+                operational_reason = MonitoringReason.ASSIGNMENT_INVALID
+            else:
+                operational_reason = MonitoringReason.DEVICE_UNHEALTHY
+
+        if monitoring is None and calibration is None:
+            availability = ResidentStatusDataAvailability.NOT_YET_AVAILABLE
+        elif unavailable_reasons:
             availability = ResidentStatusDataAvailability.PARTIAL
+        else:
+            availability = ResidentStatusDataAvailability.AVAILABLE
+
+        monitoring_response = (
+            None
+            if monitoring is None
+            else monitoring_status_response(monitoring)
+        )
+        if monitoring_response is not None and operational_reason is not None:
+            reasons = list(monitoring_response.reasons)
+            if operational_reason not in reasons:
+                reasons.append(operational_reason)
+            monitoring_response = monitoring_response.model_copy(
+                update={
+                    "monitoring_state": MonitoringState.UNAVAILABLE,
+                    "baseline_learning_allowed": False,
+                    "resident_measurements_allowed": False,
+                    "reasons": reasons,
+                }
+            )
         return ResidentStatusResponse(
             resident_id=resident.resident_id,
             room_id=resident.room_id,
             data_availability=availability,
             unavailable_reasons=unavailable_reasons,
-            monitoring=(
-                None
-                if monitoring is None
-                else monitoring_status_response(monitoring)
-            ),
+            device_assignment_state=device_assignment_state,
+            device=device_response,
+            monitoring=monitoring_response,
             calibration=(
                 None if calibration is None else calibration_response(calibration)
             ),

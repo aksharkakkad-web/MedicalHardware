@@ -13,6 +13,7 @@ from backend.app.contracts.events import (
 )
 from backend.app.contracts.devices import (
     DeviceAssignmentResponse,
+    DeviceAssignmentState,
     DeviceHealthDataAvailability,
     DeviceHealthResponse,
     DeviceListItemResponse,
@@ -37,6 +38,7 @@ __all__ = [
     "CalibrationResponse",
     "ContractModel",
     "DeviceAssignmentResponse",
+    "DeviceAssignmentState",
     "DeviceHealthDataAvailability",
     "DeviceHealthResponse",
     "DeviceListItemResponse",

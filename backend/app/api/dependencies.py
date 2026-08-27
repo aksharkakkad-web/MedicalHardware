@@ -82,6 +82,8 @@ def status_query_service(
         ResidentRepository(session),
         MonitoringStatusRepository(session),
         CalibrationRepository(session),
+        DeviceRepository(session),
+        DeviceHealthRepository(session),
     )
 
 

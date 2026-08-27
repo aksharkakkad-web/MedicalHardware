@@ -1,11 +1,15 @@
 from enum import StrEnum
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 from backend.app.contracts.common import (
     ContractModel,
     RequestContractModel,
     UTCDateTime,
+)
+from backend.app.contracts.devices import (
+    DeviceAssignmentState,
+    DeviceListItemResponse,
 )
 from backend.app.domain.calibration import BaselineStatus
 from backend.app.domain.monitoring import (
@@ -67,6 +71,8 @@ class ResidentStatusDataAvailability(StrEnum):
 class ResidentStatusUnavailableReason(StrEnum):
     MONITORING_NOT_YET_AVAILABLE = "monitoring_not_yet_available"
     CALIBRATION_NOT_YET_AVAILABLE = "calibration_not_yet_available"
+    DEVICE_ASSIGNMENT_UNAVAILABLE = "device_assignment_unavailable"
+    DEVICE_HEALTH_NOT_YET_AVAILABLE = "device_health_not_yet_available"
 
 
 class ResidentStatusResponse(ContractModel):
@@ -74,8 +80,34 @@ class ResidentStatusResponse(ContractModel):
     room_id: str
     data_availability: ResidentStatusDataAvailability
     unavailable_reasons: list[ResidentStatusUnavailableReason]
+    device_assignment_state: DeviceAssignmentState
+    device: DeviceListItemResponse | None
     monitoring: MonitoringStatusResponse | None
     calibration: CalibrationResponse | None
+
+    @field_validator("unavailable_reasons")
+    @classmethod
+    def require_unique_unavailable_reasons(
+        cls,
+        value: list[ResidentStatusUnavailableReason],
+    ) -> list[ResidentStatusUnavailableReason]:
+        if len(set(value)) != len(value):
+            raise ValueError("unavailable_reasons must not contain duplicates")
+        return value
+
+    @model_validator(mode="after")
+    def require_consistent_device_assignment(self) -> "ResidentStatusResponse":
+        if self.device_assignment_state is DeviceAssignmentState.ASSIGNED:
+            if self.device is None or self.device.assignment is None:
+                raise ValueError("assigned resident status requires device assignment")
+            if self.device.assignment.room_id != self.room_id:
+                raise ValueError("device assignment must match resident room")
+            if self.device.health.device_id != self.device.device_id:
+                raise ValueError("device health identity must match device")
+            return self
+        if self.device is not None:
+            raise ValueError("unavailable device assignment must not invent a device")
+        return self
 
 
 class AwarenessTimelineResponse(ContractModel):

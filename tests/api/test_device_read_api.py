@@ -4,7 +4,6 @@ from fastapi.testclient import TestClient
 
 from backend.app.db.device_repositories import DeviceHealthRepository
 from backend.app.db.models import (
-    DeviceRoomAssignmentRow,
     DeviceRow,
     LocationRow,
     RoomRow,
@@ -27,39 +26,13 @@ OBSERVED_AT = datetime(2026, 8, 25, 14, 0, tzinfo=timezone.utc)
 def _seed_device_reads(api_client: TestClient) -> None:
     with api_client.app.state.session_factory() as session:
         session.add(
-            LocationRow(
-                location_id="location_demo",
+            DeviceRow(
+                device_id="device_spare",
                 tenant_id="tenant_demo",
-                label="Demo clinic",
+                display_label="Spare monitor",
             )
-        )
-        session.add_all(
-            [
-                DeviceRow(
-                    device_id="device_room_214",
-                    tenant_id="tenant_demo",
-                    display_label="Room 214 monitor",
-                ),
-                DeviceRow(
-                    device_id="device_spare",
-                    tenant_id="tenant_demo",
-                    display_label="Spare monitor",
-                ),
-            ]
         )
         session.flush()
-        session.add(
-            DeviceRoomAssignmentRow(
-                assignment_id="device_assign_room_214",
-                tenant_id="tenant_demo",
-                device_id="device_room_214",
-                location_id="location_demo",
-                room_id="room_214",
-                status="active",
-                effective_from=OBSERVED_AT - timedelta(days=1),
-                effective_to=None,
-            )
-        )
         DeviceHealthRepository(session).record(
             "tenant_demo",
             DeviceHealthObservation(
@@ -123,7 +96,7 @@ def test_device_list_returns_current_assignment_and_honest_health(
                     "location_label": "Demo clinic",
                     "room_id": "room_214",
                     "room_label": "Room 214",
-                    "assigned_at": "2026-08-24T14:00:00Z",
+                    "assigned_at": "2026-08-24T00:00:00Z",
                 },
                 "health": {
                     "schema_version": "1.0",

@@ -798,9 +798,9 @@
     "semantic_hash": ""
   },
   "backend/app/api/dependencies.py": {
-    "mtime": 1787873943.2400458,
-    "seen": 1787874241.134611,
-    "ast_hash": "c109df15d8a956f8ad3e71c164fa6ace",
+    "mtime": 1787874647.18269,
+    "seen": 1787874691.580436,
+    "ast_hash": "4a28428b21e4b1b940b981503d87eee5",
     "semantic_hash": ""
   },
   "backend/app/api/errors.py": {
@@ -834,9 +834,9 @@
     "semantic_hash": ""
   },
   "backend/app/api/v1/router.py": {
-    "mtime": 1787873943.2401865,
-    "seen": 1787874241.134614,
-    "ast_hash": "aceae3a75ca13bfbb1180e7aed7acbd6",
+    "mtime": 1787874647.1829014,
+    "seen": 1787874691.58044,
+    "ast_hash": "a5d6c8c6877cae409cd1a546043fcbc1",
     "semantic_hash": ""
   },
   "backend/app/checkpoints/__init__.py": {
@@ -1080,9 +1080,9 @@
     "semantic_hash": ""
   },
   "tests/api/test_contracts.py": {
-    "mtime": 1787862162.1335845,
-    "seen": 1787872525.1953018,
-    "ast_hash": "588648b4f9d6c3ced3cf4698e96e3427",
+    "mtime": 1787874671.0684352,
+    "seen": 1787874691.5804648,
+    "ast_hash": "d41a02692af13030a8b0b309ac4419d8",
     "semantic_hash": ""
   },
   "tests/api/test_event_lifecycle_api.py": {
@@ -1989,6 +1989,24 @@
     "mtime": 1787874338.6530316,
     "seen": 1787874556.4208262,
     "ast_hash": "dd9edc69964f4a7991c0a2a586b7e9d3",
+    "semantic_hash": ""
+  },
+  "backend/app/api/v1/devices.py": {
+    "mtime": 1787874647.182337,
+    "seen": 1787874691.580438,
+    "ast_hash": "7999d2afdd6de18b1896c3b40472f1b9",
+    "semantic_hash": ""
+  },
+  "backend/app/services/device_queries.py": {
+    "mtime": 1787874647.182129,
+    "seen": 1787874691.580459,
+    "ast_hash": "ba64c6b741bbe4962123045165a696b6",
+    "semantic_hash": ""
+  },
+  "tests/api/test_device_read_api.py": {
+    "mtime": 1787874609.7839699,
+    "seen": 1787874691.580466,
+    "ast_hash": "06148c655a99f3c26065ae7d326915ba",
     "semantic_hash": ""
   }
 }

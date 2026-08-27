@@ -16,6 +16,11 @@ class DeviceHealthDataAvailability(StrEnum):
     NOT_YET_AVAILABLE = "not_yet_available"
 
 
+class DeviceAssignmentState(StrEnum):
+    ASSIGNED = "assigned"
+    ASSIGNMENT_UNAVAILABLE = "assignment_unavailable"
+
+
 class DeviceSourceHealthResponse(ContractModel):
     source: str
     state: DeviceSourceHealthState
@@ -147,6 +152,7 @@ def _normalize_text_list(value: list[str], field: str) -> list[str]:
 
 __all__ = [
     "DeviceAssignmentResponse",
+    "DeviceAssignmentState",
     "DeviceHealthDataAvailability",
     "DeviceHealthResponse",
     "DeviceListItemResponse",

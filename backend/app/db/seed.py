@@ -11,11 +11,15 @@ from sqlalchemy.orm import Session
 from backend.app.config import Settings
 from backend.app.db.mappers import event_to_rows
 from backend.app.db.models import (
+    DeviceRoomAssignmentRow,
+    DeviceRow,
+    LocationRow,
     ResidentRow,
     RoomResidentAssignmentRow,
     RoomRow,
     TenantRow,
 )
+from backend.app.db.device_repositories import DeviceHealthRepository
 from backend.app.db.session import create_engine_for_url, create_session_factory
 from backend.app.db.status_repositories import (
     CalibrationRepository,
@@ -36,6 +40,11 @@ from backend.app.domain.events import (
     EventStatus,
     MonitoringEvent,
 )
+from backend.app.domain.device_health import (
+    DeviceHealthObservation,
+    DeviceHealthState,
+    DeviceSourceHealth,
+)
 from backend.app.domain.monitoring import PresenceState, derive_monitoring_snapshot
 
 
@@ -43,6 +52,8 @@ TENANT_ID = "tenant_demo"
 ROOM_ID = "room_214"
 RESIDENT_ID = "resident_demo_a"
 EVENT_ID = "evt_phase2_demo"
+LOCATION_ID = "location_demo"
+DEVICE_ID = "device_room_214"
 
 
 @dataclass(frozen=True)
@@ -93,6 +104,20 @@ def seed_synthetic_story(session: Session) -> SeededStory:
     session.flush()
     session.add(RoomRow(room_id=ROOM_ID, tenant_id=TENANT_ID, label="Room 214"))
     session.add(
+        LocationRow(
+            location_id=LOCATION_ID,
+            tenant_id=TENANT_ID,
+            label="Demo clinic",
+        )
+    )
+    session.add(
+        DeviceRow(
+            device_id=DEVICE_ID,
+            tenant_id=TENANT_ID,
+            display_label="Room 214 monitor",
+        )
+    )
+    session.add(
         ResidentRow(
             resident_id=RESIDENT_ID,
             tenant_id=TENANT_ID,
@@ -106,6 +131,18 @@ def seed_synthetic_story(session: Session) -> SeededStory:
             tenant_id=TENANT_ID,
             room_id=ROOM_ID,
             resident_id=RESIDENT_ID,
+            status="active",
+            effective_from=datetime(2026, 8, 24, tzinfo=timezone.utc),
+            effective_to=None,
+        )
+    )
+    session.add(
+        DeviceRoomAssignmentRow(
+            assignment_id="device_assign_room_214",
+            tenant_id=TENANT_ID,
+            device_id=DEVICE_ID,
+            location_id=LOCATION_ID,
+            room_id=ROOM_ID,
             status="active",
             effective_from=datetime(2026, 8, 24, tzinfo=timezone.utc),
             effective_to=None,
@@ -171,6 +208,21 @@ def seed_synthetic_story(session: Session) -> SeededStory:
             ),
         ),
         expected_version=0,
+    )
+    DeviceHealthRepository(session).record(
+        TENANT_ID,
+        DeviceHealthObservation(
+            device_id=DEVICE_ID,
+            state=DeviceHealthState.ONLINE,
+            observed_at=datetime(2026, 8, 24, 20, 59, tzinfo=timezone.utc),
+            last_seen_at=datetime(2026, 8, 24, 20, 59, tzinfo=timezone.utc),
+            sources=(
+                DeviceSourceHealth(source="radar", state="online"),
+                DeviceSourceHealth(source="thermal", state="online"),
+                DeviceSourceHealth(source="wifi_csi", state="online"),
+            ),
+            limitations=(),
+        ),
     )
     session.commit()
     return story

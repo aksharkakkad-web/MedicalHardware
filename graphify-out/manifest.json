@@ -798,9 +798,9 @@
     "semantic_hash": ""
   },
   "backend/app/api/dependencies.py": {
-    "mtime": 1787874647.18269,
-    "seen": 1787874691.580436,
-    "ast_hash": "4a28428b21e4b1b940b981503d87eee5",
+    "mtime": 1787874793.4205692,
+    "seen": 1787874976.83173,
+    "ast_hash": "55542ee2fc7f795cfbb6956e3be6ee6c",
     "semantic_hash": ""
   },
   "backend/app/api/errors.py": {
@@ -858,9 +858,9 @@
     "semantic_hash": ""
   },
   "backend/app/contracts/__init__.py": {
-    "mtime": 1787874216.6631598,
-    "seen": 1787874241.1346161,
-    "ast_hash": "21802bb5415f54db00d60eb5e56b2593",
+    "mtime": 1787874793.4194155,
+    "seen": 1787874976.8317351,
+    "ast_hash": "b508415b9f0bb187cde0cead261ed8f2",
     "semantic_hash": ""
   },
   "backend/app/contracts/common.py": {
@@ -888,9 +888,9 @@
     "semantic_hash": ""
   },
   "backend/app/contracts/status.py": {
-    "mtime": 1787873943.240458,
-    "seen": 1787874241.134619,
-    "ast_hash": "49a3ab3c52873290d9303c88ef3bee58",
+    "mtime": 1787874919.9849713,
+    "seen": 1787874976.831737,
+    "ast_hash": "7951abb59c931179804ac9780da97189",
     "semantic_hash": ""
   },
   "backend/app/db/__init__.py": {
@@ -942,9 +942,9 @@
     "semantic_hash": ""
   },
   "backend/app/db/seed.py": {
-    "mtime": 1787873943.2408154,
-    "seen": 1787874241.134623,
-    "ast_hash": "2e4b4049b67ee73ba05d467884b13d75",
+    "mtime": 1787874793.4202745,
+    "seen": 1787874976.831743,
+    "ast_hash": "e79ba6c5e7b63e1bf8c29130512d9a76",
     "semantic_hash": ""
   },
   "backend/app/db/session.py": {
@@ -996,9 +996,9 @@
     "semantic_hash": ""
   },
   "backend/app/domain/monitoring.py": {
-    "mtime": 1787797862.2652335,
-    "seen": 1787872525.195296,
-    "ast_hash": "61ff6fabeec9da5eef4c9d163127b001",
+    "mtime": 1787874793.4182405,
+    "seen": 1787874976.831747,
+    "ast_hash": "e80688a138d036e61a625547295dd411",
     "semantic_hash": ""
   },
   "backend/app/domain/toy_scenario.py": {
@@ -1056,9 +1056,9 @@
     "semantic_hash": ""
   },
   "backend/app/services/status_queries.py": {
-    "mtime": 1787873943.2411172,
-    "seen": 1787874241.134631,
-    "ast_hash": "50fa7fe2239465db08ba39d479f91ba5",
+    "mtime": 1787874818.1208153,
+    "seen": 1787874976.8317518,
+    "ast_hash": "284f3887cbd8bddbb99f6108aa44f351",
     "semantic_hash": ""
   },
   "pyproject.toml": {
@@ -1128,15 +1128,15 @@
     "semantic_hash": ""
   },
   "tests/api/test_status_contracts.py": {
-    "mtime": 1787873943.2830906,
-    "seen": 1787874241.134637,
-    "ast_hash": "c3f862793b263995a7377c9058d11e5a",
+    "mtime": 1787874905.3713193,
+    "seen": 1787874976.8317592,
+    "ast_hash": "12af639e7b56e1b528beabdfccf4dd0b",
     "semantic_hash": ""
   },
   "tests/api/test_status_read_api.py": {
-    "mtime": 1787873943.2831504,
-    "seen": 1787874241.134637,
-    "ast_hash": "e1af329c71c69621b3ba44757777564c",
+    "mtime": 1787874860.2511156,
+    "seen": 1787874976.8317592,
+    "ast_hash": "35f73d3ea4f9f948918ec15789560221",
     "semantic_hash": ""
   },
   "tests/calibration_domain/__init__.py": {
@@ -1632,9 +1632,9 @@
     "semantic_hash": ""
   },
   "docs/DATA_CONTRACT.md": {
-    "mtime": 1787874216.6646135,
-    "seen": 1787874241.134677,
-    "ast_hash": "aa0d73e98e0e84458f9193b1e0293183",
+    "mtime": 1787874891.2484574,
+    "seen": 1787874976.831799,
+    "ast_hash": "b9b18836afb443861a4bf25acc137d7f",
     "semantic_hash": ""
   },
   "docs/PHASE_2_CHECKPOINT_A_REVIEW.md": {
@@ -1926,9 +1926,9 @@
     "semantic_hash": ""
   },
   "backend/app/contracts/devices.py": {
-    "mtime": 1787874188.2542815,
-    "seen": 1787874241.134617,
-    "ast_hash": "052ee476844ceb7a35680520dfcb8a1c",
+    "mtime": 1787874793.4187768,
+    "seen": 1787874976.831736,
+    "ast_hash": "002a7122ef75acb8a9b0fedd043ef862",
     "semantic_hash": ""
   },
   "backend/app/domain/device_health.py": {
@@ -2004,9 +2004,15 @@
     "semantic_hash": ""
   },
   "tests/api/test_device_read_api.py": {
-    "mtime": 1787874609.7839699,
-    "seen": 1787874691.580466,
-    "ast_hash": "06148c655a99f3c26065ae7d326915ba",
+    "mtime": 1787874944.893368,
+    "seen": 1787874976.831754,
+    "ast_hash": "ba88b578b97b67f1247407d4bc7a1125",
+    "semantic_hash": ""
+  },
+  "tests/api/test_resident_device_composition.py": {
+    "mtime": 1787874756.3174355,
+    "seen": 1787874976.831757,
+    "ast_hash": "b521c644c67d02d148882dbaa0e33c78",
     "semantic_hash": ""
   }
 }
