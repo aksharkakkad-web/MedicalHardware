@@ -114,6 +114,26 @@ class HydratedDecisionFeedbackRepository(FeedbackRepository):
         raise AssertionError("an existing-decision retry must not persist")
 
 
+class FirstReadStaleFeedbackRepository(FeedbackRepository):
+    """Model both route transactions reading before the winner commits."""
+
+    def __init__(self, session: Session) -> None:
+        super().__init__(session)
+        self._find_count = 0
+
+    def find_by_event(
+        self,
+        tenant_id: str,
+        event_id: str,
+    ) -> LearningDecision | None:
+        assert tenant_id == "tenant_demo"
+        assert event_id == "evt_phase2_demo"
+        self._find_count += 1
+        if self._find_count == 1:
+            return None
+        return super().find_by_event(tenant_id, event_id)
+
+
 class StaticEventRepository:
     def __init__(self, stored_event: StoredEvent) -> None:
         self._stored_event = stored_event
@@ -568,3 +588,95 @@ def test_existing_feedback_retry_uses_same_hydration_current_memory(
     assert retry.memory.version == 2
     assert retry.memory.entries[0].status == "retired"
     assert retry.memory_updated is False
+
+
+def test_same_event_feedback_race_has_one_versioned_concurrent_loser(
+    api_client: TestClient,
+) -> None:
+    event_path = "/v1/events/evt_phase2_demo"
+    base_headers = {
+        "X-Tenant-Id": "tenant_demo",
+        "X-Actor-Id": "operator_1",
+    }
+    for action, key, body in (
+        ("acknowledge", "same-event-ack", {"occurred_at": "2026-08-24T21:03:00Z"}),
+        ("checked", "same-event-check", {"occurred_at": "2026-08-24T21:04:00Z"}),
+        (
+            "resolve",
+            "same-event-resolve",
+            {
+                "occurred_at": "2026-08-24T21:05:00Z",
+                "outcome": "false_positive",
+            },
+        ),
+    ):
+        response = api_client.post(
+            f"{event_path}/{action}",
+            headers={**base_headers, "Idempotency-Key": key},
+            json=body,
+        )
+        assert response.status_code == 200
+
+    submissions = (
+        ("same-event-feedback-a", "Assisted movement"),
+        ("same-event-feedback-b", "Unexplained movement"),
+    )
+
+    def post(submission: tuple[str, str]):
+        key, actual_event_label = submission
+        with TestClient(api_client.app, raise_server_exceptions=False) as client:
+            return client.post(
+                f"{event_path}/feedback",
+                headers={**base_headers, "Idempotency-Key": key},
+                json={
+                    "actual_event_label": actual_event_label,
+                    "routine": True,
+                    "created_at": "2026-08-24T21:06:00Z",
+                },
+            )
+
+    api_client.app.state.feedback_repository_factory = (
+        FirstReadStaleFeedbackRepository
+    )
+    try:
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            responses = list(executor.map(post, submissions))
+    finally:
+        del api_client.app.state.feedback_repository_factory
+
+    success = next(response for response in responses if response.status_code == 200)
+    conflict = next(response for response in responses if response.status_code != 200)
+    assert success.status_code == 200
+    assert conflict.status_code == 409
+    assert conflict.json() == {
+        "schema_version": "1.0",
+        "error": {
+            "code": "concurrent_update",
+            "message": "Resource was updated by another request",
+            "field": None,
+        },
+    }
+    with api_client.app.state.session_factory() as verification_session:
+        assert verification_session.scalar(
+            select(func.count()).select_from(FeedbackRecordRow)
+        ) == 1
+        assert verification_session.scalar(
+            select(func.count()).select_from(ResidentMemorySnapshotRow)
+        ) == 1
+        assert verification_session.scalar(
+            select(func.count()).select_from(ResidentMemoryEntryRow)
+        ) == 1
+        assert verification_session.scalar(
+            select(func.count())
+            .select_from(AuditLogRow)
+            .where(AuditLogRow.action == "feedback.submitted")
+        ) == 1
+        assert verification_session.scalar(
+            select(func.count())
+            .select_from(IdempotencyRecordRow)
+            .where(
+                IdempotencyRecordRow.key.in_(
+                    ("same-event-feedback-a", "same-event-feedback-b")
+                )
+            )
+        ) == 1

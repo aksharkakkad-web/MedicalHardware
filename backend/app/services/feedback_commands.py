@@ -63,13 +63,13 @@ class FeedbackCommandService:
 
         if existing_decision is None:
             self._feedback.save_decision(context.tenant_id, decision)
-            self._append_audit(context, decision)
             saved_decision = self._feedback.find_by_event(
                 context.tenant_id,
                 event_id,
             )
             if saved_decision is None:
                 raise RuntimeError("saved feedback decision is unavailable")
+            self._append_audit(context, saved_decision)
             return saved_decision
         return decision
 

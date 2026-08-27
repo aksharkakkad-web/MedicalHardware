@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 import pytest
+from fastapi.testclient import TestClient
 from pydantic import BaseModel, ValidationError
 
 from backend.app.contracts.events import (
@@ -133,3 +134,23 @@ def test_public_datetime_contracts_reject_values_that_are_not_utc(
 
     with pytest.raises(ValidationError):
         model_type.model_validate(payload)
+
+
+def test_every_read_operation_documents_versioned_method_not_allowed(
+    api_client: TestClient,
+) -> None:
+    schema = api_client.get("/openapi.json").json()
+    read_paths = (
+        "/health",
+        "/v1/residents",
+        "/v1/residents/{resident_id}",
+        "/v1/residents/{resident_id}/events",
+        "/v1/residents/{resident_id}/memory",
+        "/v1/events/{event_id}",
+    )
+
+    for path in read_paths:
+        responses = schema["paths"][path]["get"]["responses"]
+        assert responses["405"]["content"]["application/json"]["schema"] == {
+            "$ref": "#/components/schemas/ErrorEnvelope"
+        }

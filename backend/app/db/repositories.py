@@ -31,6 +31,20 @@ from backend.app.domain.feedback import LearningDecision, ResidentMemory
 from backend.app.services.errors import ConcurrentUpdateError, NotFoundError
 
 
+def _is_feedback_event_conflict(error: IntegrityError) -> bool:
+    constraint_name = getattr(
+        getattr(error.orig, "diag", None),
+        "constraint_name",
+        None,
+    )
+    if constraint_name == "feedback_records_tenant_id_event_id_key":
+        return True
+    return (
+        "unique constraint failed: feedback_records.tenant_id, "
+        "feedback_records.event_id"
+    ) in str(error.orig).casefold()
+
+
 @dataclass(frozen=True)
 class ResidentRecord:
     resident_id: str
@@ -279,8 +293,14 @@ class FeedbackRepository:
         if existing_snapshot is not None and decision.memory_updated:
             raise ConcurrentUpdateError()
 
-        self._session.add(feedback_to_row(tenant_id, decision))
-        self._session.flush()
+        feedback_row = feedback_to_row(tenant_id, decision)
+        self._session.add(feedback_row)
+        try:
+            self._session.flush((feedback_row,))
+        except IntegrityError as error:
+            if _is_feedback_event_conflict(error):
+                raise ConcurrentUpdateError() from error
+            raise
         if existing_snapshot is None:
             bundle = memory_to_rows(
                 tenant_id,

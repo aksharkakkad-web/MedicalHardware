@@ -14,7 +14,7 @@ from backend.app.domain._validation import (
 from backend.app.domain.events import EventStatus, MonitoringEvent, ResolutionOutcome
 
 
-def _normalize_event_label(value: object) -> str:
+def normalize_event_label(value: object) -> str:
     value = require_nonblank_text(value, "actual_event_label")
     normalized = re.sub(r"[^a-z0-9]+", "_", value.casefold()).strip("_")
     if not normalized:
@@ -102,7 +102,7 @@ class FeedbackService:
         if event.status != EventStatus.RESOLVED or event.resolution_outcome is None:
             raise ValueError("feedback requires a resolved event")
         actor_id = require_nonblank_text(actor_id, "actor_id")
-        actual_event_label = _normalize_event_label(actual_event_label)
+        actual_event_label = normalize_event_label(actual_event_label)
         routine = require_strict_bool(routine, "routine")
         created_at = require_aware_datetime(created_at, "created_at")
         event_timestamp = require_aware_datetime(

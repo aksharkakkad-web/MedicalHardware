@@ -1,9 +1,10 @@
 from typing import Literal
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict
+from pydantic import AwareDatetime, BaseModel, ConfigDict, field_validator
 
 from backend.app.contracts.common import ContractModel, UTCDateTime
 from backend.app.domain.events import ResolutionOutcome
+from backend.app.domain.feedback import normalize_event_label
 
 
 class SubmitFeedbackRequest(BaseModel):
@@ -12,6 +13,11 @@ class SubmitFeedbackRequest(BaseModel):
     actual_event_label: str
     routine: bool
     created_at: AwareDatetime
+
+    @field_validator("actual_event_label")
+    @classmethod
+    def normalize_actual_event_label(cls, value: str) -> str:
+        return normalize_event_label(value)
 
 
 class MemoryEntryResponse(ContractModel):

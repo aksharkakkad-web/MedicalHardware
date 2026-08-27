@@ -16,7 +16,11 @@ router = APIRouter(prefix="/residents", tags=["residents"])
 @router.get(
     "",
     response_model=ResidentListResponse,
-    responses={422: READ_ERROR_RESPONSES[422], 500: READ_ERROR_RESPONSES[500]},
+    responses={
+        405: READ_ERROR_RESPONSES[405],
+        422: READ_ERROR_RESPONSES[422],
+        500: READ_ERROR_RESPONSES[500],
+    },
 )
 def list_residents(
     context: Annotated[AccessContext, Depends(access_context)],

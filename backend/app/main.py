@@ -3,7 +3,10 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from backend.app.api.errors import register_error_handlers
+from backend.app.api.errors import (
+    METHOD_NOT_ALLOWED_ERROR_RESPONSES,
+    register_error_handlers,
+)
 from backend.app.api.v1.router import router as v1_router
 from backend.app.config import Settings
 from backend.app.contracts.common import HealthResponse
@@ -29,7 +32,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     register_error_handlers(app)
     app.include_router(v1_router)
 
-    @app.get("/health", response_model=HealthResponse)
+    @app.get(
+        "/health",
+        response_model=HealthResponse,
+        responses=METHOD_NOT_ALLOWED_ERROR_RESPONSES,
+    )
     def health() -> HealthResponse:
         return HealthResponse(status="ready", service="product-api")
 

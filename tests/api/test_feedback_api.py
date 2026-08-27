@@ -310,3 +310,78 @@ def test_offset_feedback_time_is_normalized_to_utc_in_every_output(
     for value in timestamps:
         parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
         assert parsed.tzinfo is timezone.utc
+
+    with api_client.app.state.session_factory() as session:
+        audit = session.scalar(
+            select(AuditLogRow).where(
+                AuditLogRow.action == "feedback.submitted"
+            )
+        )
+        assert audit is not None
+        persisted_at = audit.occurred_at
+        if persisted_at.tzinfo is None:
+            persisted_at = persisted_at.replace(tzinfo=timezone.utc)
+        else:
+            persisted_at = persisted_at.astimezone(timezone.utc)
+        assert persisted_at == datetime(
+            2026,
+            8,
+            24,
+            21,
+            6,
+            tzinfo=timezone.utc,
+        )
+
+
+@pytest.mark.parametrize("actual_event_label", ("", "   ", "--- !!!"))
+def test_malformed_feedback_label_is_invalid_input_without_effects(
+    api_client: TestClient,
+    actual_event_label: str,
+) -> None:
+    _resolve_event(api_client)
+
+    response = api_client.post(
+        FEEDBACK_PATH,
+        headers=_headers(f"malformed-label-{actual_event_label!r}"),
+        json={**FEEDBACK_BODY, "actual_event_label": actual_event_label},
+    )
+
+    assert response.status_code == 422
+    assert response.json() == {
+        "schema_version": "1.0",
+        "error": {
+            "code": "invalid_input",
+            "message": "Invalid request",
+            "field": "actual_event_label",
+        },
+    }
+    assert _row_count(api_client, FeedbackRecordRow) == 0
+    assert _row_count(api_client, ResidentMemorySnapshotRow) == 0
+    assert _row_count(api_client, ResidentMemoryEntryRow) == 0
+    assert _feedback_audit_count(api_client) == 0
+    assert _row_count(api_client, IdempotencyRecordRow) == 3
+
+
+def test_equivalent_normalized_labels_share_idempotency_fingerprint(
+    api_client: TestClient,
+) -> None:
+    _resolve_event(api_client)
+    headers = _headers("normalized-label-replay")
+
+    first = api_client.post(
+        FEEDBACK_PATH,
+        headers=headers,
+        json={**FEEDBACK_BODY, "actual_event_label": "Assisted movement"},
+    )
+    replay = api_client.post(
+        FEEDBACK_PATH,
+        headers=headers,
+        json={**FEEDBACK_BODY, "actual_event_label": "assisted_movement"},
+    )
+
+    assert first.status_code == replay.status_code == 200
+    assert replay.json() == first.json()
+    assert _row_count(api_client, FeedbackRecordRow) == 1
+    assert _row_count(api_client, ResidentMemorySnapshotRow) == 1
+    assert _row_count(api_client, ResidentMemoryEntryRow) == 1
+    assert _feedback_audit_count(api_client) == 1
