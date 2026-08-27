@@ -77,4 +77,31 @@ describe("MockMonitoringClient", () => {
 
     expect(nextResult.items[0].displayLabel).not.toBe("Mutated label");
   });
+
+  it("returns a contract-shaped event and preserves action progress", async () => {
+    const client = new MockMonitoringClient(
+      () => new Date("2026-08-27T18:00:00.000Z"),
+    );
+
+    const opened = await client.getEvent("evt_unusual_movement_102");
+    const acknowledged = await client.performEventAction(
+      opened.eventId,
+      "acknowledge",
+    );
+    const checked = await client.performEventAction(opened.eventId, "check");
+
+    expect(opened.status).toBe("open");
+    expect(opened.evidence).toHaveLength(3);
+    expect(acknowledged.status).toBe("acknowledged");
+    expect(checked.status).toBe("checked");
+    expect((await client.getEvent(opened.eventId)).status).toBe("checked");
+  });
+
+  it("rejects actions that do not match the current event state", async () => {
+    const client = new MockMonitoringClient();
+
+    await expect(
+      client.performEventAction("evt_unusual_movement_102", "check"),
+    ).rejects.toThrow(/not available/i);
+  });
 });

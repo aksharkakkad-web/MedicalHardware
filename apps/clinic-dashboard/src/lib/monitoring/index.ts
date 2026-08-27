@@ -6,6 +6,10 @@ export {
 export type {
   AttentionPriority,
   DeviceStatus,
+  EventAction,
+  EventStatus,
+  InterpretationStatus,
+  MonitoringEventDetail,
   MonitoringState,
   ResidentOverviewItem,
   ResidentOverviewResponse,

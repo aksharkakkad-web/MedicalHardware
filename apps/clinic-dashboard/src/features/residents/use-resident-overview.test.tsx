@@ -21,6 +21,18 @@ function withMonitoringClient(client: MonitoringClient) {
   };
 }
 
+function residentClient(
+  listResidentOverview: MonitoringClient["listResidentOverview"],
+): MonitoringClient {
+  const fallback = new MockMonitoringClient();
+  return {
+    listResidentOverview,
+    getEvent: (eventId) => fallback.getEvent(eventId),
+    performEventAction: (eventId, action) =>
+      fallback.performEventAction(eventId, action),
+  };
+}
+
 function deferred<T>() {
   let resolve!: (value: T) => void;
   let reject!: (reason?: unknown) => void;
@@ -41,9 +53,7 @@ async function createCompleteResponse(): Promise<ResidentOverviewResponse> {
 describe("useResidentOverview", () => {
   it("starts in loading and stores the complete resident list", async () => {
     const request = deferred<ResidentOverviewResponse>();
-    const client: MonitoringClient = {
-      listResidentOverview: () => request.promise,
-    };
+    const client = residentClient(() => request.promise);
     const { result } = renderHook(() => useResidentOverview(), {
       wrapper: withMonitoringClient(client),
     });
@@ -60,15 +70,15 @@ describe("useResidentOverview", () => {
   it("shows a safe error and loads again when retry is used", async () => {
     const response = await createCompleteResponse();
     let requestCount = 0;
-    const client: MonitoringClient = {
-      async listResidentOverview() {
+    const client = residentClient(
+      async () => {
         requestCount += 1;
         if (requestCount === 1) {
           throw new Error("private upstream details");
         }
         return response;
       },
-    };
+    );
     const { result } = renderHook(() => useResidentOverview(), {
       wrapper: withMonitoringClient(client),
     });

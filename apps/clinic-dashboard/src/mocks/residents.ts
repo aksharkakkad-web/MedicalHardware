@@ -49,6 +49,7 @@ export function createResidentOverviewFixture(
           priority: "high",
           headline: "Unusual activity needs staff review",
           openEventCount: 1,
+          primaryEventId: "evt_unusual_movement_102",
         },
         device: {
           status: "online",

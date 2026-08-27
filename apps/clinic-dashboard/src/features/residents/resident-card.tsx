@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { StatusPill, type StatusTone } from "@/components/status-pill/status-pill";
 import type { ResidentOverviewItem } from "@/lib/monitoring";
 
@@ -76,6 +78,15 @@ export function ResidentCard({ resident }: Readonly<{ resident: ResidentOverview
           </div>
         )}
       </div>
+
+      {resident.attention.primaryEventId && (
+        <Link
+          className={styles.reviewLink}
+          href={`/events/${resident.attention.primaryEventId}`}
+        >
+          Review event <span aria-hidden="true">→</span>
+        </Link>
+      )}
 
       <p className={styles.updated}>
         Updated{" "}
