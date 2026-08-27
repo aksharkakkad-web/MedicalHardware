@@ -22,7 +22,7 @@ All three tracks work in parallel. A phase is not a rule that Akshar, Rishit, or
 | Current gate | Status | What this means |
 | --- | --- | --- |
 | Phase 1 — product-logic foundation | **Complete** | The agreed monitoring, calibration, event, feedback, recurrence, and resident-memory behavior runs with deterministic toy data. |
-| Phase 2 — first complete event experience | **Ready to start** | Backend makes the product flow durable and accessible; Rishit builds the actual clinic experience on contract-valid mocks; hardware defines product-facing device states. |
+| Phase 2 — first complete event experience | **In progress** | Backend makes the product flow durable and accessible; Rishit builds the actual clinic experience on contract-valid mocks; hardware defines product-facing device states. |
 
 ### Why Phase 2 is ready
 
