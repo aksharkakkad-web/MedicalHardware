@@ -5,15 +5,65 @@ describe("MockMonitoringClient", () => {
   it("returns five synthetic residents covering honest monitoring states", async () => {
     const result = await new MockMonitoringClient().listResidentOverview();
 
+    const expectedScenarios = [
+      {
+        monitoringState: "active",
+        attentionPriority: "none",
+        deviceStatus: "online",
+      },
+      {
+        monitoringState: "active",
+        attentionPriority: "high",
+        deviceStatus: "online",
+      },
+      {
+        monitoringState: "paused",
+        attentionPriority: "none",
+        deviceStatus: "online",
+        reason: /away/i,
+      },
+      {
+        monitoringState: "limited",
+        attentionPriority: "watch",
+        deviceStatus: "online",
+        reason: /(multiple-person|visitor)/i,
+      },
+      {
+        monitoringState: "unavailable",
+        attentionPriority: "watch",
+        deviceStatus: "offline",
+      },
+    ] as const;
+
+    expect(result.schemaVersion).toBe("1.0");
     expect(result.items).toHaveLength(5);
-    expect(result.items.map((item) => item.monitoring.state)).toEqual(
-      expect.arrayContaining(["active", "paused", "limited", "unavailable"]),
-    );
-    expect(
-      result.items.some((item) => item.attention.priority === "high"),
-    ).toBe(true);
+    expectedScenarios.forEach((expected, index) => {
+      const item = result.items[index];
+
+      expect(item.monitoring.state).toBe(expected.monitoringState);
+      expect(item.attention.priority).toBe(expected.attentionPriority);
+      expect(item.device.status).toBe(expected.deviceStatus);
+      if ("reason" in expected) {
+        expect(item.monitoring.reason).toMatch(expected.reason);
+      }
+    });
     expect(result.items.every((item) => item.schemaVersion === "1.0")).toBe(
       true,
+    );
+  });
+
+  it("uses the injected current time for fresh deterministic timestamps", async () => {
+    const fixedNow = new Date("2030-04-05T12:34:56.000Z");
+    const result = await new MockMonitoringClient(
+      () => fixedNow,
+    ).listResidentOverview();
+    const expectedOffsetsMs = [15_000, 30_000, 300_000, 110_000, 1_080_000];
+
+    expect(result.generatedAt).toBe(fixedNow.toISOString());
+    expect(result.items.map((item) => item.monitoring.lastUpdatedAt)).toEqual(
+      expectedOffsetsMs.map((offset) =>
+        new Date(fixedNow.getTime() - offset).toISOString(),
+      ),
     );
   });
 
