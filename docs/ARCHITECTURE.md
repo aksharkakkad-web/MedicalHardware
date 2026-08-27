@@ -1,14 +1,14 @@
 # Contactless Adaptive Care Platform — Technical Architecture
 
 **Status:** Pre-build architecture source of truth
-**Version:** 1.2
+**Version:** 1.4
 **Companion docs:** `PRD.md`, `DATA_CONTRACT.md`, `BUILD_PLAN.md`, root `AGENTS.md`
 
 ---
 
 ## 1. Architecture Goal
 
-Build a modular monitoring platform whose real product UI can be developed first against contract-valid mock data, whose cloud intelligence can then be developed against simulated **edge telemetry**, and which can finally accept real ESP32-preprocessed radar/thermal/CSI plus RFID identity data without rewriting the product.
+Build a modular monitoring platform whose real product UI can be developed first against contract-valid mock data, whose cloud intelligence can then be developed against simulated **edge telemetry**, and which can finally accept real ESP32-preprocessed radar/thermal/CSI data without rewriting the product.
 
 The architecture must support:
 
@@ -27,8 +27,10 @@ The architecture must support:
 
 ## 2. Locked Architectural Decisions
 
-- Core inputs: 60 GHz radar + MLX90640 thermal + ESP32-S3 Wi-Fi CSI + UHF RAIN RFID identity.
-- Embedded device performs lightweight per-modality raw-to-usable conversion, downsampling/compression, packaging, buffering/retry, and RFID tag capture.
+- Core inputs: 60 GHz radar + MLX90640 thermal + ESP32-S3 Wi-Fi CSI.
+- Embedded device performs lightweight per-modality raw-to-usable conversion, downsampling/compression, packaging, and buffering/retry.
+- V1 supports one assigned resident per monitored room. Device-to-room and room-to-resident assignments provide product attribution.
+- Suspected multi-person presence makes resident-specific monitoring ambiguous or unavailable; V1 does not identify or separate multiple people.
 - Embedded device does not perform cross-sensor fusion, personal baselines, anomaly/event decisions, LLM reasoning, or feedback learning.
 - Cloud is the intelligence layer.
 - Python handles filtering, feature extraction, fusion, baseline, anomaly detection, confidence, device health, and deterministic warnings.
@@ -52,8 +54,8 @@ The architecture must support:
 ```text
 RADAR ───────┐
 THERMAL ─────┼──> ESP32-S3 edge node
-WIFI CSI ────┤      • per-sensor raw→usable conversion
-RFID READER ─┘      • downsample/compress + tag reads
+WIFI CSI ────┘      • per-sensor raw→usable conversion
+                     • downsample/compress
                       • timestamp/package/buffer/retry
                          |
                          v
@@ -64,12 +66,11 @@ RFID READER ─┘      • downsample/compress + tag reads
                          |
                          v
                  Cloud normalizers
-              radar thermal csi rfid
-                  \    |    |   /
-                   \   |    |  /
-                    v    v    v v
+                radar thermal csi
+                   \    |    /
+                    v   v   v
               Time alignment + fusion
-                + identity resolution
+                + room assignment
                          |
                          v
                 Fused resident state
@@ -149,12 +150,11 @@ Rules:
 
 The embedded node should make sensor data compact and transportable without becoming the decision-making brain:
 
-- acquire radar, thermal, CSI, and RFID data;
+- acquire radar, thermal, and CSI data;
 - decode vendor/raw outputs;
 - perform lightweight per-sensor filtering and raw-to-usable conversion;
 - calculate compact per-sensor values/features where practical (for example radar vital/motion outputs, thermal summary/location features, CSI movement/presence features);
 - downsample/aggregate/compress high-volume streams;
-- capture passive RFID tag reads;
 - attach source metadata, sequence numbers, and timestamps;
 - construct/batch EdgeTelemetryEnvelope packets;
 - optionally retain/upload bounded diagnostic raw windows;
@@ -164,8 +164,8 @@ The embedded node should make sensor data compact and transportable without beco
 
 ### Explicitly not on device
 
-- cross-sensor radar+thermal+CSI+RFID fusion;
-- final resident attribution/confidence decisions;
+- cross-sensor radar+thermal+CSI fusion;
+- final monitoring-confidence decisions;
 - personal baseline modeling;
 - anomaly/event decisions;
 - deterministic alert policy evaluation;
@@ -182,11 +182,11 @@ The exact vendor/raw formats remain TBD until hardware testing. Firmware/edge ad
 
 ### Edge / ESP32
 
-The edge exists to make sensor data **small, usable, and reliable to transport**. It may do per-modality conversion, obvious-invalid filtering, downsampling/aggregation/compression, timestamping, packetization, RFID tag capture, local buffering/retry, and bounded diagnostic raw capture.
+The edge exists to make sensor data **small, usable, and reliable to transport**. It may do per-modality conversion, obvious-invalid filtering, downsampling/aggregation/compression, timestamping, packetization, local buffering/retry, and bounded diagnostic raw capture.
 
 ### Cloud
 
-The cloud owns the intelligence that depends on history or multiple inputs: modality validation, radar+thermal+CSI+RFID fusion, resident attribution, personal baselines, anomaly/confidence/event logic, deterministic warning policies, resident memory, LLM interpretation, feedback, and learning/evaluation.
+The cloud owns the intelligence that depends on history or multiple inputs: modality validation, radar+thermal+CSI fusion, room/resident assignment, personal baselines, anomaly/confidence/event logic, deterministic warning policies, resident memory, LLM interpretation, feedback, and learning/evaluation.
 
 This boundary is deliberate: **edge makes data manageable; cloud makes it intelligent.**
 
@@ -275,9 +275,9 @@ Potential outputs:
 
 RuView may be used as an implementation/reference for CSI processing, but the rest of the stack depends only on our normalized contract.
 
-### RFID identity adapter
+### Room/resident assignment adapter
 
-RFID is a core V1 input. The edge node reports detected passive UHF tag IDs and reader evidence. The cloud identity adapter resolves authorized tag-to-resident assignments and produces identity evidence for fusion/event attribution.
+V1 maps each monitoring device to a room and each monitored room to one assigned resident. This assignment provides product attribution without a wearable identity layer. The adapter must reject missing or conflicting assignments and expose suspected multi-person presence as degraded or unavailable resident-specific monitoring.
 
 ### Optional medical accessory adapter
 
@@ -287,12 +287,13 @@ SpO₂ devices, BP cuffs, or future validated sensors plug in through independen
 
 ## 8. Layer 5 — Time Alignment and Sensor Fusion
 
-Sensor fusion consumes normalized compact features + identity evidence, not vendor-specific raw formats.
+Sensor fusion consumes normalized compact features + room/resident assignment context, not vendor-specific raw formats.
 
 Responsibilities:
 
 - align observations into common time windows;
 - track which modalities are present;
+- determine monitoring suitability: resident present, resident away, possible multi-person, or unavailable;
 - compare independent evidence;
 - represent disagreement;
 - calculate per-feature quality;
@@ -327,6 +328,15 @@ Baseline updates only use eligible data:
 - bounded against runaway adaptation.
 
 Every baseline update creates a new version or auditable revision.
+
+Calibration behavior:
+
+- device health and broad/test-only warning paths may run before a personal baseline is established;
+- personalized conclusions remain limited and visibly lower-confidence during `new` and `calibrating`;
+- `partial` enables only the dimensions with sufficient eligible coverage;
+- away, possible-multi-person, poor-quality, concerning-event, and unresolved-anomaly windows are ineligible for learning;
+- room moves, material device moves, core-sensor replacement, or material layout changes create a new monitoring-setup version and return affected dimensions to `calibrating` or `partial`;
+- resident history and semantic memory survive recalibration.
 
 ---
 
@@ -400,6 +410,15 @@ Responsibilities:
 - trigger optional LLM interpretation;
 - route event to product surfaces.
 
+Episode and recurrence rules:
+
+- `detected` is internal and `open` is the first user-visible state;
+- related evidence inside a configurable quiet-time gap updates one active episode;
+- recurrence after that gap creates a new event linked to prior events;
+- resolved events remain immutable and never reopen;
+- repeated linked events expose recurrence/pattern information;
+- watch items may auto-close into history, while high/critical events become overdue and never silently expire.
+
 ### Deterministic warning policy
 
 Hard-warning rules are configurable and versioned. They may raise priority/create an event without the LLM.
@@ -468,12 +487,16 @@ Expose shared domain APIs while keeping product behavior separate. Frontends con
 ### Shared
 
 - authentication/session;
-- resident/person identity;
+- resident profile and room assignment;
 - latest status;
 - event list/detail;
 - trends;
 - feedback submission;
 - device status.
+- resident monitoring/presence status;
+- recurrence and overdue state;
+- notification preferences;
+- editable, versioned resident memory settings.
 
 ### Clinic-specific
 
@@ -508,6 +531,8 @@ Flow:
 5. resident memory updater may run;
 6. baseline eligibility is recalculated;
 7. labeled outcome becomes evaluation/training data.
+
+Authenticated clinic operators are treated as trusted V1 feedback sources. Corrections supersede prior feedback/memory versions without deleting audit history.
 
 The AI feedback agent asks questions; it does not directly mutate safety configuration.
 
@@ -618,22 +643,19 @@ The logical module boundaries matter more than the exact folder names.
 
 ---
 
-## 20. Multi-Person and Identity Architecture
+## 20. Single-Resident Room and Ambiguity Architecture
 
-V1 uses passive UHF RAIN RFID identity evidence while still representing multi-person uncertainty.
+V1 supports one assigned resident per monitored room.
 
 Possible states:
 
-- single tagged resident / high identity confidence;
-- resident tag detected + possible untagged second person;
-- multiple known tags detected;
-- multi-person/ambiguous sensing;
-- room assignment known but RFID unavailable;
-- identity unavailable/ambiguous.
+- room and resident assignment valid, with single-person sensing suitable for monitoring;
+- room or resident assignment missing/conflicting;
+- possible caregiver/visitor presence;
+- multi-person or otherwise ambiguous sensing;
+- room temporarily unsuitable for resident-specific measurements.
 
-Passive UHF RAIN RFID wristbands/tags are part of the V1 identity architecture. Exact reader tuning, antenna placement, and read characteristics remain hardware-validation items and are hidden behind the identity adapter.
-
-The system must never assign a vital/event to a specific resident with high confidence when the sensing evidence does not support that attribution.
+The system does not attempt to identify or separate multiple people. When single-resident attribution is not supported by the sensing context, resident-specific measurements and events must be lowered in confidence or marked unavailable.
 
 ---
 
@@ -660,11 +682,11 @@ A future hardware-specific time-sync strategy can be added without changing doma
 | CSI unavailable | Continue radar + thermal with lower confidence |
 | Thermal unavailable | Continue remaining modalities with lower confidence |
 | Radar unavailable | Mark vital/motion features unavailable; continue other evidence |
-| RFID unavailable | Fall back to room assignment/sensing context; mark identity confidence lower |
+| Room/resident assignment missing | Do not create resident-specific monitoring output until the assignment is repaired |
 | Device offline | Operational/device alert + last-seen |
 | Temporary internet loss | Device buffers/retries; backend deduplicates |
 | Duplicate upload | Idempotent ingest |
-| Multi-person ambiguity | Use RFID + sensing evidence; lower resident-specific confidence when attribution remains ambiguous |
+| Multi-person ambiguity | Lower confidence or mark resident-specific measurements unavailable; do not guess attribution |
 | Low signal quality | Show unavailable/low confidence rather than fake precision |
 | DB processing backlog | Ingestion remains durable; expose health metrics |
 
@@ -695,7 +717,7 @@ Every important event must be reproducible from stored evidence/version metadata
 
 1. Never couple core domain logic to vendor-specific raw payloads.
 2. Edge processing may reduce/convert each sensor stream, but keep cross-sensor fusion, baselines, anomaly/event decisions, and learning in the cloud unless this document is intentionally changed.
-3. Treat RFID as identity evidence, not as perfect physical attribution of every sensor reflection.
+3. Attribute V1 monitoring through one-resident room assignment; never guess resident-specific values during possible multi-person presence.
 4. Never make continuous raw upload the default production path.
 5. Never call the LLM for every sample/telemetry packet.
 6. Never let the LLM delete/suppress deterministic events.

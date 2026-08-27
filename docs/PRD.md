@@ -2,7 +2,7 @@
 
 **Status:** Pre-build source of truth
 **Audience:** Founders, Codex, engineering collaborators, future research/clinical advisors
-**Version:** 1.2
+**Version:** 1.4
 **Purpose:** Define what the product is, what V1 must do, and what is intentionally left flexible until hardware testing and customer discovery.
 
 ---
@@ -16,9 +16,8 @@ The core room system combines:
 - 60 GHz mmWave radar
 - MLX90640 32×24 thermal sensing
 - ESP32-S3 Wi-Fi CSI / RF sensing
-- UHF RAIN RFID reader + passive resident wristband/tag for identity evidence
 
-The embedded device is intentionally **small and efficient, not dumb**. It performs lightweight per-sensor preprocessing locally so huge raw streams do not need to be uploaded continuously. It can convert raw sensor output into compact usable measurements/features, remove obvious junk, downsample/compress, timestamp/package data, capture RFID tag IDs, buffer during network loss, and retry uploads.
+The embedded device is intentionally **small and efficient, not dumb**. It performs lightweight per-sensor preprocessing locally so huge raw streams do not need to be uploaded continuously. It can convert raw sensor output into compact usable measurements/features, remove obvious junk, downsample/compress, timestamp/package data, buffer during network loss, and retry uploads.
 
 The device does **not** perform the main intelligence pipeline: no cross-sensor fusion, personal baseline modeling, anomaly/event decisions, LLM reasoning, or feedback learning. Those remain in the cloud.
 
@@ -114,7 +113,7 @@ Primary jobs:
 - provide quick structured feedback;
 - review resident trends and history;
 - see calibration/baseline status;
-- see resident identity/attribution status when relevant;
+- see room assignment and monitoring-ambiguity status when relevant;
 - understand confidence and data quality.
 
 ### 5.2 Home / Family Product
@@ -211,13 +210,12 @@ CSI is a complementary modality. The processing implementation may use RuView co
 
 The ESP32/edge layer should remain lightweight, but it should reduce raw-data volume before cloud upload. It may:
 
-- acquire radar, thermal, CSI, and RFID data;
+- acquire radar, thermal, and CSI data;
 - perform per-sensor raw-to-usable conversion;
 - remove obvious invalid/junk samples;
 - calculate compact per-sensor measurements/features where practical;
 - downsample, aggregate, or compress high-volume streams;
 - attach device/source identifiers and sequence/time metadata;
-- attach RFID tag identity evidence;
 - package/batch compact telemetry;
 - optionally retain/upload bounded raw/debug windows for development and replay;
 - buffer temporarily during network loss;
@@ -225,21 +223,13 @@ The ESP32/edge layer should remain lightweight, but it should reduce raw-data vo
 - report basic device/transport health.
 
 It should **not** perform cross-sensor fusion, personal baseline modeling, anomaly/event decisions, LLM reasoning, or feedback learning.
-### UHF RAIN RFID identity layer
+### V1 room and resident assignment
 
-The room system includes a UHF RAIN RFID reader/antenna and passive resident wristband/tag. Its primary purpose is **identity**, not medical sensing.
+V1 intentionally supports **one assigned resident per monitored room** and does not include a resident wearable or separate identity-reader layer.
 
-It should provide:
+The backend maps each monitoring device to one room and each monitored room to one assigned resident. Radar, thermal, and CSI observations from that room are attributed to the assigned resident only while the room remains suitable for single-person monitoring.
 
-- detected passive tag IDs;
-- reader/source ID;
-- read time;
-- optional read strength/quality if available;
-- multi-tag presence evidence when more than one tagged person is nearby.
-
-The edge packet may include tag IDs, but the cloud maps tag IDs to pseudonymous resident IDs through an authorized assignment table. No resident name or medical profile should be stored on the passive tag.
-
-RFID improves person identification and room attribution, but should not be treated as perfect proof that every radar/thermal/CSI reflection belongs to a specific person when several people are present.
+Caregivers, visitors, or other people may still enter the room. If sensing indicates possible multi-person presence or attribution is otherwise ambiguous, the system must lower confidence or mark resident-specific measurements unavailable. V1 does not attempt to identify or separate multiple people.
 
 
 ---
@@ -254,7 +244,7 @@ Possible future integrations:
 - existing blood-pressure cuff;
 - other validated external medical devices.
 
-These should feed the same cloud resident record through adapters. RFID identity is part of the core V1 hardware path; SpO₂/BP and other medical accessories remain optional.
+These should feed the same cloud resident record through adapters. SpO₂/BP and other medical accessories remain optional.
 
 ---
 
@@ -321,11 +311,11 @@ Data collection is continuous while the device is operating.
 
 The system should:
 
-1. receive compact edge telemetry from radar, thermal, CSI, and RFID;
+1. receive compact edge telemetry from radar, thermal, and CSI;
 2. store processed history needed for trends, replay, baselines, and event analysis;
 3. optionally store bounded raw/debug windows when explicitly captured for development, research, or event investigation;
 4. validate/standardize edge telemetry and derive normalized measurements/features;
-5. synchronize and fuse sensor evidence + RFID identity evidence;
+5. synchronize and fuse sensor evidence for the resident assigned to the monitored room;
 6. compare against individual baselines;
 7. create anomaly candidates and deterministic warning candidates;
 8. create an event when policy requires it;
@@ -392,6 +382,24 @@ The baseline may learn:
 
 Calibration should depend on sufficient valid data, not a hard-coded number of calendar days.
 
+### Behavior during calibration
+
+- data collection and device-health monitoring begin immediately;
+- broad obvious patterns may still create events during `new`/`calibrating`, but personalized conclusions are limited and visibly lower-confidence;
+- extreme-value warnings require strong signal quality and a versioned rule; prototype rules are synthetic/test-only until validated;
+- `partial` may enable personalized monitoring for some dimensions while others remain provisional or unavailable;
+- resident-away, possible-multiple-person, poor-quality, concerning-event, and unresolved-anomaly windows are excluded from baseline learning.
+
+### Presence and setup changes
+
+- resident-away is an awareness/timeline state, not a resident warning;
+- resident-specific measurements and baseline learning pause while the resident is away;
+- possible caregiver/visitor presence limits resident-specific monitoring and pauses baseline learning;
+- an extremely unusual room-level pattern during possible multi-person presence may create a low-confidence verification event without claiming resident-specific attribution;
+- moving the resident, materially moving the device, replacing a core sensor, or materially changing the room starts partial or full recalibration;
+- resident history and semantic memory remain, while affected physical-sensing baseline dimensions recalibrate;
+- the dashboard provides an explicit setup-change/recalibration action and reason.
+
 ---
 
 ## 12. Anomaly and Event System
@@ -419,6 +427,13 @@ The implementation should support configurable priority levels such as:
 - `critical`
 
 Exact medical thresholds and clinical warning rules are **not** invented during software development. They remain configurable until validated.
+
+Priority and confidence are separate. Priority may consider objective severity, confidence/quality, duration, rate of change, sensor agreement, personal-baseline deviation, recurrence, and missing information.
+
+- `watch` is awareness/review and may be grouped, summarized, hidden, or auto-closed by settings;
+- `high` needs timely staff attention and always remains visible in the dashboard;
+- `critical` needs immediate staff attention and cannot be hidden in the dashboard;
+- administrators configure notification delivery channels and low-priority noise controls.
 
 ### LLM-independent warning path
 
@@ -463,6 +478,10 @@ Core lifecycle:
 
 `detected → open → acknowledged → checked → resolved`
 
+`detected` is internal; `open` is the first user-visible state. Related signals within a configurable quiet-time gap update one active event episode. A recurrence after the gap creates a new linked event. Resolved events remain immutable and do not reopen; later occurrences become new linked events.
+
+`watch` items may auto-close when the condition returns to normal and remain in history. Unacknowledged `high` and `critical` events never silently expire; they become overdue and may escalate according to configurable policy. Repeated related events show a recurrence/pattern indicator.
+
 Resolution outcome:
 
 - `confirmed`
@@ -505,7 +524,7 @@ Structured result:
 
 ### Feedback confidence
 
-Human feedback should capture who/what confirmed the event and how certain they are. A person who directly checked the resident is higher-confidence ground truth than an unverified guess.
+V1 treats authenticated clinic dashboard operators as authorized, trusted feedback sources. Every feedback change records actor, time, source event, and version. Authorized operators may correct or supersede earlier feedback without deleting history.
 
 ---
 
@@ -516,6 +535,8 @@ There are three different learning speeds.
 ### A. Fast: Resident memory
 
 Relevant feedback and routines may update resident context promptly.
+
+Authorized operators can view, add, correct, or retire resident routines/context from resident settings. Memory changes remain versioned and auditable.
 
 ### B. Controlled: Personal baseline
 
@@ -562,7 +583,7 @@ Device-health cases include:
 - upload failures;
 - low-quality/noisy sensing;
 - time/sequence anomalies;
-- RFID identity unavailable/ambiguous.
+- room assignment missing or possible multi-person presence.
 
 ### Degradation rules
 
@@ -677,10 +698,10 @@ V1 is a **general monitoring platform**, not a single-event detector.
 V1 must demonstrate:
 
 1. contract-valid production UI/UX running first on mock data;
-2. continuous simulated edge-telemetry ingestion including RFID identity evidence;
+2. continuous simulated edge-telemetry ingestion from radar, thermal, and CSI;
 3. processed telemetry storage/replay plus optional bounded raw/debug capture;
-4. modular radar/thermal/CSI/RFID edge and cloud interfaces;
-5. RFID tag-to-resident identity resolution and ambiguity handling;
+4. modular radar/thermal/CSI edge and cloud interfaces;
+5. one assigned resident per monitored room, with ambiguous/multi-person sensing handled as degraded or unavailable;
 6. multi-sensor fusion;
 7. personal baseline/calibration;
 8. general anomaly detection, including an `unknown_anomaly` path;
@@ -731,7 +752,7 @@ These remain configuration/research decisions:
 - exact processed-history and diagnostic-raw retention durations;
 - exact LLM provider/model;
 - exact deployment/cloud vendor;
-- exact RFID reader tuning/antenna placement and tag-read characteristics;
+- exact multi-person/interference detection behavior and room placement constraints;
 - future trained classifier architecture;
 - final pricing and first market wedge.
 
