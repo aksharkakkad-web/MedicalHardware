@@ -34,8 +34,10 @@ The tested journey is:
 The Product API now also persists and exposes active, away, return,
 possible-multi-person, and unavailable/limited monitoring history. A setup
 change can restart only an affected calibration dimension while preserving
-unaffected progress and all history. The plain-language verification command
-is `python3 -m backend.app.checkpoints.status_calibration`.
+unaffected progress and all history. An assigned resident whose histories have
+not started is shown honestly as not yet available instead of being mistaken
+for a missing resident. The plain-language verification command is
+`python3 -m backend.app.checkpoints.status_calibration`.
 
 ## What Rishit can build now
 

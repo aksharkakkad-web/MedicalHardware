@@ -1,3 +1,5 @@
+from enum import StrEnum
+
 from pydantic import Field, field_validator
 
 from backend.app.contracts.common import (
@@ -56,11 +58,24 @@ class MonitoringStatusResponse(ContractModel):
     quality_policy_test_only: bool
 
 
+class ResidentStatusDataAvailability(StrEnum):
+    AVAILABLE = "available"
+    PARTIAL = "partial"
+    NOT_YET_AVAILABLE = "not_yet_available"
+
+
+class ResidentStatusUnavailableReason(StrEnum):
+    MONITORING_NOT_YET_AVAILABLE = "monitoring_not_yet_available"
+    CALIBRATION_NOT_YET_AVAILABLE = "calibration_not_yet_available"
+
+
 class ResidentStatusResponse(ContractModel):
     resident_id: str
     room_id: str
-    monitoring: MonitoringStatusResponse
-    calibration: CalibrationResponse
+    data_availability: ResidentStatusDataAvailability
+    unavailable_reasons: list[ResidentStatusUnavailableReason]
+    monitoring: MonitoringStatusResponse | None
+    calibration: CalibrationResponse | None
 
 
 class AwarenessTimelineResponse(ContractModel):

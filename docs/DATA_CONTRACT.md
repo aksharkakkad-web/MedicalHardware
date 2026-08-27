@@ -17,7 +17,12 @@ calibration is available:
 
 Resident-away and possible-multi-person are awareness states. They do not
 become warning events. The awareness list is chronological and the current
-status is the newest item. Unknown or unavailable data stays explicit.
+status is the newest item. Unknown or unavailable data stays explicit. An
+assigned resident with no monitoring or calibration history still returns a
+status response: unavailable parts are `null`, `data_availability` explains
+whether the response is complete or partial, and `unavailable_reasons` says
+which histories have not started. This is distinct from a missing or
+cross-tenant resident, which returns `404`.
 
 Example status response:
 
@@ -26,6 +31,8 @@ Example status response:
   "schema_version": "1.0",
   "resident_id": "resident_demo_a",
   "room_id": "room_214",
+  "data_availability": "available",
+  "unavailable_reasons": [],
   "monitoring": {
     "schema_version": "1.0",
     "resident_id": "resident_demo_a",
@@ -61,6 +68,23 @@ Example status response:
     ],
     "setup_changes": []
   }
+}
+```
+
+Example status before monitoring and calibration histories exist:
+
+```json
+{
+  "schema_version": "1.0",
+  "resident_id": "resident_new",
+  "room_id": "room_new",
+  "data_availability": "not_yet_available",
+  "unavailable_reasons": [
+    "monitoring_not_yet_available",
+    "calibration_not_yet_available"
+  ],
+  "monitoring": null,
+  "calibration": null
 }
 ```
 

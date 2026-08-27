@@ -5,7 +5,9 @@ from backend.app.contracts.status import (
     CalibrationDimensionResponse,
     CalibrationResponse,
     MonitoringStatusResponse,
+    ResidentStatusDataAvailability,
     ResidentStatusResponse,
+    ResidentStatusUnavailableReason,
     SetupChangeResponse,
 )
 from backend.app.db.repositories import ResidentRecord, ResidentRepository
@@ -89,13 +91,39 @@ class ProductStatusQueryService:
         resident_id: str,
     ) -> ResidentStatusResponse:
         resident = self._resident(context, resident_id)
-        monitoring = self._monitoring.latest(context.tenant_id, resident_id)
-        calibration = self._calibration.current(context.tenant_id, resident_id)
+        monitoring = self._monitoring.find_latest(context.tenant_id, resident_id)
+        calibration = self._calibration.find_current(
+            context.tenant_id,
+            resident_id,
+        )
+        unavailable_reasons: list[ResidentStatusUnavailableReason] = []
+        if monitoring is None:
+            unavailable_reasons.append(
+                ResidentStatusUnavailableReason.MONITORING_NOT_YET_AVAILABLE
+            )
+        if calibration is None:
+            unavailable_reasons.append(
+                ResidentStatusUnavailableReason.CALIBRATION_NOT_YET_AVAILABLE
+            )
+        if not unavailable_reasons:
+            availability = ResidentStatusDataAvailability.AVAILABLE
+        elif monitoring is None and calibration is None:
+            availability = ResidentStatusDataAvailability.NOT_YET_AVAILABLE
+        else:
+            availability = ResidentStatusDataAvailability.PARTIAL
         return ResidentStatusResponse(
             resident_id=resident.resident_id,
             room_id=resident.room_id,
-            monitoring=monitoring_status_response(monitoring),
-            calibration=calibration_response(calibration),
+            data_availability=availability,
+            unavailable_reasons=unavailable_reasons,
+            monitoring=(
+                None
+                if monitoring is None
+                else monitoring_status_response(monitoring)
+            ),
+            calibration=(
+                None if calibration is None else calibration_response(calibration)
+            ),
         )
 
     def get_awareness(

@@ -39,6 +39,8 @@ overwrite newer progress.
 - Away and possible-multi-person periods never become invented resident
   measurements.
 - Away remains an awareness item rather than an event requiring response.
+- An assigned resident whose monitoring history has not started is shown as
+  unavailable rather than being mistaken for a missing resident.
 - Cross-tenant and missing resident records are indistinguishable.
 - Status, calibration, setup history, idempotency, and audit effects commit or
   roll back together.
@@ -60,7 +62,7 @@ restarts the app, verifies exact retry behavior, and ends with
 ## Verification evidence
 
 - founder Checkpoint A walkthrough: passed;
-- full pytest suite: 212 passed plus 83 subtests;
+- full pytest suite: 213 passed plus 83 subtests;
 - compatibility unittest suite: 75 passed;
 - backend/test compilation and diff checks: passed.
 

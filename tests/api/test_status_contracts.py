@@ -60,6 +60,8 @@ def test_status_contracts_expose_the_exact_frontend_fields() -> None:
             "schema_version": "1.0",
             "resident_id": "resident_demo_a",
             "room_id": "room_214",
+            "data_availability": "available",
+            "unavailable_reasons": [],
             "monitoring": MONITORING_PAYLOAD,
             "calibration": CALIBRATION_PAYLOAD,
         }
@@ -197,6 +199,8 @@ def test_nested_status_objects_require_known_schema_versions() -> None:
                 "schema_version": "1.0",
                 "resident_id": "resident_demo_a",
                 "room_id": "room_214",
+                "data_availability": "available",
+                "unavailable_reasons": [],
                 "monitoring": {**MONITORING_PAYLOAD, "unknown": True},
                 "calibration": CALIBRATION_PAYLOAD,
             }

@@ -53,6 +53,16 @@ class MonitoringStatusRepository:
         self._session.flush((row,))
 
     def latest(self, tenant_id: str, resident_id: str) -> StoredMonitoringStatus:
+        stored = self.find_latest(tenant_id, resident_id)
+        if stored is None:
+            raise NotFoundError()
+        return stored
+
+    def find_latest(
+        self,
+        tenant_id: str,
+        resident_id: str,
+    ) -> StoredMonitoringStatus | None:
         row = self._session.scalar(
             select(MonitoringStatusSnapshotRow)
             .where(
@@ -65,9 +75,7 @@ class MonitoringStatusRepository:
             )
             .limit(1)
         )
-        if row is None:
-            raise NotFoundError()
-        return monitoring_from_row(row)
+        return None if row is None else monitoring_from_row(row)
 
     def timeline(
         self,
@@ -93,6 +101,16 @@ class CalibrationRepository:
         self._session = session
 
     def current(self, tenant_id: str, resident_id: str) -> StoredCalibration:
+        stored = self.find_current(tenant_id, resident_id)
+        if stored is None:
+            raise NotFoundError()
+        return stored
+
+    def find_current(
+        self,
+        tenant_id: str,
+        resident_id: str,
+    ) -> StoredCalibration | None:
         row = self._session.scalar(
             select(CalibrationSnapshotRow)
             .where(
@@ -103,7 +121,7 @@ class CalibrationRepository:
             .limit(1)
         )
         if row is None:
-            raise NotFoundError()
+            return None
         setup_rows = self._session.scalars(
             select(MonitoringSetupChangeRow)
             .where(

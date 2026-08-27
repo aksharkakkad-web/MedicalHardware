@@ -124,8 +124,13 @@ class MonitoringStatusResponse(ContractModel):
 class ResidentStatusResponse(ContractModel):
     resident_id: str
     room_id: str
-    monitoring: MonitoringStatusResponse
-    calibration: CalibrationResponse
+    data_availability: Literal["available", "partial", "not_yet_available"]
+    unavailable_reasons: list[Literal[
+        "monitoring_not_yet_available",
+        "calibration_not_yet_available",
+    ]]
+    monitoring: MonitoringStatusResponse | None
+    calibration: CalibrationResponse | None
 
 
 class AwarenessTimelineResponse(ContractModel):

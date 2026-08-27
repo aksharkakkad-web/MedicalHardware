@@ -1,10 +1,20 @@
+from datetime import datetime, timezone
+
 from fastapi.testclient import TestClient
+
+from backend.app.db.models import (
+    ResidentRow,
+    RoomResidentAssignmentRow,
+    RoomRow,
+)
 
 
 ACCESS_HEADERS = {
     "X-Tenant-Id": "tenant_demo",
     "X-Actor-Id": "operator_1",
 }
+
+
 def test_resident_status_combines_latest_monitoring_and_calibration(
     api_client: TestClient,
 ) -> None:
@@ -18,6 +28,8 @@ def test_resident_status_combines_latest_monitoring_and_calibration(
         "schema_version": "1.0",
         "resident_id": "resident_demo_a",
         "room_id": "room_214",
+        "data_availability": "available",
+        "unavailable_reasons": [],
         "monitoring": {
             "schema_version": "1.0",
             "resident_id": "resident_demo_a",
@@ -60,6 +72,58 @@ def test_resident_status_combines_latest_monitoring_and_calibration(
             ],
             "setup_changes": [],
         },
+    }
+
+
+def test_existing_resident_without_status_history_is_explicitly_unavailable(
+    api_client: TestClient,
+) -> None:
+    with api_client.app.state.session_factory() as session:
+        session.add(
+            RoomRow(
+                room_id="room_new",
+                tenant_id="tenant_demo",
+                label="New room",
+            )
+        )
+        session.add(
+            ResidentRow(
+                resident_id="resident_new",
+                tenant_id="tenant_demo",
+                display_label="New resident",
+            )
+        )
+        session.flush()
+        session.add(
+            RoomResidentAssignmentRow(
+                assignment_id="assign_room_new",
+                tenant_id="tenant_demo",
+                room_id="room_new",
+                resident_id="resident_new",
+                status="active",
+                effective_from=datetime(2026, 8, 25, tzinfo=timezone.utc),
+                effective_to=None,
+            )
+        )
+        session.commit()
+
+    response = api_client.get(
+        "/v1/residents/resident_new/status",
+        headers=ACCESS_HEADERS,
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "schema_version": "1.0",
+        "resident_id": "resident_new",
+        "room_id": "room_new",
+        "data_availability": "not_yet_available",
+        "unavailable_reasons": [
+            "monitoring_not_yet_available",
+            "calibration_not_yet_available",
+        ],
+        "monitoring": None,
+        "calibration": None,
     }
 
 
