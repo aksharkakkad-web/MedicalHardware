@@ -1,90 +1,13 @@
-from datetime import datetime, timedelta, timezone
-
 from fastapi.testclient import TestClient
-
-from backend.app.db.status_repositories import (
-    CalibrationRepository,
-    MonitoringStatusRepository,
-    StoredCalibration,
-    StoredMonitoringStatus,
-)
-from backend.app.domain.calibration import (
-    BaselineStatus,
-    CalibrationDimensionProgress,
-    CalibrationProgress,
-)
-from backend.app.domain.monitoring import PresenceState, derive_monitoring_snapshot
 
 
 ACCESS_HEADERS = {
     "X-Tenant-Id": "tenant_demo",
     "X-Actor-Id": "operator_1",
 }
-OBSERVED_AT = datetime(2026, 8, 24, 21, 0, tzinfo=timezone.utc)
-
-
-def _seed_status_story(client: TestClient) -> None:
-    with client.app.state.session_factory() as session:
-        monitoring = MonitoringStatusRepository(session)
-        for offset, presence in enumerate(
-            (
-                PresenceState.RESIDENT_PRESENT,
-                PresenceState.RESIDENT_AWAY,
-                PresenceState.RESIDENT_PRESENT,
-            )
-        ):
-            monitoring.record(
-                "tenant_demo",
-                StoredMonitoringStatus(
-                    resident_id="resident_demo_a",
-                    room_id="room_214",
-                    observed_at=OBSERVED_AT + timedelta(minutes=offset),
-                    snapshot=derive_monitoring_snapshot(
-                        assignment_valid=True,
-                        device_healthy=True,
-                        presence=presence,
-                        signal_quality=0.9,
-                    ),
-                ),
-            )
-        CalibrationRepository(session).save(
-            "tenant_demo",
-            StoredCalibration(
-                resident_id="resident_demo_a",
-                version=1,
-                recorded_at=OBSERVED_AT + timedelta(minutes=2),
-                progress=CalibrationProgress(
-                    setup_version="setup_room_214_v1",
-                    status=BaselineStatus.ESTABLISHED,
-                    eligible_windows=12,
-                    excluded_windows=2,
-                    reason="calibration_complete",
-                    dimension_progress=(
-                        CalibrationDimensionProgress(
-                            dimension="movement",
-                            status=BaselineStatus.ESTABLISHED,
-                            eligible_windows=12,
-                            excluded_windows=2,
-                        ),
-                        CalibrationDimensionProgress(
-                            dimension="respiratory_rate",
-                            status=BaselineStatus.ESTABLISHED,
-                            eligible_windows=12,
-                            excluded_windows=2,
-                        ),
-                    ),
-                ),
-            ),
-            expected_version=0,
-        )
-        session.commit()
-
-
 def test_resident_status_combines_latest_monitoring_and_calibration(
     api_client: TestClient,
 ) -> None:
-    _seed_status_story(api_client)
-
     response = api_client.get(
         "/v1/residents/resident_demo_a/status",
         headers=ACCESS_HEADERS,
@@ -99,7 +22,7 @@ def test_resident_status_combines_latest_monitoring_and_calibration(
             "schema_version": "1.0",
             "resident_id": "resident_demo_a",
             "room_id": "room_214",
-            "observed_at": "2026-08-24T21:02:00Z",
+            "observed_at": "2026-08-24T20:59:00Z",
             "monitoring_state": "active",
             "presence_state": "resident_present",
             "baseline_learning_allowed": True,
@@ -112,7 +35,7 @@ def test_resident_status_combines_latest_monitoring_and_calibration(
             "schema_version": "1.0",
             "resident_id": "resident_demo_a",
             "version": 1,
-            "recorded_at": "2026-08-24T21:02:00Z",
+            "recorded_at": "2026-08-24T21:00:00Z",
             "setup_version": "setup_room_214_v1",
             "status": "established",
             "eligible_windows": 12,
@@ -143,8 +66,6 @@ def test_resident_status_combines_latest_monitoring_and_calibration(
 def test_away_is_chronological_awareness_not_a_warning_event(
     api_client: TestClient,
 ) -> None:
-    _seed_status_story(api_client)
-
     timeline = api_client.get(
         "/v1/residents/resident_demo_a/awareness",
         headers=ACCESS_HEADERS,
@@ -157,7 +78,13 @@ def test_away_is_chronological_awareness_not_a_warning_event(
     assert timeline.status_code == 200
     assert [
         item["presence_state"] for item in timeline.json()["items"]
-    ] == ["resident_present", "resident_away", "resident_present"]
+    ] == [
+        "resident_present",
+        "resident_away",
+        "resident_present",
+        "possible_multi_person",
+        "resident_present",
+    ]
     away = timeline.json()["items"][1]
     assert away["monitoring_state"] == "paused"
     assert away["baseline_learning_allowed"] is False
@@ -170,8 +97,6 @@ def test_away_is_chronological_awareness_not_a_warning_event(
 def test_calibration_read_matches_status_calibration(
     api_client: TestClient,
 ) -> None:
-    _seed_status_story(api_client)
-
     status = api_client.get(
         "/v1/residents/resident_demo_a/status",
         headers=ACCESS_HEADERS,
@@ -188,7 +113,6 @@ def test_calibration_read_matches_status_calibration(
 def test_status_reads_hide_missing_and_cross_tenant_residents(
     api_client: TestClient,
 ) -> None:
-    _seed_status_story(api_client)
     other_headers = {
         "X-Tenant-Id": "tenant_other",
         "X-Actor-Id": "operator_1",

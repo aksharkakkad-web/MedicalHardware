@@ -1,5 +1,3 @@
-from datetime import datetime, timezone
-
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 
@@ -8,12 +6,6 @@ from backend.app.db.models import (
     CalibrationSnapshotRow,
     IdempotencyRecordRow,
     MonitoringSetupChangeRow,
-)
-from backend.app.db.status_repositories import CalibrationRepository, StoredCalibration
-from backend.app.domain.calibration import (
-    BaselineStatus,
-    CalibrationDimensionProgress,
-    CalibrationProgress,
 )
 
 
@@ -39,41 +31,6 @@ def _body(**changes: object) -> dict[str, object]:
     }
 
 
-def _seed_calibration(client: TestClient) -> None:
-    with client.app.state.session_factory() as session:
-        CalibrationRepository(session).save(
-            "tenant_demo",
-            StoredCalibration(
-                resident_id="resident_demo_a",
-                version=1,
-                recorded_at=datetime(2026, 8, 24, 21, 0, tzinfo=timezone.utc),
-                progress=CalibrationProgress(
-                    setup_version="setup_room_214_v1",
-                    status=BaselineStatus.ESTABLISHED,
-                    eligible_windows=12,
-                    excluded_windows=2,
-                    reason="calibration_complete",
-                    dimension_progress=(
-                        CalibrationDimensionProgress(
-                            "movement",
-                            BaselineStatus.ESTABLISHED,
-                            12,
-                            2,
-                        ),
-                        CalibrationDimensionProgress(
-                            "respiratory_rate",
-                            BaselineStatus.ESTABLISHED,
-                            12,
-                            2,
-                        ),
-                    ),
-                ),
-            ),
-            expected_version=0,
-        )
-        session.commit()
-
-
 def _count(client: TestClient, row_type: type[object]) -> int:
     with client.app.state.session_factory() as session:
         return session.scalar(select(func.count()).select_from(row_type))
@@ -82,8 +39,6 @@ def _count(client: TestClient, row_type: type[object]) -> int:
 def test_setup_change_resets_only_selected_dimension_and_audits(
     api_client: TestClient,
 ) -> None:
-    _seed_calibration(api_client)
-
     response = api_client.post(PATH, headers=_headers("move-1"), json=_body())
 
     assert response.status_code == 200
@@ -123,7 +78,6 @@ def test_setup_change_resets_only_selected_dimension_and_audits(
 def test_setup_change_replay_returns_one_durable_effect(
     api_client: TestClient,
 ) -> None:
-    _seed_calibration(api_client)
     headers = _headers("move-retry")
 
     first = api_client.post(PATH, headers=headers, json=_body())
@@ -140,7 +94,6 @@ def test_setup_change_replay_returns_one_durable_effect(
 def test_setup_change_conflicts_do_not_create_more_history(
     api_client: TestClient,
 ) -> None:
-    _seed_calibration(api_client)
     success = api_client.post(
         PATH,
         headers=_headers("move-success"),
@@ -180,8 +133,6 @@ def test_setup_change_conflicts_do_not_create_more_history(
 def test_setup_change_validates_input_and_tenant_scope(
     api_client: TestClient,
 ) -> None:
-    _seed_calibration(api_client)
-
     unknown_dimension = api_client.post(
         PATH,
         headers=_headers("unknown-dimension"),

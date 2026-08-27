@@ -8,7 +8,7 @@ from backend.app.db.models import (
     MonitoringSetupChangeRow,
 )
 from backend.app.db.status_repositories import CalibrationRepository
-from tests.api.test_setup_change_api import PATH, _body, _headers, _seed_calibration
+from tests.api.test_setup_change_api import PATH, _body, _headers
 
 
 class FaultingCalibrationRepository(CalibrationRepository):
@@ -20,7 +20,6 @@ class FaultingCalibrationRepository(CalibrationRepository):
 def test_setup_route_failure_rolls_back_history_audit_and_idempotency(
     api_client: TestClient,
 ) -> None:
-    _seed_calibration(api_client)
     api_client.app.state.calibration_repository_factory = (
         FaultingCalibrationRepository
     )

@@ -569,7 +569,7 @@ git commit -m "feat: add durable selective recalibration action"
 - Consumes: all Checkpoint A API paths and existing event/memory paths.
 - Produces: deterministic synthetic seed history and `python3 -m backend.app.checkpoints.status_calibration` founder verification command.
 
-- [ ] **Step 1: Write the failing end-to-end restart story**
+- [x] **Step 1: Write the failing end-to-end restart story**
 
 The story must prove, through the real API:
 
@@ -582,19 +582,19 @@ The story must prove, through the real API:
 7. status, awareness, setup history, and calibration survive app restart;
 8. replay does not create another calibration/audit/idempotency effect.
 
-- [ ] **Step 2: Run story and verify RED**
+- [x] **Step 2: Run story and verify RED**
 
 Run: `python3 -m pytest -q tests/api/test_status_calibration_story.py`
 
 Expected: seed data and checkpoint module are missing.
 
-- [ ] **Step 3: Extend deterministic synthetic seed**
+- [x] **Step 3: Extend deterministic synthetic seed**
 
 Seed ordered monitoring snapshots and calibration version 1 for
 `resident_demo_a`. Values remain synthetic and use existing domain functions
 to derive monitoring decisions rather than hand-writing contradictory states.
 
-- [ ] **Step 4: Add the founder checkpoint command**
+- [x] **Step 4: Add the founder checkpoint command**
 
 The module creates a temporary migrated database, seeds it, calls the real API,
 performs the setup change, restarts the application, and prints:
@@ -611,13 +611,13 @@ CHECKPOINT A READY
 
 Any mismatch exits nonzero with one plain-language `FAIL` line.
 
-- [ ] **Step 5: Update status and review documentation**
+- [x] **Step 5: Update status and review documentation**
 
 Record Checkpoint A as complete only after all commands pass. State that device
 health, preferences/memory administration, and the full clinic handoff remain
 open Checkpoints B–D.
 
-- [ ] **Step 6: Run the complete verification gate**
+- [x] **Step 6: Run the complete verification gate**
 
 Run:
 
@@ -631,7 +631,7 @@ git diff --check
 
 Expected: checkpoint prints all PASS lines; every automated suite passes.
 
-- [ ] **Step 7: Refresh graph and commit Task 6**
+- [x] **Step 7: Refresh graph and commit Task 6**
 
 Run: `graphify update .`
 

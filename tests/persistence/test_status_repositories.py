@@ -6,8 +6,15 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from backend.app.db.base import Base
-from backend.app.db.models import MonitoringSetupChangeRow, MonitoringStatusSnapshotRow
-from backend.app.db.seed import seed_synthetic_story
+from backend.app.db.models import (
+    MonitoringSetupChangeRow,
+    MonitoringStatusSnapshotRow,
+    ResidentRow,
+    RoomResidentAssignmentRow,
+    RoomRow,
+    TenantRow,
+)
+from backend.app.db.seed import SeededStory
 from backend.app.db.session import create_engine_for_url
 from backend.app.db.status_repositories import (
     CalibrationRepository,
@@ -30,9 +37,47 @@ def session() -> Session:
     engine = create_engine_for_url("sqlite+pysqlite:///:memory:")
     Base.metadata.create_all(engine)
     with Session(engine) as database_session:
-        seed_synthetic_story(database_session)
         yield database_session
     engine.dispose()
+
+
+def _seed_ownership(session: Session) -> SeededStory:
+    story = SeededStory(
+        "tenant_demo",
+        "room_214",
+        "resident_demo_a",
+        "evt_unused",
+    )
+    session.add(TenantRow(tenant_id=story.tenant_id))
+    session.flush()
+    session.add(
+        RoomRow(
+            room_id=story.room_id,
+            tenant_id=story.tenant_id,
+            label="Room 214",
+        )
+    )
+    session.add(
+        ResidentRow(
+            resident_id=story.resident_id,
+            tenant_id=story.tenant_id,
+            display_label="Resident A",
+        )
+    )
+    session.flush()
+    session.add(
+        RoomResidentAssignmentRow(
+            assignment_id="assign_room_214_a",
+            tenant_id=story.tenant_id,
+            room_id=story.room_id,
+            resident_id=story.resident_id,
+            status="active",
+            effective_from=datetime(2026, 8, 24, tzinfo=timezone.utc),
+            effective_to=None,
+        )
+    )
+    session.commit()
+    return story
 
 
 def _status(
@@ -87,7 +132,7 @@ def _established_calibration(resident_id: str) -> StoredCalibration:
 def test_monitoring_repository_preserves_order_states_and_utc(
     session: Session,
 ) -> None:
-    story = seed_synthetic_story(session)
+    story = _seed_ownership(session)
     repository = MonitoringStatusRepository(session)
     local_zone = timezone(timedelta(hours=5, minutes=30))
     start = datetime(2026, 8, 25, 2, 30, tzinfo=local_zone)
@@ -128,7 +173,7 @@ def test_monitoring_repository_preserves_order_states_and_utc(
 def test_calibration_repository_round_trips_dimensions_and_setup_history(
     session: Session,
 ) -> None:
-    story = seed_synthetic_story(session)
+    story = _seed_ownership(session)
     repository = CalibrationRepository(session)
     initial = _established_calibration(story.resident_id)
     repository.save(story.tenant_id, initial, expected_version=0)
@@ -166,7 +211,7 @@ def test_calibration_repository_round_trips_dimensions_and_setup_history(
 def test_calibration_repository_rejects_stale_expected_version(
     session: Session,
 ) -> None:
-    story = seed_synthetic_story(session)
+    story = _seed_ownership(session)
     repository = CalibrationRepository(session)
     initial = _established_calibration(story.resident_id)
     repository.save(story.tenant_id, initial, expected_version=0)
@@ -208,7 +253,7 @@ def test_calibration_repository_rejects_stale_expected_version(
 def test_calibration_progress_does_not_duplicate_setup_change_history(
     session: Session,
 ) -> None:
-    story = seed_synthetic_story(session)
+    story = _seed_ownership(session)
     repository = CalibrationRepository(session)
     initial = _established_calibration(story.resident_id)
     repository.save(story.tenant_id, initial, expected_version=0)
@@ -244,7 +289,7 @@ def test_calibration_progress_does_not_duplicate_setup_change_history(
 def test_monitoring_repository_rejects_malformed_stored_enum(
     session: Session,
 ) -> None:
-    story = seed_synthetic_story(session)
+    story = _seed_ownership(session)
     repository = MonitoringStatusRepository(session)
     stored = _status(
         resident_id=story.resident_id,

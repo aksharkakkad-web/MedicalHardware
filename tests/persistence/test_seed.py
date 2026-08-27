@@ -10,7 +10,9 @@ from backend.app.db.base import Base
 from backend.app.db.models import (
     EventActionRow,
     EventPriorityHistoryRow,
+    CalibrationSnapshotRow,
     MonitoringEventRow,
+    MonitoringStatusSnapshotRow,
     ResidentRow,
     RoomResidentAssignmentRow,
     RoomRow,
@@ -50,6 +52,12 @@ def test_seed_is_deterministic_and_idempotent() -> None:
             EventPriorityHistoryRow,
         ):
             assert session.scalar(select(func.count()).select_from(row_type)) == 1
+        assert session.scalar(
+            select(func.count()).select_from(MonitoringStatusSnapshotRow)
+        ) == 5
+        assert session.scalar(
+            select(func.count()).select_from(CalibrationSnapshotRow)
+        ) == 1
     engine.dispose()
 
 

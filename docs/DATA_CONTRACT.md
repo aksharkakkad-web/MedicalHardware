@@ -782,6 +782,9 @@ Implemented read paths:
 - `GET /v1/residents/{resident_id}`
 - `GET /v1/residents/{resident_id}/events`
 - `GET /v1/residents/{resident_id}/memory`
+- `GET /v1/residents/{resident_id}/status`
+- `GET /v1/residents/{resident_id}/awareness`
+- `GET /v1/residents/{resident_id}/calibration`
 - `GET /v1/events/{event_id}`
 
 Implemented caregiver action paths:
@@ -790,6 +793,7 @@ Implemented caregiver action paths:
 - `POST /v1/events/{event_id}/checked`
 - `POST /v1/events/{event_id}/resolve`
 - `POST /v1/events/{event_id}/feedback`
+- `POST /v1/residents/{resident_id}/setup-changes`
 
 Every `/v1` request requires the development-only `X-Tenant-Id` and
 `X-Actor-Id` headers. Every caregiver action also requires
