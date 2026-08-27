@@ -166,6 +166,15 @@ Current backend/domain verification:
 python3 -m unittest discover -s tests -p 'test_*.py' -v
 ```
 
+Current clinic dashboard verification:
+
+```bash
+pnpm --dir apps/clinic-dashboard test
+pnpm --dir apps/clinic-dashboard lint
+pnpm --dir apps/clinic-dashboard typecheck
+pnpm --dir apps/clinic-dashboard build
+```
+
 Never report a task complete without running the relevant available checks or clearly stating what could not be run.
 
 ## Codex task style

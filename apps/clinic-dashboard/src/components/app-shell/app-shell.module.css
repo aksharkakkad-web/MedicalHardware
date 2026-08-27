@@ -217,7 +217,7 @@
   .activeLink,
   .futureItem {
     display: flex;
-    min-height: 2.35rem;
+    min-height: 2.75rem;
     padding: 0.35rem 0.6rem;
     font-size: 0.78rem;
   }

@@ -420,7 +420,7 @@ git commit -m "feat: build mock-backed resident overview"
 - Modify if necessary: `apps/clinic-dashboard/src/**`
 - Modify: `AGENTS.md` only if canonical frontend commands are missing after bootstrap
 
-- [ ] **Step 1: Start the real app**
+- [x] **Step 1: Start the real app**
 
 ```bash
 pnpm --dir apps/clinic-dashboard dev
@@ -428,15 +428,15 @@ pnpm --dir apps/clinic-dashboard dev
 
 Expected: the app reports a local URL and loads successfully.
 
-- [ ] **Step 2: Verify desktop behavior**
+- [x] **Step 2: Verify desktop behavior**
 
 At a desktop viewport, inspect the overview, navigation, all five mock states, loading/empty/error presentations, keyboard focus, and browser console. Fix any product or responsive defects found.
 
-- [ ] **Step 3: Verify mobile behavior**
+- [x] **Step 3: Verify mobile behavior**
 
 At a mobile viewport, confirm navigation remains usable, cards do not overflow, labels remain readable, and tap targets are comfortably sized. Fix any defects found.
 
-- [ ] **Step 4: Run the final check set**
+- [x] **Step 4: Run the final check set**
 
 ```bash
 pnpm --dir apps/clinic-dashboard test
@@ -448,11 +448,11 @@ git diff --check
 
 Expected: every command succeeds and browser console has no errors.
 
-- [ ] **Step 5: Update documentation only where verified**
+- [x] **Step 5: Update documentation only where verified**
 
 If the new commands are not already recorded, add the exact passing frontend commands to `AGENTS.md`. Do not change product requirements or shared contracts.
 
-- [ ] **Step 6: Commit final fixes and verified commands**
+- [x] **Step 6: Commit final fixes and verified commands**
 
 ```bash
 git add apps/clinic-dashboard AGENTS.md
