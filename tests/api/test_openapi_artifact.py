@@ -43,3 +43,20 @@ def test_every_v1_operation_documents_development_access_headers() -> None:
                 continue
             parameters = {item["name"] for item in operation["parameters"]}
             assert {"X-Tenant-Id", "X-Actor-Id"} <= parameters
+
+
+def test_error_descriptions_are_stable_across_framework_versions() -> None:
+    document = generate_openapi_document()
+
+    for route, path in document["paths"].items():
+        if not route.startswith("/v1"):
+            continue
+        for method, operation in path.items():
+            if method not in {"get", "post", "put", "patch", "delete"}:
+                continue
+            responses = operation["responses"]
+            if "422" in responses:
+                assert (
+                    responses["422"]["description"]
+                    == "Unprocessable Content"
+                )

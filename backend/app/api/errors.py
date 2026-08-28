@@ -14,20 +14,25 @@ from backend.app.services.errors import (
 )
 
 
-ERROR_RESPONSE = {"model": ErrorEnvelope}
-METHOD_NOT_ALLOWED_ERROR_RESPONSES = {405: ERROR_RESPONSE}
+def _documented_error(description: str) -> dict[str, object]:
+    return {"model": ErrorEnvelope, "description": description}
+
+
+METHOD_NOT_ALLOWED_ERROR_RESPONSES = {
+    405: _documented_error("Method Not Allowed")
+}
 READ_ERROR_RESPONSES = {
-    404: ERROR_RESPONSE,
+    404: _documented_error("Not Found"),
     **METHOD_NOT_ALLOWED_ERROR_RESPONSES,
-    422: ERROR_RESPONSE,
-    500: ERROR_RESPONSE,
+    422: _documented_error("Unprocessable Content"),
+    500: _documented_error("Internal Server Error"),
 }
 MUTATION_ERROR_RESPONSES = {
-    404: ERROR_RESPONSE,
+    404: _documented_error("Not Found"),
     **METHOD_NOT_ALLOWED_ERROR_RESPONSES,
-    409: ERROR_RESPONSE,
-    422: ERROR_RESPONSE,
-    500: ERROR_RESPONSE,
+    409: _documented_error("Conflict"),
+    422: _documented_error("Unprocessable Content"),
+    500: _documented_error("Internal Server Error"),
 }
 
 
