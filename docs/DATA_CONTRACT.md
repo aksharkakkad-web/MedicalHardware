@@ -1,8 +1,63 @@
 # Contactless Adaptive Care Platform — Data & API Contract
 
 **Status:** V1 contract for UI-first and simulator-first development
-**Version:** 1.5
+**Version:** 1.6
 **Important:** Final vendor-specific radar/CSI raw shapes are intentionally hardware-dependent. Production software stabilizes around a versioned **EdgeTelemetryEnvelope** emitted after lightweight on-device preprocessing. Optional raw/debug capture is separate and bounded.
+
+## Phase 2 Checkpoint D — Clinic Event Queue
+
+`GET /v1/events` is the clinic-wide caregiver work queue. It reuses the exact
+`EventResponse` object used by event detail and resident history.
+
+Query parameters:
+
+- repeated `status` values are OR filters for `open`, `acknowledged`,
+  `checked`, and `resolved`;
+- repeated `priority` values are OR filters for `watch`, `high`, and
+  `critical`;
+- optional `resident_id` and `room_id` narrow the tenant-owned queue;
+- filter categories combine with AND;
+- `limit` defaults to `25` and accepts `1` through `100`;
+- `cursor` is opaque, stable, and bound to the normalized filters.
+
+With no `status`, the endpoint returns active caregiver work: `open`,
+`acknowledged`, and `checked`. Resolved history remains available by requesting
+`status=resolved`, or by explicitly combining resolved with active statuses.
+The internal transient `detected` state is not a valid clinic queue filter.
+Unknown or cross-tenant resident/room filters return an empty result rather
+than revealing whether the identifier exists elsewhere.
+
+The deterministic queue order is:
+
+1. unresolved before resolved;
+2. `critical`, then `high`, then `watch`;
+3. overdue before not overdue;
+4. newest `last_signal_at`;
+5. newest `created_at`;
+6. `event_id` ascending as the final tie-breaker.
+
+The response is:
+
+```json
+{
+  "schema_version": "1.0",
+  "items": [],
+  "total_items": 0,
+  "next_cursor": null
+}
+```
+
+`total_items` counts all tenant-owned events matching the normalized filters,
+not only the current page. `next_cursor` is `null` on the final page. Malformed
+cursors or reuse under different filters return the versioned `invalid_input`
+error with `field: "cursor"`. Lifecycle actions can move an event between
+filtered views, so the clinic client refreshes the active queue after a
+successful acknowledge, check, or resolve action.
+
+Trend intelligence is not part of this checkpoint and is not fabricated. The
+current clinic client does not require a trend read for the selected connection
+path; a future trends contract will expose explicit unavailable states when
+that later intelligence phase begins.
 
 ## Phase 2 Checkpoint A — Resident Status and Calibration
 
