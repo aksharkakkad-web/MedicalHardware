@@ -1,9 +1,10 @@
 """Tenant-scoped persistence adapters for product domain records."""
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 
-from sqlalchemy import func, select, update
+from sqlalchemy import and_, case, func, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -27,7 +28,7 @@ from backend.app.db.models import (
     RoomResidentAssignmentRow,
     RoomRow,
 )
-from backend.app.domain.events import MonitoringEvent
+from backend.app.domain.events import EventPriority, EventStatus, MonitoringEvent
 from backend.app.domain.feedback import LearningDecision, ResidentMemory
 from backend.app.services.errors import ConcurrentUpdateError, NotFoundError
 
@@ -53,6 +54,23 @@ class ResidentRecord:
     room_id: str
     room_label: str
     assignment_status: str
+
+
+@dataclass(frozen=True)
+class EventQueuePosition:
+    resolved: bool
+    priority: EventPriority
+    overdue: bool
+    last_signal_at: datetime
+    created_at: datetime
+    event_id: str
+
+
+@dataclass(frozen=True)
+class EventQueuePage:
+    items: tuple[StoredEvent, ...]
+    next_position: EventQueuePosition | None
+    total_items: int
 
 
 class ResidentRepository:
@@ -132,6 +150,128 @@ class EventRepository:
             self._hydrate(tenant_id, row)
             for row in self._session.scalars(statement)
         ]
+
+    def list_for_tenant(
+        self,
+        tenant_id: str,
+        *,
+        statuses: Sequence[EventStatus] = (),
+        priorities: Sequence[EventPriority] = (),
+        resident_id: str | None = None,
+        room_id: str | None = None,
+        limit: int,
+        after: EventQueuePosition | None = None,
+    ) -> EventQueuePage:
+        filters = [MonitoringEventRow.tenant_id == tenant_id]
+        if statuses:
+            filters.append(
+                MonitoringEventRow.status.in_(status.value for status in statuses)
+            )
+        if priorities:
+            filters.append(
+                MonitoringEventRow.priority.in_(
+                    priority.value for priority in priorities
+                )
+            )
+        if resident_id is not None:
+            filters.append(MonitoringEventRow.resident_id == resident_id)
+        if room_id is not None:
+            filters.append(MonitoringEventRow.room_id == room_id)
+
+        total_items = int(
+            self._session.scalar(
+                select(func.count())
+                .select_from(MonitoringEventRow)
+                .where(*filters)
+            )
+            or 0
+        )
+        resolved_rank = case(
+            (MonitoringEventRow.status == EventStatus.RESOLVED.value, 1),
+            else_=0,
+        )
+        priority_rank = case(
+            (MonitoringEventRow.priority == EventPriority.CRITICAL.value, 0),
+            (MonitoringEventRow.priority == EventPriority.HIGH.value, 1),
+            else_=2,
+        )
+        overdue_rank = case(
+            (MonitoringEventRow.overdue_at.is_not(None), 0),
+            else_=1,
+        )
+
+        page_filters = list(filters)
+        if after is not None:
+            after_resolved = int(after.resolved)
+            after_priority = {
+                EventPriority.CRITICAL: 0,
+                EventPriority.HIGH: 1,
+                EventPriority.WATCH: 2,
+            }[after.priority]
+            after_overdue = 0 if after.overdue else 1
+            page_filters.append(
+                or_(
+                    resolved_rank > after_resolved,
+                    and_(
+                        resolved_rank == after_resolved,
+                        priority_rank > after_priority,
+                    ),
+                    and_(
+                        resolved_rank == after_resolved,
+                        priority_rank == after_priority,
+                        overdue_rank > after_overdue,
+                    ),
+                    and_(
+                        resolved_rank == after_resolved,
+                        priority_rank == after_priority,
+                        overdue_rank == after_overdue,
+                        MonitoringEventRow.last_signal_at
+                        < after.last_signal_at,
+                    ),
+                    and_(
+                        resolved_rank == after_resolved,
+                        priority_rank == after_priority,
+                        overdue_rank == after_overdue,
+                        MonitoringEventRow.last_signal_at
+                        == after.last_signal_at,
+                        MonitoringEventRow.created_at < after.created_at,
+                    ),
+                    and_(
+                        resolved_rank == after_resolved,
+                        priority_rank == after_priority,
+                        overdue_rank == after_overdue,
+                        MonitoringEventRow.last_signal_at
+                        == after.last_signal_at,
+                        MonitoringEventRow.created_at == after.created_at,
+                        MonitoringEventRow.event_id > after.event_id,
+                    ),
+                )
+            )
+
+        rows = self._session.scalars(
+            select(MonitoringEventRow)
+            .where(*page_filters)
+            .order_by(
+                resolved_rank,
+                priority_rank,
+                overdue_rank,
+                MonitoringEventRow.last_signal_at.desc(),
+                MonitoringEventRow.created_at.desc(),
+                MonitoringEventRow.event_id,
+            )
+            .limit(limit + 1)
+        ).all()
+        has_more = len(rows) > limit
+        page_rows = rows[:limit]
+        items = self._hydrate_many(tenant_id, page_rows)
+        next_position = (
+            self._queue_position(page_rows[-1]) if has_more else None
+        )
+        return EventQueuePage(
+            items=items,
+            next_position=next_position,
+            total_items=total_items,
+        )
 
     def find(self, tenant_id: str, event_id: str) -> StoredEvent | None:
         event_row = self._session.scalar(
@@ -216,6 +356,68 @@ class EventRepository:
             .order_by(EventPriorityHistoryRow.sequence)
         ).all()
         return event_from_rows(event_row, actions, priorities)
+
+    def _hydrate_many(
+        self,
+        tenant_id: str,
+        event_rows: Sequence[MonitoringEventRow],
+    ) -> tuple[StoredEvent, ...]:
+        if not event_rows:
+            return ()
+        event_ids = [row.event_id for row in event_rows]
+        actions = self._session.scalars(
+            select(EventActionRow)
+            .where(
+                EventActionRow.tenant_id == tenant_id,
+                EventActionRow.event_id.in_(event_ids),
+            )
+            .order_by(EventActionRow.event_id, EventActionRow.sequence)
+        ).all()
+        priorities = self._session.scalars(
+            select(EventPriorityHistoryRow)
+            .where(
+                EventPriorityHistoryRow.tenant_id == tenant_id,
+                EventPriorityHistoryRow.event_id.in_(event_ids),
+            )
+            .order_by(
+                EventPriorityHistoryRow.event_id,
+                EventPriorityHistoryRow.sequence,
+            )
+        ).all()
+        actions_by_event: dict[str, list[EventActionRow]] = {
+            event_id: [] for event_id in event_ids
+        }
+        priorities_by_event: dict[str, list[EventPriorityHistoryRow]] = {
+            event_id: [] for event_id in event_ids
+        }
+        for action in actions:
+            actions_by_event[action.event_id].append(action)
+        for priority in priorities:
+            priorities_by_event[priority.event_id].append(priority)
+        return tuple(
+            event_from_rows(
+                event_row,
+                actions_by_event[event_row.event_id],
+                priorities_by_event[event_row.event_id],
+            )
+            for event_row in event_rows
+        )
+
+    @staticmethod
+    def _queue_position(event_row: MonitoringEventRow) -> EventQueuePosition:
+        def utc(value: datetime) -> datetime:
+            if value.tzinfo is None:
+                return value.replace(tzinfo=timezone.utc)
+            return value.astimezone(timezone.utc)
+
+        return EventQueuePosition(
+            resolved=event_row.status == EventStatus.RESOLVED.value,
+            priority=EventPriority(event_row.priority),
+            overdue=event_row.overdue_at is not None,
+            last_signal_at=utc(event_row.last_signal_at),
+            created_at=utc(event_row.created_at),
+            event_id=event_row.event_id,
+        )
 
     def _latest_sequence(
         self,
