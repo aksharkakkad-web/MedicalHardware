@@ -5,6 +5,7 @@
 .updatedLabel { color: var(--color-text-soft); font-size: .7rem; font-weight: 620; }
 .attentionBanner { display: grid; grid-template-columns: 2.5rem minmax(0, 1fr) auto; min-height: 6.4rem; align-items: center; gap: 1rem; margin-top: 1.7rem; padding: 1rem 1.2rem; border: 1px solid #f0c1bc; border-radius: 1rem; background: #fff9f8; box-shadow: var(--shadow-card); }
 .alertMark { display: grid; width: 2.35rem; height: 2.35rem; place-items: center; border: 1px solid #efaaa4; border-radius: 50%; color: var(--color-status-critical-text); font-size: 1.05rem; font-weight: 750; }
+.alertMark svg { width: 1.25rem; height: 1.25rem; }
 .attentionBanner strong, .attentionBanner small { display: block; }
 .attentionBanner strong { font-size: .88rem; }
 .attentionBanner small { margin-top: .35rem; color: var(--color-text-muted); font-size: .72rem; }
@@ -19,7 +20,7 @@
 .sectionHeading p, .sectionHeading > span { color: var(--color-text-muted); font-size: .72rem; }
 .sectionHeading p { margin-top: .3rem; }
 .grid { overflow: hidden; margin-top: .85rem; border: 1px solid var(--color-border); border-radius: 1rem; background: white; box-shadow: var(--shadow-card); }
-.columnLabels { display: grid; grid-template-columns: minmax(8rem, 1fr) minmax(12rem, 1.35fr) minmax(12rem, 1.35fr) minmax(9rem, 1fr) 5.5rem minmax(5rem, auto); gap: 1rem; padding: .72rem 1.1rem; border-bottom: 1px solid var(--color-border); color: var(--color-text-soft); background: #fafafc; font-size: .64rem; font-weight: 650; }
+.columnLabels { display: grid; grid-template-columns: minmax(8rem, 1fr) minmax(12rem, 1.35fr) minmax(12rem, 1.35fr) minmax(9rem, 1fr) 5.5rem minmax(5rem, auto); gap: 1rem; padding: .72rem 1.1rem; border-bottom: 1px solid var(--color-border); color: var(--color-text-muted); background: #fbfaf7; font-size: .72rem; font-weight: 650; }
 .message { max-width: 42rem; margin-top: 2rem; padding: 1.4rem; border: 1px solid var(--color-border); border-radius: 1rem; background: white; color: var(--color-text-muted); line-height: 1.55; }
 .messageTitle { margin-bottom: .35rem; color: var(--color-text); font-size: 1.05rem; font-weight: 700; }
 .message button { margin-top: 1rem; min-height: 2.6rem; padding: .55rem 1rem; border: 0; border-radius: .7rem; color: white; background: var(--color-accent-strong); cursor: pointer; font-weight: 700; }

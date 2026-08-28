@@ -13,16 +13,16 @@
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 .list { overflow: hidden; border: 1px solid var(--color-border); border-radius: 1rem; background: white; box-shadow: var(--shadow-card); }
 .columnLabels, .row { display: grid; grid-template-columns: minmax(18rem, 2.2fr) minmax(8rem, 1fr) 9rem 8rem 1rem; align-items: center; gap: 1rem; }
-.columnLabels { min-height: 2.8rem; padding: .55rem 1.1rem; border-bottom: 1px solid var(--color-border); color: var(--color-text-soft); background: #fafafc; font-size: .67rem; font-weight: 650; }
+.columnLabels { min-height: 2.8rem; padding: .55rem 1.1rem; border-bottom: 1px solid var(--color-border); color: var(--color-text-muted); background: #fbfaf7; font-size: .72rem; font-weight: 650; }
 .row { min-height: 5.2rem; padding: .8rem 1.1rem; border-bottom: 1px solid var(--color-border); transition: background 150ms ease; }
 .row:last-child { border-bottom: 0; }
 .row:hover { background: #fafbfe; }
 .eventName, .resident { display: flex; min-width: 0; align-items: center; gap: .7rem; }
 .eventName strong, .resident strong { display: block; overflow: hidden; font-size: .82rem; text-overflow: ellipsis; white-space: nowrap; }
-.eventName small, .resident small { display: block; margin-top: .25rem; color: var(--color-text-muted); font-size: .69rem; }
+.eventName small, .resident small { display: block; margin-top: .25rem; color: var(--color-text-muted); font-size: .72rem; }
 .priority { width: .52rem; height: .52rem; flex: 0 0 auto; border-radius: 50%; background: #d58b18; }
 .priority[data-priority="high"], .priority[data-priority="critical"] { background: #e0443e; box-shadow: 0 0 0 4px #fff0ef; }
-.row time { color: var(--color-text-muted); font-size: .74rem; }
+.row time { color: var(--color-text-muted); font-size: .75rem; }
 .arrow { width: 1rem; color: var(--color-text-soft); }
 .message { padding: 3rem 1.5rem; border: 1px solid var(--color-border); border-radius: 1rem; text-align: center; background: white; }
 .message p { margin-top: .4rem; color: var(--color-text-muted); font-size: .8rem; }

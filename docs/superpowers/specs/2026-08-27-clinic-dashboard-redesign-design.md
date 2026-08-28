@@ -28,7 +28,7 @@ Seven grounded directions were considered:
 6. Hotel floor/concierge board — useful room metaphor, but weak for event evidence.
 7. Museum archive — elegant hierarchy, but too passive for urgent work.
 
-The assigned seed was direction 4. Challengers reinforced, but did not replace, it: split-flap boards support fixed-column event rows; data-art references support numerical restraint; material references support subtle layering. Dark coded systems and decorative motion were rejected because they reduce calmness and clarity.
+The assigned seed was direction 4, recorded with seed key `1d7b2559`. Challengers reinforced, but did not replace, it: split-flap boards support fixed-column event rows; data-art references support numerical restraint; material references support subtle layering. Dark coded systems and decorative motion were rejected because they reduce calmness and clarity.
 
 ## Information architecture
 

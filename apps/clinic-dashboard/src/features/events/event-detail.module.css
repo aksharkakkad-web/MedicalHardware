@@ -2,7 +2,7 @@
 .backLink { width: fit-content; color: var(--color-accent-strong); font-size: .78rem; font-weight: 650; }
 .backLink:hover { text-decoration: underline; }
 .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1.5rem; padding: .45rem 0 1.4rem; border-bottom: 1px solid var(--color-border); }
-.residentLink, .sectionLabel { color: var(--color-text-muted); font-size: .69rem; font-weight: 650; }
+.residentLink { color: var(--color-text-muted); font-size: .74rem; font-weight: 650; }
 .residentLink { color: var(--color-accent-strong); }
 .header h1 { max-width: 48rem; margin-top: .45rem; font-size: clamp(1.8rem, 3vw, 2.65rem); line-height: 1.08; letter-spacing: -.045em; }
 .timestamp { margin-top: 0.65rem; color: var(--color-text-muted); font-size: 0.82rem; }
@@ -11,6 +11,8 @@
 .primaryColumn, .sideColumn { display: grid; gap: 1rem; }
 .sideColumn { position: sticky; top: 1rem; }
 .panel { padding: 1.25rem; border: 1px solid var(--color-border); border-radius: 1rem; background: var(--color-surface); box-shadow: var(--shadow-card); }
+.primaryColumn .panel { position: relative; }
+.primaryColumn .panel::after { position: absolute; z-index: -1; right: .7rem; bottom: -.34rem; left: .7rem; height: .45rem; border: 1px solid var(--color-border); border-top: 0; border-radius: 0 0 .75rem .75rem; background: #efeee9; content: ""; }
 .panel h2 { margin-top: 0.35rem; font-size: 1.15rem; letter-spacing: -0.02em; }
 .panelHeading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
 .safetyNote { margin-top: 1rem; padding: .8rem .9rem; border: 1px solid #eed3a3; border-radius: .7rem; background: #fffaf0; color: var(--color-text-muted); font-size: .8rem; line-height: 1.5; }
@@ -25,6 +27,12 @@
 .uncertainty { padding-top: 0.8rem; border-top: 1px solid var(--color-border); }
 .primaryButton, .error button { width: 100%; min-height: 2.8rem; margin-top: 1rem; padding: .7rem 1rem; border: 0; border-radius: .7rem; color: #fff; background: var(--color-accent-strong); box-shadow: 0 3px 10px rgb(7 91 216 / 18%); font-size: .8rem; font-weight: 680; cursor: pointer; }
 .primaryButton:disabled { opacity: 0.62; cursor: wait; }
+.workflowPanel[data-state="acknowledged"] { animation: workflow-acknowledged 360ms ease-out; }
+.workflowPanel[data-state="checked"] { animation: workflow-checked 420ms ease-out; }
+.workflowPanel[data-state="resolved"] { animation: workflow-resolved 520ms ease-out; }
+@keyframes workflow-acknowledged { from { border-color: var(--color-accent-strong); box-shadow: 0 0 0 4px rgb(7 91 216 / 16%); transform: scale(.985); } }
+@keyframes workflow-checked { from { border-color: #d58b18; background: #fffaf0; transform: translateY(-4px); } }
+@keyframes workflow-resolved { from { border-color: #2ca55d; background: #effaf3; box-shadow: 0 0 0 4px rgb(44 165 93 / 14%); } }
 .actionError { margin-top: 0.75rem; color: var(--color-status-critical-text); font-size: 0.78rem; }
 .resolutionForm { display: grid; gap: 1rem; margin-top: 1rem; }
 .resolutionForm fieldset { border: 0; }

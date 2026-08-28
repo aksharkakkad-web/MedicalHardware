@@ -32,6 +32,10 @@ export function SearchIcon(props: IconProps) {
   return <Icon {...props}><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></Icon>;
 }
 
+export function AlertIcon(props: IconProps) {
+  return <Icon {...props}><path d="M12 3.5 3.8 18a1.7 1.7 0 0 0 1.5 2.5h13.4a1.7 1.7 0 0 0 1.5-2.5L12 3.5Z" /><path d="M12 9v4.5M12 17h.01" /></Icon>;
+}
+
 export function CareMark(props: IconProps) {
   return <Icon {...props}><path d="M20.8 5.8a5 5 0 0 0-7.1 0L12 7.5l-1.7-1.7a5 5 0 0 0-7.1 7.1L12 21l8.8-8.1a5 5 0 0 0 0-7.1Z" /><path d="M7.5 12h2l1.2-2.5 2.1 5 1.2-2.5h2.5" /></Icon>;
 }

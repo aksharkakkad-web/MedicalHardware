@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { AlertIcon } from "@/components/icons/icons";
 import type { ResidentOverviewItem } from "@/lib/monitoring";
 
 import { ResidentCard } from "./resident-card";
@@ -88,7 +89,7 @@ export function ResidentOverview() {
     <section className={styles.page}>
       <OverviewHeader />
 
-      {primaryAttention && <Link className={styles.attentionBanner} href={`/events/${primaryAttention.attention.primaryEventId}`}><span className={styles.alertMark}>!</span><span><strong>{primaryAttention.attention.headline}</strong><small>{primaryAttention.displayLabel} · {primaryAttention.roomLabel} · Staff review is required</small></span><span>Review now →</span></Link>}
+      {primaryAttention && <Link className={styles.attentionBanner} href={`/events/${primaryAttention.attention.primaryEventId}`}><span className={styles.alertMark}><AlertIcon /></span><span><strong>{primaryAttention.attention.headline}</strong><small>{primaryAttention.displayLabel} · {primaryAttention.roomLabel} · Staff review is required</small></span><span>Review now →</span></Link>}
 
       <div className={styles.summary} aria-label="Resident monitoring summary"><div><strong>{highPriorityCount}</strong><span>High priority</span></div><div><strong>{activeCount}</strong><span>Active monitoring</span></div><div><strong>{limitedCount}</strong><span>Limited, paused, or offline</span></div><Link href="/events">View all events →</Link></div>
 

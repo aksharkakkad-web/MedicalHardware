@@ -3,12 +3,12 @@
 .card:hover { background: #fafbfe; }
 .identity { min-width: 0; }
 .room, .name, .monitoring small, .attention small, .device strong, .device small { display: block; }
-.room { color: var(--color-text-muted); font-size: .67rem; }
+.room { color: var(--color-text-muted); font-size: .72rem; }
 .name { margin-top: .2rem; overflow: hidden; font-size: .82rem; text-overflow: ellipsis; white-space: nowrap; }
 .monitoring, .attention, .device { min-width: 0; }
-.monitoring small, .attention small, .device small { margin-top: .32rem; overflow: hidden; color: var(--color-text-muted); font-size: .66rem; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+.monitoring small, .attention small, .device small { margin-top: .32rem; overflow: hidden; color: var(--color-text-muted); font-size: .72rem; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
 .device strong { font-size: .74rem; }
-.updated { color: var(--color-text-muted); font-size: .7rem; }
+.updated { color: var(--color-text-muted); font-size: .72rem; }
 .actions { display: flex; align-items: center; justify-content: flex-end; gap: .4rem; }
 .reviewLink { padding: .45rem .62rem; border-radius: .55rem; color: var(--color-accent-strong); background: var(--color-accent-soft); font-size: .68rem; font-weight: 650; white-space: nowrap; }
 .detailLink { display: grid; width: 2rem; height: 2rem; place-items: center; border-radius: .55rem; color: var(--color-text-soft); }

@@ -21,7 +21,6 @@ export function EventHistory({
 }: Readonly<{ event: MonitoringEventDetail }>) {
   return (
     <section className={styles.panel} aria-labelledby="history-heading">
-      <p className={styles.sectionLabel}>Audit trail</p>
       <h2 id="history-heading">Event history</h2>
       <ol className={styles.historyList}>
         {event.actionHistory.map((item, index) => (

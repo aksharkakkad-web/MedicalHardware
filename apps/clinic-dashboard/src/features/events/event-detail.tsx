@@ -133,7 +133,6 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
           <section className={styles.panel} aria-labelledby="evidence-heading">
             <div className={styles.panelHeading}>
               <div>
-                <p className={styles.sectionLabel}>Objective evidence</p>
                 <h2 id="evidence-heading">What the sensors observed</h2>
               </div>
               <StatusPill
@@ -161,8 +160,7 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
           <section className={styles.panel} aria-labelledby="interpretation-heading">
             <div className={styles.panelHeading}>
               <div>
-                <p className={styles.sectionLabel}>AI-assisted explanation</p>
-                <h2 id="interpretation-heading">What this pattern may mean</h2>
+                <h2 id="interpretation-heading">AI-assisted explanation</h2>
               </div>
               <StatusPill
                 label={interpretation.label}
@@ -185,7 +183,6 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
 
           {(event.recurrenceCount > 1 || event.relatedEventIds.length > 0) && (
             <section className={styles.panel} aria-labelledby="related-heading">
-              <p className={styles.sectionLabel}>Pattern history</p>
               <h2 id="related-heading">Related events</h2>
               <p className={styles.actionExplanation}>
                 This pattern has appeared {event.recurrenceCount} times. Each event keeps its own permanent record.
@@ -202,8 +199,7 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
         </div>
 
         <aside className={styles.sideColumn}>
-          <section className={styles.panel} aria-labelledby="action-heading">
-            <p className={styles.sectionLabel}>Staff workflow</p>
+          <section className={`${styles.panel} ${styles.workflowPanel}`} data-state={event.status} key={event.status} aria-labelledby="action-heading">
             <h2 id="action-heading">Next action</h2>
             {action ? (
               <>
@@ -240,7 +236,6 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
           </section>
 
           <section className={styles.panel} aria-labelledby="quality-heading">
-            <p className={styles.sectionLabel}>Monitoring quality</p>
             <h2 id="quality-heading">Data and device status</h2>
             <dl className={styles.facts}>
               <div><dt>Event type</dt><dd>{event.objectiveFamily}</dd></div>
