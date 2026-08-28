@@ -81,7 +81,8 @@ No unresolved Critical or Important product/code finding remains.
 
 ## Verification evidence
 
-- 372 full-suite pytest cases plus 85 domain subtests;
+- 373 final full-suite pytest cases plus 85 domain subtests: 372 Checkpoint D
+  cases plus one cross-framework API-contract regression added before merge;
 - 77 unittest compatibility cases;
 - backend compilation and full branch diff check;
 - deterministic OpenAPI regeneration with zero drift;

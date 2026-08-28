@@ -230,7 +230,8 @@ monitoring-intelligence and simulated-telemetry phases.
 
 Final clean-`main` verification after merge produced:
 
-- 373 passing backend tests;
+- 373 passing backend tests: the 372 Checkpoint D cases plus one final
+  cross-framework API-contract regression added before merge;
 - 85 passing detailed domain subtests;
 - 77 passing compatibility tests;
 - a complete two-resident restart walkthrough ending in
