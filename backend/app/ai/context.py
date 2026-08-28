@@ -3,6 +3,7 @@
 import json
 from hashlib import sha256
 from math import isfinite
+from sys import float_info
 
 from backend.app.ai.client import InterpretationRequest
 from backend.app.ai.skills import select_skill_bundle
@@ -12,6 +13,42 @@ from backend.app.intelligence.evidence import EvidencePacket
 
 
 _MAX_RELEVANT_MEMORY_ENTRIES = 20
+_MAX_FINITE_FLOAT_INTEGER = int(float_info.max)
+_REQUEST_TEXT_FIELDS = {
+    "anomaly_id",
+    "invocation_version",
+    "model_id",
+    "model_version",
+    "output_schema_version",
+    "payload_json",
+    "prompt",
+    "prompt_version",
+    "relevant_context_version",
+    "request_fingerprint",
+    "retrieval_contract_version",
+    "schema_version",
+    "skill_bundle_version",
+}
+_REQUEST_TUPLE_FIELDS = {
+    "available_evidence_refs",
+    "available_measurements",
+    "contradictions",
+    "required_limitations",
+    "required_missing_information",
+    "required_unsupported_conclusions",
+    "retrieved_context_refs",
+    "skill_bundle",
+    "unavailable_measurements",
+}
+_PRIMARY_SKILLS = {
+    "fall_like",
+    "inactivity",
+    "monitoring_degraded",
+    "movement",
+    "respiration",
+    "routine_change",
+    "unknown_anomaly",
+}
 _ANOMALY_EVIDENCE_KEYS = {
     "agreements",
     "anomaly_id",
@@ -71,11 +108,13 @@ def _text_list(value: object) -> bool:
 
 
 def _number_or_none(value: object) -> bool:
-    return value is None or (
-        not isinstance(value, bool)
-        and isinstance(value, (int, float))
-        and isfinite(value)
-    )
+    if value is None:
+        return True
+    if isinstance(value, bool):
+        return False
+    if isinstance(value, int):
+        return abs(value) <= _MAX_FINITE_FLOAT_INTEGER
+    return isinstance(value, float) and isfinite(value)
 
 
 def _number(value: object) -> bool:
@@ -92,6 +131,41 @@ def _canonical_json(value: object) -> str:
     )
 
 
+def validate_interpretation_request_shape(request: InterpretationRequest) -> None:
+    """Validate the complete outer request before downstream consumers use it."""
+
+    if not isinstance(request, InterpretationRequest):
+        raise ValueError("interpretation request has invalid structure")
+    for field in _REQUEST_TEXT_FIELDS:
+        value = getattr(request, field)
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(f"interpretation request {field} must be text")
+    for field in _REQUEST_TUPLE_FIELDS:
+        value = getattr(request, field)
+        if not isinstance(value, tuple) or any(
+            not isinstance(item, str) or not item.strip() for item in value
+        ):
+            raise ValueError(f"interpretation request {field} must be a text tuple")
+    if (
+        isinstance(request.packet_revision, bool)
+        or not isinstance(request.packet_revision, int)
+        or request.packet_revision < 1
+    ):
+        raise ValueError("interpretation request packet_revision must be positive")
+    if not isinstance(request.urgent_deterministic_event, bool):
+        raise ValueError("interpretation request urgent flag must be boolean")
+    if (
+        len(request.skill_bundle) not in (2, 3)
+        or request.skill_bundle[0] != "core"
+        or request.skill_bundle[1] not in _PRIMARY_SKILLS
+        or (
+            len(request.skill_bundle) == 3
+            and request.skill_bundle[2] != "multi_person"
+        )
+    ):
+        raise ValueError("interpretation request skill bundle is malformed")
+
+
 def validate_interpretation_request_payload(
     request: InterpretationRequest,
 ) -> tuple[str, int, tuple[str, ...]]:
@@ -104,13 +178,13 @@ def validate_interpretation_request_payload(
         raise ValueError("interpretation request payload must be JSON text")
     try:
         payload = json.loads(request.payload_json)
-    except (TypeError, ValueError) as exc:
+    except (OverflowError, RecursionError, TypeError, ValueError) as exc:
         raise ValueError("interpretation request is not canonical JSON") from exc
     if not isinstance(payload, dict):
         raise ValueError("interpretation request payload must be an object")
     try:
         canonical_payload = _canonical_json(payload)
-    except (TypeError, ValueError) as exc:
+    except (OverflowError, RecursionError, TypeError, ValueError) as exc:
         raise ValueError("interpretation request is not canonical JSON") from exc
     if canonical_payload != request.payload_json:
         raise ValueError("interpretation request is not canonical JSON")
@@ -339,6 +413,7 @@ def validate_interpretation_request_binding(
 ) -> None:
     """Bind a request to one exact stored packet and deterministic prompt bundle."""
 
+    validate_interpretation_request_shape(request)
     validate_interpretation_request_payload(request)
     bundle = select_skill_bundle(packet)
     payload = json.loads(request.payload_json)
@@ -639,6 +714,7 @@ def build_interpretation_request(
 __all__ = [
     "InterpretationRequest",
     "build_interpretation_request",
+    "validate_interpretation_request_shape",
     "validate_interpretation_request_payload",
     "validate_interpretation_request_binding",
 ]

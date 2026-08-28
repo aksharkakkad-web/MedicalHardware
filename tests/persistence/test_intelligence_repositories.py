@@ -723,6 +723,121 @@ def test_interpretation_hydration_rejects_wrong_nested_evidence_type() -> None:
         interpretation_from_row(row)
 
 
+def test_interpretation_hydration_rejects_oversized_nested_integer() -> None:
+    # Break caught: isfinite converts an arbitrary-size JSON integer and overflows.
+    _, packet = _anomaly_revision(_baseline())
+    request, result = _interpretation(packet)
+    row = interpretation_to_row("tenant_demo", request, result, packet.current_time)
+    envelope = json.loads(row.request_json)
+    embedded = json.loads(envelope["request"]["payload_json"])
+    embedded["anomaly_evidence"]["changed_features"][0]["robust_z"] = 10**1000
+    envelope["request"]["payload_json"] = canonical_json(embedded)
+    row.request_json = canonical_json(envelope)
+
+    with pytest.raises((ValueError, ConcurrentUpdateError)) as exc_info:
+        interpretation_from_row(row)
+    assert not isinstance(exc_info.value, OverflowError)
+
+
+def test_interpretation_hydration_rejects_empty_outer_skill_bundle() -> None:
+    # Break caught: Task 6 indexes an empty persisted skill bundle.
+    _, packet = _anomaly_revision(_baseline())
+    request, result = _interpretation(packet)
+    row = interpretation_to_row("tenant_demo", request, result, packet.current_time)
+    envelope = json.loads(row.request_json)
+    envelope["request"]["skill_bundle"] = []
+    row.request_json = canonical_json(envelope)
+
+    with pytest.raises((ValueError, ConcurrentUpdateError)) as exc_info:
+        interpretation_from_row(row)
+    assert not isinstance(exc_info.value, IndexError)
+
+
+def test_interpretation_write_mapping_rejects_empty_outer_skill_bundle() -> None:
+    # Break caught: write mapping reaches Task 6 before request shape validation.
+    _, packet = _anomaly_revision(_baseline())
+    request, result = _interpretation(packet)
+
+    with pytest.raises(ValueError) as exc_info:
+        interpretation_to_row(
+            "tenant_demo",
+            replace(request, skill_bundle=()),
+            result,
+            packet.current_time,
+        )
+    assert not isinstance(exc_info.value, IndexError)
+
+
+def test_interpretation_hydration_rejects_non_list_outer_tuple_field() -> None:
+    # Break caught: tuple(None) raises raw TypeError before request validation.
+    _, packet = _anomaly_revision(_baseline())
+    request, result = _interpretation(packet)
+    row = interpretation_to_row("tenant_demo", request, result, packet.current_time)
+    envelope = json.loads(row.request_json)
+    envelope["request"]["available_evidence_refs"] = None
+    row.request_json = canonical_json(envelope)
+
+    with pytest.raises((ValueError, ConcurrentUpdateError)) as exc_info:
+        interpretation_from_row(row)
+    assert not isinstance(exc_info.value, TypeError)
+
+
+def test_interpretation_hydration_rejects_missing_request_envelope() -> None:
+    # Break caught: a missing outer request object escapes as raw KeyError.
+    _, packet = _anomaly_revision(_baseline())
+    request, result = _interpretation(packet)
+    row = interpretation_to_row("tenant_demo", request, result, packet.current_time)
+    envelope = json.loads(row.request_json)
+    del envelope["request"]
+    row.request_json = canonical_json(envelope)
+
+    with pytest.raises((ValueError, ConcurrentUpdateError)) as exc_info:
+        interpretation_from_row(row)
+    assert not isinstance(exc_info.value, KeyError)
+
+
+def test_interpretation_hydration_rejects_recursive_embedded_json() -> None:
+    # Break caught: deeply nested persisted JSON escapes as raw RecursionError.
+    _, packet = _anomaly_revision(_baseline())
+    request, result = _interpretation(packet)
+    row = interpretation_to_row("tenant_demo", request, result, packet.current_time)
+    envelope = json.loads(row.request_json)
+    embedded = json.loads(envelope["request"]["payload_json"])
+    scalar = canonical_json(
+        embedded["anomaly_evidence"]["changed_features"][0]["value"]
+    )
+    envelope["request"]["payload_json"] = envelope["request"][
+        "payload_json"
+    ].replace(
+        f'"value":{scalar}',
+        '"value":' + "[" * 150_000 + "0" + "]" * 150_000,
+        1,
+    )
+    row.request_json = canonical_json(envelope)
+
+    with pytest.raises((ValueError, ConcurrentUpdateError)) as exc_info:
+        interpretation_from_row(row)
+    assert not isinstance(exc_info.value, RecursionError)
+
+
+def test_interpretation_hydration_rejects_recursive_outer_request_json() -> None:
+    # Break caught: outer persisted JSON parsing escapes as raw RecursionError.
+    _, packet = _anomaly_revision(_baseline())
+    request, result = _interpretation(packet)
+    row = interpretation_to_row("tenant_demo", request, result, packet.current_time)
+    envelope = json.loads(row.request_json)
+    refs = canonical_json(envelope["request"]["available_evidence_refs"])
+    row.request_json = row.request_json.replace(
+        f'"available_evidence_refs":{refs}',
+        '"available_evidence_refs":' + "[" * 150_000 + "0" + "]" * 150_000,
+        1,
+    )
+
+    with pytest.raises((ValueError, ConcurrentUpdateError)) as exc_info:
+        interpretation_from_row(row)
+    assert not isinstance(exc_info.value, RecursionError)
+
+
 def test_interpretation_repository_rejects_fabricated_stored_context(
     session: Session,
 ) -> None:

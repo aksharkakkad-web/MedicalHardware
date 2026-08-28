@@ -12,7 +12,10 @@ from backend.app.ai.client import (
     InterpretationRequest,
     InterpretationResult,
 )
-from backend.app.ai.context import validate_interpretation_request_payload
+from backend.app.ai.context import (
+    validate_interpretation_request_payload,
+    validate_interpretation_request_shape,
+)
 from backend.app.ai.validation import validate_interpretation
 from backend.app.db.models import (
     AnomalyRevisionRow,
@@ -88,9 +91,17 @@ def _require_shadow(field: str, actual: object, expected: object) -> None:
 def _parse_canonical_json(payload: str, label: str) -> dict[str, Any]:
     try:
         parsed = json.loads(payload)
-    except (TypeError, ValueError) as exc:
+    except (OverflowError, RecursionError, TypeError, ValueError) as exc:
         raise ConcurrentUpdateError(f"Stored {label} is not valid JSON") from exc
-    if not isinstance(parsed, dict) or canonical_json(parsed) != payload:
+    if not isinstance(parsed, dict):
+        raise ConcurrentUpdateError(f"Stored {label} is not canonical JSON")
+    try:
+        canonical = canonical_json(parsed)
+    except (OverflowError, RecursionError, TypeError, ValueError) as exc:
+        raise ConcurrentUpdateError(
+            f"Stored {label} is not canonical JSON"
+        ) from exc
+    if canonical != payload:
         raise ConcurrentUpdateError(f"Stored {label} is not canonical JSON")
     return parsed
 
@@ -622,8 +633,20 @@ def _request(data: dict[str, Any]) -> InterpretationRequest:
         "required_unsupported_conclusions",
         "retrieved_context_refs",
     }
+    expected_fields = {field.name for field in fields(InterpretationRequest)}
+    if not isinstance(data, dict) or set(data) != expected_fields:
+        raise ConcurrentUpdateError(
+            "Stored interpretation request does not use the exact schema"
+        )
+    if any(not isinstance(data[field], list) for field in tuple_fields):
+        raise ConcurrentUpdateError(
+            "Stored interpretation request tuple fields must be arrays"
+        )
     return InterpretationRequest(
-        **{key: tuple(value) if key in tuple_fields else value for key, value in data.items()}
+        **{
+            key: tuple(value) if key in tuple_fields else value
+            for key, value in data.items()
+        }
     )
 
 
@@ -691,6 +714,8 @@ def interpretation_to_row(
     result: InterpretationResult,
     created_at: datetime,
 ) -> LLMInterpretationRow:
+    validate_interpretation_request_shape(request)
+    validate_interpretation_request_payload(request)
     validate_interpretation(request, result)
     return LLMInterpretationRow(
         interpretation_id=result.interpretation_id,
@@ -729,6 +754,14 @@ def interpretation_from_row(row: LLMInterpretationRow) -> StoredInterpretation:
         row.result_json,
         "interpretation result",
     )
+    if set(request_payload) != {"request", "tenant_id"}:
+        raise ConcurrentUpdateError(
+            "Stored interpretation request envelope is not canonical exact schema"
+        )
+    if set(result_payload) != {"created_at", "result", "tenant_id"}:
+        raise ConcurrentUpdateError(
+            "Stored interpretation result envelope is not canonical exact schema"
+        )
     _require_shadow(
         "interpretation.request_tenant_id",
         row.tenant_id,
@@ -744,6 +777,7 @@ def interpretation_from_row(row: LLMInterpretationRow) -> StoredInterpretation:
         result=_result(result_payload["result"]),
         created_at=_parse_time(result_payload["created_at"]),
     )
+    validate_interpretation_request_shape(stored.request)
     validate_interpretation_request_payload(stored.request)
     validate_interpretation(stored.request, stored.result)
     result = stored.result
