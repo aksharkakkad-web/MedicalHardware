@@ -600,3 +600,63 @@ def test_setup_change_starts_new_lineage_only_for_affected_feature_names() -> No
     assert unaffected_snapshot.feature("movement", "evening") == _baseline_snapshot().feature(
         "movement", "evening"
     )
+
+
+def test_affected_candidate_publishes_after_five_post_setup_windows() -> None:
+    # Break caught: the pending new-setup candidate is rejected after its first window.
+    original = _baseline_snapshot()
+    unchanged_respiration = original.feature("respiratory_rate", "night")
+    changed = start_recalibration(
+        CalibrationProgress.new(
+            "setup_v1",
+            dimensions=("movement", "respiratory_rate"),
+        ),
+        new_setup_version="setup_v2",
+        reason="device_moved",
+        actor_id="operator_007",
+        changed_at=_WINDOW_START,
+        affected_dimensions=("movement",),
+    )
+    candidate = _candidate(values=(20.0, 21.0, 22.0, 23.0))
+
+    for number, value in enumerate((30.0, 31.0, 32.0, 33.0), start=1):
+        candidate, published = advance_new_normal(
+            candidate,
+            baseline=original,
+            expected_behavior=_expected_behavior(),
+            learning_guard=_guard(
+                (_evidence(value, observation_id=f"setup_v2_observation_{number}"),),
+                frame_id=f"setup_v2_frame_{number}",
+                window_start=_WINDOW_START + timedelta(minutes=number),
+                setup_version="setup_v2",
+            ),
+            calibration_progress=changed,
+            new_baseline_id="baseline_2",
+            policy=BaselinePolicy(),
+        )
+        assert candidate.setup_version == "setup_v2"
+        assert candidate.clean_windows == number
+        assert published is None
+
+    candidate, published = advance_new_normal(
+        candidate,
+        baseline=original,
+        expected_behavior=_expected_behavior(),
+        learning_guard=_guard(
+            (_evidence(34.0, observation_id="setup_v2_observation_5"),),
+            frame_id="setup_v2_frame_5",
+            window_start=_WINDOW_START + timedelta(minutes=5),
+            setup_version="setup_v2",
+        ),
+        calibration_progress=changed,
+        new_baseline_id="baseline_2",
+        policy=BaselinePolicy(),
+    )
+
+    assert candidate.clean_windows == 5
+    assert published is not None
+    assert published.monitoring_setup_version == "setup_v2"
+    assert published.prior_baseline_id == "baseline_1"
+    assert published.feature("movement", "evening").median == 32.0
+    assert published.feature("respiratory_rate", "night") == unchanged_respiration
+    assert original.monitoring_setup_version == "setup_v1"

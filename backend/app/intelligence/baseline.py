@@ -553,6 +553,20 @@ def _setup_change_affects_feature(
     return affected if found_transition and tracked_version == progress.setup_version else True
 
 
+def _setup_transition_is_traced(
+    previous_setup_version: str,
+    progress: CalibrationProgress,
+) -> bool:
+    tracked_version = previous_setup_version
+    for action in progress.setup_change_history:
+        if action.previous_setup_version != tracked_version:
+            continue
+        tracked_version = action.new_setup_version
+        if tracked_version == progress.setup_version:
+            return True
+    return False
+
+
 def _window_value(
     candidate: NewNormalCandidate,
     window: LearningGuard,
@@ -610,7 +624,17 @@ def advance_new_normal(
         raise ValueError("learning-window resident must match candidate resident")
     if learning_guard.purpose != candidate.purpose:
         raise ValueError("learning-window purpose must match candidate purpose")
-    if candidate.setup_version != baseline.monitoring_setup_version:
+    pending_traced_setup = (
+        candidate.setup_version == calibration_progress.setup_version
+        and _setup_transition_is_traced(
+            baseline.monitoring_setup_version,
+            calibration_progress,
+        )
+    )
+    if (
+        candidate.setup_version != baseline.monitoring_setup_version
+        and not pending_traced_setup
+    ):
         raise ValueError("candidate setup must match the current baseline setup")
     if learning_guard.setup_version != calibration_progress.setup_version:
         raise ValueError("learning-window setup must match calibration setup")
