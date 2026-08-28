@@ -1,5 +1,6 @@
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
+from hashlib import sha256
 import json
 
 import pytest
@@ -8,19 +9,26 @@ from sqlalchemy.orm import Session
 
 from backend.app.ai.client import (
     DeterministicFakeLLMClient,
-    InterpretationRequest,
 )
 from backend.app.ai.validation import InterpretationValidationError
+from backend.app.ai.context import build_interpretation_request
 from backend.app.db.base import Base
 from backend.app.db.intelligence_mappers import (
     DispositionRecord,
+    anomaly_from_row,
     anomaly_to_row,
     canonical_json,
+    disposition_from_row,
+    disposition_to_row,
+    event_bridge_from_row,
+    event_bridge_to_row,
+    interpretation_from_row,
     interpretation_to_row,
 )
 from backend.app.db.intelligence_repositories import IntelligenceRepository
 from backend.app.db.models import (
     AnomalyRevisionRow,
+    BaselineDimensionRow,
     BaselineSnapshotRow,
     DispositionDecisionRow,
     EventBridgeRecordRow,
@@ -38,6 +46,7 @@ from backend.app.domain.events import (
     EventPriority,
     EventStore,
 )
+from backend.app.domain.feedback import ResidentMemory
 from backend.app.intelligence.anomaly import (
     AnomalyEpisode,
     AnomalyState,
@@ -51,7 +60,13 @@ from backend.app.intelligence.policy import (
     DispositionDecision,
     PolicyDisposition,
 )
+from backend.app.intelligence.orchestration import MonitoringIntelligenceEngine
 from backend.app.services.errors import ConcurrentUpdateError
+from tests.intelligence.test_policy_orchestration import (
+    _baseline as _fall_baseline,
+    _fall_sequence,
+    _process as _process_fall_frame,
+)
 
 
 AT = datetime(2026, 8, 28, 16, 0, tzinfo=timezone.utc)
@@ -165,30 +180,15 @@ def _anomaly_revision(
 
 
 def _interpretation(packet: EvidencePacket):
-    request = InterpretationRequest(
-        anomaly_id=packet.anomaly_id,
-        packet_revision=packet.packet_revision,
-        prompt="Interpret only the bounded evidence.",
-        skill_bundle=("core", "movement"),
-        prompt_version="monitoring_prompt_v3",
-        skill_bundle_version="monitoring_skills_v2",
-        retrieval_contract_version="retrieval_v4",
-        output_schema_version="interpretation_output_v1",
+    request = build_interpretation_request(
+        packet,
+        ResidentMemory(
+            resident_id=packet.resident_id,
+            version=8,
+            entries=(),
+        ),
         model_id="fake_provider",
         model_version="fake_model_v2",
-        invocation_version="invocation_v3",
-        relevant_context_version="resident_memory_8",
-        payload_json='{"anomaly_id":"anomaly_intelligence_1","packet_revision":1}',
-        available_evidence_refs=packet.evidence_refs,
-        available_measurements=("movement",),
-        unavailable_measurements=("respiration_rate",),
-        contradictions=packet.contradictions,
-        required_missing_information=("csi",),
-        required_limitations=packet.limitations,
-        required_unsupported_conclusions=("medical_diagnosis",),
-        retrieved_context_refs=("memory://resident_demo_a/8/entry_1",),
-        request_fingerprint="fingerprint_intelligence_1",
-        urgent_deterministic_event=False,
     )
     return request, DeterministicFakeLLMClient().interpret(request)
 
@@ -201,6 +201,31 @@ def _store_baseline_and_anomaly(
     update, packet = _anomaly_revision(baseline)
     repository.save_anomaly_revision("tenant_demo", update, packet)
     return baseline, update, packet
+
+
+def _persist_packet_event(
+    session: Session,
+    packet: EvidencePacket,
+    decision: DispositionDecision,
+) -> object:
+    event = EventStore().record_signal(
+        resident_id=packet.resident_id,
+        room_id=packet.room_id,
+        objective_family=decision.objective_family,
+        headline=decision.headline,
+        priority=decision.priority,
+        observed_at=packet.current_time,
+        source_anomaly_id=packet.anomaly_id,
+        evidence_revision=packet.packet_revision,
+        bridge_idempotency_key=(
+            f"{packet.anomaly_id}:{packet.packet_revision}:{decision.policy_version}"
+        ),
+        provisional_urgent=decision.provisional_urgent,
+        evidence_kind=BridgeEvidenceKind.PACKET,
+        room_level_only=decision.room_level_only,
+    )
+    EventRepository(session).save("tenant_demo", event, expected_version=0)
+    return event
 
 
 def test_baseline_round_trip_latest_tenant_scope_and_immutable_identity(
@@ -244,6 +269,53 @@ def test_baseline_hydration_rejects_shadow_column_tampering(
 
     with pytest.raises(ConcurrentUpdateError):
         repository.latest_baseline("tenant_demo", baseline.resident_id)
+
+
+def test_baseline_hydration_rejects_deleted_dimension(
+    session: Session,
+) -> None:
+    repository = IntelligenceRepository(session)
+    baseline = _baseline()
+    repository.save_baseline("tenant_demo", baseline, AT)
+    dimension = session.scalar(select(BaselineDimensionRow))
+    session.delete(dimension)
+    session.flush()
+
+    with pytest.raises(ConcurrentUpdateError, match="manifest"):
+        repository.latest_baseline("tenant_demo", baseline.resident_id)
+
+
+def test_baseline_hydration_rejects_noncanonical_whitespace(
+    session: Session,
+) -> None:
+    repository = IntelligenceRepository(session)
+    baseline = _baseline()
+    repository.save_baseline("tenant_demo", baseline, AT)
+    row = session.get(
+        BaselineSnapshotRow,
+        ("tenant_demo", baseline.baseline_id),
+    )
+    row.payload_json = f" {row.payload_json}"
+    session.flush()
+
+    with pytest.raises(ConcurrentUpdateError, match="manifest|canonical"):
+        repository.latest_baseline("tenant_demo", baseline.resident_id)
+
+
+def test_baseline_hydration_rejects_extra_dimension_payload_key(
+    session: Session,
+) -> None:
+    repository = IntelligenceRepository(session)
+    baseline = _baseline()
+    repository.save_baseline("tenant_demo", baseline, AT)
+    dimension = session.scalar(select(BaselineDimensionRow))
+    payload = json.loads(dimension.payload_json)
+    payload["feature"]["unexpected"] = "tampered"
+    dimension.payload_json = canonical_json(payload)
+    session.flush()
+
+    with pytest.raises(ConcurrentUpdateError, match="manifest|canonical"):
+        repository.latest_baseline("tenant_demo", baseline.resident_id)
     with pytest.raises(ConcurrentUpdateError):
         repository.save_baseline("tenant_demo", baseline, AT)
 
@@ -286,9 +358,17 @@ def test_intelligence_logical_ids_are_independent_per_tenant(
     repository.save_anomaly_revision("tenant_other", other_update, other_packet)
     first_request, first_result = _interpretation(first_packet)
     other_request, other_result = _interpretation(other_packet)
+    other_result = replace(
+        other_result,
+        interpretation_id=first_result.interpretation_id,
+    )
     assert first_result.interpretation_id == other_result.interpretation_id
-    repository.save_interpretation("tenant_demo", first_request, first_result, AT)
-    repository.save_interpretation("tenant_other", other_request, other_result, AT)
+    repository.save_interpretation(
+        "tenant_demo", first_request, first_result, first_packet.current_time
+    )
+    repository.save_interpretation(
+        "tenant_other", other_request, other_result, other_packet.current_time
+    )
 
     decision = DispositionDecision(
         disposition=PolicyDisposition.OBSERVE,
@@ -307,8 +387,10 @@ def test_intelligence_logical_ids_are_independent_per_tenant(
         resident_id="resident_demo_a",
         room_id="room_214",
         anomaly_id=first_packet.anomaly_id,
+        evidence_kind=BridgeEvidenceKind.PACKET,
+        evidence_revision=1,
         packet_revision=1,
-        decided_at=AT,
+        decided_at=first_packet.current_time,
         decision=decision,
         interpretation_id=first_result.interpretation_id,
     )
@@ -316,6 +398,7 @@ def test_intelligence_logical_ids_are_independent_per_tenant(
         first_disposition,
         resident_id="resident_other",
         room_id="room_other",
+        decided_at=other_packet.current_time,
     )
     repository.save_disposition("tenant_demo", first_disposition)
     repository.save_disposition("tenant_other", other_disposition)
@@ -379,6 +462,81 @@ def test_baseline_insert_race_reconciles_without_poisoning_session(
 def test_canonical_json_rejects_non_finite_numbers() -> None:
     with pytest.raises(ValueError):
         canonical_json({"not_a_number": float("nan")})
+
+
+def test_anomaly_hydration_rejects_noncanonical_json() -> None:
+    update, packet = _anomaly_revision(_baseline())
+    row = anomaly_to_row("tenant_demo", update, packet)
+    row.update_json = f" {row.update_json}"
+
+    with pytest.raises(ConcurrentUpdateError, match="canonical"):
+        anomaly_from_row(row)
+
+
+def test_interpretation_hydration_rejects_extra_json_key() -> None:
+    _, packet = _anomaly_revision(_baseline())
+    request, result = _interpretation(packet)
+    row = interpretation_to_row("tenant_demo", request, result, AT)
+    payload = json.loads(row.result_json)
+    payload["unexpected"] = True
+    row.result_json = canonical_json(payload)
+
+    with pytest.raises(ConcurrentUpdateError, match="canonical"):
+        interpretation_from_row(row)
+
+
+def test_disposition_hydration_rejects_extra_json_key() -> None:
+    record = DispositionRecord(
+        disposition_id="disposition_strict_json",
+        resident_id="resident_demo_a",
+        room_id="room_214",
+        anomaly_id="anomaly_intelligence_1",
+        evidence_kind=BridgeEvidenceKind.PACKET,
+        evidence_revision=1,
+        packet_revision=1,
+        decided_at=AT,
+        decision=DispositionDecision(
+            disposition=PolicyDisposition.OBSERVE,
+            priority=None,
+            confidence="objective_only",
+            objective_family="unknown_anomaly",
+            headline="Observe",
+            reasons=("objective_fallback",),
+            policy_version="synthetic_disposition_v1",
+            fallback_used=True,
+            room_level_only=False,
+        ),
+    )
+    row = disposition_to_row("tenant_demo", record)
+    payload = json.loads(row.payload_json)
+    payload["unexpected"] = True
+    row.payload_json = canonical_json(payload)
+
+    with pytest.raises(ConcurrentUpdateError, match="canonical"):
+        disposition_from_row(row)
+
+
+def test_bridge_hydration_rejects_noncanonical_json() -> None:
+    bridge = EventBridgeRecord(
+        idempotency_key="strict-bridge",
+        resident_id="resident_demo_a",
+        room_id="room_214",
+        source_anomaly_id="anomaly_intelligence_1",
+        evidence_revision=1,
+        evidence_kind=BridgeEvidenceKind.PACKET,
+        objective_family="unknown_anomaly",
+        headline="Observe",
+        priority=EventPriority.WATCH,
+        provisional_urgent=False,
+        room_level_only=False,
+        observed_at=AT,
+        actor_id="system:monitoring_event",
+    )
+    row = event_bridge_to_row("tenant_demo", "event_strict", bridge)
+    row.payload_json = f"{row.payload_json}\n"
+
+    with pytest.raises(ConcurrentUpdateError, match="canonical"):
+        event_bridge_from_row(row)
 
 
 def test_anomaly_revisions_append_and_changed_duplicate_conflicts(
@@ -472,6 +630,63 @@ def test_interpretation_mapper_rejects_unvalidated_provenance() -> None:
         )
 
 
+def test_interpretation_repository_rejects_self_consistent_fabricated_packet(
+    session: Session,
+) -> None:
+    repository = IntelligenceRepository(session)
+    _, _, packet = _store_baseline_and_anomaly(repository)
+    request, _ = _interpretation(packet)
+    payload = json.loads(request.payload_json)
+    payload["anomaly_evidence"]["frame_id"] = "fabricated_frame"
+    fingerprint_payload = dict(payload)
+    fingerprint_payload.pop("request_fingerprint")
+    material = {
+        "model_id": request.model_id,
+        "model_version": request.model_version,
+        "payload": fingerprint_payload,
+        "prompt": request.prompt,
+        "skill_bundle": list(request.skill_bundle),
+    }
+    fingerprint = sha256(
+        json.dumps(material, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    payload["request_fingerprint"] = fingerprint
+    fabricated_request = replace(
+        request,
+        payload_json=json.dumps(payload, sort_keys=True, separators=(",", ":")),
+        request_fingerprint=fingerprint,
+    )
+    fabricated_result = DeterministicFakeLLMClient().interpret(
+        fabricated_request
+    )
+
+    with pytest.raises(ValueError, match="stored evidence packet"):
+        repository.save_interpretation(
+            "tenant_demo",
+            fabricated_request,
+            fabricated_result,
+            AT + timedelta(seconds=1),
+        )
+
+
+def test_interpretation_repository_rejects_noncanonical_embedded_request(
+    session: Session,
+) -> None:
+    repository = IntelligenceRepository(session)
+    _, _, packet = _store_baseline_and_anomaly(repository)
+    request, _ = _interpretation(packet)
+    noncanonical = replace(request, payload_json=f"{request.payload_json} ")
+    result = DeterministicFakeLLMClient().interpret(noncanonical)
+
+    with pytest.raises(ValueError, match="canonical"):
+        repository.save_interpretation(
+            "tenant_demo",
+            noncanonical,
+            result,
+            packet.current_time,
+        )
+
+
 def test_disposition_record_rejects_mismatched_or_invalid_identity() -> None:
     decision = DispositionDecision(
         disposition=PolicyDisposition.OBSERVE,
@@ -492,6 +707,8 @@ def test_disposition_record_rejects_mismatched_or_invalid_identity() -> None:
             resident_id="resident_demo_a",
             room_id="room_214",
             anomaly_id="anomaly_intelligence_1",
+            evidence_kind=BridgeEvidenceKind.PACKET,
+            evidence_revision=1,
             packet_revision=1,
             decided_at=AT,
             decision=decision,
@@ -503,6 +720,8 @@ def test_disposition_record_rejects_mismatched_or_invalid_identity() -> None:
             resident_id="resident_demo_a",
             room_id="room_214",
             anomaly_id="anomaly_intelligence_1",
+            evidence_kind=BridgeEvidenceKind.PACKET,
+            evidence_revision=1,
             packet_revision=1,
             decided_at=AT,
             decision=replace(decision, interpretation_id=None),
@@ -531,16 +750,19 @@ def test_interpretation_and_disposition_preserve_complete_provenance(
         room_level_only=False,
         interpretation_id=result.interpretation_id,
     )
+    event = _persist_packet_event(session, packet, decision)
     disposition = DispositionRecord(
         disposition_id="disposition_intelligence_1",
         resident_id="resident_demo_a",
         room_id="room_214",
         anomaly_id=packet.anomaly_id,
+        evidence_kind=BridgeEvidenceKind.PACKET,
+        evidence_revision=packet.packet_revision,
         packet_revision=packet.packet_revision,
         decided_at=AT + timedelta(seconds=6),
         decision=decision,
         interpretation_id=result.interpretation_id,
-        event_id="evt_phase2_demo",
+        event_id=event.event_id,
     )
 
     assert repository.find_interpretation(
@@ -579,7 +801,12 @@ def test_disposition_rejects_cross_lane_linked_artifacts(
     repository = IntelligenceRepository(session)
     _, _, packet = _store_baseline_and_anomaly(repository)
     request, result = _interpretation(packet)
-    repository.save_interpretation("tenant_demo", request, result, AT)
+    repository.save_interpretation(
+        "tenant_demo",
+        request,
+        result,
+        packet.current_time,
+    )
     decision = DispositionDecision(
         disposition=PolicyDisposition.OBSERVE,
         priority=None,
@@ -597,14 +824,123 @@ def test_disposition_rejects_cross_lane_linked_artifacts(
         resident_id="resident_demo_b",
         room_id="room_214",
         anomaly_id=packet.anomaly_id,
+        evidence_kind=BridgeEvidenceKind.PACKET,
+        evidence_revision=packet.packet_revision,
         packet_revision=packet.packet_revision,
-        decided_at=AT,
+        decided_at=packet.current_time,
         decision=decision,
         interpretation_id=result.interpretation_id,
     )
 
     with pytest.raises(ValueError, match="lane"):
         repository.save_disposition("tenant_demo", record)
+
+
+def test_packet_disposition_rejects_unrelated_same_lane_event(
+    session: Session,
+) -> None:
+    repository = IntelligenceRepository(session)
+    _, _, packet = _store_baseline_and_anomaly(repository)
+    decision = DispositionDecision(
+        disposition=PolicyDisposition.CAREGIVER_EVENT,
+        priority=EventPriority.HIGH,
+        confidence="objective_only",
+        objective_family="unusual_movement",
+        headline="Unusual movement",
+        reasons=("objective_fallback",),
+        policy_version="synthetic_disposition_v1",
+        fallback_used=True,
+        room_level_only=False,
+    )
+    _persist_packet_event(session, packet, decision)
+    record = DispositionRecord(
+        disposition_id="disposition_unrelated_event",
+        resident_id=packet.resident_id,
+        room_id=packet.room_id,
+        anomaly_id=packet.anomaly_id,
+        evidence_kind=BridgeEvidenceKind.PACKET,
+        evidence_revision=packet.packet_revision,
+        packet_revision=packet.packet_revision,
+        decided_at=packet.current_time,
+        decision=decision,
+        event_id="evt_phase2_demo",
+    )
+
+    with pytest.raises(ValueError, match="bridge"):
+        repository.save_disposition("tenant_demo", record)
+
+
+def test_packet_disposition_rejects_decision_before_evidence(
+    session: Session,
+) -> None:
+    repository = IntelligenceRepository(session)
+    _, _, packet = _store_baseline_and_anomaly(repository)
+    decision = DispositionDecision(
+        disposition=PolicyDisposition.CAREGIVER_EVENT,
+        priority=EventPriority.HIGH,
+        confidence="objective_only",
+        objective_family="unusual_movement",
+        headline="Unusual movement",
+        reasons=("objective_fallback",),
+        policy_version="synthetic_disposition_v1",
+        fallback_used=True,
+        room_level_only=False,
+    )
+    event = _persist_packet_event(session, packet, decision)
+    record = DispositionRecord(
+        disposition_id="disposition_before_evidence",
+        resident_id=packet.resident_id,
+        room_id=packet.room_id,
+        anomaly_id=packet.anomaly_id,
+        evidence_kind=BridgeEvidenceKind.PACKET,
+        evidence_revision=packet.packet_revision,
+        packet_revision=packet.packet_revision,
+        decided_at=packet.current_time - timedelta(days=30),
+        decision=decision,
+        event_id=event.event_id,
+    )
+
+    with pytest.raises(ValueError, match="precede"):
+        repository.save_disposition("tenant_demo", record)
+
+
+def test_provisional_urgent_disposition_persists_without_packet(
+    session: Session,
+) -> None:
+    engine = MonitoringIntelligenceEngine()
+    result = None
+    for frame in _fall_sequence():
+        result = _process_fall_frame(
+            engine,
+            frame,
+            baseline=_fall_baseline(feature_name="unused"),
+        )
+    assert result is not None
+    assert result.evidence is None
+    assert result.event is not None
+    bridge = result.event.bridge_records[-1]
+    EventRepository(session).save(
+        "tenant_demo",
+        result.event,
+        expected_version=0,
+    )
+    record = DispositionRecord(
+        disposition_id="disposition_provisional_fall",
+        resident_id=result.event.resident_id,
+        room_id=result.event.room_id,
+        anomaly_id=bridge.source_anomaly_id,
+        evidence_kind=BridgeEvidenceKind.PROVISIONAL,
+        evidence_revision=bridge.evidence_revision,
+        packet_revision=None,
+        decided_at=bridge.observed_at,
+        decision=result.decision,
+        event_id=result.event.event_id,
+    )
+
+    assert IntelligenceRepository(session).save_disposition(
+        "tenant_demo", record
+    ) == record
+    assert session.scalar(select(AnomalyRevisionRow)) is None
 
 
 @pytest.mark.parametrize(
@@ -622,14 +958,21 @@ def test_hydration_rejects_timestamp_shadow_tampering(
     repository = IntelligenceRepository(session)
     _, _, packet = _store_baseline_and_anomaly(repository)
     request, result = _interpretation(packet)
-    repository.save_interpretation("tenant_demo", request, result, AT)
+    repository.save_interpretation(
+        "tenant_demo",
+        request,
+        result,
+        packet.current_time,
+    )
     disposition = DispositionRecord(
         disposition_id="disposition_timestamp_tamper",
         resident_id=packet.resident_id,
         room_id=packet.room_id,
         anomaly_id=packet.anomaly_id,
+        evidence_kind=BridgeEvidenceKind.PACKET,
+        evidence_revision=packet.packet_revision,
         packet_revision=packet.packet_revision,
-        decided_at=AT,
+        decided_at=packet.current_time,
         decision=DispositionDecision(
             disposition=PolicyDisposition.OBSERVE,
             priority=None,
@@ -646,7 +989,7 @@ def test_hydration_rejects_timestamp_shadow_tampering(
     )
     repository.save_disposition("tenant_demo", disposition)
     row = session.scalar(select(row_type))
-    setattr(row, timestamp_field, AT + timedelta(days=1))
+    setattr(row, timestamp_field, packet.current_time + timedelta(days=1))
     session.flush()
 
     with pytest.raises(ConcurrentUpdateError):

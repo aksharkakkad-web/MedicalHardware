@@ -3,6 +3,7 @@
 from dataclasses import dataclass, fields
 from datetime import datetime, timezone
 from enum import Enum
+from hashlib import sha256
 import json
 from typing import Any
 
@@ -83,6 +84,20 @@ def _require_shadow(field: str, actual: object, expected: object) -> None:
         )
 
 
+def _parse_canonical_json(payload: str, label: str) -> dict[str, Any]:
+    try:
+        parsed = json.loads(payload)
+    except (TypeError, ValueError) as exc:
+        raise ConcurrentUpdateError(f"Stored {label} is not valid JSON") from exc
+    if not isinstance(parsed, dict) or canonical_json(parsed) != payload:
+        raise ConcurrentUpdateError(f"Stored {label} is not canonical JSON")
+    return parsed
+
+
+def _payload_digest(payload: str) -> str:
+    return sha256(payload.encode("ascii")).hexdigest()
+
+
 def _feature_baseline_data(feature: FeatureBaseline) -> dict[str, object]:
     return {
         "context_key": feature.context_key,
@@ -122,31 +137,6 @@ def baseline_to_rows(
     baseline: BaselineSnapshot,
     recorded_at: datetime,
 ) -> tuple[BaselineSnapshotRow, tuple[BaselineDimensionRow, ...]]:
-    payload = {
-        "adoption_candidate_id": baseline.adoption_candidate_id,
-        "adoption_context_entry_id": baseline.adoption_context_entry_id,
-        "baseline_id": baseline.baseline_id,
-        "monitoring_setup_version": baseline.monitoring_setup_version,
-        "policy_version": baseline.policy_version,
-        "prior_baseline_id": baseline.prior_baseline_id,
-        "resident_id": baseline.resident_id,
-        "recorded_at": _time(recorded_at),
-        "schema_version": baseline.schema_version,
-        "tenant_id": tenant_id,
-    }
-    snapshot = BaselineSnapshotRow(
-        baseline_id=baseline.baseline_id,
-        tenant_id=tenant_id,
-        resident_id=baseline.resident_id,
-        recorded_at=_utc(recorded_at),
-        monitoring_setup_version=baseline.monitoring_setup_version,
-        policy_version=baseline.policy_version,
-        prior_baseline_id=baseline.prior_baseline_id,
-        adoption_candidate_id=baseline.adoption_candidate_id,
-        adoption_context_entry_id=baseline.adoption_context_entry_id,
-        schema_version=baseline.schema_version,
-        payload_json=canonical_json(payload),
-    )
     dimensions = tuple(
         BaselineDimensionRow(
             tenant_id=tenant_id,
@@ -168,6 +158,40 @@ def baseline_to_rows(
             key=lambda item: (item.feature_name, item.context_key),
         )
     )
+    payload = {
+        "adoption_candidate_id": baseline.adoption_candidate_id,
+        "adoption_context_entry_id": baseline.adoption_context_entry_id,
+        "baseline_id": baseline.baseline_id,
+        "monitoring_setup_version": baseline.monitoring_setup_version,
+        "policy_version": baseline.policy_version,
+        "prior_baseline_id": baseline.prior_baseline_id,
+        "resident_id": baseline.resident_id,
+        "recorded_at": _time(recorded_at),
+        "schema_version": baseline.schema_version,
+        "tenant_id": tenant_id,
+        "dimension_count": len(dimensions),
+        "dimension_manifest": [
+            {
+                "context_key": row.context_key,
+                "feature_name": row.feature_name,
+                "payload_sha256": _payload_digest(row.payload_json),
+            }
+            for row in dimensions
+        ],
+    }
+    snapshot = BaselineSnapshotRow(
+        baseline_id=baseline.baseline_id,
+        tenant_id=tenant_id,
+        resident_id=baseline.resident_id,
+        recorded_at=_utc(recorded_at),
+        monitoring_setup_version=baseline.monitoring_setup_version,
+        policy_version=baseline.policy_version,
+        prior_baseline_id=baseline.prior_baseline_id,
+        adoption_candidate_id=baseline.adoption_candidate_id,
+        adoption_context_entry_id=baseline.adoption_context_entry_id,
+        schema_version=baseline.schema_version,
+        payload_json=canonical_json(payload),
+    )
     return snapshot, dimensions
 
 
@@ -175,7 +199,7 @@ def baseline_from_rows(
     snapshot: BaselineSnapshotRow,
     dimensions: tuple[BaselineDimensionRow, ...],
 ) -> BaselineSnapshot:
-    data = json.loads(snapshot.payload_json)
+    data = _parse_canonical_json(snapshot.payload_json, "baseline payload")
     for field, actual in (
         ("baseline_id", snapshot.baseline_id),
         ("resident_id", snapshot.resident_id),
@@ -192,13 +216,38 @@ def baseline_from_rows(
             _parse_time(data[field]) if field == "recorded_at" else data[field]
         )
         _require_shadow(f"baseline.{field}", actual, expected)
-    features = []
-    for row in sorted(
-        dimensions,
-        key=lambda item: (item.feature_name, item.context_key),
+    actual_manifest = [
+        {
+            "context_key": row.context_key,
+            "feature_name": row.feature_name,
+            "payload_sha256": _payload_digest(row.payload_json),
+        }
+        for row in dimensions
+    ]
+    if (
+        data.get("dimension_count") != len(dimensions)
+        or data.get("dimension_manifest") != actual_manifest
     ):
-        dimension_data = json.loads(row.payload_json)
-        feature = _feature_baseline(dimension_data["feature"])
+        raise ConcurrentUpdateError("Stored baseline dimension manifest mismatch")
+    features = []
+    try:
+        dimension_payloads = tuple(
+            _parse_canonical_json(row.payload_json, "baseline dimension payload")
+            for row in dimensions
+        )
+        feature_records = tuple(
+            _feature_baseline(item["feature"]) for item in dimension_payloads
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ConcurrentUpdateError(
+            "Stored baseline dimension is not canonical domain data"
+        ) from exc
+    for row, dimension_data, feature in zip(
+        dimensions,
+        dimension_payloads,
+        feature_records,
+        strict=True,
+    ):
         _require_shadow(
             "baseline_dimension.payload_tenant_id",
             row.tenant_id,
@@ -229,7 +278,7 @@ def baseline_from_rows(
             snapshot.tenant_id,
         )
         features.append(feature)
-    return BaselineSnapshot(
+    baseline = BaselineSnapshot(
         baseline_id=data["baseline_id"],
         resident_id=data["resident_id"],
         monitoring_setup_version=data["monitoring_setup_version"],
@@ -240,6 +289,18 @@ def baseline_from_rows(
         adoption_context_entry_id=data["adoption_context_entry_id"],
         schema_version=data["schema_version"],
     )
+    regenerated_snapshot, regenerated_dimensions = baseline_to_rows(
+        snapshot.tenant_id,
+        baseline,
+        snapshot.recorded_at,
+    )
+    if regenerated_snapshot.payload_json != snapshot.payload_json or tuple(
+        item.payload_json for item in regenerated_dimensions
+    ) != tuple(item.payload_json for item in dimensions):
+        raise ConcurrentUpdateError(
+            "Stored baseline payload is not canonical domain data"
+        )
+    return baseline
 
 
 def _deviation_data(item: FeatureDeviation) -> dict[str, object]:
@@ -502,8 +563,8 @@ def anomaly_to_row(
 
 
 def anomaly_from_row(row: AnomalyRevisionRow) -> StoredAnomalyRevision:
-    update_payload = json.loads(row.update_json)
-    packet_payload = json.loads(row.packet_json)
+    update_payload = _parse_canonical_json(row.update_json, "anomaly update")
+    packet_payload = _parse_canonical_json(row.packet_json, "anomaly packet")
     _require_shadow(
         "anomaly.update_tenant_id",
         row.tenant_id,
@@ -530,6 +591,14 @@ def anomaly_from_row(row: AnomalyRevisionRow) -> StoredAnomalyRevision:
         ("recorded_at", packet.current_time),
     ):
         _require_shadow(f"anomaly.{field}", getattr(row, field), expected)
+    regenerated = anomaly_to_row(row.tenant_id, stored.update, stored.packet)
+    if (
+        regenerated.update_json != row.update_json
+        or regenerated.packet_json != row.packet_json
+    ):
+        raise ConcurrentUpdateError(
+            "Stored anomaly JSON is not canonical domain data"
+        )
     return stored
 
 
@@ -651,8 +720,14 @@ def interpretation_to_row(
 
 
 def interpretation_from_row(row: LLMInterpretationRow) -> StoredInterpretation:
-    request_payload = json.loads(row.request_json)
-    result_payload = json.loads(row.result_json)
+    request_payload = _parse_canonical_json(
+        row.request_json,
+        "interpretation request",
+    )
+    result_payload = _parse_canonical_json(
+        row.result_json,
+        "interpretation result",
+    )
     _require_shadow(
         "interpretation.request_tenant_id",
         row.tenant_id,
@@ -686,6 +761,19 @@ def interpretation_from_row(row: LLMInterpretationRow) -> StoredInterpretation:
         ("created_at", stored.created_at),
     ):
         _require_shadow(f"interpretation.{field}", getattr(row, field), expected)
+    regenerated = interpretation_to_row(
+        row.tenant_id,
+        stored.request,
+        stored.result,
+        stored.created_at,
+    )
+    if (
+        regenerated.request_json != row.request_json
+        or regenerated.result_json != row.result_json
+    ):
+        raise ConcurrentUpdateError(
+            "Stored interpretation JSON is not canonical domain data"
+        )
     return stored
 
 
@@ -731,7 +819,9 @@ class DispositionRecord:
     resident_id: str
     room_id: str
     anomaly_id: str
-    packet_revision: int
+    evidence_kind: BridgeEvidenceKind
+    evidence_revision: int
+    packet_revision: int | None
     decided_at: datetime
     decision: DispositionDecision
     interpretation_id: str | None = None
@@ -749,12 +839,30 @@ class DispositionRecord:
                 field,
                 require_nonblank_text(getattr(self, field), field),
             )
+        object.__setattr__(
+            self,
+            "evidence_kind",
+            BridgeEvidenceKind(self.evidence_kind),
+        )
+        evidence_revision = self.evidence_revision
         if (
-            isinstance(self.packet_revision, bool)
-            or not isinstance(self.packet_revision, int)
-            or self.packet_revision < 1
+            isinstance(evidence_revision, bool)
+            or not isinstance(evidence_revision, int)
+            or evidence_revision < 1
         ):
-            raise ValueError("packet_revision must be a positive integer")
+            raise ValueError("evidence_revision must be a positive integer")
+        if self.evidence_kind == BridgeEvidenceKind.PACKET:
+            if (
+                isinstance(self.packet_revision, bool)
+                or not isinstance(self.packet_revision, int)
+                or self.packet_revision < 1
+                or self.packet_revision != evidence_revision
+            ):
+                raise ValueError(
+                    "packet evidence requires matching positive packet_revision"
+                )
+        elif self.packet_revision is not None:
+            raise ValueError("provisional evidence cannot claim a packet_revision")
         object.__setattr__(
             self,
             "decided_at",
@@ -776,13 +884,18 @@ class DispositionRecord:
             )
 
 
-def disposition_to_row(tenant_id: str, record: DispositionRecord) -> DispositionDecisionRow:
+def disposition_to_row(
+    tenant_id: str,
+    record: DispositionRecord,
+) -> DispositionDecisionRow:
     payload = {
         "anomaly_id": record.anomaly_id,
         "decided_at": _time(record.decided_at),
         "decision": _decision_data(record.decision),
         "disposition_id": record.disposition_id,
         "event_id": record.event_id,
+        "evidence_kind": record.evidence_kind.value,
+        "evidence_revision": record.evidence_revision,
         "interpretation_id": record.interpretation_id,
         "packet_revision": record.packet_revision,
         "resident_id": record.resident_id,
@@ -795,6 +908,8 @@ def disposition_to_row(tenant_id: str, record: DispositionRecord) -> Disposition
         resident_id=record.resident_id,
         room_id=record.room_id,
         anomaly_id=record.anomaly_id,
+        evidence_kind=record.evidence_kind.value,
+        evidence_revision=record.evidence_revision,
         packet_revision=record.packet_revision,
         interpretation_id=record.interpretation_id,
         event_id=record.event_id,
@@ -806,13 +921,15 @@ def disposition_to_row(tenant_id: str, record: DispositionRecord) -> Disposition
 
 
 def disposition_from_row(row: DispositionDecisionRow) -> DispositionRecord:
-    payload = json.loads(row.payload_json)
+    payload = _parse_canonical_json(row.payload_json, "disposition")
     _require_shadow("disposition.tenant_id", row.tenant_id, payload["tenant_id"])
     record = DispositionRecord(
         disposition_id=payload["disposition_id"],
         resident_id=payload["resident_id"],
         room_id=payload["room_id"],
         anomaly_id=payload["anomaly_id"],
+        evidence_kind=BridgeEvidenceKind(payload["evidence_kind"]),
+        evidence_revision=payload["evidence_revision"],
         packet_revision=payload["packet_revision"],
         decided_at=_parse_time(payload["decided_at"]),
         decision=_decision(payload["decision"]),
@@ -824,6 +941,8 @@ def disposition_from_row(row: DispositionDecisionRow) -> DispositionRecord:
         ("resident_id", record.resident_id),
         ("room_id", record.room_id),
         ("anomaly_id", record.anomaly_id),
+        ("evidence_kind", record.evidence_kind.value),
+        ("evidence_revision", record.evidence_revision),
         ("packet_revision", record.packet_revision),
         ("interpretation_id", record.interpretation_id),
         ("event_id", record.event_id),
@@ -832,6 +951,11 @@ def disposition_from_row(row: DispositionDecisionRow) -> DispositionRecord:
         ("policy_version", record.decision.policy_version),
     ):
         _require_shadow(f"disposition.{field}", getattr(row, field), expected)
+    regenerated = disposition_to_row(row.tenant_id, record)
+    if regenerated.payload_json != row.payload_json:
+        raise ConcurrentUpdateError(
+            "Stored disposition JSON is not canonical domain data"
+        )
     return record
 
 
@@ -912,7 +1036,7 @@ class StoredEventBridge:
 
 
 def event_bridge_from_row(row: EventBridgeRecordRow) -> StoredEventBridge:
-    payload = json.loads(row.payload_json)
+    payload = _parse_canonical_json(row.payload_json, "event bridge")
     _require_shadow("event_bridge.tenant_id", row.tenant_id, payload["tenant_id"])
     _require_shadow("event_bridge.event_id", row.event_id, payload["event_id"])
     stored = StoredEventBridge(
@@ -931,6 +1055,11 @@ def event_bridge_from_row(row: EventBridgeRecordRow) -> StoredEventBridge:
         ("observed_at", record.observed_at),
     ):
         _require_shadow(f"event_bridge.{field}", getattr(row, field), expected)
+    regenerated = event_bridge_to_row(row.tenant_id, row.event_id, record)
+    if regenerated.payload_json != row.payload_json:
+        raise ConcurrentUpdateError(
+            "Stored event bridge JSON is not canonical domain data"
+        )
     return stored
 
 

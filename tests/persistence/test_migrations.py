@@ -317,7 +317,9 @@ EXPECTED_COLUMNS = {
         "resident_id": False,
         "room_id": False,
         "anomaly_id": False,
-        "packet_revision": False,
+        "evidence_kind": False,
+        "evidence_revision": False,
+        "packet_revision": True,
         "interpretation_id": True,
         "event_id": True,
         "status": False,
@@ -758,6 +760,15 @@ def test_initial_migration_creates_product_backbone(tmp_path: Path) -> None:
             for item in orm_inspector.get_unique_constraints(table_name)
         }
         assert orm_uniques == migrated_uniques
+        migrated_checks = {
+            (item["name"], item["sqltext"])
+            for item in inspector.get_check_constraints(table_name)
+        }
+        orm_checks = {
+            (item["name"], item["sqltext"])
+            for item in orm_inspector.get_check_constraints(table_name)
+        }
+        assert orm_checks == migrated_checks
 
     task_8_event_defaults = {
         column["name"]: column["default"]

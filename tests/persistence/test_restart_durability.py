@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.config import Settings
 from backend.app.db.models import (
+    AnomalyRevisionRow,
     AuditLogRow,
     CalibrationSnapshotRow,
     EventActionRow,
@@ -54,6 +55,7 @@ from backend.app.domain.events import (
     MonitoringEvent,
 )
 from backend.app.intelligence.policy import DispositionDecision, PolicyDisposition
+from backend.app.intelligence.orchestration import MonitoringIntelligenceEngine
 from tests.persistence.test_intelligence_repositories import (
     AT as INTELLIGENCE_AT,
     _anomaly_revision,
@@ -62,6 +64,11 @@ from tests.persistence.test_intelligence_repositories import (
 )
 from backend.app.db.seed import seed_synthetic_story
 from backend.app.main import create_app
+from tests.intelligence.test_policy_orchestration import (
+    _baseline as _fall_baseline,
+    _fall_sequence,
+    _process as _process_fall_frame,
+)
 
 
 ACCESS_HEADERS = {
@@ -147,6 +154,66 @@ def test_brand_new_intelligence_event_and_children_survive_restart(
     restarted.dispose()
 
 
+def test_provisional_fall_disposition_survives_restart_without_packet(
+    tmp_path: Path,
+) -> None:
+    database_url = f"sqlite+pysqlite:///{tmp_path / 'provisional-restart.db'}"
+    config = Config("alembic.ini")
+    config.set_main_option("sqlalchemy.url", database_url)
+    command.upgrade(config, "head")
+    engine = create_engine_for_url(database_url)
+    monitor = MonitoringIntelligenceEngine()
+    result = None
+    for frame in _fall_sequence():
+        result = _process_fall_frame(
+            monitor,
+            frame,
+            baseline=_fall_baseline(feature_name="unused"),
+        )
+    assert result is not None
+    assert result.evidence is None
+    assert result.event is not None
+    bridge = result.event.bridge_records[-1]
+    disposition = DispositionRecord(
+        disposition_id="disposition_provisional_restart",
+        resident_id=result.event.resident_id,
+        room_id=result.event.room_id,
+        anomaly_id=bridge.source_anomaly_id,
+        evidence_kind=BridgeEvidenceKind.PROVISIONAL,
+        evidence_revision=bridge.evidence_revision,
+        packet_revision=None,
+        decided_at=bridge.observed_at,
+        decision=result.decision,
+        event_id=result.event.event_id,
+    )
+    with Session(engine) as session:
+        seed_synthetic_story(session)
+        EventRepository(session).save(
+            "tenant_demo",
+            result.event,
+            expected_version=0,
+        )
+        IntelligenceRepository(session).save_disposition(
+            "tenant_demo",
+            disposition,
+        )
+        session.commit()
+    engine.dispose()
+
+    restarted = create_engine_for_url(database_url)
+    with Session(restarted) as session:
+        assert IntelligenceRepository(session).find_disposition(
+            "tenant_demo",
+            disposition.disposition_id,
+        ) == disposition
+        assert IntelligenceRepository(session).find_event_bridge(
+            "tenant_demo",
+            bridge.idempotency_key,
+        ).record == bridge
+        assert session.scalar(select(AnomalyRevisionRow)) is None
+    restarted.dispose()
+
+
 def test_complete_intelligence_trail_survives_database_restart(
     tmp_path: Path,
 ) -> None:
@@ -176,6 +243,8 @@ def test_complete_intelligence_trail_survives_database_restart(
         resident_id="resident_demo_a",
         room_id="room_214",
         anomaly_id=packet.anomaly_id,
+        evidence_kind=BridgeEvidenceKind.PACKET,
+        evidence_revision=packet.packet_revision,
         packet_revision=packet.packet_revision,
         decided_at=INTELLIGENCE_AT + timedelta(seconds=6),
         decision=decision,
@@ -211,20 +280,25 @@ def test_complete_intelligence_trail_survives_database_restart(
             result,
             INTELLIGENCE_AT + timedelta(seconds=5),
         )
-        intelligence.save_disposition(story.tenant_id, disposition)
         events = EventRepository(session)
         stored_event = events.get(story.tenant_id, story.event_id)
         events.save(
             story.tenant_id,
             replace(
                 stored_event.event,
+                objective_family=decision.objective_family,
+                headline=decision.headline,
+                priority=decision.priority,
                 source_anomaly_id=bridge.source_anomaly_id,
                 latest_evidence_revision=bridge.evidence_revision,
+                provisional_urgent=decision.provisional_urgent,
+                room_level_only=decision.room_level_only,
                 bridge_idempotency_keys=(bridge.idempotency_key,),
                 bridge_records=(bridge,),
             ),
             expected_version=stored_event.version,
         )
+        intelligence.save_disposition(story.tenant_id, disposition)
         session.commit()
     engine.dispose()
 

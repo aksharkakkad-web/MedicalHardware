@@ -13,6 +13,193 @@ from backend.app.intelligence.evidence import EvidencePacket
 _MAX_RELEVANT_MEMORY_ENTRIES = 20
 
 
+def _anomaly_evidence_payload(packet: EvidencePacket) -> dict[str, object]:
+    return {
+        "agreements": list(packet.agreements),
+        "anomaly_id": packet.anomaly_id,
+        "baseline_id": packet.baseline_id,
+        "baseline_policy_version": packet.baseline_policy_version,
+        "changed_features": _feature_payload(packet),
+        "config_version": packet.config_version,
+        "contradictions": list(packet.contradictions),
+        "current_time": packet.current_time.isoformat(),
+        "evidence_limited": packet.evidence_limited,
+        "evidence_refs": list(packet.evidence_refs),
+        "feature_contract_version": packet.feature_contract_version,
+        "filter_version": packet.filter_version,
+        "frame_id": packet.frame_id,
+        "limitations": list(packet.limitations),
+        "lifecycle_state": packet.lifecycle_state.value,
+        "missing_initiating_features": list(packet.missing_initiating_features),
+        "missing_modalities": list(packet.missing_modalities),
+        "monitoring_setup_version": packet.monitoring_setup_version,
+        "overall_strength": packet.overall_strength,
+        "packet_revision": packet.packet_revision,
+        "progression": packet.progression,
+        "room_id": packet.room_id,
+        "strength_scale": packet.strength_scale,
+        "unknowns": list(packet.unknowns),
+    }
+
+
+def _required_declarations(
+    packet: EvidencePacket,
+    skill_names: tuple[str, ...],
+) -> tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
+    missing = tuple(
+        sorted(
+            {
+                *packet.unknowns,
+                *packet.missing_initiating_features,
+                *packet.missing_modalities,
+            }
+        )
+    )
+    limitations = tuple(
+        dict.fromkeys(
+            (
+                *packet.limitations,
+                *(
+                    ("resident_attribution_ambiguous",)
+                    if "multi_person" in skill_names
+                    else ()
+                ),
+            )
+        )
+    )
+    unsupported = {"causal_explanation", "medical_diagnosis"}
+    if "multi_person" in skill_names:
+        unsupported.add("person_identity")
+    if missing:
+        unsupported.add("unobserved_measurement")
+    return missing, limitations, tuple(sorted(unsupported))
+
+
+def validate_interpretation_request_binding(
+    packet: EvidencePacket,
+    request: InterpretationRequest,
+) -> None:
+    """Bind a request to one exact stored packet and deterministic prompt bundle."""
+
+    bundle = select_skill_bundle(packet)
+    try:
+        payload = json.loads(request.payload_json)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("interpretation request is not canonical JSON") from exc
+    if (
+        json.dumps(payload, sort_keys=True, separators=(",", ":"))
+        != request.payload_json
+    ):
+        raise ValueError("interpretation request is not canonical JSON")
+    if set(payload) != {
+        "anomaly_evidence",
+        "guardrails",
+        "request_fingerprint",
+        "resident_context",
+        "schema_version",
+        "skill_bundle",
+        "versions",
+    }:
+        raise ValueError("interpretation request does not use the exact payload schema")
+    missing, limitations, unsupported = _required_declarations(
+        packet,
+        bundle.skill_names,
+    )
+    context = payload.get("resident_context", {})
+    context_entries = context.get("entries", ())
+    context_entry_keys = {
+        "context_kind",
+        "context_ref",
+        "description",
+        "entry_id",
+        "flexibility_note",
+        "local_time_end",
+        "local_time_start",
+        "recurrence_note",
+    }
+    if (
+        not isinstance(context, dict)
+        or set(context) != {"entries", "resident_id", "version"}
+        or not isinstance(context_entries, list)
+        or any(
+            not isinstance(item, dict) or set(item) != context_entry_keys
+            for item in context_entries
+        )
+        or payload.get("guardrails")
+        != {"urgent_deterministic_event": request.urgent_deterministic_event}
+        or payload.get("schema_version") != request.schema_version
+        or request.relevant_context_version
+        != f"resident_memory_v{context.get('version')}"
+    ):
+        raise ValueError("interpretation request does not use the exact payload schema")
+    expected = (
+        (request.anomaly_id, packet.anomaly_id),
+        (request.packet_revision, packet.packet_revision),
+        (request.prompt, bundle.prompt),
+        (request.skill_bundle, bundle.skill_names),
+        (request.skill_bundle_version, bundle.bundle_version),
+        (request.available_evidence_refs, packet.evidence_refs),
+        (
+            request.available_measurements,
+            tuple(sorted({item.feature_name for item in packet.changed_features})),
+        ),
+        (
+            request.unavailable_measurements,
+            tuple(
+                sorted(
+                    {
+                        *packet.missing_initiating_features,
+                        *packet.missing_modalities,
+                    }
+                )
+            ),
+        ),
+        (request.contradictions, packet.contradictions),
+        (request.required_missing_information, missing),
+        (request.required_limitations, limitations),
+        (request.required_unsupported_conclusions, unsupported),
+        (
+            request.retrieved_context_refs,
+            tuple(item.get("context_ref") for item in context_entries),
+        ),
+        (payload.get("anomaly_evidence"), _anomaly_evidence_payload(packet)),
+        (payload.get("skill_bundle"), list(bundle.skill_names)),
+        (context.get("resident_id"), packet.resident_id),
+    )
+    if any(actual != wanted for actual, wanted in expected):
+        raise ValueError("interpretation request does not match stored evidence packet")
+    versions = payload.get("versions", {})
+    if versions != {
+        "invocation": request.invocation_version,
+        "model": request.model_version,
+        "output_schema": request.output_schema_version,
+        "prompt": request.prompt_version,
+        "relevant_context": request.relevant_context_version,
+        "retrieval_contract": request.retrieval_contract_version,
+        "skill_bundle": request.skill_bundle_version,
+        "skills": list(bundle.skill_versions),
+    }:
+        raise ValueError(
+            "interpretation request versions do not match stored evidence packet"
+        )
+    fingerprint_payload = dict(payload)
+    fingerprint_payload.pop("request_fingerprint", None)
+    expected_fingerprint = _request_fingerprint(
+        payload=fingerprint_payload,
+        prompt=request.prompt,
+        skill_bundle=request.skill_bundle,
+        model_id=request.model_id,
+        model_version=request.model_version,
+    )
+    if (
+        payload.get("request_fingerprint") != expected_fingerprint
+        or request.request_fingerprint != expected_fingerprint
+    ):
+        raise ValueError(
+            "interpretation request fingerprint does not match stored evidence packet"
+        )
+
+
 def _feature_payload(packet: EvidencePacket) -> list[dict[str, object]]:
     ref_by_name = {
         reference.rsplit("/", 1)[-1]: reference
@@ -147,34 +334,7 @@ def build_interpretation_request(
     invocation_version = "monitoring_invocation_v1"
     relevant_context_version = f"resident_memory_v{resident_memory.version}"
     payload = {
-        "anomaly_evidence": {
-            "agreements": list(packet.agreements),
-            "anomaly_id": packet.anomaly_id,
-            "baseline_id": packet.baseline_id,
-            "baseline_policy_version": packet.baseline_policy_version,
-            "changed_features": _feature_payload(packet),
-            "config_version": packet.config_version,
-            "contradictions": list(packet.contradictions),
-            "current_time": packet.current_time.isoformat(),
-            "evidence_limited": packet.evidence_limited,
-            "evidence_refs": list(packet.evidence_refs),
-            "feature_contract_version": packet.feature_contract_version,
-            "filter_version": packet.filter_version,
-            "frame_id": packet.frame_id,
-            "limitations": list(packet.limitations),
-            "lifecycle_state": packet.lifecycle_state.value,
-            "missing_initiating_features": list(
-                packet.missing_initiating_features
-            ),
-            "missing_modalities": list(packet.missing_modalities),
-            "monitoring_setup_version": packet.monitoring_setup_version,
-            "overall_strength": packet.overall_strength,
-            "packet_revision": packet.packet_revision,
-            "progression": packet.progression,
-            "room_id": packet.room_id,
-            "strength_scale": packet.strength_scale,
-            "unknowns": list(packet.unknowns),
-        },
+        "anomaly_evidence": _anomaly_evidence_payload(packet),
         "guardrails": {"urgent_deterministic_event": urgent},
         "resident_context": {
             "entries": [
@@ -214,33 +374,11 @@ def build_interpretation_request(
         model_version=model_version,
     )
     payload["request_fingerprint"] = request_fingerprint
-    required_missing_information = tuple(
-        sorted(
-            {
-                *packet.unknowns,
-                *packet.missing_initiating_features,
-                *packet.missing_modalities,
-            }
-        )
-    )
-    required_limitations = tuple(
-        dict.fromkeys(
-            (
-                *packet.limitations,
-                *(
-                    ("resident_attribution_ambiguous",)
-                    if "multi_person" in bundle.skill_names
-                    else ()
-                ),
-            )
-        )
-    )
-    unsupported_conclusions = {"causal_explanation", "medical_diagnosis"}
-    if "multi_person" in bundle.skill_names:
-        unsupported_conclusions.add("person_identity")
-    if required_missing_information:
-        unsupported_conclusions.add("unobserved_measurement")
-    required_unsupported_conclusions = tuple(sorted(unsupported_conclusions))
+    (
+        required_missing_information,
+        required_limitations,
+        required_unsupported_conclusions,
+    ) = _required_declarations(packet, bundle.skill_names)
     return InterpretationRequest(
         anomaly_id=packet.anomaly_id,
         packet_revision=packet.packet_revision,
@@ -277,4 +415,8 @@ def build_interpretation_request(
     )
 
 
-__all__ = ["InterpretationRequest", "build_interpretation_request"]
+__all__ = [
+    "InterpretationRequest",
+    "build_interpretation_request",
+    "validate_interpretation_request_binding",
+]

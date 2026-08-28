@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.app.ai.client import InterpretationRequest, InterpretationResult
+from backend.app.ai.context import validate_interpretation_request_binding
 from backend.app.db.intelligence_mappers import (
     DispositionRecord,
     StoredAnomalyRevision,
@@ -187,6 +188,17 @@ class IntelligenceRepository:
         result: InterpretationResult,
         created_at: datetime,
     ) -> StoredInterpretation:
+        anomaly = self._anomaly_revision(
+            tenant_id,
+            request.anomaly_id,
+            request.packet_revision,
+        )
+        if anomaly is None:
+            raise ValueError("interpretation anomaly revision does not exist")
+        validate_interpretation_request_binding(
+            anomaly_from_row(anomaly).packet,
+            request,
+        )
         candidate = interpretation_to_row(
             tenant_id, request, result, created_at
         )
@@ -231,7 +243,6 @@ class IntelligenceRepository:
         tenant_id: str,
         record: DispositionRecord,
     ) -> DispositionRecord:
-        self._validate_disposition_links(tenant_id, record)
         candidate = disposition_to_row(tenant_id, record)
         existing = self._session.get(
             DispositionDecisionRow,
@@ -241,6 +252,7 @@ class IntelligenceRepository:
             if not _same_row(existing, candidate):
                 raise ConcurrentUpdateError()
             return disposition_from_row(existing)
+        self._validate_disposition_links(tenant_id, record)
         try:
             with self._session.begin_nested():
                 self._session.add(candidate)
@@ -349,6 +361,9 @@ class IntelligenceRepository:
         tenant_id: str,
         record: DispositionRecord,
     ) -> None:
+        if record.evidence_kind.value == "provisional":
+            self._validate_provisional_disposition(tenant_id, record)
+            return
         anomaly = self._anomaly_revision(
             tenant_id,
             record.anomaly_id,
@@ -361,6 +376,8 @@ class IntelligenceRepository:
             record.room_id,
         ):
             raise ValueError("disposition lane does not match anomaly revision")
+        if _utc(record.decided_at) < _utc(anomaly.recorded_at):
+            raise ValueError("disposition cannot precede packet evidence")
         if record.interpretation_id is not None:
             interpretation = self._session.get(
                 LLMInterpretationRow,
@@ -373,18 +390,83 @@ class IntelligenceRepository:
                 raise ValueError(
                     "disposition interpretation does not match anomaly revision"
                 )
-        if record.event_id is not None:
-            event = self._session.scalar(
-                select(MonitoringEventRow).where(
-                    MonitoringEventRow.tenant_id == tenant_id,
-                    MonitoringEventRow.event_id == record.event_id,
-                )
+            if _utc(record.decided_at) < _utc(interpretation.created_at):
+                raise ValueError("disposition cannot precede interpretation")
+        self._validate_disposition_event_chain(tenant_id, record)
+
+    def _validate_provisional_disposition(
+        self,
+        tenant_id: str,
+        record: DispositionRecord,
+    ) -> None:
+        if (
+            record.decision.disposition.value != "caregiver_event"
+            or not record.decision.provisional_urgent
+            or record.event_id is None
+            or record.interpretation_id is not None
+        ):
+            raise ValueError(
+                "provisional disposition requires urgent caregiver event without interpretation"
             )
-            if event is None or (event.resident_id, event.room_id) != (
-                record.resident_id,
-                record.room_id,
-            ):
-                raise ValueError("disposition event does not match resident lane")
+        self._validate_disposition_event_chain(tenant_id, record)
+
+    def _validate_disposition_event_chain(
+        self,
+        tenant_id: str,
+        record: DispositionRecord,
+    ) -> None:
+        caregiver = record.decision.disposition.value == "caregiver_event"
+        if not caregiver:
+            if record.event_id is not None:
+                raise ValueError("non-caregiver disposition cannot link an event")
+            return
+        if record.event_id is None or record.decision.priority is None:
+            raise ValueError("caregiver disposition requires linked event")
+        bridge = self._session.scalar(
+            select(EventBridgeRecordRow).where(
+                EventBridgeRecordRow.tenant_id == tenant_id,
+                EventBridgeRecordRow.event_id == record.event_id,
+                EventBridgeRecordRow.source_anomaly_id == record.anomaly_id,
+                EventBridgeRecordRow.evidence_revision == record.evidence_revision,
+                EventBridgeRecordRow.evidence_kind == record.evidence_kind.value,
+            )
+        )
+        if bridge is None:
+            raise ValueError("disposition bridge does not exist")
+        stored_bridge = event_bridge_from_row(bridge).record
+        event = self._session.scalar(
+            select(MonitoringEventRow).where(
+                MonitoringEventRow.tenant_id == tenant_id,
+                MonitoringEventRow.event_id == record.event_id,
+            )
+        )
+        if event is None or (event.resident_id, event.room_id) != (
+            record.resident_id,
+            record.room_id,
+        ):
+            raise ValueError("disposition event lane does not match")
+        decision = record.decision
+        expected_metadata = (
+            (stored_bridge.resident_id, record.resident_id),
+            (stored_bridge.room_id, record.room_id),
+            (stored_bridge.objective_family, decision.objective_family),
+            (stored_bridge.headline, decision.headline),
+            (stored_bridge.priority, decision.priority),
+            (stored_bridge.provisional_urgent, decision.provisional_urgent),
+            (stored_bridge.room_level_only, decision.room_level_only),
+            (event.objective_family, decision.objective_family),
+            (event.headline, decision.headline),
+            (event.priority, decision.priority.value),
+            (event.provisional_urgent, decision.provisional_urgent),
+            (event.room_level_only, decision.room_level_only),
+        )
+        if any(actual != expected for actual, expected in expected_metadata):
+            raise ValueError("disposition event metadata does not match decision")
+        if any(
+            _utc(record.decided_at) < _utc(timestamp)
+            for timestamp in (event.created_at, stored_bridge.observed_at)
+        ):
+            raise ValueError("disposition cannot precede event or bridge evidence")
 
 
 __all__ = ["IntelligenceRepository"]

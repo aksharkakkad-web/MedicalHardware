@@ -525,6 +525,13 @@ class DispositionDecisionRow(Base):
             ("monitoring_events.tenant_id", "monitoring_events.event_id"),
         ),
         Index("ix_disposition_decisions_anomaly_revision", "anomaly_id", "packet_revision"),
+        CheckConstraint(
+            "evidence_revision >= 1 AND ((evidence_kind = 'packet' "
+            "AND packet_revision IS NOT NULL "
+            "AND evidence_revision = packet_revision) OR "
+            "(evidence_kind = 'provisional' AND packet_revision IS NULL))",
+            name="ck_disposition_decisions_evidence_source",
+        ),
     )
 
     disposition_id: Mapped[str] = mapped_column(String(255))
@@ -536,7 +543,9 @@ class DispositionDecisionRow(Base):
     )
     room_id: Mapped[str] = mapped_column(ForeignKey("rooms.room_id"), index=True)
     anomaly_id: Mapped[str] = mapped_column(String(255))
-    packet_revision: Mapped[int] = mapped_column(Integer)
+    evidence_kind: Mapped[str] = mapped_column(String(64))
+    evidence_revision: Mapped[int] = mapped_column(Integer)
+    packet_revision: Mapped[int | None] = mapped_column(Integer)
     interpretation_id: Mapped[str | None] = mapped_column(String(255))
     event_id: Mapped[str | None] = mapped_column(String(255), index=True)
     status: Mapped[str] = mapped_column(String(64))

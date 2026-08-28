@@ -186,7 +186,9 @@ def upgrade() -> None:
         sa.Column("resident_id", sa.String(255), nullable=False),
         sa.Column("room_id", sa.String(255), nullable=False),
         sa.Column("anomaly_id", sa.String(255), nullable=False),
-        sa.Column("packet_revision", sa.Integer(), nullable=False),
+        sa.Column("evidence_kind", sa.String(64), nullable=False),
+        sa.Column("evidence_revision", sa.Integer(), nullable=False),
+        sa.Column("packet_revision", sa.Integer()),
         sa.Column("interpretation_id", sa.String(255)),
         sa.Column("event_id", sa.String(255)),
         sa.Column("status", sa.String(64), nullable=False),
@@ -221,6 +223,13 @@ def upgrade() -> None:
             ["monitoring_events.tenant_id", "monitoring_events.event_id"],
         ),
         sa.PrimaryKeyConstraint("tenant_id", "disposition_id"),
+        sa.CheckConstraint(
+            "evidence_revision >= 1 AND ((evidence_kind = 'packet' "
+            "AND packet_revision IS NOT NULL "
+            "AND evidence_revision = packet_revision) OR "
+            "(evidence_kind = 'provisional' AND packet_revision IS NULL))",
+            name="ck_disposition_decisions_evidence_source",
+        ),
     )
     op.create_index("ix_disposition_decisions_tenant_id", "disposition_decisions", ["tenant_id"])
     op.create_index(
