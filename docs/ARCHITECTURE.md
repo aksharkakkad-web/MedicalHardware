@@ -432,8 +432,9 @@ Responsibilities:
 Episode and recurrence rules:
 
 - `detected` is internal and `open` is the first user-visible state;
-- a candidate that returns to normal before persistence closes silently and a
-  later deviation receives a distinct anomaly identity;
+- a candidate closes silently when good initiating evidence breaks consecutive
+  activation persistence; missing or limited evidence does not prove closure,
+  and a later deviation receives a distinct anomaly identity;
 - related evidence inside a configurable quiet-time gap updates one active episode;
 - recurrence after that gap creates a new event linked to prior events;
 - resolved events remain immutable and never reopen;

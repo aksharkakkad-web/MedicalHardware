@@ -131,10 +131,17 @@ def _baseline_with_respiration() -> BaselineSnapshot:
     )
 
 
-def _advance(episode, second: int, value: float | None, *, anomaly_id="anomaly_1"):
+def _advance(
+    episode,
+    second: int,
+    value: float | None,
+    *,
+    anomaly_id="anomaly_1",
+    quality: QualityClass = QualityClass.GOOD,
+):
     return advance_episode(
         episode,
-        frame=_frame(second, value),
+        frame=_frame(second, value, quality=quality),
         baseline=_baseline(),
         context_key="resident_global",
         anomaly_id=anomaly_id,
@@ -225,6 +232,29 @@ def test_candidate_returning_to_normal_closes_without_packet_and_allows_new_id()
     assert later.episode.state is AnomalyState.CANDIDATE
     assert later.episode.anomaly_id == "anomaly_later"
     assert later.episode.recurrence_of is None
+
+
+@pytest.mark.parametrize(
+    ("value", "quality", "expected_limitation"),
+    (
+        (None, QualityClass.GOOD, "missing_initiating_evidence"),
+        (12.0, QualityClass.LIMITED, "limited_quality"),
+    ),
+)
+def test_uncertain_candidate_evidence_does_not_prove_candidate_ended(
+    value: float | None,
+    quality: QualityClass,
+    expected_limitation: str,
+) -> None:
+    # Break caught: missing or limited evidence is treated as a good interruption.
+    first = _advance(None, 0, 14.0)
+
+    uncertain = _advance(first.episode, 1, value, quality=quality)
+
+    assert uncertain.episode is not None
+    assert uncertain.episode.state is AnomalyState.CANDIDATE
+    assert uncertain.episode.activation_count == 0
+    assert expected_limitation in uncertain.limitations
 
 
 def test_missing_frame_pauses_recovery_and_three_good_frames_close() -> None:

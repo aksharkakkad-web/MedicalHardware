@@ -635,15 +635,12 @@ def advance_episode(
     next_episode: AnomalyEpisode
 
     if episode.state == AnomalyState.CANDIDATE:
-        returned_to_normal = (
+        activation_persistence_broken = (
             bool(related_names)
             and all_initiating_good
-            and all(
-                abs(item.robust_z) < policy.end_abs_z
-                for item in related
-            )
+            and not crossing
         )
-        if returned_to_normal:
+        if activation_persistence_broken:
             next_episode = replace(
                 episode,
                 state=AnomalyState.CLOSED,

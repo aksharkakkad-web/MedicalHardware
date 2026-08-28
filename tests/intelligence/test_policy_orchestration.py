@@ -635,7 +635,7 @@ def test_failed_persistence_candidate_closes_silently_before_later_episode() -> 
     )
     retired = _process(
         engine,
-        _movement_frame(1, 0.0),
+        _movement_frame(1, 0.2),
         anomaly_id="short_candidate",
     )
 

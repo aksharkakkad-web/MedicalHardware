@@ -720,9 +720,10 @@ separate from caregiver event lifecycle:
 
 An active episode produces immutable revisioned evidence packets. The packet
 is richer than a prose summary but does not contain continuous raw streams.
-A candidate that returns inside recovery bounds before persistence is met
-closes without a packet or caregiver event; a later deviation starts with a
-new anomaly ID.
+A candidate closes without a packet or caregiver event when good initiating
+evidence falls below the activation threshold before consecutive persistence
+is met; a later deviation starts with a new anomaly ID. Missing or limited
+evidence does not prove that the candidate ended.
 
 ```json
 {
