@@ -237,15 +237,16 @@ without moving raw streams into the Phase 5 engine.
 
 ### Phase 5 measured replay
 
-The canonical synthetic run measured 24 scenarios, 7/7 declared meaningful
-captures, zero false packets and zero false caregiver events
+The canonical synthetic run measured 24 scenarios, expected downstream
+caregiver work in 7/7 declared meaningful scenarios, zero false packets, and
+zero false caregiver events
 across 24 declared scenario exposure units, zero baseline contamination across
 57 learning windows, and zero duplicate events across 10 event signal groups.
 Interpretation results were 12 attempted, 10 valid, 1 rejected, and 1
 unavailable. The urgent fall-like scenario created provisional caregiver work
 with no AI attempt. A nonurgent request used explicitly selected resident
 context, and the repository restart hydrated the complete anomaly-to-event
-lineage. Two fresh replay commands emitted the same 40,362 bytes. Exposure
+lineage. Two fresh replay commands emitted the same 40,481 bytes. Exposure
 units are fixture weights, not elapsed resident-days or operating-time rates.
 These are engineering-fixture measurements, not clinical or hardware claims.
 

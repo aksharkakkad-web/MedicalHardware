@@ -29,8 +29,9 @@ All three tracks work in parallel. A phase is not a rule that Akshar, Rishit, or
 
 The backend now runs quality, robust baseline, anomaly/evidence, deterministic
 fake-AI validation, disposition, and caregiver-event components from synthetic
-normalized fixtures. The measured replay captured 7/7 declared meaningful
-scenarios, produced zero false packets and zero false caregiver events
+normalized fixtures. The measured replay produced the expected downstream
+caregiver work in 7/7 declared meaningful scenarios, with zero false packets
+and zero false caregiver events
 across 24 declared scenario exposure units, admitted zero contaminated windows
 across 57 evaluated learning windows, and produced zero duplicate events
 across 10 event signal groups. Invalid and unavailable AI both used objective

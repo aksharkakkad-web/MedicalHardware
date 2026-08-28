@@ -29,10 +29,16 @@ def calculate_metrics(records: list[dict[str, Any]]) -> dict[str, Any]:
     captured = [
         record
         for record in meaningful
-        if record["packet_count"] > 0 or record["urgent_triggered"]
+        if (
+            not record["caregiver_event_expected"]
+            or record["caregiver_event_count"] > 0
+        )
     ]
     missed = sorted(
-        record["scenario_id"] for record in meaningful if record not in captured
+        record["scenario_id"]
+        for record in meaningful
+        if record["caregiver_event_expected"]
+        and record["caregiver_event_count"] == 0
     )
     false_packets = sum(
         int(record["packet_count"])
@@ -269,6 +275,11 @@ def safety_gates(
                 "false_caregiver_events_per_declared_exposure_unit"
             ]["count"]
             == 0
+        ),
+        "expected_caregiver_work_complete": all(
+            not record["caregiver_event_expected"]
+            or record["caregiver_event_count"] > 0
+            for record in records
         ),
         "baseline_contamination_zero": (
             aggregate["baseline_contamination"]["contaminated_learning_windows"]

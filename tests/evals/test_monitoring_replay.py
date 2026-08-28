@@ -102,6 +102,37 @@ def test_metrics_change_when_replay_records_contain_regressions() -> None:
     assert aggregate["duplicate_events"]["duplicate_event_count"] == 1
 
 
+def test_expected_downstream_event_loss_is_a_miss_with_upstream_intact() -> None:
+    # Break caught: a packet/AI success masks missing declared caregiver work.
+    for scenario_id in (
+        "repetitive_movement",
+        "inactivity",
+        "unknown_anomaly",
+        "llm_invalid_output",
+        "llm_unavailable",
+    ):
+        report = deepcopy(run_replay())
+        scenario = _by_id(report)[scenario_id]
+        assert scenario["caregiver_event_expected"] is True
+        assert scenario["candidate_count"] == 1
+        assert scenario["packet_count"] == 1
+        assert scenario["interpretation"]["attempted"] == 1
+
+        scenario["caregiver_event_count"] = 0
+
+        aggregate = calculate_metrics(report["scenarios"])
+        assert aggregate["meaningful_anomaly_recall"] == {
+            "captured": 6,
+            "expected": 7,
+            "rate": 0.857143,
+        }
+        assert aggregate["missed_meaningful_events"] == [scenario_id]
+        assert (
+            "safety gate failed: expected_caregiver_work_complete"
+            in checkpoint_failures(report)
+        )
+
+
 def test_ordinary_away_routine_and_degraded_cases_do_not_create_resident_work() -> None:
     # Break caught: ordinary variation or unreliable attribution becomes resident work.
     report = run_replay()
