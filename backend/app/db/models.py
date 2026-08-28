@@ -397,6 +397,13 @@ class ResidentMemoryEntryRow(Base):
     retired_by: Mapped[str | None] = mapped_column(String(255))
     retired_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     retirement_reason: Mapped[str | None] = mapped_column(String(500))
+    context_kind: Mapped[str | None] = mapped_column(String(64))
+    effective_from: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    effective_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    local_time_start: Mapped[str | None] = mapped_column(String(5))
+    local_time_end: Mapped[str | None] = mapped_column(String(5))
+    recurrence_note: Mapped[str | None] = mapped_column(String(1000))
+    flexibility_note: Mapped[str | None] = mapped_column(String(1000))
 
 
 class ResidentNotificationPreferenceVersionRow(Base):

@@ -5,7 +5,11 @@ from pydantic import Field, StrictInt, field_validator, model_validator
 from backend.app.contracts.common import ContractModel, RequestContractModel, UTCDateTime
 from backend.app.domain._validation import require_nonblank_text
 from backend.app.domain.events import ResolutionOutcome
-from backend.app.domain.feedback import normalize_event_label
+from backend.app.domain.feedback import (
+    MemoryContextKind,
+    normalize_event_label,
+    validate_memory_context,
+)
 
 
 ExpectedVersion = Annotated[StrictInt, Field(ge=0)]
@@ -34,9 +38,23 @@ class MemoryEntryResponse(ContractModel):
     retired_by: str | None
     retired_at: UTCDateTime | None
     retirement_reason: str | None
+    context_kind: MemoryContextKind = "general_context"
+    effective_from: UTCDateTime | None = None
+    effective_until: UTCDateTime | None = None
+    local_time_start: str | None = None
+    local_time_end: str | None = None
+    recurrence_note: str | None = None
+    flexibility_note: str | None = None
 
     @model_validator(mode="after")
     def require_consistent_provenance_and_retirement(self) -> "MemoryEntryResponse":
+        validate_memory_context(
+            context_kind=self.context_kind,
+            effective_from=self.effective_from,
+            effective_until=self.effective_until,
+            local_time_start=self.local_time_start,
+            local_time_end=self.local_time_end,
+        )
         if self.source_kind == "feedback" and self.source_feedback_id is None:
             raise ValueError("feedback memory requires source_feedback_id")
         if self.source_kind == "operator" and self.source_feedback_id is not None:
@@ -82,11 +100,29 @@ class AddMemoryEntryRequest(RequestContractModel):
     expected_version: ExpectedVersion
     description: str
     changed_at: UTCDateTime
+    context_kind: MemoryContextKind = "general_context"
+    effective_from: UTCDateTime | None = None
+    effective_until: UTCDateTime | None = None
+    local_time_start: str | None = None
+    local_time_end: str | None = None
+    recurrence_note: str | None = None
+    flexibility_note: str | None = None
 
     @field_validator("description")
     @classmethod
     def require_description(cls, value: str) -> str:
         return require_nonblank_text(value, "description")
+
+    @model_validator(mode="after")
+    def require_valid_context(self) -> "AddMemoryEntryRequest":
+        validate_memory_context(
+            context_kind=self.context_kind,
+            effective_from=self.effective_from,
+            effective_until=self.effective_until,
+            local_time_start=self.local_time_start,
+            local_time_end=self.local_time_end,
+        )
+        return self
 
 
 class CorrectMemoryEntryRequest(RequestContractModel):
@@ -94,11 +130,29 @@ class CorrectMemoryEntryRequest(RequestContractModel):
     description: str
     reason: str
     changed_at: UTCDateTime
+    context_kind: MemoryContextKind = "general_context"
+    effective_from: UTCDateTime | None = None
+    effective_until: UTCDateTime | None = None
+    local_time_start: str | None = None
+    local_time_end: str | None = None
+    recurrence_note: str | None = None
+    flexibility_note: str | None = None
 
     @field_validator("description", "reason")
     @classmethod
     def require_text(cls, value: str, info: object) -> str:
         return require_nonblank_text(value, info.field_name)
+
+    @model_validator(mode="after")
+    def require_valid_context(self) -> "CorrectMemoryEntryRequest":
+        validate_memory_context(
+            context_kind=self.context_kind,
+            effective_from=self.effective_from,
+            effective_until=self.effective_until,
+            local_time_start=self.local_time_start,
+            local_time_end=self.local_time_end,
+        )
+        return self
 
 
 class RetireMemoryEntryRequest(RequestContractModel):

@@ -3,10 +3,91 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from backend.app.domain.events import EventPriority, EventStore, ResolutionOutcome
-from backend.app.domain.feedback import FeedbackService, ResidentMemoryService
+from backend.app.domain.feedback import (
+    FeedbackService,
+    MemoryEntry,
+    ResidentMemory,
+    ResidentMemoryService,
+)
 
 
 STARTED_AT = datetime(2026, 8, 25, 15, 0, tzinfo=timezone.utc)
+
+
+def _memory_entry(**changes: object) -> MemoryEntry:
+    values = {
+        "entry_id": "memory_flexible_context",
+        "description": "Bathroom trips vary day to day.",
+        "source_feedback_id": None,
+        "source_kind": "operator",
+        "status": "active",
+        "created_by": "operator_1",
+        "created_at": STARTED_AT,
+    }
+    values.update(changes)
+    return MemoryEntry(**values)
+
+
+def test_relevant_entries_treat_flexible_routine_as_a_tendency() -> None:
+    entry = _memory_entry(
+        context_kind="routine",
+        flexibility_note="No fixed time",
+        local_time_start="08:00",
+        local_time_end="10:00",
+    )
+    memory = ResidentMemory("resident_a", 1, (entry,))
+
+    assert memory.relevant_entries(
+        datetime(2026, 8, 26, 3, 0, tzinfo=timezone.utc)
+    ) == (entry,)
+    assert memory.relevant_entries(
+        datetime(2026, 8, 26, 15, 0, tzinfo=timezone.utc)
+    ) == (entry,)
+
+
+def test_relevant_entries_exclude_expired_context_and_filter_kinds_in_order() -> None:
+    expired = _memory_entry(
+        entry_id="memory_expired",
+        context_kind="temporary_change",
+        effective_from=STARTED_AT,
+        effective_until=STARTED_AT + timedelta(hours=1),
+    )
+    routine = _memory_entry(entry_id="memory_routine", context_kind="routine")
+    habit = _memory_entry(entry_id="memory_habit", context_kind="habit")
+    memory = ResidentMemory("resident_a", 1, (expired, routine, habit))
+
+    at = STARTED_AT + timedelta(hours=2)
+    assert memory.relevant_entries(at) == (routine, habit)
+    assert memory.relevant_entries(at, context_kinds=("habit", "routine")) == (
+        routine,
+        habit,
+    )
+
+
+def test_memory_entry_rejects_non_increasing_effective_range() -> None:
+    with pytest.raises(ValueError, match="effective_until"):
+        _memory_entry(
+            effective_from=STARTED_AT,
+            effective_until=STARTED_AT,
+        )
+
+
+@pytest.mark.parametrize(
+    "changes",
+    (
+        {"effective_from": datetime(2026, 8, 25, 15, 0)},
+        {"effective_until": datetime(2026, 8, 26, 15, 0)},
+        {"local_time_start": "08:00"},
+        {"local_time_end": "10:00"},
+        {"local_time_start": "8:00", "local_time_end": "10:00"},
+        {"local_time_start": "08:00", "local_time_end": "24:00"},
+    ),
+)
+def test_memory_entry_requires_aware_effective_times_and_complete_hhmm_pairs(
+    changes: dict[str, object],
+) -> None:
+    with pytest.raises(ValueError):
+        _memory_entry(**changes)
 
 
 def _feedback_memory():

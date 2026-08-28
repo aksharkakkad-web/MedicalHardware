@@ -5,6 +5,9 @@ from alembic.config import Config
 import pytest
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+
+from backend.app.db.repositories import FeedbackRepository
 
 
 EXPECTED_TABLES = {
@@ -125,6 +128,13 @@ EXPECTED_COLUMNS = {
         "retired_by": True,
         "retired_at": True,
         "retirement_reason": True,
+        "context_kind": True,
+        "effective_from": True,
+        "effective_until": True,
+        "local_time_start": True,
+        "local_time_end": True,
+        "recurrence_note": True,
+        "flexibility_note": True,
     },
     "idempotency_records": {
         "idempotency_id": False,
@@ -546,6 +556,58 @@ def test_initial_migration_creates_product_backbone(tmp_path: Path) -> None:
     command.downgrade(config, "base")
 
     assert set(inspect(engine).get_table_names()) == {"alembic_version"}
+    engine.dispose()
+
+
+def test_flexible_context_migration_defaults_old_memory_to_general_context(
+    tmp_path: Path,
+) -> None:
+    database_url = f"sqlite+pysqlite:///{tmp_path / 'old-memory.db'}"
+    config = Config("alembic.ini")
+    config.set_main_option("sqlalchemy.url", database_url)
+    command.upgrade(config, "0004_preferences_memory_admin")
+
+    engine = create_engine(database_url)
+    with engine.begin() as connection:
+        connection.execute(text("INSERT INTO tenants (tenant_id) VALUES ('tenant_a')"))
+        connection.execute(
+            text(
+                "INSERT INTO residents (resident_id, tenant_id, display_label) "
+                "VALUES ('resident_a', 'tenant_a', 'Resident A')"
+            )
+        )
+        connection.execute(
+            text(
+                "INSERT INTO resident_memory_snapshots "
+                "(tenant_id, resident_id, version, created_at) VALUES "
+                "('tenant_a', 'resident_a', 1, '2026-08-25T15:10:00Z')"
+            )
+        )
+        connection.execute(
+            text(
+                "INSERT INTO resident_memory_entries "
+                "(entry_id, tenant_id, resident_id, memory_version, description, "
+                "source_kind, source_feedback_id, supersedes_entry_id, status, "
+                "created_by, created_at, retired_by, retired_at, retirement_reason) "
+                "VALUES ('memory_old', 'tenant_a', 'resident_a', 1, "
+                "'Existing routine', 'operator', NULL, NULL, 'active', "
+                "'operator_1', '2026-08-25T15:10:00Z', NULL, NULL, NULL)"
+            )
+        )
+
+    command.upgrade(config, "head")
+
+    with Session(engine) as session:
+        restored = FeedbackRepository(session).current_memory(
+            "tenant_a",
+            "resident_a",
+        )
+        revision = session.scalar(text("SELECT version_num FROM alembic_version"))
+
+    assert revision == "0005_flexible_resident_context"
+    assert restored.entries[0].context_kind == "general_context"
+    assert restored.entries[0].effective_from is None
+    assert restored.entries[0].effective_until is None
     engine.dispose()
 
 

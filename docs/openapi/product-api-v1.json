@@ -9,14 +9,94 @@
             "title": "Changed At",
             "type": "string"
           },
+          "context_kind": {
+            "default": "general_context",
+            "enum": [
+              "routine",
+              "habit",
+              "temporary_change",
+              "expected_new_behavior",
+              "general_context"
+            ],
+            "title": "Context Kind",
+            "type": "string"
+          },
           "description": {
             "title": "Description",
             "type": "string"
+          },
+          "effective_from": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective From"
+          },
+          "effective_until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective Until"
           },
           "expected_version": {
             "minimum": 0.0,
             "title": "Expected Version",
             "type": "integer"
+          },
+          "flexibility_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Flexibility Note"
+          },
+          "local_time_end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Local Time End"
+          },
+          "local_time_start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Local Time Start"
+          },
+          "recurrence_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recurrence Note"
           },
           "schema_version": {
             "const": "1.0",
@@ -276,18 +356,98 @@
             "title": "Changed At",
             "type": "string"
           },
+          "context_kind": {
+            "default": "general_context",
+            "enum": [
+              "routine",
+              "habit",
+              "temporary_change",
+              "expected_new_behavior",
+              "general_context"
+            ],
+            "title": "Context Kind",
+            "type": "string"
+          },
           "description": {
             "title": "Description",
             "type": "string"
+          },
+          "effective_from": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective From"
+          },
+          "effective_until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective Until"
           },
           "expected_version": {
             "minimum": 0.0,
             "title": "Expected Version",
             "type": "integer"
           },
+          "flexibility_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Flexibility Note"
+          },
+          "local_time_end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Local Time End"
+          },
+          "local_time_start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Local Time Start"
+          },
           "reason": {
             "title": "Reason",
             "type": "string"
+          },
+          "recurrence_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recurrence Note"
           },
           "schema_version": {
             "const": "1.0",
@@ -1091,6 +1251,18 @@
       "MemoryEntryResponse": {
         "additionalProperties": false,
         "properties": {
+          "context_kind": {
+            "default": "general_context",
+            "enum": [
+              "routine",
+              "habit",
+              "temporary_change",
+              "expected_new_behavior",
+              "general_context"
+            ],
+            "title": "Context Kind",
+            "type": "string"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -1104,9 +1276,77 @@
             "title": "Description",
             "type": "string"
           },
+          "effective_from": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective From"
+          },
+          "effective_until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective Until"
+          },
           "entry_id": {
             "title": "Entry Id",
             "type": "string"
+          },
+          "flexibility_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Flexibility Note"
+          },
+          "local_time_end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Local Time End"
+          },
+          "local_time_start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Local Time Start"
+          },
+          "recurrence_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recurrence Note"
           },
           "retired_at": {
             "anyOf": [

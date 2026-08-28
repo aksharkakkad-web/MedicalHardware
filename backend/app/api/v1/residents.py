@@ -225,6 +225,13 @@ def add_resident_memory_entry(
             expected_version=body.expected_version,
             description=body.description,
             changed_at=body.changed_at,
+            context_kind=body.context_kind,
+            effective_from=body.effective_from,
+            effective_until=body.effective_until,
+            local_time_start=body.local_time_start,
+            local_time_end=body.local_time_end,
+            recurrence_note=body.recurrence_note,
+            flexibility_note=body.flexibility_note,
         ),
     )
 
@@ -259,6 +266,13 @@ def correct_resident_memory_entry(
             description=body.description,
             reason=body.reason,
             changed_at=body.changed_at,
+            context_kind=body.context_kind,
+            effective_from=body.effective_from,
+            effective_until=body.effective_until,
+            local_time_start=body.local_time_start,
+            local_time_end=body.local_time_end,
+            recurrence_note=body.recurrence_note,
+            flexibility_note=body.flexibility_note,
         ),
     )
 

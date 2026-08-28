@@ -156,3 +156,46 @@ def test_admin_memory_repository_rejects_stale_and_cross_tenant_writes(
 
     assert repository.current_memory("tenant_a", "resident_a") == added
     assert repository.current_memory("tenant_a", "resident_b").version == 0
+
+
+def test_expected_new_behavior_survives_repository_restart_with_provenance(
+    session: Session,
+) -> None:
+    saved = FeedbackRepository(session).save_memory(
+        "tenant_a",
+        ResidentMemoryService().add_entry(
+            resident_id="resident_a",
+            expected_version=0,
+            description="A new medication may increase bathroom trips.",
+            context_kind="expected_new_behavior",
+            effective_from=NOW,
+            effective_until=NOW + timedelta(days=7),
+            local_time_start="07:30",
+            local_time_end="11:00",
+            recurrence_note="May happen several times each morning",
+            flexibility_note="Timing varies day to day",
+            actor_id="operator_1",
+            changed_at=NOW,
+        ),
+        expected_version=0,
+        changed_at=NOW,
+    )
+    session.commit()
+
+    with Session(session.get_bind()) as restarted_session:
+        restored = FeedbackRepository(restarted_session).current_memory(
+            "tenant_a",
+            "resident_a",
+        )
+
+    assert restored == saved
+    entry = restored.active_entries[0]
+    assert entry.context_kind == "expected_new_behavior"
+    assert entry.effective_from == NOW
+    assert entry.effective_until == NOW + timedelta(days=7)
+    assert entry.local_time_start == "07:30"
+    assert entry.local_time_end == "11:00"
+    assert entry.recurrence_note == "May happen several times each morning"
+    assert entry.flexibility_note == "Timing varies day to day"
+    assert entry.source_kind == "operator"
+    assert entry.created_by == "operator_1"

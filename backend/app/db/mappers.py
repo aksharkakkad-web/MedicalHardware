@@ -215,6 +215,13 @@ def memory_to_rows(
             retired_by=entry.retired_by,
             retired_at=_utc(entry.retired_at),
             retirement_reason=entry.retirement_reason,
+            context_kind=entry.context_kind,
+            effective_from=_utc(entry.effective_from),
+            effective_until=_utc(entry.effective_until),
+            local_time_start=entry.local_time_start,
+            local_time_end=entry.local_time_end,
+            recurrence_note=entry.recurrence_note,
+            flexibility_note=entry.flexibility_note,
         )
         for entry in memory.entries
     )
@@ -238,6 +245,13 @@ def memory_from_rows(
             retired_by=row.retired_by,
             retired_at=_utc(row.retired_at),
             retirement_reason=row.retirement_reason,
+            context_kind=row.context_kind or "general_context",
+            effective_from=_utc(row.effective_from),
+            effective_until=_utc(row.effective_until),
+            local_time_start=row.local_time_start,
+            local_time_end=row.local_time_end,
+            recurrence_note=row.recurrence_note,
+            flexibility_note=row.flexibility_note,
         )
         for row in sorted(entry_rows, key=lambda item: item.memory_entry_row_id or 0)
     )
