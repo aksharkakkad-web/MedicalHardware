@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-28T03:09:12Z",
+  "title": "Design System: Adaptive Care Clinic Console",
+  "extensions": {
+    "colorMeta": {
+      "canvas": { "role": "neutral", "displayName": "Warm Canvas", "canonical": "#f7f6f2", "tonalRamp": ["color-mix(in oklch, #f7f6f2 42%, black)", "color-mix(in oklch, #f7f6f2 58%, black)", "color-mix(in oklch, #f7f6f2 76%, black)", "#f7f6f2", "color-mix(in oklch, #f7f6f2 82%, white)", "color-mix(in oklch, #f7f6f2 65%, white)", "color-mix(in oklch, #f7f6f2 42%, white)", "color-mix(in oklch, #f7f6f2 18%, white)"] },
+      "surface": { "role": "neutral", "displayName": "Working White", "canonical": "#ffffff", "tonalRamp": ["#262626", "#555555", "#8c8c8c", "#c4c4c4", "#dedede", "#ededed", "#f7f7f7", "#ffffff"] },
+      "ink": { "role": "neutral", "displayName": "Clinic Ink", "canonical": "#1d1d1f", "tonalRamp": ["color-mix(in oklch, #1d1d1f 42%, black)", "color-mix(in oklch, #1d1d1f 58%, black)", "color-mix(in oklch, #1d1d1f 76%, black)", "#1d1d1f", "color-mix(in oklch, #1d1d1f 82%, white)", "color-mix(in oklch, #1d1d1f 65%, white)", "color-mix(in oklch, #1d1d1f 42%, white)", "color-mix(in oklch, #1d1d1f 18%, white)"] },
+      "text-muted": { "role": "neutral", "displayName": "Quiet Gray", "canonical": "#636366", "tonalRamp": ["color-mix(in oklch, #636366 42%, black)", "color-mix(in oklch, #636366 58%, black)", "color-mix(in oklch, #636366 76%, black)", "#636366", "color-mix(in oklch, #636366 82%, white)", "color-mix(in oklch, #636366 65%, white)", "color-mix(in oklch, #636366 42%, white)", "color-mix(in oklch, #636366 18%, white)"] },
+      "text-soft": { "role": "neutral", "displayName": "Soft Gray", "canonical": "#6e6e73", "tonalRamp": ["color-mix(in oklch, #6e6e73 42%, black)", "color-mix(in oklch, #6e6e73 58%, black)", "color-mix(in oklch, #6e6e73 76%, black)", "#6e6e73", "color-mix(in oklch, #6e6e73 82%, white)", "color-mix(in oklch, #6e6e73 65%, white)", "color-mix(in oklch, #6e6e73 42%, white)", "color-mix(in oklch, #6e6e73 18%, white)"] },
+      "divider": { "role": "neutral", "displayName": "Hairline Divider", "canonical": "#dedee3", "tonalRamp": ["color-mix(in oklch, #dedee3 42%, black)", "color-mix(in oklch, #dedee3 58%, black)", "color-mix(in oklch, #dedee3 76%, black)", "#dedee3", "color-mix(in oklch, #dedee3 82%, white)", "color-mix(in oklch, #dedee3 65%, white)", "color-mix(in oklch, #dedee3 42%, white)", "color-mix(in oklch, #dedee3 18%, white)"] },
+      "cobalt-action": { "role": "primary", "displayName": "Action Cobalt", "canonical": "#075bd8", "tonalRamp": ["color-mix(in oklch, #075bd8 42%, black)", "color-mix(in oklch, #075bd8 58%, black)", "color-mix(in oklch, #075bd8 76%, black)", "#075bd8", "color-mix(in oklch, #075bd8 82%, white)", "color-mix(in oklch, #075bd8 65%, white)", "color-mix(in oklch, #075bd8 42%, white)", "color-mix(in oklch, #075bd8 18%, white)"] },
+      "cobalt-wash": { "role": "primary", "displayName": "Cobalt Wash", "canonical": "#edf4ff", "tonalRamp": ["color-mix(in oklch, #edf4ff 42%, black)", "color-mix(in oklch, #edf4ff 58%, black)", "color-mix(in oklch, #edf4ff 76%, black)", "#edf4ff", "color-mix(in oklch, #edf4ff 82%, white)", "color-mix(in oklch, #edf4ff 65%, white)", "color-mix(in oklch, #edf4ff 42%, white)", "color-mix(in oklch, #edf4ff 18%, white)"] },
+      "cobalt-border": { "role": "primary", "displayName": "Cobalt Border", "canonical": "#c9dcfb", "tonalRamp": ["color-mix(in oklch, #c9dcfb 42%, black)", "color-mix(in oklch, #c9dcfb 58%, black)", "color-mix(in oklch, #c9dcfb 76%, black)", "#c9dcfb", "color-mix(in oklch, #c9dcfb 82%, white)", "color-mix(in oklch, #c9dcfb 65%, white)", "color-mix(in oklch, #c9dcfb 42%, white)", "color-mix(in oklch, #c9dcfb 18%, white)"] },
+      "neutral-status-ink": { "role": "neutral", "displayName": "Neutral Status Ink", "canonical": "#52605b", "tonalRamp": ["color-mix(in oklch, #52605b 42%, black)", "color-mix(in oklch, #52605b 58%, black)", "color-mix(in oklch, #52605b 76%, black)", "#52605b", "color-mix(in oklch, #52605b 82%, white)", "color-mix(in oklch, #52605b 65%, white)", "color-mix(in oklch, #52605b 42%, white)", "color-mix(in oklch, #52605b 18%, white)"] },
+      "neutral-status-bg": { "role": "neutral", "displayName": "Neutral Status Field", "canonical": "#f2f4f3", "tonalRamp": ["color-mix(in oklch, #f2f4f3 42%, black)", "color-mix(in oklch, #f2f4f3 58%, black)", "color-mix(in oklch, #f2f4f3 76%, black)", "#f2f4f3", "color-mix(in oklch, #f2f4f3 82%, white)", "color-mix(in oklch, #f2f4f3 65%, white)", "color-mix(in oklch, #f2f4f3 42%, white)", "color-mix(in oklch, #f2f4f3 18%, white)"] },
+      "healthy-status-ink": { "role": "secondary", "displayName": "Healthy Evergreen", "canonical": "#12604d", "tonalRamp": ["color-mix(in oklch, #12604d 42%, black)", "color-mix(in oklch, #12604d 58%, black)", "color-mix(in oklch, #12604d 76%, black)", "#12604d", "color-mix(in oklch, #12604d 82%, white)", "color-mix(in oklch, #12604d 65%, white)", "color-mix(in oklch, #12604d 42%, white)", "color-mix(in oklch, #12604d 18%, white)"] },
+      "healthy-status-bg": { "role": "secondary", "displayName": "Healthy Field", "canonical": "#e4f3ed", "tonalRamp": ["color-mix(in oklch, #e4f3ed 42%, black)", "color-mix(in oklch, #e4f3ed 58%, black)", "color-mix(in oklch, #e4f3ed 76%, black)", "#e4f3ed", "color-mix(in oklch, #e4f3ed 82%, white)", "color-mix(in oklch, #e4f3ed 65%, white)", "color-mix(in oklch, #e4f3ed 42%, white)", "color-mix(in oklch, #e4f3ed 18%, white)"] },
+      "attention-status-ink": { "role": "secondary", "displayName": "Attention Amber", "canonical": "#875006", "tonalRamp": ["color-mix(in oklch, #875006 42%, black)", "color-mix(in oklch, #875006 58%, black)", "color-mix(in oklch, #875006 76%, black)", "#875006", "color-mix(in oklch, #875006 82%, white)", "color-mix(in oklch, #875006 65%, white)", "color-mix(in oklch, #875006 42%, white)", "color-mix(in oklch, #875006 18%, white)"] },
+      "attention-status-bg": { "role": "secondary", "displayName": "Attention Field", "canonical": "#fff2d9", "tonalRamp": ["color-mix(in oklch, #fff2d9 42%, black)", "color-mix(in oklch, #fff2d9 58%, black)", "color-mix(in oklch, #fff2d9 76%, black)", "#fff2d9", "color-mix(in oklch, #fff2d9 82%, white)", "color-mix(in oklch, #fff2d9 65%, white)", "color-mix(in oklch, #fff2d9 42%, white)", "color-mix(in oklch, #fff2d9 18%, white)"] },
+      "critical-status-ink": { "role": "secondary", "displayName": "Critical Brick", "canonical": "#9f2d25", "tonalRamp": ["color-mix(in oklch, #9f2d25 42%, black)", "color-mix(in oklch, #9f2d25 58%, black)", "color-mix(in oklch, #9f2d25 76%, black)", "#9f2d25", "color-mix(in oklch, #9f2d25 82%, white)", "color-mix(in oklch, #9f2d25 65%, white)", "color-mix(in oklch, #9f2d25 42%, white)", "color-mix(in oklch, #9f2d25 18%, white)"] },
+      "critical-status-bg": { "role": "secondary", "displayName": "Critical Field", "canonical": "#ffebe8", "tonalRamp": ["color-mix(in oklch, #ffebe8 42%, black)", "color-mix(in oklch, #ffebe8 58%, black)", "color-mix(in oklch, #ffebe8 76%, black)", "#ffebe8", "color-mix(in oklch, #ffebe8 82%, white)", "color-mix(in oklch, #ffebe8 65%, white)", "color-mix(in oklch, #ffebe8 42%, white)", "color-mix(in oklch, #ffebe8 18%, white)"] },
+      "unavailable-status-ink": { "role": "neutral", "displayName": "Unavailable Gray", "canonical": "#59635f", "tonalRamp": ["color-mix(in oklch, #59635f 42%, black)", "color-mix(in oklch, #59635f 58%, black)", "color-mix(in oklch, #59635f 76%, black)", "#59635f", "color-mix(in oklch, #59635f 82%, white)", "color-mix(in oklch, #59635f 65%, white)", "color-mix(in oklch, #59635f 42%, white)", "color-mix(in oklch, #59635f 18%, white)"] },
+      "unavailable-status-bg": { "role": "neutral", "displayName": "Unavailable Field", "canonical": "#ecefed", "tonalRamp": ["color-mix(in oklch, #ecefed 42%, black)", "color-mix(in oklch, #ecefed 58%, black)", "color-mix(in oklch, #ecefed 76%, black)", "#ecefed", "color-mix(in oklch, #ecefed 82%, white)", "color-mix(in oklch, #ecefed 65%, white)", "color-mix(in oklch, #ecefed 42%, white)", "color-mix(in oklch, #ecefed 18%, white)"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Page Display", "purpose": "One page or event title per workspace." },
+      "headline": { "displayName": "Panel Headline", "purpose": "The leading title inside an important work sheet." },
+      "title": { "displayName": "Compact Title", "purpose": "Panel names, workspace identity, and compact hierarchy." },
+      "body": { "displayName": "Operational Body", "purpose": "Explanations, evidence, limitations, and monitoring context." },
+      "label": { "displayName": "Scan Label", "purpose": "Statuses, columns, rooms, timestamps, and metadata." }
+    },
+    "shadows": [
+      { "name": "ambient-card", "value": "0 1px 2px rgb(0 0 0 / 4%), 0 10px 32px rgb(0 0 0 / 5%)", "purpose": "Gentle separation for working sheets and operational lists." },
+      { "name": "action-lift", "value": "0 3px 10px rgb(7 91 216 / 18%)", "purpose": "Primary workflow buttons only." },
+      { "name": "selected-segment", "value": "0 1px 4px rgb(0 0 0 / 10%)", "purpose": "The selected option inside segmented filters." },
+      { "name": "focus-halo", "value": "0 0 0 3px rgb(7 91 216 / 22%)", "purpose": "Keyboard focus paired with the cobalt outline." }
+    ],
+    "motion": [
+      { "name": "row-hover", "value": "150ms ease", "purpose": "Quiet list-row surface transitions." },
+      { "name": "navigation-state", "value": "160ms ease", "purpose": "Navigation color and surface transitions." },
+      { "name": "workflow-acknowledged", "value": "360ms ease-out", "purpose": "Brief saved-state confirmation after acknowledging an event." },
+      { "name": "workflow-checked", "value": "420ms ease-out", "purpose": "Brief saved-state confirmation after recording a resident check." },
+      { "name": "workflow-resolved", "value": "520ms ease-out", "purpose": "Brief saved-state confirmation after resolving an event." }
+    ],
+    "breakpoints": [
+      { "name": "phone", "value": "600px" },
+      { "name": "record-stack", "value": "700px" },
+      { "name": "shell-collapse", "value": "760px" },
+      { "name": "detail-stack", "value": "900px" },
+      { "name": "event-list-stack", "value": "940px" },
+      { "name": "secondary-columns-hide", "value": "1080px" },
+      { "name": "event-workspace-stack", "value": "1100px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Workflow Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single full-width action that advances an event workflow.",
+      "html": "<button class=\"ds-btn-primary\" type=\"button\">Acknowledge event</button>",
+      "css": ".ds-btn-primary { width: 100%; min-height: 2.8rem; padding: .7rem 1rem; border: 0; border-radius: var(--radius-control, .75rem); color: #fff; background: var(--color-accent-strong, #075bd8); box-shadow: 0 3px 10px rgb(7 91 216 / 18%); font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif; font-size: .8rem; font-weight: 680; cursor: pointer; } .ds-btn-primary:focus-visible { outline: 2px solid var(--color-accent-strong, #075bd8); outline-offset: 3px; box-shadow: 0 0 0 3px rgb(7 91 216 / 22%); } .ds-btn-primary:disabled { opacity: .62; cursor: wait; }"
+    },
+    {
+      "name": "Healthy Status Pill",
+      "kind": "chip",
+      "refersTo": "status-pill",
+      "description": "A word-and-dot state marker for healthy, active, or resolved conditions.",
+      "html": "<span class=\"ds-status-pill ds-status-healthy\"><span class=\"ds-status-dot\" aria-hidden=\"true\"></span>Monitoring active</span>",
+      "css": ".ds-status-pill { display: inline-flex; align-items: center; gap: .45rem; width: fit-content; min-height: 1.75rem; padding: .25rem .65rem; border: 1px solid currentColor; border-radius: 999px; font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif; font-size: .75rem; font-weight: 650; line-height: 1; white-space: nowrap; } .ds-status-dot { width: .42rem; height: .42rem; flex: 0 0 auto; border-radius: 50%; background: currentColor; } .ds-status-healthy { color: var(--color-status-healthy-text, #12604d); background: var(--color-status-healthy-bg, #e4f3ed); }"
+    },
+    {
+      "name": "Critical Status Pill",
+      "kind": "chip",
+      "refersTo": "status-pill",
+      "description": "The same stable pill geometry used for critical, high-priority, and overdue states.",
+      "html": "<span class=\"ds-status-pill ds-status-critical\"><span class=\"ds-status-dot\" aria-hidden=\"true\"></span>Needs attention</span>",
+      "css": ".ds-status-pill { display: inline-flex; align-items: center; gap: .45rem; width: fit-content; min-height: 1.75rem; padding: .25rem .65rem; border: 1px solid currentColor; border-radius: 999px; font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif; font-size: .75rem; font-weight: 650; line-height: 1; white-space: nowrap; } .ds-status-dot { width: .42rem; height: .42rem; flex: 0 0 auto; border-radius: 50%; background: currentColor; } .ds-status-critical { color: var(--color-status-critical-text, #9f2d25); background: var(--color-status-critical-bg, #ffebe8); }"
+    },
+    {
+      "name": "Active Navigation Item",
+      "kind": "nav",
+      "description": "The selected destination in the stable clinic index.",
+      "html": "<a class=\"ds-nav-active\" href=\"#\"><svg class=\"ds-nav-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 13h6V4H4v9Zm10 7h6v-9h-6v9ZM4 20h6v-3H4v3Zm10-13h6V4h-6v3Z\"/></svg><span>Overview</span></a>",
+      "css": ".ds-nav-active { display: flex; min-height: 2.65rem; align-items: center; gap: .72rem; padding: .45rem .65rem; border-radius: .7rem; color: var(--color-accent-strong, #075bd8); background: var(--color-accent-soft, #edf4ff); font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif; font-size: .86rem; font-weight: 580; text-decoration: none; transition: background-color 160ms ease, color 160ms ease; } .ds-nav-active:focus-visible { outline: 2px solid var(--color-accent-strong, #075bd8); outline-offset: 3px; box-shadow: 0 0 0 3px rgb(7 91 216 / 22%); } .ds-nav-icon { width: 1.15rem; height: 1.15rem; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "A plain bordered field for staff-supplied event resolution context.",
+      "html": "<label class=\"ds-field-label\">What actually happened?<input class=\"ds-text-field\" type=\"text\" placeholder=\"Example: Assisted movement\"></label>",
+      "css": ".ds-field-label { display: grid; gap: .5rem; color: var(--color-text, #1d1d1f); font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif; font-size: .8rem; font-weight: 700; } .ds-text-field { width: 100%; padding: .7rem; border: 1px solid var(--color-border, #dedee3); border-radius: var(--radius-control, .75rem); color: var(--color-text, #1d1d1f); background: var(--color-surface, #fff); font: inherit; font-weight: 400; } .ds-text-field:focus-visible { outline: 2px solid var(--color-accent-strong, #075bd8); outline-offset: 3px; box-shadow: 0 0 0 3px rgb(7 91 216 / 22%); }"
+    },
+    {
+      "name": "Working Sheet",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The primary white folio surface for evidence, interpretation, actions, and facts.",
+      "html": "<section class=\"ds-work-sheet\"><h2>What the sensors observed</h2><p>Structured evidence appears here in plain language.</p></section>",
+      "css": ".ds-work-sheet { padding: 1.25rem; border: 1px solid var(--color-border, #dedee3); border-radius: var(--radius-card, 1rem); color: var(--color-text, #1d1d1f); background: var(--color-surface, #fff); box-shadow: 0 1px 2px rgb(0 0 0 / 4%), 0 10px 32px rgb(0 0 0 / 5%); font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif; } .ds-work-sheet h2 { margin: 0; font-size: 1.15rem; letter-spacing: -.02em; } .ds-work-sheet p { margin: .35rem 0 0; color: var(--color-text-muted, #636366); font-size: .84rem; line-height: 1.55; }"
+    },
+    {
+      "name": "Selected Outcome Card",
+      "kind": "custom",
+      "description": "A compact radio-card for the event resolution outcome.",
+      "html": "<label class=\"ds-outcome-selected\"><input type=\"radio\" checked><span><strong>Confirmed event</strong><small>The event reflected a real situation that needed attention.</small></span></label>",
+      "css": ".ds-outcome-selected { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .6rem; padding: .7rem; border: 1px solid var(--color-accent-strong, #075bd8); border-radius: var(--radius-control, .75rem); color: var(--color-text, #1d1d1f); background: var(--color-accent-soft, #edf4ff); font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif; font-size: .8rem; cursor: pointer; } .ds-outcome-selected input { margin-top: .15rem; accent-color: var(--color-accent-strong, #075bd8); } .ds-outcome-selected strong, .ds-outcome-selected small { display: block; } .ds-outcome-selected small { margin-top: .2rem; color: var(--color-text-muted, #636366); font-size: .7rem; font-weight: 450; line-height: 1.4; } .ds-outcome-selected:focus-within { box-shadow: 0 0 0 3px rgb(7 91 216 / 22%); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Calm Care Folio",
+    "overview": "Adaptive Care behaves like a well-kept care-plan folio: a stable index, one clear working sheet, and deeper evidence immediately behind the item in focus. The interface is calm but not passive. Warm paper and quiet white surfaces lower visual noise so attention, uncertainty, and the next staff action remain unmistakable.\n\nThe system is compact enough for an operational console but leaves deliberate room around consequential information. Native-feeling controls, restrained motion, and progressive detail make the product feel precise without implying medical certainty.",
+    "keyCharacteristics": [
+      "Warm paper canvas with crisp white working sheets.",
+      "Cobalt reserved for selection, navigation, focus, and staff action.",
+      "Semantic states pair words and dots with color; color never carries meaning alone.",
+      "Compact fixed-column scanning on wide screens, stacked records on narrow screens.",
+      "Soft folio layering through hairline borders, gentle shadows, and occasional sheet edges."
+    ],
+    "rules": [
+      { "name": "The One Action Voice Rule", "body": "Cobalt means navigation, selection, focus, or an available staff action; it does not decorate neutral information.", "section": "colors" },
+      { "name": "The Meaning Needs Words Rule", "body": "Every semantic color is accompanied by a direct text label and, where useful, a dot or boundary.", "section": "colors" },
+      { "name": "The Quiet Normal Rule", "body": "Normal and healthy rooms remain visually calm; amber and red appear only when the underlying state earns attention.", "section": "colors" },
+      { "name": "The Title Budget Rule", "body": "Large type identifies the page or event; operational rows and panels rely on compact titles instead of competing headlines.", "section": "typography" },
+      { "name": "The Plain Evidence Rule", "body": "Sensor evidence, limitations, and staff actions use sentence case and readable line spacing rather than display styling.", "section": "typography" },
+      { "name": "The Attention-Then-Inventory Rule", "body": "A screen presents urgent work before the full resident or event inventory, then preserves a direct path into evidence and action.", "section": "layout" },
+      { "name": "The Collapse by Importance Rule", "body": "Narrow layouts remove secondary columns before they compress primary labels, statuses, or the next staff action.", "section": "layout" },
+      { "name": "The Folio Layer Rule", "body": "Depth clarifies persistent chrome, a working sheet, or an active control; it never exists as ornamental floating-card scenery.", "section": "elevation" },
+      { "name": "The Motion Explains State Rule", "body": "Short 150–160ms transitions support hover and selection; longer 360–520ms animations are reserved for acknowledged, checked, and resolved workflow changes and are removed under reduced motion.", "section": "elevation" },
+      { "name": "The Soft Geometry Rule", "body": "Operational containers stay rectangular and aligned; rounded corners soften the console without turning it into a collection of bubbles.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do lead with the next caregiver decision, then reveal evidence, quality, device context, and history progressively.",
+      "Do keep synthetic-data labeling visible in persistent chrome.",
+      "Do pair every semantic color with words and preserve unavailable or limited states as explicit states.",
+      "Do use the shared 0.75rem control radius, 1rem card radius, hairline borders, and ambient shadow for new operational surfaces.",
+      "Do preserve keyboard focus and reduced-motion behavior in every new control or transition."
+    ],
+    "donts": [
+      "Don't use cobalt, amber, red, or green as decoration; each color has an operational job.",
+      "Don't replace uncertainty with precise-looking numbers, diagnoses, or reassuring empty space.",
+      "Don't create equal-weight card mosaics that hide the attention-to-action path.",
+      "Don't shrink primary labels or staff actions to preserve secondary table columns on narrow screens.",
+      "Don't add heavy gradients, dark command-center styling, decorative motion, or extra floating layers to this quiet folio world."
+    ]
+  }
+}
