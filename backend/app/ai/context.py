@@ -1,6 +1,8 @@
 """Bounded serialization of evidence and relevant resident context."""
 
 import json
+from hashlib import sha256
+import re
 
 from backend.app.ai.client import InterpretationRequest
 from backend.app.ai.skills import select_skill_bundle
@@ -10,6 +12,13 @@ from backend.app.intelligence.evidence import EvidencePacket
 
 
 _MAX_RELEVANT_MEMORY_ENTRIES = 20
+_CONTEXT_KEYWORDS = {
+    "fall_like": ("fall", "walk", "mobility", "transfer", "balance"),
+    "inactivity": ("inactive", "still", "sleep", "rest", "nap", "sedentary"),
+    "movement": ("move", "motion", "walk", "activity", "exercise", "transfer", "pace"),
+    "respiration": ("breath", "respirat"),
+    "routine_change": ("routine", "habit", "schedule", "change"),
+}
 
 
 def _feature_payload(packet: EvidencePacket) -> list[dict[str, object]]:
@@ -36,6 +45,51 @@ def _feature_payload(packet: EvidencePacket) -> list[dict[str, object]]:
     ]
 
 
+def _context_text(entry: object) -> str:
+    values = (
+        entry.description,
+        entry.recurrence_note,
+        entry.flexibility_note,
+    )
+    return " ".join(value for value in values if value).casefold()
+
+
+def _is_relevant_context(entry: object, primary_skill: str) -> bool:
+    if entry.context_kind == "general_context":
+        return False
+    keywords = _CONTEXT_KEYWORDS.get(primary_skill, ())
+    if not keywords:
+        return False
+    text = _context_text(entry)
+    return any(re.search(rf"\b{re.escape(keyword)}\w*", text) for keyword in keywords)
+
+
+def _context_ref(resident_memory: ResidentMemory, entry_id: str) -> str:
+    return (
+        f"resident-memory://{resident_memory.resident_id}/"
+        f"{resident_memory.version}/entries/{entry_id}"
+    )
+
+
+def _request_fingerprint(
+    *,
+    payload: dict[str, object],
+    prompt: str,
+    skill_bundle: tuple[str, ...],
+    model_id: str,
+    model_version: str,
+) -> str:
+    material = {
+        "model_id": model_id,
+        "model_version": model_version,
+        "payload": payload,
+        "prompt": prompt,
+        "skill_bundle": list(skill_bundle),
+    }
+    canonical = json.dumps(material, sort_keys=True, separators=(",", ":"))
+    return sha256(canonical.encode("utf-8")).hexdigest()
+
+
 def build_interpretation_request(
     packet: EvidencePacket,
     resident_memory: ResidentMemory,
@@ -59,9 +113,20 @@ def build_interpretation_request(
         "urgent_deterministic_event",
     )
     bundle = select_skill_bundle(packet)
-    relevant_entries = resident_memory.relevant_entries(packet.current_time)[
-        :_MAX_RELEVANT_MEMORY_ENTRIES
-    ]
+    primary_skill = bundle.skill_names[1]
+    relevant_entries = tuple(
+        sorted(
+            (
+                entry
+                for entry in resident_memory.relevant_entries(packet.current_time)
+                if _is_relevant_context(entry, primary_skill)
+            ),
+            key=lambda entry: entry.entry_id,
+        )
+    )[:_MAX_RELEVANT_MEMORY_ENTRIES]
+    retrieved_context_refs = tuple(
+        _context_ref(resident_memory, entry.entry_id) for entry in relevant_entries
+    )
     retrieval_version = "relevant_resident_context_v1"
     output_version = "monitoring_interpretation_output_v1"
     prompt_version = "monitoring_interpreter_v1"
@@ -101,6 +166,7 @@ def build_interpretation_request(
             "entries": [
                 {
                     "context_kind": entry.context_kind,
+                    "context_ref": _context_ref(resident_memory, entry.entry_id),
                     "description": entry.description,
                     "entry_id": entry.entry_id,
                     "flexibility_note": entry.flexibility_note,
@@ -114,6 +180,7 @@ def build_interpretation_request(
             "version": resident_memory.version,
         },
         "schema_version": "1.0",
+        "skill_bundle": list(bundle.skill_names),
         "versions": {
             "invocation": invocation_version,
             "model": model_version,
@@ -125,6 +192,52 @@ def build_interpretation_request(
             "skills": list(bundle.skill_versions),
         },
     }
+    request_fingerprint = _request_fingerprint(
+        payload=payload,
+        prompt=bundle.prompt,
+        skill_bundle=bundle.skill_names,
+        model_id=model_id,
+        model_version=model_version,
+    )
+    payload["request_fingerprint"] = request_fingerprint
+    required_missing_information = tuple(
+        sorted(
+            {
+                *packet.unknowns,
+                *packet.missing_initiating_features,
+                *packet.missing_modalities,
+            }
+        )
+    )
+    required_limitations = tuple(
+        dict.fromkeys(
+            (
+                *packet.limitations,
+                *(
+                    ("resident_attribution_ambiguous",)
+                    if "multi_person" in bundle.skill_names
+                    else ()
+                ),
+            )
+        )
+    )
+    measurement_values = tuple(
+        sorted(
+            (
+                item.feature_name,
+                tuple(
+                    sorted(
+                        {
+                            float(item.value),
+                            float(item.robust_z),
+                            float(item.persistence_frames),
+                        }
+                    )
+                ),
+            )
+            for item in packet.changed_features
+        )
+    )
     return InterpretationRequest(
         anomaly_id=packet.anomaly_id,
         packet_revision=packet.packet_revision,
@@ -151,7 +264,12 @@ def build_interpretation_request(
                 }
             )
         ),
+        measurement_values=measurement_values,
         contradictions=packet.contradictions,
+        required_missing_information=required_missing_information,
+        required_limitations=required_limitations,
+        retrieved_context_refs=retrieved_context_refs,
+        request_fingerprint=request_fingerprint,
         urgent_deterministic_event=urgent,
     )
 

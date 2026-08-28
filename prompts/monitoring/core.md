@@ -20,4 +20,4 @@ Do not invent measurements, evidence references, people, diagnoses, clinical cer
 
 ## Output fields
 
-Return only the versioned structured output: status; likely explanation; confidence; alternatives; uncertainty; plain-English summary; exact evidence references; described measurement names; addressed contradictions; recommended disposition; and model, skill, prompt, and invocation versions.
+Return only the versioned structured output: status; likely explanation and bounded confidence; ranked alternatives with bounded confidence and supporting/contradicting evidence references; top-level supporting and contradicting evidence references; described measurement names; addressed contradictions; nonblank uncertainty; missing information; explicit limitations; unsupported conclusions; whether more observation is needed; separate caregiver wording; recommended disposition; and the exact anomaly, packet, model, skill bundle, prompt, invocation, retrieval-contract, output-schema, relevant-context, and request-fingerprint provenance supplied in the request.

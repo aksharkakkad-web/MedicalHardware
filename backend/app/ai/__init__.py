@@ -2,6 +2,7 @@
 
 from backend.app.ai.client import (
     DeterministicFakeLLMClient,
+    InterpretationAlternative,
     InterpretationRequest,
     InterpretationResult,
     InterpretationStatus,
@@ -14,6 +15,7 @@ from backend.app.ai.validation import validate_interpretation
 
 __all__ = [
     "DeterministicFakeLLMClient",
+    "InterpretationAlternative",
     "InterpretationRequest",
     "InterpretationResult",
     "InterpretationStatus",
