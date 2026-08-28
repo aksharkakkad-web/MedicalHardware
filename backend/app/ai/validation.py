@@ -61,12 +61,13 @@ def _append(reasons: list[str], reason: str) -> None:
 
 
 def _valid_confidence(value: object) -> bool:
-    return (
-        not isinstance(value, bool)
-        and isinstance(value, (int, float))
-        and isfinite(float(value))
-        and 0.0 <= float(value) <= 1.0
-    )
+    if isinstance(value, bool):
+        return False
+    if isinstance(value, int):
+        return 0 <= value <= 1
+    if isinstance(value, float):
+        return isfinite(value) and 0.0 <= value <= 1.0
+    return False
 
 
 def _required_text(

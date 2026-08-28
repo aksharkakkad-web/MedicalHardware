@@ -1205,3 +1205,57 @@ def test_alternative_reference_tuples_reject_duplicates(
         validate_interpretation(request, result)
 
     assert exc_info.value.reasons == (expected_reason,)
+
+
+def test_huge_integer_top_level_confidence_is_rejected_without_overflow() -> None:
+    # Break caught: float conversion overflows before the trust boundary can reject JSON int.
+    request = _request()
+    result = replace(_valid_result(request), confidence=10**400)
+
+    with pytest.raises(InterpretationValidationError) as exc_info:
+        validate_interpretation(request, result)
+
+    assert exc_info.value.reasons == ("invalid_interpretation_confidence",)
+
+
+def test_huge_integer_alternative_confidence_is_rejected_without_overflow() -> None:
+    # Break caught: a huge alternative score escapes as raw OverflowError.
+    request = _request()
+    alternative = replace(
+        _valid_result(request).alternatives[0],
+        confidence=10**400,
+    )
+    result = replace(_valid_result(request), alternatives=(alternative,))
+
+    with pytest.raises(InterpretationValidationError) as exc_info:
+        validate_interpretation(request, result)
+
+    assert exc_info.value.reasons == ("invalid_alternative_confidence:1",)
+
+
+@pytest.mark.parametrize("confidence", (0, 1, 0.0, 0.5, 1.0))
+def test_finite_in_range_integer_and_float_confidence_is_accepted(
+    confidence: int | float,
+) -> None:
+    # Break caught: overflow hardening accidentally narrows valid bounded numeric scores.
+    request = _request()
+    result = replace(_valid_result(request), confidence=confidence)
+
+    assert validate_interpretation(request, result) is result
+
+
+@pytest.mark.parametrize(
+    "confidence",
+    (False, True, -1, 2, -0.1, 1.1, float("nan"), float("inf"), -float("inf")),
+)
+def test_bool_out_of_range_and_nonfinite_confidence_is_rejected(
+    confidence: object,
+) -> None:
+    # Break caught: the confidence helper admits bools, out-of-range values, NaN, or infinity.
+    request = _request()
+    result = replace(_valid_result(request), confidence=confidence)
+
+    with pytest.raises(InterpretationValidationError) as exc_info:
+        validate_interpretation(request, result)
+
+    assert exc_info.value.reasons == ("invalid_interpretation_confidence",)
