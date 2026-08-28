@@ -1,7 +1,7 @@
 # Graph Report - contactless_monitoring_build_docs  (2026-08-27)
 
 ## Corpus Check
-- 361 files · ~399,778 words
+- 361 files · ~399,774 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -364,8 +364,8 @@ Cohesion: 0.15
 Nodes (30): ClinicEventQueueResponse, ClinicEventStatus, field_validator, model_validator, StrEnum, EventQueuePosition, InvalidInputError, decode_event_queue_cursor() (+22 more)
 
 ### Community 1 - "test_feedback_rollback.py"
-Cohesion: 0.16
-Nodes (41): FeedbackRecordRow, ResidentMemoryEntryRow, ResidentMemorySnapshotRow, FeedbackCommandService, Barrier, _feedback_audit_count(), _headers(), parametrize (+33 more)
+Cohesion: 0.13
+Nodes (43): FeedbackRecordRow, ResidentMemoryEntryRow, ResidentMemorySnapshotRow, FeedbackCommandService, Barrier, _feedback_audit_count(), _headers(), parametrize (+35 more)
 
 ### Community 2 - "normalize.py"
 Cohesion: 0.15
@@ -401,7 +401,7 @@ Nodes (60): Protocol leg 2: resume from the nominations bundle, apply the host j
 
 ### Community 10 - "Candidate"
 Cohesion: 0.05
-Nodes (87): _candidate_text(), cluster_candidates(), _cluster_sort_key(), _cluster_uncertainty(), _merge_entity_clusters(), _mmr_representatives(), Candidate clustering and representative selection., Merge small clusters that cover the same story across different sources. The… (+79 more)
+Nodes (86): _candidate_text(), cluster_candidates(), _cluster_sort_key(), _cluster_uncertainty(), _merge_entity_clusters(), _mmr_representatives(), Candidate clustering and representative selection., Merge small clusters that cover the same story across different sources. The… (+78 more)
 
 ### Community 11 - "library.py"
 Cohesion: 0.19
@@ -449,7 +449,7 @@ Nodes (22): 10. Fused Frame, 11. Baseline Snapshot, 12. Anomaly Candidate, 14. L
 
 ### Community 22 - "Report"
 Cohesion: 0.09
-Nodes (64): _append_html_footer(), _assess_data_freshness(), _assistant_safety_lines(), _best_take_relevance_ok(), _candidates_for_auxiliary_sections(), _clusters_clearing_relevance_floor(), _format_untrusted_evidence(), _qualifying_representative_ids() (+56 more)
+Nodes (63): _append_html_footer(), _assess_data_freshness(), _assistant_safety_lines(), _best_take_relevance_ok(), _candidates_for_auxiliary_sections(), _clusters_clearing_relevance_floor(), _format_untrusted_evidence(), _qualifying_representative_ids() (+55 more)
 
 ### Community 23 - "SourceItem"
 Cohesion: 0.15
@@ -477,7 +477,7 @@ Nodes (17): Completion proof, Frozen behavior, Implementation sequence, Non-goal
 
 ### Community 29 - "repositories.py"
 Cohesion: 0.07
-Nodes (47): event_from_rows(), feedback_from_row(), feedback_to_row(), memory_from_rows(), memory_to_rows(), MemoryRowBundle, datetime, Explicit mappings between immutable domain records and SQLAlchemy rows. (+39 more)
+Nodes (45): event_from_rows(), feedback_from_row(), feedback_to_row(), memory_from_rows(), memory_to_rows(), MemoryRowBundle, datetime, Explicit mappings between immutable domain records and SQLAlchemy rows. (+37 more)
 
 ### Community 30 - "index.ts"
 Cohesion: 0.06
@@ -792,8 +792,8 @@ Cohesion: 0.12
 Nodes (15): 10. Data Quality and Confidence, 14. Event Lifecycle, 17. Active Learning, 18. Device Health and Degraded Operation, 19. Simulator-First Development, 20. Privacy, Security, and Development Data, 22. V1 Requirements, 23. Non-Goals for Initial Build (+7 more)
 
 ### Community 109 - "Cluster"
-Cohesion: 0.12
-Nodes (16): _drill_cluster_text(), Resolve a 1-based cluster index or fuzzy title/entity description., resolve_drill_clusters(), AudienceRegister, get_register(), _preset(), Named audience registers for standard research brief synthesis., Return a named register, rejecting unsupported/free-form templates. (+8 more)
+Cohesion: 0.11
+Nodes (18): _drill_cluster_text(), Resolve a 1-based cluster index or fuzzy title/entity description., resolve_drill_clusters(), AudienceRegister, get_register(), _preset(), Named audience registers for standard research brief synthesis., Return a named register, rejecting unsupported/free-form templates. (+10 more)
 
 ### Community 110 - "twitter-client-features.js"
 Cohesion: 0.30

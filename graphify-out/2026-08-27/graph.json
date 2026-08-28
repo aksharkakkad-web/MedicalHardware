@@ -186,6 +186,19 @@
       "source_location": "L121"
     },
     {
+      "id": "tests_persistence_test_feedback_rollback_hydrateddecisionfeedbackrepository",
+      "label": "HydratedDecisionFeedbackRepository",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "test_feedback_rollback.py",
+      "file_type": "code",
+      "norm_label": "hydrateddecisionfeedbackrepository",
+      "source_file": "tests/persistence/test_feedback_rollback.py",
+      "source_location": "L82"
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_dedupe_preparedtext",
       "label": "_PreparedText",
       "_callable": true,
@@ -1549,19 +1562,6 @@
       "norm_label": "residentmemory",
       "source_file": "backend/app/domain/feedback.py",
       "source_location": "L97"
-    },
-    {
-      "id": "tests_persistence_test_feedback_rollback_hydrateddecisionfeedbackrepository",
-      "label": "HydratedDecisionFeedbackRepository",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 29,
-      "community_name": "repositories.py",
-      "file_type": "code",
-      "norm_label": "hydrateddecisionfeedbackrepository",
-      "source_file": "tests/persistence/test_feedback_rollback.py",
-      "source_location": "L82"
     },
     {
       "id": "backend_app_db_mappers_storedevent",
@@ -3568,6 +3568,18 @@
       "source_location": "L191"
     },
     {
+      "id": "tests_persistence_test_feedback_rollback_coordinatedfeedbackrepository_current_memory",
+      "label": ".current_memory()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "test_feedback_rollback.py",
+      "file_type": "code",
+      "norm_label": ".current_memory()",
+      "source_file": "tests/persistence/test_feedback_rollback.py",
+      "source_location": "L70"
+    },
+    {
       "id": "tests_persistence_test_feedback_rollback_coordinatedfeedbackrepository_init",
       "label": ".__init__()",
       "_callable": true,
@@ -3614,6 +3626,54 @@
       "norm_label": ".__init__()",
       "source_file": "tests/persistence/test_feedback_rollback.py",
       "source_location": "L124"
+    },
+    {
+      "id": "tests_persistence_test_feedback_rollback_hydrateddecisionfeedbackrepository_current_memory",
+      "label": ".current_memory()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "test_feedback_rollback.py",
+      "file_type": "code",
+      "norm_label": ".current_memory()",
+      "source_file": "tests/persistence/test_feedback_rollback.py",
+      "source_location": "L95"
+    },
+    {
+      "id": "tests_persistence_test_feedback_rollback_hydrateddecisionfeedbackrepository_find_by_event",
+      "label": ".find_by_event()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "test_feedback_rollback.py",
+      "file_type": "code",
+      "norm_label": ".find_by_event()",
+      "source_file": "tests/persistence/test_feedback_rollback.py",
+      "source_location": "L104"
+    },
+    {
+      "id": "tests_persistence_test_feedback_rollback_hydrateddecisionfeedbackrepository_init",
+      "label": ".__init__()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "test_feedback_rollback.py",
+      "file_type": "code",
+      "norm_label": ".__init__()",
+      "source_file": "tests/persistence/test_feedback_rollback.py",
+      "source_location": "L85"
+    },
+    {
+      "id": "tests_persistence_test_feedback_rollback_hydrateddecisionfeedbackrepository_save_decision",
+      "label": ".save_decision()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "test_feedback_rollback.py",
+      "file_type": "code",
+      "norm_label": ".save_decision()",
+      "source_file": "tests/persistence/test_feedback_rollback.py",
+      "source_location": "L113"
     },
     {
       "id": "tests_persistence_test_feedback_rollback_resolve_seeded_event",
@@ -3890,18 +3950,6 @@
       "norm_label": "weighted_rrf()",
       "source_file": ".claude/skills/last30days/scripts/lib/fusion.py",
       "source_location": "L148"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_render_format_corroboration",
-      "label": "_format_corroboration()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "Candidate",
-      "file_type": "code",
-      "norm_label": "_format_corroboration()",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L3266"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_rerank_apply_engagement_rescue",
@@ -5042,6 +5090,18 @@
       "norm_label": "_clusters_for_register()",
       "source_file": ".claude/skills/last30days/scripts/lib/render.py",
       "source_location": "L610"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_render_visible_clusters_fail_relevance_floor",
+      "label": "_visible_clusters_fail_relevance_floor()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 109,
+      "community_name": "Cluster",
+      "file_type": "code",
+      "norm_label": "_visible_clusters_fail_relevance_floor()",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L509"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_schema_cluster_post_init",
@@ -7504,6 +7564,18 @@
       "source_location": "L3120"
     },
     {
+      "id": "claude_skills_last30days_scripts_lib_render_format_corroboration",
+      "label": "_format_corroboration()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 131,
+      "community_name": "render.py",
+      "file_type": "code",
+      "norm_label": "_format_corroboration()",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L3266"
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_render_format_date",
       "label": "_format_date()",
       "_callable": true,
@@ -7670,18 +7742,6 @@
       "norm_label": "render_library_search()",
       "source_file": ".claude/skills/last30days/scripts/lib/render.py",
       "source_location": "L320"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_render_render_stats",
-      "label": "_render_stats()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 131,
-      "community_name": "render.py",
-      "file_type": "code",
-      "norm_label": "_render_stats()",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L3035"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_render_render_top_comments",
@@ -14272,6 +14332,18 @@
       "source_location": "L2506"
     },
     {
+      "id": "claude_skills_last30days_scripts_lib_render_render_stats",
+      "label": "_render_stats()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 22,
+      "community_name": "Report",
+      "file_type": "code",
+      "norm_label": "_render_stats()",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L3035"
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_render_render_synthesis_directive",
       "label": "_render_synthesis_directive()",
       "_callable": true,
@@ -14318,18 +14390,6 @@
       "norm_label": "_truncate()",
       "source_file": ".claude/skills/last30days/scripts/lib/render.py",
       "source_location": "L3641"
-    },
-    {
-      "id": "claude_skills_last30days_scripts_lib_render_visible_clusters_fail_relevance_floor",
-      "label": "_visible_clusters_fail_relevance_floor()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 22,
-      "community_name": "Report",
-      "file_type": "code",
-      "norm_label": "_visible_clusters_fail_relevance_floor()",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L509"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_schema_without_sources",
@@ -16900,18 +16960,6 @@
       "source_location": "L382"
     },
     {
-      "id": "tests_persistence_test_feedback_rollback_coordinatedfeedbackrepository_current_memory",
-      "label": ".current_memory()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 29,
-      "community_name": "repositories.py",
-      "file_type": "code",
-      "norm_label": ".current_memory()",
-      "source_file": "tests/persistence/test_feedback_rollback.py",
-      "source_location": "L70"
-    },
-    {
       "id": "tests_persistence_test_feedback_rollback_faultingfeedbackrepository_save_decision",
       "label": ".save_decision()",
       "_callable": true,
@@ -16922,54 +16970,6 @@
       "norm_label": ".save_decision()",
       "source_file": "tests/persistence/test_feedback_rollback.py",
       "source_location": "L52"
-    },
-    {
-      "id": "tests_persistence_test_feedback_rollback_hydrateddecisionfeedbackrepository_current_memory",
-      "label": ".current_memory()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 29,
-      "community_name": "repositories.py",
-      "file_type": "code",
-      "norm_label": ".current_memory()",
-      "source_file": "tests/persistence/test_feedback_rollback.py",
-      "source_location": "L95"
-    },
-    {
-      "id": "tests_persistence_test_feedback_rollback_hydrateddecisionfeedbackrepository_find_by_event",
-      "label": ".find_by_event()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 29,
-      "community_name": "repositories.py",
-      "file_type": "code",
-      "norm_label": ".find_by_event()",
-      "source_file": "tests/persistence/test_feedback_rollback.py",
-      "source_location": "L104"
-    },
-    {
-      "id": "tests_persistence_test_feedback_rollback_hydrateddecisionfeedbackrepository_init",
-      "label": ".__init__()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 29,
-      "community_name": "repositories.py",
-      "file_type": "code",
-      "norm_label": ".__init__()",
-      "source_file": "tests/persistence/test_feedback_rollback.py",
-      "source_location": "L85"
-    },
-    {
-      "id": "tests_persistence_test_feedback_rollback_hydrateddecisionfeedbackrepository_save_decision",
-      "label": ".save_decision()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 29,
-      "community_name": "repositories.py",
-      "file_type": "code",
-      "norm_label": ".save_decision()",
-      "source_file": "tests/persistence/test_feedback_rollback.py",
-      "source_location": "L113"
     },
     {
       "id": "tests_persistence_test_repositories_test_non_utc_feedback_and_memory_timestamps_round_trip_to_utc_instants",
@@ -30457,7 +30457,7 @@
       "file_type": "code",
       "norm_label": "register_error_handlers()",
       "source_file": "backend/app/api/errors.py",
-      "source_location": "L53"
+      "source_location": "L52"
     },
     {
       "id": "backend_app_api_errors_status_code",
@@ -30469,7 +30469,7 @@
       "file_type": "code",
       "norm_label": "_status_code()",
       "source_file": "backend/app/api/errors.py",
-      "source_location": "L40"
+      "source_location": "L39"
     },
     {
       "id": "backend_app_services_errors_producterror_init",
@@ -32648,6 +32648,17 @@
       "source_location": "L63"
     },
     {
+      "id": "tests_persistence_test_feedback_rollback_rationale_83",
+      "label": "Expose a memory advance between the command's potential reads.",
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "test_feedback_rollback.py",
+      "file_type": "rationale",
+      "norm_label": "expose a memory advance between the command's potential reads.",
+      "source_file": "tests/persistence/test_feedback_rollback.py",
+      "source_location": "L83"
+    },
+    {
       "id": "claude_skills_last30days_scripts_lib_cluster",
       "label": "cluster.py",
       "_origin": "ast",
@@ -33957,6 +33968,17 @@
       "norm_label": "return ranked candidates belonging to the supplied visible clusters.",
       "source_file": ".claude/skills/last30days/scripts/lib/render.py",
       "source_location": "L472"
+    },
+    {
+      "id": "claude_skills_last30days_scripts_lib_render_rationale_513",
+      "label": "Whether a non-empty visible cluster set contains no usable evidence.",
+      "_origin": "ast",
+      "community": 109,
+      "community_name": "Cluster",
+      "file_type": "rationale",
+      "norm_label": "whether a non-empty visible cluster set contains no usable evidence.",
+      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
+      "source_location": "L513"
     },
     {
       "id": "claude_skills_last30days_scripts_lib_render_rationale_615",
@@ -46121,17 +46143,6 @@
       "source_location": "L488"
     },
     {
-      "id": "claude_skills_last30days_scripts_lib_render_rationale_513",
-      "label": "Whether a non-empty visible cluster set contains no usable evidence.",
-      "_origin": "ast",
-      "community": 22,
-      "community_name": "Report",
-      "file_type": "rationale",
-      "norm_label": "whether a non-empty visible cluster set contains no usable evidence.",
-      "source_file": ".claude/skills/last30days/scripts/lib/render.py",
-      "source_location": "L513"
-    },
-    {
       "id": "claude_skills_last30days_scripts_lib_render_rationale_518",
       "label": "Render private local evidence in one removable, clearly badged block.",
       "_origin": "ast",
@@ -49878,17 +49889,6 @@
       "norm_label": "trusted operator feedback and versioned resident context for toy scenarios.",
       "source_file": "backend/app/domain/feedback.py",
       "source_location": "L1"
-    },
-    {
-      "id": "tests_persistence_test_feedback_rollback_rationale_83",
-      "label": "Expose a memory advance between the command's potential reads.",
-      "_origin": "ast",
-      "community": 29,
-      "community_name": "repositories.py",
-      "file_type": "rationale",
-      "norm_label": "expose a memory advance between the command's potential reads.",
-      "source_file": "tests/persistence/test_feedback_rollback.py",
-      "source_location": "L83"
     },
     {
       "id": "claude_skills_ego_browser_learnings_x_com_browser_tools_extract_post",
@@ -67012,7 +67012,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "backend/app/api/errors.py",
-      "source_location": "L61",
+      "source_location": "L60",
       "weight": 1.0
     },
     {
@@ -67024,7 +67024,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "backend/app/api/errors.py",
-      "source_location": "L62",
+      "source_location": "L61",
       "weight": 1.0
     },
     {
@@ -143404,7 +143404,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "backend/app/api/errors.py",
-      "source_location": "L53",
+      "source_location": "L52",
       "weight": 1.0
     },
     {
@@ -158339,7 +158339,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/api/errors.py",
-      "source_location": "L40",
+      "source_location": "L39",
       "weight": 1.0
     },
     {
@@ -158350,7 +158350,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/api/errors.py",
-      "source_location": "L53",
+      "source_location": "L52",
       "weight": 1.0
     },
     {
@@ -216477,7 +216477,7 @@
       "confidence_score": 0.95,
       "context": "parameter_type",
       "source_file": "backend/app/api/errors.py",
-      "source_location": "L40",
+      "source_location": "L39",
       "weight": 0.8
     },
     {
@@ -217262,7 +217262,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/api/errors.py",
-      "source_location": "L69",
+      "source_location": "L68",
       "weight": 0.8
     },
     {
@@ -217273,7 +217273,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/api/errors.py",
-      "source_location": "L41",
+      "source_location": "L40",
       "weight": 0.8
     },
     {
@@ -217284,7 +217284,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/api/errors.py",
-      "source_location": "L43",
+      "source_location": "L42",
       "weight": 0.8
     },
     {
@@ -217295,7 +217295,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/api/errors.py",
-      "source_location": "L47",
+      "source_location": "L46",
       "weight": 0.8
     },
     {
@@ -217306,7 +217306,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/api/errors.py",
-      "source_location": "L47",
+      "source_location": "L46",
       "weight": 0.8
     },
     {
@@ -217317,7 +217317,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/api/errors.py",
-      "source_location": "L47",
+      "source_location": "L46",
       "weight": 0.8
     },
     {

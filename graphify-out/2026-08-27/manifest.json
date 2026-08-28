@@ -804,9 +804,9 @@
     "semantic_hash": ""
   },
   "backend/app/api/errors.py": {
-    "mtime": 1787879728.7272942,
-    "seen": 1787879767.6982558,
-    "ast_hash": "c57578640a9025e5461f4caf8ea7ab57",
+    "mtime": 1787879781.42095,
+    "seen": 1787879791.192184,
+    "ast_hash": "397486b8ba12496adba154ba37073062",
     "semantic_hash": ""
   },
   "backend/app/api/v1/__init__.py": {
@@ -2196,9 +2196,9 @@
     "semantic_hash": ""
   },
   "tests/api/test_openapi_artifact.py": {
-    "mtime": 1787879728.7276874,
-    "seen": 1787879767.6982899,
-    "ast_hash": "f0493487e5f8cdc5949867056b69b202",
+    "mtime": 1787879781.421363,
+    "seen": 1787879791.192217,
+    "ast_hash": "8c9978a413f6ee314ec6537467019f24",
     "semantic_hash": ""
   },
   "tests/persistence/test_event_queue_repository.py": {
