@@ -403,20 +403,60 @@ def advance_fall_like(
             and movement > policy.maximum_post_transition_movement
         ):
             state = FallLikeState.RECOVERED
+    elif state == FallLikeState.CONFIRMED_FALL_LIKE:
+        if explicit_non_low_position or (
+            movement is not None
+            and movement > policy.maximum_post_transition_movement
+        ):
+            state = FallLikeState.RECOVERED
+        elif position_contradiction:
+            limitations = _combined(
+                limitations,
+                ("contradictory_low_position_evidence",),
+            )
 
     urgent_triggered = state == FallLikeState.CONFIRMED_FALL_LIKE
     confidence = "none"
+    limitations = tuple(
+        item
+        for item in limitations
+        if item != "thermal_corroboration_unavailable"
+    )
     if urgent_triggered:
         if thermal_position == "floor_like":
             confidence = "high"
-        else:
+        elif thermal_position is None:
             confidence = "lower"
             limitations = _combined(
                 limitations,
                 ("thermal_corroboration_unavailable",),
             )
-    if possible_multiple_people:
+        else:
+            confidence = "lower"
+            limitation = (
+                "contradictory_low_position_evidence"
+                if position_contradiction
+                else "thermal_not_corroborating"
+            )
+            limitations = _combined(limitations, (limitation,))
+
+    if previous is None or previous.state == FallLikeState.STABLE:
+        room_level_only = possible_multiple_people
+    elif (
+        previous.state == FallLikeState.RECOVERED
+        and state == FallLikeState.RAPID_DESCENT
+    ):
+        room_level_only = possible_multiple_people
+    else:
+        room_level_only = previous.room_level_only or possible_multiple_people
+    if room_level_only:
         limitations = _combined(limitations, ("resident_attribution_uncertain",))
+    else:
+        limitations = tuple(
+            item
+            for item in limitations
+            if item != "resident_attribution_uncertain"
+        )
 
     return FallLikeAssessment(
         state=state,
@@ -430,7 +470,7 @@ def advance_fall_like(
         contradictions=contradictions,
         missing_sources=missing_sources,
         limitations=limitations,
-        room_level_only=possible_multiple_people,
+        room_level_only=room_level_only,
         policy_version=policy.policy_version,
         test_only=policy.test_only,
         clinical_authority=policy.clinical_authority,

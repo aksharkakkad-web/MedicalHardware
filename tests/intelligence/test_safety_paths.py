@@ -309,6 +309,77 @@ def test_possible_multiple_people_preserves_room_evidence_without_resident_claim
     assert "resident_attribution_uncertain" in assessment.limitations
 
 
+def test_multiple_person_ambiguity_during_descent_stays_sticky_through_confirmation() -> None:
+    # Break caught: clearing room ambiguity later assigns the in-progress episode to a resident.
+    assessment = None
+    for index, current in enumerate(fall_sequence()):
+        assessment = advance_fall_like(
+            assessment,
+            current,
+            possible_multiple_people=index == 1,
+        )
+
+    assert assessment is not None
+    assert assessment.state == FallLikeState.CONFIRMED_FALL_LIKE
+    assert assessment.urgent_triggered
+    assert assessment.room_level_only
+    assert "resident_attribution_uncertain" in assessment.limitations
+
+
+def test_confirmed_assessment_recovers_on_upright_posture_and_high_movement() -> None:
+    # Break caught: the current fast assessment acts as a permanent urgent event latch.
+    confirmed = run_fall_sequence(fall_sequence())
+
+    recovered = advance_fall_like(
+        confirmed,
+        frame(
+            5,
+            (
+                ("radar", radar_features(
+                    1.6,
+                    position="upright_like",
+                    movement=0.5,
+                )),
+                ("thermal", thermal_features("upright_like")),
+            ),
+        ),
+    )
+
+    assert recovered.state == FallLikeState.RECOVERED
+    assert not recovered.urgent_triggered
+    assert recovered.confidence == "none"
+    assert "thermal_corroboration_unavailable" not in recovered.limitations
+
+
+def test_confirmed_assessment_keeps_explicit_thermal_contradiction_honest() -> None:
+    # Break caught: contradictory thermal evidence is mislabeled as unavailable.
+    confirmed = run_fall_sequence(fall_sequence())
+
+    still_confirmed = advance_fall_like(
+        confirmed,
+        frame(
+            5,
+            (
+                ("radar", radar_features(
+                    0.78,
+                    position="floor_like",
+                    movement=0.07,
+                )),
+                ("thermal", thermal_features("upright_like")),
+            ),
+        ),
+    )
+
+    assert still_confirmed.state == FallLikeState.CONFIRMED_FALL_LIKE
+    assert still_confirmed.urgent_triggered
+    assert still_confirmed.confidence == "lower"
+    assert still_confirmed.contradictions == (
+        "position_state:radar=floor_like,thermal=upright_like",
+    )
+    assert "contradictory_low_position_evidence" in still_confirmed.limitations
+    assert "thermal_corroboration_unavailable" not in still_confirmed.limitations
+
+
 def test_synthetic_policy_requires_version_change_for_custom_fixture_values() -> None:
     # Break caught: default policy version silently refers to different fixture thresholds.
     with pytest.raises(ValueError, match="custom policy values require"):
