@@ -1,0 +1,12 @@
+:root {
+  --canvas: #f7f5ef; --surface: #fffefa; --text: #242522; --muted: #686a64; --border: #dfdfd8;
+  --action: #2467d6; --action-soft: #e8f0fd; --steady: #256c58; --steady-soft: #e2f2eb;
+  --attention: #8a5710; --attention-soft: #fff0d3; --important: #9c3d35; --important-soft: #fde9e5;
+}
+* { box-sizing: border-box; }
+html { background: var(--canvas); }
+body { margin: 0; background: var(--canvas); color: var(--text); font-family: var(--font-geist-sans), Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+button, input, textarea { font: inherit; }
+button, a, input, textarea { outline: none; }
+:focus-visible { outline: 3px solid rgba(36, 103, 214, .38); outline-offset: 3px; }
+::selection { background: #cfe0fb; }
