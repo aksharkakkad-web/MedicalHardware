@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
-import { CareMark, DeviceIcon, EventIcon, OverviewIcon } from "@/components/icons/icons";
+import { CareMark, DeviceIcon, EventIcon, OverviewIcon, ScenarioIcon } from "@/components/icons/icons";
 
 import styles from "./app-shell.module.css";
 
@@ -12,6 +12,7 @@ const destinations = [
   { label: "Overview", href: "/", icon: OverviewIcon },
   { label: "Events", href: "/events", icon: EventIcon },
   { label: "Devices", href: "/devices", icon: DeviceIcon },
+  { label: "Scenario Lab", href: "/scenarios", icon: ScenarioIcon },
 ];
 
 export function AppShell({ children }: Readonly<{ children: ReactNode }>) {

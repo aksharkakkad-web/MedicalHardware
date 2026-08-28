@@ -24,6 +24,10 @@ export function DeviceIcon(props: IconProps) {
   return <Icon {...props}><rect x="5" y="3" width="14" height="18" rx="3" /><path d="M9 7h6M9 11h6M9 15h3" /><circle cx="16" cy="16" r="1" /></Icon>;
 }
 
+export function ScenarioIcon(props: IconProps) {
+  return <Icon {...props}><path d="M6 4.5v15M6 6h7.5a2.5 2.5 0 0 1 0 5H10a2.5 2.5 0 0 0 0 5h8" /><path d="m15.5 13.5 2.5 2.5-2.5 2.5" /><circle cx="6" cy="4.5" r="1.5" /></Icon>;
+}
+
 export function ChevronLeftIcon(props: IconProps) {
   return <Icon {...props}><path d="m15 18-6-6 6-6" /></Icon>;
 }
