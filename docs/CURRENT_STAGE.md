@@ -127,6 +127,8 @@ Real hardware later replaces the simulator as the telemetry producer. It should 
 
 ## Source-of-truth handoff
 
+- Standalone founder/reviewer backend status:
+  `docs/COFOUNDER_BACKEND_REVIEW.md`
 - Phase status, review gates, and team cadence: `docs/PHASE_GATES.md`
 - Product behavior: `docs/PRD.md`
 - System boundaries: `docs/ARCHITECTURE.md`
