@@ -4,6 +4,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from datetime import datetime
 import re
+from typing import Literal
 from uuid import uuid4
 
 from backend.app.domain._validation import (
@@ -39,7 +40,7 @@ class FeedbackRecord:
 class MemoryEntry:
     entry_id: str
     description: str
-    source_feedback_id: str
+    source_feedback_id: str | None
     status: str
     created_by: str
     created_at: datetime
@@ -47,6 +48,49 @@ class MemoryEntry:
     retired_at: datetime | None = None
     retirement_reason: str | None = None
     schema_version: str = "1.0"
+    source_kind: Literal["feedback", "operator"] = "feedback"
+    supersedes_entry_id: str | None = None
+
+    def __post_init__(self) -> None:
+        require_nonblank_text(self.entry_id, "entry_id")
+        require_nonblank_text(self.description, "description")
+        require_nonblank_text(self.created_by, "created_by")
+        require_aware_datetime(self.created_at, "created_at")
+        if self.source_kind not in ("feedback", "operator"):
+            raise ValueError("source_kind must be feedback or operator")
+        if self.source_kind == "feedback":
+            require_nonblank_text(
+                self.source_feedback_id,
+                "source_feedback_id",
+            )
+        elif self.source_feedback_id is not None:
+            raise ValueError("operator memory cannot claim a feedback source")
+        if self.supersedes_entry_id is not None:
+            require_nonblank_text(
+                self.supersedes_entry_id,
+                "supersedes_entry_id",
+            )
+            if self.supersedes_entry_id == self.entry_id:
+                raise ValueError("memory entry cannot supersede itself")
+        retirement_values = (
+            self.retired_by,
+            self.retired_at,
+            self.retirement_reason,
+        )
+        if self.status == "active":
+            if any(value is not None for value in retirement_values):
+                raise ValueError("active memory cannot contain retirement metadata")
+        elif self.status == "retired":
+            if any(value is None for value in retirement_values):
+                raise ValueError("retired memory requires retirement metadata")
+            require_nonblank_text(self.retired_by, "retired_by")
+            require_aware_datetime(self.retired_at, "retired_at")
+            require_nonblank_text(
+                self.retirement_reason,
+                "retirement_reason",
+            )
+        else:
+            raise ValueError("status must be active or retired")
 
 
 @dataclass(frozen=True)
@@ -155,6 +199,8 @@ class FeedbackService:
                 entry_id=f"memory_{uuid4().hex}",
                 description=actual_event_label,
                 source_feedback_id=feedback.feedback_id,
+                source_kind="feedback",
+                supersedes_entry_id=None,
                 status="active",
                 created_by=actor_id,
                 created_at=created_at,
@@ -214,3 +260,222 @@ class FeedbackService:
         updated = ResidentMemory(resident_id, memory.version + 1, tuple(updated_entries))
         self._memories[resident_id] = updated
         return updated
+
+
+def _require_expected_memory_version(value: object) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError("expected_version must be a nonnegative integer")
+    return value
+
+
+def _latest_memory_timestamp(memory: ResidentMemory) -> datetime | None:
+    timestamps: list[datetime] = []
+    for entry in memory.entries:
+        timestamps.append(
+            require_aware_datetime(entry.created_at, "memory entry timestamp")
+        )
+        if entry.retired_at is not None:
+            timestamps.append(
+                require_aware_datetime(
+                    entry.retired_at,
+                    "memory retirement timestamp",
+                )
+            )
+    return max(timestamps) if timestamps else None
+
+
+class ResidentMemoryService:
+    """Pure operator commands over immutable resident-memory snapshots."""
+
+    def __init__(
+        self,
+        *,
+        initial_memories: Sequence[ResidentMemory] = (),
+    ) -> None:
+        self._memories = {
+            memory.resident_id: memory for memory in initial_memories
+        }
+
+    def current_memory(self, resident_id: str) -> ResidentMemory:
+        resident_id = require_nonblank_text(resident_id, "resident_id")
+        return self._memories.get(
+            resident_id,
+            ResidentMemory(resident_id, 0, ()),
+        )
+
+    def add_entry(
+        self,
+        *,
+        resident_id: str,
+        expected_version: int,
+        description: str,
+        actor_id: str,
+        changed_at: datetime,
+    ) -> ResidentMemory:
+        resident_id, actor_id, changed_at, memory = self._command_context(
+            resident_id=resident_id,
+            expected_version=expected_version,
+            actor_id=actor_id,
+            changed_at=changed_at,
+        )
+        description = require_nonblank_text(description, "description")
+        entry = self._operator_entry(
+            description=description,
+            actor_id=actor_id,
+            changed_at=changed_at,
+        )
+        updated = ResidentMemory(
+            resident_id,
+            memory.version + 1,
+            memory.entries + (entry,),
+        )
+        self._memories[resident_id] = updated
+        return updated
+
+    def correct_entry(
+        self,
+        *,
+        resident_id: str,
+        entry_id: str,
+        expected_version: int,
+        description: str,
+        reason: str,
+        actor_id: str,
+        changed_at: datetime,
+    ) -> ResidentMemory:
+        resident_id, actor_id, changed_at, memory = self._command_context(
+            resident_id=resident_id,
+            expected_version=expected_version,
+            actor_id=actor_id,
+            changed_at=changed_at,
+        )
+        entry_id = require_nonblank_text(entry_id, "entry_id")
+        description = require_nonblank_text(description, "description")
+        reason = require_nonblank_text(reason, "reason")
+        target = self._active_entry(memory, entry_id)
+        retired = self._retired_entry(
+            target,
+            actor_id=actor_id,
+            reason=reason,
+            changed_at=changed_at,
+        )
+        replacement = self._operator_entry(
+            description=description,
+            actor_id=actor_id,
+            changed_at=changed_at,
+            supersedes_entry_id=target.entry_id,
+        )
+        updated_entries = tuple(
+            retired if entry.entry_id == entry_id else entry
+            for entry in memory.entries
+        ) + (replacement,)
+        updated = ResidentMemory(
+            resident_id,
+            memory.version + 1,
+            updated_entries,
+        )
+        self._memories[resident_id] = updated
+        return updated
+
+    def retire_entry(
+        self,
+        *,
+        resident_id: str,
+        entry_id: str,
+        expected_version: int,
+        reason: str,
+        actor_id: str,
+        changed_at: datetime,
+    ) -> ResidentMemory:
+        resident_id, actor_id, changed_at, memory = self._command_context(
+            resident_id=resident_id,
+            expected_version=expected_version,
+            actor_id=actor_id,
+            changed_at=changed_at,
+        )
+        entry_id = require_nonblank_text(entry_id, "entry_id")
+        reason = require_nonblank_text(reason, "reason")
+        target = self._active_entry(memory, entry_id)
+        retired = self._retired_entry(
+            target,
+            actor_id=actor_id,
+            reason=reason,
+            changed_at=changed_at,
+        )
+        updated = ResidentMemory(
+            resident_id,
+            memory.version + 1,
+            tuple(
+                retired if entry.entry_id == entry_id else entry
+                for entry in memory.entries
+            ),
+        )
+        self._memories[resident_id] = updated
+        return updated
+
+    def _command_context(
+        self,
+        *,
+        resident_id: str,
+        expected_version: int,
+        actor_id: str,
+        changed_at: datetime,
+    ) -> tuple[str, str, datetime, ResidentMemory]:
+        resident_id = require_nonblank_text(resident_id, "resident_id")
+        actor_id = require_nonblank_text(actor_id, "actor_id")
+        expected_version = _require_expected_memory_version(expected_version)
+        changed_at = require_aware_datetime(changed_at, "changed_at")
+        memory = self.current_memory(resident_id)
+        if expected_version != memory.version:
+            raise ValueError("expected_version does not match current version")
+        latest_timestamp = _latest_memory_timestamp(memory)
+        if latest_timestamp is not None and changed_at < latest_timestamp:
+            raise ValueError("changed_at cannot precede memory history")
+        return resident_id, actor_id, changed_at, memory
+
+    @staticmethod
+    def _active_entry(memory: ResidentMemory, entry_id: str) -> MemoryEntry:
+        target = next(
+            (entry for entry in memory.entries if entry.entry_id == entry_id),
+            None,
+        )
+        if target is None:
+            raise KeyError(f"Unknown memory entry: {entry_id}")
+        if target.status != "active":
+            raise ValueError("only active memory can be changed")
+        return target
+
+    @staticmethod
+    def _operator_entry(
+        *,
+        description: str,
+        actor_id: str,
+        changed_at: datetime,
+        supersedes_entry_id: str | None = None,
+    ) -> MemoryEntry:
+        return MemoryEntry(
+            entry_id=f"memory_{uuid4().hex}",
+            description=description,
+            source_feedback_id=None,
+            source_kind="operator",
+            supersedes_entry_id=supersedes_entry_id,
+            status="active",
+            created_by=actor_id,
+            created_at=changed_at,
+        )
+
+    @staticmethod
+    def _retired_entry(
+        entry: MemoryEntry,
+        *,
+        actor_id: str,
+        reason: str,
+        changed_at: datetime,
+    ) -> MemoryEntry:
+        return replace(
+            entry,
+            status="retired",
+            retired_by=actor_id,
+            retired_at=changed_at,
+            retirement_reason=reason,
+        )
