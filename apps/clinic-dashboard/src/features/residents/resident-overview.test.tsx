@@ -33,6 +33,8 @@ function residentClient(
     listResidentOverview,
     listEvents: () => fallback.listEvents(),
     getResident: (residentId) => fallback.getResident(residentId),
+    getResidentMonitoringSetup: (residentId) => fallback.getResidentMonitoringSetup(residentId),
+    recordSetupChange: (residentId, input) => fallback.recordSetupChange(residentId, input),
     getEvent: (eventId) => fallback.getEvent(eventId),
     performEventAction: (eventId, action) =>
       fallback.performEventAction(eventId, action),
@@ -50,7 +52,7 @@ function deferred<T>() {
 }
 
 describe("ResidentOverview", () => {
-  it("shows the five honest monitoring situations", async () => {
+  it("shows the honest monitoring situations", async () => {
     renderOverview(
       new MockMonitoringClient(() => new Date("2026-08-27T18:00:00.000Z")),
     );

@@ -40,7 +40,7 @@ describe("MockMonitoringClient", () => {
     await expect(client.getDevice("dev_missing")).rejects.toThrow(/could not be found/i);
   });
 
-  it("returns five synthetic residents covering honest monitoring states", async () => {
+  it("returns six synthetic residents covering honest monitoring states", async () => {
     const result = await new MockMonitoringClient().listResidentOverview();
 
     const expectedScenarios = [
@@ -71,10 +71,15 @@ describe("MockMonitoringClient", () => {
         attentionPriority: "watch",
         deviceStatus: "offline",
       },
+      {
+        monitoringState: "unavailable",
+        attentionPriority: "watch",
+        deviceStatus: "unknown",
+      },
     ] as const;
 
     expect(result.schemaVersion).toBe("1.0");
-    expect(result.items).toHaveLength(5);
+    expect(result.items).toHaveLength(6);
     expectedScenarios.forEach((expected, index) => {
       const item = result.items[index];
 
@@ -95,7 +100,7 @@ describe("MockMonitoringClient", () => {
     const result = await new MockMonitoringClient(
       () => fixedNow,
     ).listResidentOverview();
-    const expectedOffsetsMs = [15_000, 30_000, 300_000, 110_000, 1_080_000];
+    const expectedOffsetsMs = [15_000, 30_000, 300_000, 110_000, 1_080_000, 300_000];
 
     expect(result.generatedAt).toBe(fixedNow.toISOString());
     expect(result.items.map((item) => item.monitoring.lastUpdatedAt)).toEqual(
@@ -280,5 +285,66 @@ describe("MockMonitoringClient", () => {
       priority: "none",
       openEventCount: 0,
     });
+  });
+
+  it("restarts only selected calibration areas and preserves the rest", async () => {
+    const client = new MockMonitoringClient(() => new Date("2026-08-28T12:00:00.000Z"));
+
+    const result = await client.recordSetupChange("res_7f3a1c", {
+      reason: "device_moved",
+      affectedDimensions: ["movement"],
+      expectedCalibrationVersion: 1,
+    });
+
+    expect(result.setup).toMatchObject({ version: 2, status: "partial", setupVersion: "setup_room_b14e2d_v2" });
+    expect(result.setup.dimensions).toMatchObject([
+      { dimension: "movement", status: "calibrating", eligibleWindows: 0 },
+      { dimension: "respiratory_rate", status: "established", eligibleWindows: 12 },
+    ]);
+    expect(result.setup.setupChanges.at(-1)).toMatchObject({ reason: "device_moved", affectedDimensions: ["movement"] });
+  });
+
+  it("saves setup changes and blocks changes when assignment conflicts", async () => {
+    const savedValues = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => savedValues.get(key) ?? null,
+      setItem: (key: string, value: string) => savedValues.set(key, value),
+    };
+    const firstClient = new MockMonitoringClient(undefined, storage);
+    await firstClient.recordSetupChange("res_7f3a1c", { reason: "room_layout_changed", affectedDimensions: ["movement"], expectedCalibrationVersion: 1 });
+
+    expect((await new MockMonitoringClient(undefined, storage).getResidentMonitoringSetup("res_7f3a1c")).setup.version).toBe(2);
+    await expect(firstClient.recordSetupChange("res_assignment_review", { reason: "resident_moved", affectedDimensions: ["movement"], expectedCalibrationVersion: 0 })).rejects.toThrow(/resolve the room assignment/i);
+  });
+
+  it("rejects stale changes and derives the overall state from every area", async () => {
+    const client = new MockMonitoringClient();
+
+    await expect(client.recordSetupChange("res_7f3a1c", {
+      reason: "device_moved",
+      affectedDimensions: ["movement"],
+      expectedCalibrationVersion: 0,
+    })).rejects.toThrow(/changed in another session/i);
+
+    const stillCalibrating = await client.recordSetupChange("res_2c8d4f", {
+      reason: "room_layout_changed",
+      affectedDimensions: ["movement"],
+      expectedCalibrationVersion: 1,
+    });
+    expect(stillCalibrating.setup.status).toBe("calibrating");
+
+    const fullRestart = await client.recordSetupChange("res_7f3a1c", {
+      reason: "core_sensor_replaced",
+      affectedDimensions: ["movement", "respiratory_rate"],
+      expectedCalibrationVersion: 1,
+    });
+    expect(fullRestart.setup.status).toBe("calibrating");
+  });
+
+  it("keeps established calibration history when current learning is paused", async () => {
+    const away = (await new MockMonitoringClient().getResidentMonitoringSetup("res_91be60")).setup;
+
+    expect(away).toMatchObject({ status: "established", learningState: "paused" });
+    expect(away.dimensions.every((dimension) => dimension.status === "established")).toBe(true);
   });
 });

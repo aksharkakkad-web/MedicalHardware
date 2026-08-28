@@ -141,6 +141,74 @@ export interface ResidentDetailResponse {
   events: MonitoringEventDetail[];
 }
 
+export type CalibrationStatus =
+  | "new"
+  | "calibrating"
+  | "partial"
+  | "established";
+
+export type CalibrationDimensionId = "movement" | "respiratory_rate";
+
+export type CalibrationDimensionStatus =
+  | "new"
+  | "calibrating"
+  | "partial"
+  | "established";
+
+export type SetupChangeReason =
+  | "device_moved"
+  | "room_layout_changed"
+  | "core_sensor_replaced"
+  | "resident_moved";
+
+export interface SetupChangeInput {
+  reason: SetupChangeReason;
+  affectedDimensions: CalibrationDimensionId[];
+  expectedCalibrationVersion: number;
+}
+
+export interface ResidentMonitoringSetup {
+  schemaVersion: "1.0";
+  residentId: string;
+  residentLabel: string;
+  roomId: string | null;
+  roomLabel: string | null;
+  deviceId: string | null;
+  deviceLabel: string | null;
+  deviceStatus: DeviceStatus;
+  assignmentStatus: "valid" | "missing" | "conflicting";
+  setupVersion: string | null;
+  version: number;
+  recordedAt: string;
+  status: CalibrationStatus;
+  reason: string;
+  learningState: "active" | "paused" | "unavailable";
+  learningReason: string;
+  priorSetupVersions: string[];
+  dimensions: Array<{
+    schemaVersion: "1.0";
+    dimension: CalibrationDimensionId;
+    status: CalibrationDimensionStatus;
+    eligibleWindows: number;
+    excludedWindows: number;
+  }>;
+  setupChanges: Array<{
+    schemaVersion: "1.0";
+    previousSetupVersion: string;
+    newSetupVersion: string;
+    affectedDimensions: CalibrationDimensionId[];
+    reason: SetupChangeReason;
+    actorLabel: string;
+    changedAt: string;
+  }>;
+}
+
+export interface ResidentMonitoringSetupResponse {
+  schemaVersion: "1.0";
+  generatedAt: string;
+  setup: ResidentMonitoringSetup;
+}
+
 export interface MonitoringEventDetail {
   schemaVersion: "1.0";
   eventId: string;

@@ -5,10 +5,10 @@ import type { ReactNode } from "react";
 import { MonitoringClientProvider } from "@/lib/monitoring/provider";
 import {
   MockMonitoringClient,
-  type MonitoringEventStorage,
+  type MonitoringStorage,
 } from "@/mocks/mock-monitoring-client";
 
-const browserStorage: MonitoringEventStorage = {
+const browserStorage: MonitoringStorage = {
   getItem(key) {
     return typeof window === "undefined" ? null : window.localStorage.getItem(key);
   },

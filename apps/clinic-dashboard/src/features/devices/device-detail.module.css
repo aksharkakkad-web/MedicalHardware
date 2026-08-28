@@ -37,6 +37,7 @@
 .facts div { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: .7rem 0; border-top: 1px solid var(--color-border); }
 .facts dt { color: var(--color-text-muted); font-size: .72rem; }
 .facts dd { font-size: .76rem; font-weight: 650; text-align: right; text-transform: capitalize; }
+.setupLink { display: block; margin: 0 1.15rem 1rem; padding: .7rem; border-radius: .65rem; color: var(--color-accent-strong); background: var(--color-accent-soft); font-size: .73rem; font-weight: 650; text-align: center; }
 .nextStep { padding: 1.15rem; box-shadow: none; }
 .nextStep[data-tone="attention"] { border-color: #efd39d; background: #fffbf2; }
 .nextStep[data-tone="critical"] { border-color: #efc3be; background: #fff7f6; }

@@ -102,6 +102,7 @@ export function DeviceDetail({ deviceId }: Readonly<{ deviceId: string }>) {
               <div><dt>Readiness</dt><dd>{setupLabel(device.setup.state)}</dd></div>
               <div><dt>Last changed</dt><dd>{formatTimestamp(device.setup.updatedAt)}</dd></div>
             </dl>
+            {device.residentId && <Link className={styles.setupLink} href={`/residents/${device.residentId}/setup`}>Review resident setup</Link>}
           </section>
           <section className={styles.nextStep} data-tone={health.tone}>
             <span>Recommended next step</span>

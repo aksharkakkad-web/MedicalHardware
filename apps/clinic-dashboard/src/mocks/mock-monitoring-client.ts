@@ -7,18 +7,23 @@ import type {
   MonitoringEventDetail,
   MonitoringEventListResponse,
   ResidentDetailResponse,
+  ResidentMonitoringSetup,
+  ResidentMonitoringSetupResponse,
   ResidentOverviewResponse,
+  SetupChangeInput,
 } from "@/lib/monitoring";
 import { createDeviceListFixture } from "./devices";
 import { createEventDetailFixtures } from "./events";
 import { createResidentOverviewFixture } from "./residents";
+import { createMonitoringSetupFixtures } from "./setups";
 
-export interface MonitoringEventStorage {
+export interface MonitoringStorage {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
 }
 
-const STORAGE_KEY = "adaptive-care:clinic-events:v1";
+const EVENT_STORAGE_KEY = "adaptive-care:clinic-events:v1";
+const SETUP_STORAGE_KEY = "adaptive-care:clinic-setups:v2";
 
 function isStoredEvent(candidate: unknown): candidate is MonitoringEventDetail {
   if (typeof candidate !== "object" || candidate === null) {
@@ -45,13 +50,22 @@ function isStoredEvent(candidate: unknown): candidate is MonitoringEventDetail {
   );
 }
 
+function isStoredSetup(candidate: unknown): candidate is ResidentMonitoringSetup {
+  if (typeof candidate !== "object" || candidate === null) return false;
+  const setup = candidate as Partial<ResidentMonitoringSetup>;
+  const allowedStatuses = new Set(["new", "calibrating", "partial", "established"]);
+  return setup.schemaVersion === "1.0" && typeof setup.residentId === "string" && typeof setup.version === "number" && typeof setup.learningState === "string" && typeof setup.learningReason === "string" && typeof setup.status === "string" && allowedStatuses.has(setup.status) && Array.isArray(setup.dimensions) && setup.dimensions.every((dimension) => allowedStatuses.has(dimension.status)) && Array.isArray(setup.setupChanges);
+}
+
 export class MockMonitoringClient implements MonitoringClient {
   private readonly events = new Map<string, MonitoringEventDetail>();
+  private readonly setups = new Map<string, ResidentMonitoringSetup>();
   private eventsLoaded = false;
+  private setupsLoaded = false;
 
   constructor(
     private readonly now: () => Date = () => new Date(),
-    private readonly storage?: MonitoringEventStorage,
+    private readonly storage?: MonitoringStorage,
   ) {}
 
   async listDevices(): Promise<ClinicDeviceListResponse> {
@@ -152,6 +166,70 @@ export class MockMonitoringClient implements MonitoringClient {
     });
   }
 
+  async getResidentMonitoringSetup(
+    residentId: string,
+  ): Promise<ResidentMonitoringSetupResponse> {
+    const setup = this.getStoredSetup(residentId);
+    return structuredClone({
+      schemaVersion: "1.0",
+      generatedAt: this.now().toISOString(),
+      setup,
+    });
+  }
+
+  async recordSetupChange(
+    residentId: string,
+    input: SetupChangeInput,
+  ): Promise<ResidentMonitoringSetupResponse> {
+    const setup = this.getStoredSetup(residentId);
+    if (setup.assignmentStatus !== "valid") {
+      throw new Error("Resolve the room assignment before recording a setup change.");
+    }
+    if (input.affectedDimensions.length === 0) {
+      throw new Error("Choose at least one calibration area.");
+    }
+    if (input.expectedCalibrationVersion !== setup.version) {
+      throw new Error("This setup changed in another session. Refresh before trying again.");
+    }
+
+    const changedAt = this.now().toISOString();
+    const previousSetupVersion = setup.setupVersion ?? `setup_${setup.roomId ?? "unassigned"}_v${setup.version}`;
+    const version = setup.version + 1;
+    const newSetupVersion = `setup_${setup.roomId}_v${version}`;
+    const affected = new Set(input.affectedDimensions);
+    const dimensions = setup.dimensions.map((dimension) => affected.has(dimension.dimension) ? { ...dimension, status: "calibrating" as const, eligibleWindows: 0, excludedWindows: 0 } : dimension);
+    const status = dimensions.every((dimension) => dimension.status === "established")
+      ? "established"
+      : dimensions.some((dimension) => dimension.status === "established" || dimension.status === "partial")
+        ? "partial"
+        : "calibrating";
+    const updated: ResidentMonitoringSetup = {
+      ...setup,
+      version,
+      recordedAt: changedAt,
+      setupVersion: newSetupVersion,
+      status,
+      reason: "Only the selected calibration areas restarted. Other established areas were preserved.",
+      priorSetupVersions: [...setup.priorSetupVersions, previousSetupVersion],
+      dimensions,
+      setupChanges: [
+        ...setup.setupChanges,
+        {
+          schemaVersion: "1.0",
+          previousSetupVersion,
+          newSetupVersion,
+          affectedDimensions: [...input.affectedDimensions],
+          reason: input.reason,
+          actorLabel: "Demo caregiver",
+          changedAt,
+        },
+      ],
+    };
+    this.setups.set(residentId, updated);
+    this.persistSetups();
+    return this.getResidentMonitoringSetup(residentId);
+  }
+
   async getEvent(eventId: string): Promise<MonitoringEventDetail> {
     const event = this.getStoredEvent(eventId);
     return structuredClone(event);
@@ -250,6 +328,13 @@ export class MockMonitoringClient implements MonitoringClient {
     throw new Error("The requested event could not be found.");
   }
 
+  private getStoredSetup(residentId: string): ResidentMonitoringSetup {
+    this.loadSetups();
+    const setup = this.setups.get(residentId);
+    if (setup) return setup;
+    throw new Error("The requested monitoring setup could not be found.");
+  }
+
   private loadEvents(): void {
     if (this.eventsLoaded) {
       return;
@@ -261,7 +346,7 @@ export class MockMonitoringClient implements MonitoringClient {
     });
 
     try {
-      const saved = this.storage?.getItem(STORAGE_KEY);
+      const saved = this.storage?.getItem(EVENT_STORAGE_KEY);
       if (!saved) {
         return;
       }
@@ -283,7 +368,33 @@ export class MockMonitoringClient implements MonitoringClient {
 
   private persistEvents(): void {
     try {
-      this.storage?.setItem(STORAGE_KEY, JSON.stringify([...this.events.values()]));
+      this.storage?.setItem(EVENT_STORAGE_KEY, JSON.stringify([...this.events.values()]));
+    } catch {
+      // The workflow still works for this visit if browser storage is unavailable.
+    }
+  }
+
+  private loadSetups(): void {
+    if (this.setupsLoaded) return;
+    this.setupsLoaded = true;
+    createMonitoringSetupFixtures(this.now()).forEach((fixture) => this.setups.set(fixture.residentId, fixture));
+
+    try {
+      const saved = this.storage?.getItem(SETUP_STORAGE_KEY);
+      if (!saved) return;
+      const parsed: unknown = JSON.parse(saved);
+      if (!Array.isArray(parsed)) return;
+      parsed.forEach((candidate) => {
+        if (isStoredSetup(candidate) && this.setups.has(candidate.residentId)) this.setups.set(candidate.residentId, candidate);
+      });
+    } catch {
+      // Broken demo storage is ignored so the safe fixtures remain usable.
+    }
+  }
+
+  private persistSetups(): void {
+    try {
+      this.storage?.setItem(SETUP_STORAGE_KEY, JSON.stringify([...this.setups.values()]));
     } catch {
       // The workflow still works for this visit if browser storage is unavailable.
     }

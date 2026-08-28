@@ -1466,8 +1466,8 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/app/providers.tsx": {
-    "mtime": 1787887301.749136,
-    "ast_hash": "59b8f33b88d614cbf4c03a78535486f7",
+    "mtime": 1787950632.050976,
+    "ast_hash": "14af6dbc15c4a2fa27a2531908d0a3a8",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/components/app-shell/app-shell.test.tsx": {
@@ -1501,8 +1501,8 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/resident-overview.test.tsx": {
-    "mtime": 1787947181.440706,
-    "ast_hash": "1059fad464bd11555ca6178021aae23b",
+    "mtime": 1787950129.7530475,
+    "ast_hash": "42b89ea3698f0c5268a260530a39d7ca",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/resident-overview.tsx": {
@@ -1511,8 +1511,8 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/use-resident-overview.test.tsx": {
-    "mtime": 1787947181.441042,
-    "ast_hash": "e43aaf54e92ead39aadd0fefd5e3090a",
+    "mtime": 1787950129.7538075,
+    "ast_hash": "bc4887ddebebdb7f9984e646aa81e1d2",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/use-resident-overview.ts": {
@@ -1521,13 +1521,13 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/lib/monitoring/client.ts": {
-    "mtime": 1787947000.0840816,
-    "ast_hash": "b6be83a8ae33f9b81ed6266af08ec830",
+    "mtime": 1787949897.4152515,
+    "ast_hash": "4f75f96daafcb34424b970273847c14c",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/lib/monitoring/index.ts": {
-    "mtime": 1787947000.0842237,
-    "ast_hash": "3cd4c2f05ff32dcb70c4b32684b8c978",
+    "mtime": 1787949897.4156435,
+    "ast_hash": "606d81872be32f1e46acaf41abf599db",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/lib/monitoring/provider.tsx": {
@@ -1536,23 +1536,23 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/lib/monitoring/types.ts": {
-    "mtime": 1787947635.839206,
-    "ast_hash": "ca48fc53499a6f76d3315625398dbffe",
+    "mtime": 1787950511.8165045,
+    "ast_hash": "1f061f287d868df596d82741a7819cbe",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/mocks/mock-monitoring-client.test.ts": {
-    "mtime": 1787947181.4416268,
-    "ast_hash": "7ca0b62f952587e8fc40a0dbfe7608dd",
+    "mtime": 1787950527.3761296,
+    "ast_hash": "af29b45af7974e38ac661ca1fb038b92",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/mocks/mock-monitoring-client.ts": {
-    "mtime": 1787947000.0847268,
-    "ast_hash": "04a748d5524511f356ff617358ede9c4",
+    "mtime": 1787950632.0506592,
+    "ast_hash": "af58891b46e2f16279c7f8c17bffea92",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/mocks/residents.ts": {
-    "mtime": 1787887301.7566,
-    "ast_hash": "bafe7eb4fbf45d0b5117e40b45ed3f30",
+    "mtime": 1787949897.4167051,
+    "ast_hash": "2a9ff532c3255f54adc2893624fac5c3",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/test/setup.ts": {
@@ -1927,13 +1927,13 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/resident-detail.test.tsx": {
-    "mtime": 1787887301.753638,
-    "ast_hash": "cc7926b9c05d75d9416edeb79dce46c3",
+    "mtime": 1787950096.1097791,
+    "ast_hash": "a5cb0473739ce430d6dbf4cd09005834",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/resident-detail.tsx": {
-    "mtime": 1787887301.753929,
-    "ast_hash": "32ed3101a104ce88565d1949d98bfac5",
+    "mtime": 1787950078.047833,
+    "ast_hash": "849e5053c274e65a3093d2c2b95a36b1",
     "semantic_hash": ""
   },
   "PRODUCT.md": {
@@ -1977,8 +1977,8 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/devices/device-detail.tsx": {
-    "mtime": 1787947635.8422935,
-    "ast_hash": "6ede35bc47eb9a3bf20ed00eb157c131",
+    "mtime": 1787950078.0488865,
+    "ast_hash": "35f7ef52071656c6f1729ebdb7e93ba0",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/devices/device-format.ts": {
@@ -2014,6 +2014,26 @@
   "docs/research/README.md": {
     "mtime": 1787946891.2794905,
     "ast_hash": "58f8346a5ce10f46c9017ef032413641",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/app/residents/[residentId]/setup/page.tsx": {
+    "mtime": 1787950022.3752604,
+    "ast_hash": "84f0594046faaa30b5d78834ea613c24",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/features/setup/monitoring-setup.test.tsx": {
+    "mtime": 1787950537.8524096,
+    "ast_hash": "28d2a0f7eef2608c44374d727d3ac224",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/features/setup/monitoring-setup.tsx": {
+    "mtime": 1787950601.4794528,
+    "ast_hash": "d3a2930d1bef32f321ea03da1badcbe7",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/mocks/setups.ts": {
+    "mtime": 1787950511.8169985,
+    "ast_hash": "5e193ec43b5b139c5c4e847501cafcf8",
     "semantic_hash": ""
   }
 }

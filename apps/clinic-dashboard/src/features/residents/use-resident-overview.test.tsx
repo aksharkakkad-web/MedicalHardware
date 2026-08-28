@@ -31,6 +31,8 @@ function residentClient(
     listResidentOverview,
     listEvents: () => fallback.listEvents(),
     getResident: (residentId) => fallback.getResident(residentId),
+    getResidentMonitoringSetup: (residentId) => fallback.getResidentMonitoringSetup(residentId),
+    recordSetupChange: (residentId, input) => fallback.recordSetupChange(residentId, input),
     getEvent: (eventId) => fallback.getEvent(eventId),
     performEventAction: (eventId, action) =>
       fallback.performEventAction(eventId, action),
@@ -70,7 +72,7 @@ describe("useResidentOverview", () => {
     await act(async () => request.resolve(await createCompleteResponse()));
 
     await waitFor(() => expect(result.current.status).toBe("success"));
-    expect(result.current.items).toHaveLength(5);
+    expect(result.current.items).toHaveLength(6);
   });
 
   it("shows a safe error and loads again when retry is used", async () => {
@@ -102,6 +104,6 @@ describe("useResidentOverview", () => {
 
     await waitFor(() => expect(result.current.status).toBe("success"));
     expect(requestCount).toBe(2);
-    expect(result.current.items).toHaveLength(5);
+    expect(result.current.items).toHaveLength(6);
   });
 });

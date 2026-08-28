@@ -19,6 +19,7 @@ describe("ResidentDetail", () => {
     expect(screen.getByText("Room 102", { selector: "dd" })).toBeVisible();
     expect(screen.getAllByText(/unusual activity needs staff review/i)).toHaveLength(2);
     expect(screen.getByText(/previous unusual movement review/i)).toBeVisible();
+    expect(screen.getByRole("link", { name: /review monitoring setup/i })).toHaveAttribute("href", "/residents/res_2c8d4f/setup");
   });
 
   it("does not claim safety when a resident cannot load", async () => {

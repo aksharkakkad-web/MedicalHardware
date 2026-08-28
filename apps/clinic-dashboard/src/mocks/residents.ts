@@ -127,6 +127,28 @@ export function createResidentOverviewFixture(
           label: "Room sensor offline",
         },
       },
+      {
+        schemaVersion: "1.0",
+        residentId: "res_assignment_review",
+        displayLabel: "Resident F",
+        roomId: "assignment_conflict",
+        roomLabel: "Assignment review",
+        assignmentStatus: "conflicting",
+        monitoring: {
+          state: "unavailable",
+          reason: "The room assignment conflicts with another record, so resident-specific monitoring is unavailable.",
+          lastUpdatedAt: timestampBefore(now, 300_000),
+        },
+        attention: {
+          priority: "watch",
+          headline: "Resolve room assignment",
+          openEventCount: 0,
+        },
+        device: {
+          status: "unknown",
+          label: "Device assignment unavailable",
+        },
+      },
     ],
   };
 }
