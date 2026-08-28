@@ -147,7 +147,9 @@ class ProductQueryService:
                 MemoryEntryResponse(
                     entry_id=entry.entry_id,
                     description=entry.description,
+                    source_kind=entry.source_kind,
                     source_feedback_id=entry.source_feedback_id,
+                    supersedes_entry_id=entry.supersedes_entry_id,
                     status=entry.status,
                     created_by=entry.created_by,
                     created_at=entry.created_at,

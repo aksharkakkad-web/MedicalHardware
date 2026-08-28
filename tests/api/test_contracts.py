@@ -40,7 +40,9 @@ EVENT_PAYLOAD = {
 ACTIVE_MEMORY_ENTRY_PAYLOAD = {
     "entry_id": "memory_contract_test",
     "description": "assisted_movement",
+    "source_kind": "feedback",
     "source_feedback_id": "fb_contract_test",
+    "supersedes_entry_id": None,
     "status": "active",
     "created_by": "operator_1",
     "created_at": UTC_TIMESTAMP,
@@ -202,6 +204,7 @@ def test_every_read_operation_documents_versioned_method_not_allowed(
         "/v1/residents/{resident_id}/status",
         "/v1/residents/{resident_id}/awareness",
         "/v1/residents/{resident_id}/calibration",
+        "/v1/residents/{resident_id}/notification-preferences",
         "/v1/events/{event_id}",
         "/v1/devices",
         "/v1/devices/{device_id}/health",

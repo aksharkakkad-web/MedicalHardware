@@ -3,7 +3,9 @@
 > Historical review of the first durable event slice. Backend Checkpoint A was
 > completed afterward; see `docs/PHASE_2_CHECKPOINT_A_REVIEW.md` for current
 > resident-status/calibration evidence and
-> `docs/PHASE_2_CHECKPOINT_B_REVIEW.md` for device assignment/health evidence.
+> `docs/PHASE_2_CHECKPOINT_B_REVIEW.md` for device assignment/health evidence,
+> and `docs/PHASE_2_CHECKPOINT_C_REVIEW.md` for resident preferences and memory
+> administration evidence.
 
 ## What now works
 

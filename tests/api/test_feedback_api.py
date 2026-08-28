@@ -119,7 +119,9 @@ def test_feedback_updates_memory_once_with_versioned_synthetic_output(
         "schema_version": "1.0",
         "entry_id": entry["entry_id"],
         "description": "assisted_movement",
+        "source_kind": "feedback",
         "source_feedback_id": payload["feedback"]["feedback_id"],
+        "supersedes_entry_id": None,
         "status": "active",
         "created_by": "operator_1",
         "created_at": "2026-08-24T21:06:00Z",
@@ -257,6 +259,43 @@ def test_cross_tenant_feedback_is_tenant_safe_not_found(
             .select_from(IdempotencyRecordRow)
             .where(IdempotencyRecordRow.tenant_id == "tenant_other")
         ) == 0
+
+
+def test_feedback_before_newer_admin_memory_is_rejected_without_reordering_history(
+    api_client: TestClient,
+) -> None:
+    memory = api_client.post(
+        "/v1/residents/resident_demo_a/memory/entries",
+        headers=_headers("feedback-chronology-memory"),
+        json={
+            "schema_version": "1.0",
+            "expected_version": 0,
+            "description": "Newer staff-entered routine",
+            "changed_at": "2026-08-25T15:10:00Z",
+        },
+    )
+    assert memory.status_code == 200
+    _resolve_event(api_client)
+
+    response = api_client.post(
+        FEEDBACK_PATH,
+        headers=_headers("feedback-before-admin-memory"),
+        json=FEEDBACK_BODY,
+    )
+
+    assert response.status_code == 409
+    assert response.json()["error"]["code"] == "invalid_transition"
+    assert _row_count(api_client, FeedbackRecordRow) == 0
+    assert _row_count(api_client, ResidentMemorySnapshotRow) == 1
+    current = api_client.get(
+        "/v1/residents/resident_demo_a/memory",
+        headers={
+            "X-Tenant-Id": "tenant_demo",
+            "X-Actor-Id": "operator_1",
+        },
+    )
+    assert current.status_code == 200
+    assert current.json() == memory.json()
 
 
 @pytest.mark.parametrize(

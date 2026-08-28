@@ -2,6 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     DateTime,
     ForeignKey,
     ForeignKeyConstraint,
@@ -371,6 +372,11 @@ class ResidentMemoryEntryRow(Base):
     __tablename__ = "resident_memory_entries"
     __table_args__ = (
         UniqueConstraint("tenant_id", "resident_id", "memory_version", "entry_id"),
+        CheckConstraint(
+            "(source_kind = 'feedback' AND source_feedback_id IS NOT NULL) OR "
+            "(source_kind = 'operator' AND source_feedback_id IS NULL)",
+            name="ck_resident_memory_entry_source",
+        ),
     )
 
     memory_entry_row_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -379,13 +385,59 @@ class ResidentMemoryEntryRow(Base):
     resident_id: Mapped[str] = mapped_column(ForeignKey("residents.resident_id"), index=True)
     memory_version: Mapped[int] = mapped_column(Integer)
     description: Mapped[str] = mapped_column(String(1000))
-    source_feedback_id: Mapped[str] = mapped_column(ForeignKey("feedback_records.feedback_id"), index=True)
+    source_kind: Mapped[str] = mapped_column(String(64), default="feedback")
+    source_feedback_id: Mapped[str | None] = mapped_column(
+        ForeignKey("feedback_records.feedback_id"),
+        index=True,
+    )
+    supersedes_entry_id: Mapped[str | None] = mapped_column(String(255))
     status: Mapped[str] = mapped_column(String(64))
     created_by: Mapped[str] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     retired_by: Mapped[str | None] = mapped_column(String(255))
     retired_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     retirement_reason: Mapped[str | None] = mapped_column(String(500))
+
+
+class ResidentNotificationPreferenceVersionRow(Base):
+    __tablename__ = "resident_notification_preference_versions"
+    __table_args__ = (
+        UniqueConstraint(
+            "tenant_id",
+            "resident_id",
+            "version",
+            name="uq_resident_preference_version",
+        ),
+        ForeignKeyConstraint(
+            ("tenant_id", "resident_id"),
+            ("residents.tenant_id", "residents.resident_id"),
+        ),
+        CheckConstraint("version >= 1", name="ck_resident_preference_version"),
+    )
+
+    preference_version_id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+    tenant_id: Mapped[str] = mapped_column(
+        ForeignKey("tenants.tenant_id"),
+        index=True,
+    )
+    resident_id: Mapped[str] = mapped_column(
+        ForeignKey("residents.resident_id"),
+        index=True,
+    )
+    version: Mapped[int] = mapped_column(Integer)
+    watch_delivery_enabled: Mapped[bool] = mapped_column(Boolean)
+    high_delivery_enabled: Mapped[bool] = mapped_column(Boolean)
+    critical_delivery_enabled: Mapped[bool] = mapped_column(Boolean)
+    away_awareness_enabled: Mapped[bool] = mapped_column(Boolean)
+    return_awareness_enabled: Mapped[bool] = mapped_column(Boolean)
+    limited_awareness_enabled: Mapped[bool] = mapped_column(Boolean)
+    unavailable_awareness_enabled: Mapped[bool] = mapped_column(Boolean)
+    changed_by: Mapped[str] = mapped_column(String(255))
+    changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 
 class IdempotencyRecordRow(Base):

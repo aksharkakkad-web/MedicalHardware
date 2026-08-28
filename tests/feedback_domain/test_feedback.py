@@ -7,7 +7,7 @@ from backend.app.domain.events import (
     EventStore,
     ResolutionOutcome,
 )
-from backend.app.domain.feedback import FeedbackService
+from backend.app.domain.feedback import FeedbackService, ResidentMemoryService
 
 
 class FeedbackLearningTests(unittest.TestCase):
@@ -350,6 +350,62 @@ class FeedbackLearningTests(unittest.TestCase):
         self.assertFalse(retried.memory_updated)
         self.assertFalse(retried.baseline_window_eligible)
         self.assertFalse(retried.global_label_recorded)
+
+    def test_feedback_cannot_create_memory_before_newer_admin_history(self) -> None:
+        admin_memory = ResidentMemoryService().add_entry(
+            resident_id="resident_demo_a",
+            expected_version=0,
+            description="Newer staff-entered routine",
+            actor_id="operator_002",
+            changed_at=datetime(2026, 8, 26, 13, 0, tzinfo=timezone.utc),
+        )
+        service = FeedbackService(initial_memories=(admin_memory,))
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "created_at cannot precede memory history",
+        ):
+            service.submit_feedback(
+                event=self.event,
+                actor_id="operator_001",
+                actual_event_label="assisted_transfer",
+                routine=True,
+                created_at=datetime(2026, 8, 26, 12, 5, tzinfo=timezone.utc),
+            )
+
+    def test_older_entry_can_be_corrected_after_newer_memory_change(self) -> None:
+        service = ResidentMemoryService()
+        first = service.add_entry(
+            resident_id="resident_demo_a",
+            expected_version=0,
+            description="Morning routine",
+            actor_id="operator_001",
+            changed_at=datetime(2026, 8, 26, 12, 0, tzinfo=timezone.utc),
+        )
+        second = service.add_entry(
+            resident_id="resident_demo_a",
+            expected_version=1,
+            description="Evening routine",
+            actor_id="operator_001",
+            changed_at=datetime(2026, 8, 26, 13, 0, tzinfo=timezone.utc),
+        )
+
+        corrected = service.correct_entry(
+            resident_id="resident_demo_a",
+            entry_id=first.active_entries[0].entry_id,
+            expected_version=second.version,
+            description="Morning routine with assistance",
+            reason="Clarified the routine",
+            actor_id="operator_002",
+            changed_at=datetime(2026, 8, 26, 14, 0, tzinfo=timezone.utc),
+        )
+
+        self.assertEqual(corrected.version, 3)
+        self.assertEqual(len(corrected.active_entries), 2)
+        self.assertEqual(
+            corrected.active_entries[-1].supersedes_entry_id,
+            first.active_entries[0].entry_id,
+        )
 
 
 if __name__ == "__main__":

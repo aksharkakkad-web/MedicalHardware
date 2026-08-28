@@ -1,6 +1,7 @@
 """Tenant-scoped persistence adapters for product domain records."""
 
 from dataclasses import dataclass
+from datetime import datetime
 
 from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
@@ -277,6 +278,66 @@ class FeedbackRepository:
             .order_by(ResidentMemoryEntryRow.memory_entry_row_id)
         ).all()
         return memory_from_rows(snapshot, entries)
+
+    def memory_timeline(
+        self,
+        tenant_id: str,
+        resident_id: str,
+    ) -> list[ResidentMemory]:
+        snapshots = self._session.scalars(
+            select(ResidentMemorySnapshotRow)
+            .where(
+                ResidentMemorySnapshotRow.tenant_id == tenant_id,
+                ResidentMemorySnapshotRow.resident_id == resident_id,
+            )
+            .order_by(ResidentMemorySnapshotRow.version)
+        ).all()
+        history: list[ResidentMemory] = []
+        for snapshot in snapshots:
+            entries = self._session.scalars(
+                select(ResidentMemoryEntryRow)
+                .where(
+                    ResidentMemoryEntryRow.tenant_id == tenant_id,
+                    ResidentMemoryEntryRow.resident_id == resident_id,
+                    ResidentMemoryEntryRow.memory_version == snapshot.version,
+                )
+                .order_by(ResidentMemoryEntryRow.memory_entry_row_id)
+            ).all()
+            history.append(memory_from_rows(snapshot, entries))
+        return history
+
+    def save_memory(
+        self,
+        tenant_id: str,
+        memory: ResidentMemory,
+        *,
+        expected_version: int,
+        changed_at: datetime,
+    ) -> ResidentMemory:
+        resident_exists = self._session.scalar(
+            select(ResidentRow.resident_id).where(
+                ResidentRow.tenant_id == tenant_id,
+                ResidentRow.resident_id == memory.resident_id,
+            )
+        )
+        if resident_exists is None:
+            raise NotFoundError()
+        current = self.current_memory(tenant_id, memory.resident_id)
+        if (
+            current.version != expected_version
+            or memory.version != expected_version + 1
+        ):
+            raise ConcurrentUpdateError()
+
+        bundle = memory_to_rows(tenant_id, memory, changed_at)
+        self._session.add(bundle.snapshot)
+        try:
+            self._session.flush((bundle.snapshot,))
+        except IntegrityError as error:
+            raise ConcurrentUpdateError() from error
+        self._session.add_all(bundle.entries)
+        self._session.flush()
+        return self.current_memory(tenant_id, memory.resident_id)
 
     def save_decision(
         self,
