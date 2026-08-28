@@ -54,7 +54,7 @@ describe("ResidentOverview", () => {
     );
 
     expect(
-      await screen.findByRole("heading", { name: /resident overview/i }),
+      await screen.findByRole("heading", { name: /clinic overview/i }),
     ).toBeVisible();
     expect(screen.getByText("Resident A")).toBeVisible();
     expect(screen.getByText(/possible visitor/i)).toBeVisible();
