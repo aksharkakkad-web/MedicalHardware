@@ -78,6 +78,40 @@ describe("MockMonitoringClient", () => {
     expect(nextResult.items[0].displayLabel).not.toBe("Mutated label");
   });
 
+  it("lists event work in newest-first order and finds a resident", async () => {
+    const client = new MockMonitoringClient(
+      () => new Date("2026-08-27T18:00:00.000Z"),
+    );
+
+    const events = await client.listEvents();
+    const resident = await client.getResident("res_2c8d4f");
+
+    expect(events.items).toHaveLength(4);
+    expect(events.items[0].eventId).toBe("evt_unknown_pattern_104");
+    expect(resident.resident.displayLabel).toBe("Resident B");
+    expect(resident.events.map((event) => event.eventId)).toEqual([
+      "evt_unusual_movement_102",
+      "evt_previous_movement_102",
+    ]);
+    await expect(client.getResident("res_missing")).rejects.toThrow(
+      /could not be found/i,
+    );
+  });
+
+  it("shows stored event progress in event and resident lists", async () => {
+    const client = new MockMonitoringClient();
+    await client.performEventAction("evt_unusual_movement_102", "acknowledge");
+
+    expect(
+      (await client.listEvents()).items.find(
+        (event) => event.eventId === "evt_unusual_movement_102",
+      )?.status,
+    ).toBe("acknowledged");
+    expect((await client.getResident("res_2c8d4f")).events[0].status).toBe(
+      "acknowledged",
+    );
+  });
+
   it("returns a contract-shaped event and preserves action progress", async () => {
     const client = new MockMonitoringClient(
       () => new Date("2026-08-27T18:00:00.000Z"),

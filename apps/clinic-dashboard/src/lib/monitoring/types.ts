@@ -72,6 +72,19 @@ export interface ResidentOverviewResponse {
   items: ResidentOverviewItem[];
 }
 
+export interface MonitoringEventListResponse {
+  schemaVersion: "1.0";
+  generatedAt: string;
+  items: MonitoringEventDetail[];
+}
+
+export interface ResidentDetailResponse {
+  schemaVersion: "1.0";
+  generatedAt: string;
+  resident: ResidentOverviewItem;
+  events: MonitoringEventDetail[];
+}
+
 export interface MonitoringEventDetail {
   schemaVersion: "1.0";
   eventId: string;

@@ -3,6 +3,8 @@ import type {
   EventFeedbackInput,
   MonitoringClient,
   MonitoringEventDetail,
+  MonitoringEventListResponse,
+  ResidentDetailResponse,
   ResidentOverviewResponse,
 } from "@/lib/monitoring";
 import { createEventDetailFixtures } from "./events";
@@ -99,6 +101,35 @@ export class MockMonitoringClient implements MonitoringClient {
     });
 
     return structuredClone(response);
+  }
+
+  async listEvents(): Promise<MonitoringEventListResponse> {
+    this.loadEvents();
+    return structuredClone({
+      schemaVersion: "1.0",
+      generatedAt: this.now().toISOString(),
+      items: [...this.events.values()].sort(
+        (left, right) =>
+          new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+      ),
+    });
+  }
+
+  async getResident(residentId: string): Promise<ResidentDetailResponse> {
+    const overview = await this.listResidentOverview();
+    const resident = overview.items.find((item) => item.residentId === residentId);
+    if (!resident) {
+      throw new Error("The requested resident could not be found.");
+    }
+    const eventResponse = await this.listEvents();
+    return structuredClone({
+      schemaVersion: "1.0",
+      generatedAt: this.now().toISOString(),
+      resident,
+      events: eventResponse.items.filter(
+        (event) => event.resident.residentId === residentId,
+      ),
+    });
   }
 
   async getEvent(eventId: string): Promise<MonitoringEventDetail> {
