@@ -104,6 +104,12 @@ describe("MockMonitoringClient", () => {
       actualEventLabel: "Assisted movement",
       routine: true,
     });
+    expect(resolved.actionHistory.map((item) => item.action)).toEqual([
+      "opened",
+      "acknowledged",
+      "checked",
+      "resolved",
+    ]);
     expect((await client.getEvent(opened.eventId)).status).toBe("resolved");
   });
 

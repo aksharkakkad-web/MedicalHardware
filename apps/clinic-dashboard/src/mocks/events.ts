@@ -68,6 +68,15 @@ export function createEventDetailFixture(now: Date): MonitoringEventDetail {
     },
     relatedEventIds: [],
     recurrenceCount: 1,
+    actionHistory: [
+      {
+        action: "opened",
+        actorLabel: "Monitoring system",
+        occurredAt: timestampBefore(now, 8 * 60_000),
+        status: "open",
+        resolutionOutcome: null,
+      },
+    ],
     resolutionOutcome: null,
     feedback: null,
   };

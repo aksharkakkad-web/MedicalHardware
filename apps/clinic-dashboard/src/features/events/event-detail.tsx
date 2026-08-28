@@ -9,6 +9,7 @@ import type {
 } from "@/lib/monitoring";
 
 import styles from "./event-detail.module.css";
+import { EventHistory } from "./event-history";
 import { EventResolutionForm } from "./event-resolution-form";
 import { useEventDetail } from "./use-event-detail";
 
@@ -162,6 +163,8 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
             )}
             <p className={styles.uncertainty}>{event.interpretation.uncertainty}</p>
           </section>
+
+          <EventHistory event={event} />
         </div>
 
         <aside className={styles.sideColumn}>

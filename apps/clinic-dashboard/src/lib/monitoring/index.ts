@@ -8,6 +8,8 @@ export type {
   DeviceStatus,
   EventAction,
   EventFeedbackInput,
+  EventHistoryAction,
+  EventHistoryItem,
   EventStatus,
   InterpretationStatus,
   MonitoringEventDetail,

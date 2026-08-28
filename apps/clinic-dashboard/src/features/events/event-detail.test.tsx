@@ -37,6 +37,7 @@ describe("EventDetail", () => {
     expect(screen.getByText("Position changed")).toBeVisible();
     expect(screen.getByText("Low movement afterward")).toBeVisible();
     expect(screen.getByText(/possible explanation, not a diagnosis/i)).toBeVisible();
+    expect(screen.getByText("Event opened")).toBeVisible();
   });
 
   it("moves through acknowledge, check, resolution, and feedback", async () => {
@@ -64,8 +65,12 @@ describe("EventDetail", () => {
     );
 
     expect(await screen.findByText("Resolved")).toBeVisible();
-    expect(screen.getByText("Assisted movement")).toBeVisible();
+    expect(screen.getAllByText("Assisted movement")).toHaveLength(2);
     expect(screen.getByText(/history remains available/i)).toBeVisible();
+    expect(screen.getByText("Event acknowledged")).toBeVisible();
+    expect(screen.getByText("Resident checked")).toBeVisible();
+    expect(screen.getByText("Event resolved")).toBeVisible();
+    expect(screen.getByText("Feedback saved")).toBeVisible();
   });
 
   it("requires every resolution answer before saving", async () => {

@@ -44,6 +44,13 @@
 .resolutionSummary dl div { display: grid; gap: 0.15rem; padding-top: 0.55rem; border-top: 1px solid var(--color-border); }
 .resolutionSummary dt { color: var(--color-text-muted); font-size: 0.7rem; }
 .resolutionSummary dd { font-size: 0.8rem; font-weight: 700; text-transform: capitalize; }
+.historyList { display: grid; margin-top: 1rem; list-style: none; }
+.historyList li { position: relative; display: grid; grid-template-columns: 0.8rem minmax(0, 1fr); gap: 0.7rem; padding: 0 0 1rem; }
+.historyList li:not(:last-child)::before { position: absolute; top: 0.7rem; bottom: 0; left: 0.26rem; width: 1px; background: var(--color-border); content: ""; }
+.historyMarker { position: relative; z-index: 1; width: 0.55rem; height: 0.55rem; margin-top: 0.2rem; border: 2px solid var(--color-accent-strong); border-radius: 50%; background: var(--color-surface); }
+.historyList strong { font-size: 0.82rem; }
+.historyList p, .historyList small { display: block; margin-top: 0.2rem; color: var(--color-text-muted); font-size: 0.72rem; line-height: 1.4; }
+.historyList small { color: var(--color-text); text-transform: capitalize; }
 .facts { display: grid; gap: 0.65rem; margin-top: 1rem; }
 .facts div { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.8rem; }
 .facts dt { color: var(--color-text-muted); }

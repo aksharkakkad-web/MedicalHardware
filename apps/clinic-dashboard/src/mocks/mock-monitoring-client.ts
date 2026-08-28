@@ -35,12 +35,30 @@ export class MockMonitoringClient implements MonitoringClient {
       acknowledge: "acknowledged",
       check: "checked",
     };
+    const historyAction: Record<EventAction, "acknowledged" | "checked"> = {
+      acknowledge: "acknowledged",
+      check: "checked",
+    };
 
     if (event.status !== expectedStatus[action]) {
       throw new Error("This event action is not available in its current state.");
     }
 
-    const updated = { ...event, status: nextStatus[action] };
+    const status = nextStatus[action];
+    const updated: MonitoringEventDetail = {
+      ...event,
+      status,
+      actionHistory: [
+        ...event.actionHistory,
+        {
+          action: historyAction[action],
+          actorLabel: "Demo caregiver",
+          occurredAt: this.now().toISOString(),
+          status,
+          resolutionOutcome: null,
+        },
+      ],
+    };
     this.events.set(eventId, updated);
     return structuredClone(updated);
   }
@@ -62,11 +80,22 @@ export class MockMonitoringClient implements MonitoringClient {
     const updated: MonitoringEventDetail = {
       ...event,
       status: "resolved",
+      actionHistory: [
+        ...event.actionHistory,
+        {
+          action: "resolved",
+          actorLabel: "Demo caregiver",
+          occurredAt: this.now().toISOString(),
+          status: "resolved",
+          resolutionOutcome: feedback.outcome,
+        },
+      ],
       resolutionOutcome: feedback.outcome,
       feedback: {
         actualEventLabel,
         routine: feedback.routine,
         createdAt: this.now().toISOString(),
+        submittedBy: "Demo caregiver",
       },
     };
     this.events.set(eventId, updated);

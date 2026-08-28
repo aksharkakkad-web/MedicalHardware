@@ -27,6 +27,20 @@ export interface EventFeedbackInput {
   routine: boolean;
 }
 
+export type EventHistoryAction =
+  | "opened"
+  | "acknowledged"
+  | "checked"
+  | "resolved";
+
+export interface EventHistoryItem {
+  action: EventHistoryAction;
+  actorLabel: string;
+  occurredAt: string;
+  status: EventStatus;
+  resolutionOutcome: ResolutionOutcome | null;
+}
+
 export interface ResidentOverviewItem {
   schemaVersion: "1.0";
   residentId: string;
@@ -101,10 +115,12 @@ export interface MonitoringEventDetail {
   };
   relatedEventIds: string[];
   recurrenceCount: number;
+  actionHistory: EventHistoryItem[];
   resolutionOutcome: ResolutionOutcome | null;
   feedback: {
     actualEventLabel: string;
     routine: boolean;
     createdAt: string;
+    submittedBy: string;
   } | null;
 }
