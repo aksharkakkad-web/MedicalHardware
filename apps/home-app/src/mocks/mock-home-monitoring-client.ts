@@ -30,13 +30,46 @@ function browserStorage(): HomeStorage | undefined {
   }
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isDateString(value: unknown): value is string {
+  return typeof value === "string" && Number.isFinite(Date.parse(value));
+}
+
+function isFeedback(value: unknown): value is HomeFeedbackSummary {
+  if (!isRecord(value)) return false;
+  return ["expected", "not_expected", "unsure"].includes(String(value.outcome))
+    && typeof value.note === "string"
+    && typeof value.shouldRememberRoutine === "boolean"
+    && isDateString(value.savedAt);
+}
+
+function isFeedbackStore(value: unknown): value is Record<string, HomeFeedbackSummary> {
+  return isRecord(value) && Object.values(value).every(isFeedback);
+}
+
+function isRoutinesResponse(value: unknown): value is HomeRoutinesResponse {
+  if (!isRecord(value) || value.schemaVersion !== "1.0" || typeof value.version !== "number" || !Array.isArray(value.entries)) return false;
+  return value.entries.every((entry) => {
+    if (!isRecord(entry)
+      || typeof entry.routineId !== "string"
+      || typeof entry.description !== "string"
+      || !["active", "retired"].includes(String(entry.status))
+      || !isDateString(entry.createdAt)) return false;
+    if (entry.status === "active") return entry.retiredAt === null && entry.retirementReason === null;
+    return isDateString(entry.retiredAt) && typeof entry.retirementReason === "string" && entry.retirementReason.trim().length > 0;
+  });
+}
+
 export class MockHomeMonitoringClient implements HomeMonitoringClient {
   private feedback: Record<string, HomeFeedbackSummary>;
   private routines: HomeRoutinesResponse;
 
   constructor(private readonly storage: HomeStorage | undefined = browserStorage()) {
-    this.feedback = this.read<Record<string, HomeFeedbackSummary>>(FEEDBACK_KEY, {});
-    this.routines = this.read<HomeRoutinesResponse>(ROUTINES_KEY, homeRoutinesFixture);
+    this.feedback = this.read(FEEDBACK_KEY, {}, isFeedbackStore);
+    this.routines = this.read(ROUTINES_KEY, homeRoutinesFixture, isRoutinesResponse);
   }
 
   async getOverview(): Promise<HomeOverviewResponse> {
@@ -60,6 +93,8 @@ export class MockHomeMonitoringClient implements HomeMonitoringClient {
     const note = input.note.trim();
     if (note.length > 240) throw new Error("Keep the note to 240 characters or fewer.");
     if (!["expected", "not_expected", "unsure"].includes(input.outcome)) throw new Error("Choose the answer that fits best.");
+    if (input.shouldRememberRoutine && note.length < 4) throw new Error("Add a short note to describe the routine you want remembered.");
+    if (input.shouldRememberRoutine && note.length > 160) throw new Error("Keep a remembered routine to 160 characters or fewer.");
 
     this.feedback[eventId] = {
       outcome: input.outcome,
@@ -68,6 +103,9 @@ export class MockHomeMonitoringClient implements HomeMonitoringClient {
       savedAt: new Date().toISOString(),
     };
     this.write(FEEDBACK_KEY, this.feedback);
+    if (input.shouldRememberRoutine) {
+      await this.addRoutine({ expectedVersion: this.routines.version, description: note });
+    }
     return (await this.getUpdate(eventId)) as HomeUpdateDetail;
   }
 
@@ -125,10 +163,12 @@ export class MockHomeMonitoringClient implements HomeMonitoringClient {
     }
   }
 
-  private read<T>(key: string, fallback: T): T {
+  private read<T>(key: string, fallback: T, validates: (value: unknown) => value is T): T {
     try {
       const stored = this.storage?.getItem(key);
-      return stored ? JSON.parse(stored) as T : clone(fallback);
+      if (!stored) return clone(fallback);
+      const parsed: unknown = JSON.parse(stored);
+      return validates(parsed) ? clone(parsed) : clone(fallback);
     } catch {
       return clone(fallback);
     }

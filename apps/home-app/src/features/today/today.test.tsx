@@ -32,4 +32,32 @@ describe("Today", () => {
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent(/could not load/i));
     expect(screen.getByRole("button", { name: /try again/i })).toBeInTheDocument();
   });
+
+  it.each([
+    ["attention", "Needs attention"],
+    ["away", "Away mode"],
+    ["limited", "Limited view"],
+    ["unavailable", "Information unavailable"],
+  ] as const)("renders the %s state without a steady label", async (state, label) => {
+    const client = new MockHomeMonitoringClient();
+    const overview = await client.getOverview();
+    overview.lovedOne.status = { ...overview.lovedOne.status, state, headline: label, summary: "This view is intentionally not reassuring." };
+    client.getOverview = async () => overview;
+    renderToday(client);
+    expect(await screen.findByRole("heading", { name: label })).toBeInTheDocument();
+    expect(screen.getByText(label, { selector: "p" })).toBeInTheDocument();
+    expect(screen.queryByText("Current picture")).not.toBeInTheDocument();
+  });
+
+  it("describes changed and unavailable trends without false steady language", async () => {
+    const client = new MockHomeMonitoringClient();
+    const overview = await client.getOverview();
+    overview.lovedOne.trends[0] = { ...overview.lovedOne.trends[0], direction: "changed" };
+    overview.lovedOne.trends[1] = { ...overview.lovedOne.trends[1], direction: "unavailable", points: [1, 2, 3] };
+    client.getOverview = async () => overview;
+    renderToday(client);
+    expect(await screen.findByRole("img", { name: /movement routine showed a meaningful change/i })).toBeInTheDocument();
+    expect(screen.getByText("Not enough information yet")).toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: /resting pattern stayed close/i })).not.toBeInTheDocument();
+  });
 });

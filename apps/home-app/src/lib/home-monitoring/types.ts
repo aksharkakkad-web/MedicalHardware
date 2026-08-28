@@ -1,3 +1,8 @@
+/**
+ * Home-app presentation models. These are not Product API wire schemas.
+ * A future real-data client must adapt the published DATA_CONTRACT domain
+ * objects into these family-safe views instead of exposing clinic payloads.
+ */
 export const HOME_SCHEMA_VERSION = "1.0" as const;
 
 export type HomeStatusState = "steady" | "attention" | "away" | "limited" | "unavailable";

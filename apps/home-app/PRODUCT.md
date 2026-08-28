@@ -33,6 +33,7 @@ Adaptive Care Home is a quiet connection to a loved one’s monitoring—not a h
 - The UI never says a loved one is definitely safe.
 - All current data and profiles are synthetic.
 - Components use a typed `HomeMonitoringClient`; they do not import fixture files.
+- `HomeMonitoringClient` returns app-private presentation models, not new Product API wire schemas. A future real client must adapt the published domain contract into these family-safe views.
 - Family permissions and real API wiring come later behind the same interface.
 
 ## Product principles

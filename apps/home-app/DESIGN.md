@@ -42,6 +42,10 @@ Use Geist throughout. Page titles are large and gently tight; body copy is at le
 - Loading, empty, error, limited, and unavailable states never imply reassurance.
 - Motion is limited to 150ms control feedback and disappears under reduced motion.
 
+## Data boundary
+
+The home client returns family-safe presentation models for this app. They are not a second Product API contract. Real-data wiring must adapt the published shared domain objects into these views, and must wait for the backend to publish the missing home/trend data rather than inventing it in the UI.
+
 ## Signature rule
 
 **The One Calm Answer Rule:** Every main screen begins with one sentence a family member can understand immediately. Supporting evidence follows below; it never competes with the answer.

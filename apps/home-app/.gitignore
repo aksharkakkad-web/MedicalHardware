@@ -1,0 +1,19 @@
+# dependencies
+/node_modules
+
+# testing and build output
+/coverage
+/.next/
+/out/
+/build
+
+# local files
+.DS_Store
+*.pem
+*.log
+.env*
+.vercel
+
+# generated TypeScript files
+*.tsbuildinfo
+next-env.d.ts

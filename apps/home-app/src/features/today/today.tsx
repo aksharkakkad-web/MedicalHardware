@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowIcon, CheckIcon, InfoIcon, RoutineIcon } from "@/components/icons";
+import { ArrowIcon, CheckIcon, HomeIcon, InfoIcon, RoutineIcon } from "@/components/icons";
 import { useHomeMonitoringClient, type HomeOverviewResponse, type HomeTrend } from "@/lib/home-monitoring";
 import styles from "./today.module.css";
 
@@ -11,14 +11,43 @@ function timeLabel(value: string) {
 }
 
 function Sparkline({ trend }: { trend: HomeTrend }) {
-  if (!trend.points?.length) return <span className={styles.unavailable}>Not enough information yet</span>;
+  if (trend.direction === "unavailable" || !trend.points?.length) return <span className={styles.unavailable}>Not enough information yet</span>;
   const width = 112;
   const height = 32;
   const min = Math.min(...trend.points);
   const max = Math.max(...trend.points);
   const range = Math.max(max - min, 1);
   const points = trend.points.map((point, index) => `${(index / (trend.points!.length - 1)) * width},${height - 4 - ((point - min) / range) * (height - 8)}`).join(" ");
-  return <svg className={styles.sparkline} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${trend.label} stayed close to its recent range`}><polyline points={points}/></svg>;
+  const directionLabel = trend.direction === "changed" ? "showed a meaningful change" : "stayed close to its recent range";
+  return <svg className={styles.sparkline} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${trend.label} ${directionLabel}`}><polyline points={points}/></svg>;
+}
+
+const stateLabels: Record<HomeOverviewResponse["lovedOne"]["status"]["state"], string> = {
+  steady: "Current picture",
+  attention: "Needs attention",
+  away: "Away mode",
+  limited: "Limited view",
+  unavailable: "Information unavailable",
+};
+
+const stateClasses: Record<HomeOverviewResponse["lovedOne"]["status"]["state"], string> = {
+  steady: "",
+  attention: styles.attention,
+  away: styles.away,
+  limited: styles.limited,
+  unavailable: styles.statusUnavailable,
+};
+
+const trendClasses: Record<HomeTrend["direction"], string> = {
+  steady: "",
+  changed: styles.trendChanged,
+  unavailable: styles.trendUnavailable,
+};
+
+function StatusIcon({ state }: { state: HomeOverviewResponse["lovedOne"]["status"]["state"] }) {
+  if (state === "steady") return <CheckIcon />;
+  if (state === "away") return <HomeIcon />;
+  return <InfoIcon />;
 }
 
 export function Today() {
@@ -48,10 +77,10 @@ export function Today() {
       <p className={styles.introNote}>Updated {timeLabel(lovedOne.status.lastUpdatedAt)}</p>
     </header>
 
-    <section className={`${styles.statusWindow} ${styles[lovedOne.status.state]}`} aria-labelledby="status-heading">
-      <div className={styles.statusGlyph}><CheckIcon/></div>
+    <section className={`${styles.statusWindow} ${stateClasses[lovedOne.status.state]}`} aria-labelledby="status-heading">
+      <div className={styles.statusGlyph}><StatusIcon state={lovedOne.status.state}/></div>
       <div className={styles.statusCopy}>
-        <p className={styles.statusLabel}>Current picture</p>
+        <p className={styles.statusLabel}>{stateLabels[lovedOne.status.state]}</p>
         <h2 id="status-heading">{lovedOne.status.headline}</h2>
         <p>{lovedOne.status.summary}</p>
       </div>
@@ -61,7 +90,7 @@ export function Today() {
     <section className={styles.section} aria-labelledby="patterns-heading">
       <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>Recent patterns</p><h2 id="patterns-heading">The week at a glance</h2></div><span>Compared with their own routine</span></div>
       <div className={styles.trendSheet}>
-        {lovedOne.trends.map((trend) => <article className={styles.trendRow} key={trend.trendId} data-testid="trend-row">
+        {lovedOne.trends.map((trend) => <article className={`${styles.trendRow} ${trendClasses[trend.direction]}`} key={trend.trendId} data-testid="trend-row">
           <div className={styles.trendTitle}><span className={styles.trendDot}/><span>{trend.label}</span></div>
           <div className={styles.trendCopy}><h3>{trend.headline}</h3><p>{trend.summary}</p></div>
           <Sparkline trend={trend}/>
