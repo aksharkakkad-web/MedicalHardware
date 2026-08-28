@@ -32,12 +32,15 @@ def observation(
     *features: FeatureValue,
     window_start: datetime = WINDOW_START,
     window_end: datetime = WINDOW_END,
+    tenant_id: str = "tenant_demo",
+    room_id: str = "room_214",
+    resident_id: str = "resident_demo",
 ) -> NormalizedObservation:
     return NormalizedObservation(
         observation_id=f"obs_{source}",
-        tenant_id="tenant_demo",
-        room_id="room_214",
-        resident_id="resident_demo",
+        tenant_id=tenant_id,
+        room_id=room_id,
+        resident_id=resident_id,
         device_id="device_room_214",
         source=source,
         window_start=window_start,
@@ -162,9 +165,62 @@ def test_alignment_preserves_missing_source_and_position_contradiction() -> None
 
     assert frame.sources_present == ("radar", "thermal")
     assert frame.sources_missing == ("wifi_csi",)
+    assert (frame.tenant_id, frame.room_id, frame.resident_id) == (
+        "tenant_demo",
+        "room_214",
+        "resident_demo",
+    )
     assert frame.contradictions == (
         "position_state:radar=floor_like,thermal=upright_like",
     )
+
+
+@pytest.mark.parametrize(
+    ("identity_field", "conflicting_value"),
+    (
+        ("tenant_id", "tenant_other"),
+        ("room_id", "room_other"),
+        ("resident_id", "resident_other"),
+    ),
+)
+def test_alignment_rejects_mixed_assignment_identity(
+    identity_field: str,
+    conflicting_value: str,
+) -> None:
+    # Break caught: evidence from different assignment lanes is fused into one frame.
+    identity = {identity_field: conflicting_value}
+    conflicting = observation(
+        "thermal",
+        feature(
+            "position_state",
+            "upright_like",
+            "categorical",
+            QualityClass.GOOD,
+            (FeaturePurpose.POSTURE,),
+        ),
+        **identity,
+    )
+
+    with pytest.raises(ValueError, match="homogeneous tenant, room, and resident"):
+        align_observations(
+            (radar_position("upright_like"), conflicting),
+            frame_id=f"mixed_{identity_field}",
+            window_start=WINDOW_START,
+            window_end=WINDOW_END,
+            expected_sources=("radar", "thermal"),
+        )
+
+
+def test_alignment_rejects_empty_input_without_assignment_identity() -> None:
+    # Break caught: an identity-less frame reaches resident-specific processing.
+    with pytest.raises(ValueError, match="observations must not be empty"):
+        align_observations(
+            (),
+            frame_id="empty_frame",
+            window_start=WINDOW_START,
+            window_end=WINDOW_END,
+            expected_sources=("radar",),
+        )
 
 
 def test_alignment_preserves_conflicting_categorical_evidence_from_one_source() -> None:

@@ -564,7 +564,9 @@ entries immediately inform relevant LLM context but do not act as rigid
 schedules and do not directly suppress urgent physical evidence. A legitimate
 new normal enters numerical baselines only after controlled, clean,
 single-person, good-quality coverage; the prior baseline remains versioned and
-replayable.
+replayable. Every admitted learning window must fall inside the expected-
+behavior entry's effective interval. When that context expires, an in-progress
+adoption stops without publishing a numerical baseline.
 
 ---
 

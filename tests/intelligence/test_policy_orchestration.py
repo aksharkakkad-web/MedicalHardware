@@ -32,6 +32,7 @@ from backend.app.intelligence.policy import (
 START = datetime(2026, 8, 28, 12, 0, tzinfo=timezone.utc)
 RESIDENT_ID = "resident_demo_a"
 ROOM_ID = "room_214"
+TENANT_ID = "tenant_demo"
 
 
 def _feature(
@@ -65,6 +66,9 @@ def _movement_frame(
     *,
     device_moved: bool = False,
     frame_id: str | None = None,
+    tenant_id: str = TENANT_ID,
+    room_id: str = ROOM_ID,
+    resident_id: str = RESIDENT_ID,
 ) -> AlignedFrame:
     evidence = (
         _feature(
@@ -88,6 +92,9 @@ def _movement_frame(
     at = START + timedelta(seconds=second)
     return AlignedFrame(
         frame_id=frame_id or f"frame_{second}",
+        tenant_id=tenant_id,
+        room_id=room_id,
+        resident_id=resident_id,
         window_start=at,
         window_end=at + timedelta(seconds=1),
         sources_present=("radar",),
@@ -106,6 +113,9 @@ def _fall_frame(
     position: str,
     movement: float,
     degradation: str | None = None,
+    tenant_id: str = TENANT_ID,
+    room_id: str = ROOM_ID,
+    resident_id: str = RESIDENT_ID,
 ) -> AlignedFrame:
     at = START + timedelta(seconds=second)
     evidence = (
@@ -170,6 +180,9 @@ def _fall_frame(
         )
     return AlignedFrame(
         frame_id=f"fall_frame_{second}",
+        tenant_id=tenant_id,
+        room_id=room_id,
+        resident_id=resident_id,
         window_start=at,
         window_end=at + timedelta(seconds=1),
         sources_present=("radar", "thermal"),
@@ -256,6 +269,18 @@ class RecordingClient:
             return replace(result, anomaly_id="forged_anomaly")
         if self.mode == "unavailable":
             return replace(result, status=InterpretationStatus.UNAVAILABLE)
+        if self.mode == "unsupported_no_action":
+            category = ExplanationCategory.ROUTINE_MOVEMENT
+            disposition = RecommendedDisposition.NO_ACTION
+            return replace(
+                result,
+                likely_explanation=category,
+                supporting_evidence_refs=(),
+                described_measurements=(),
+                plain_english_summary=render_plain_english_summary(category),
+                recommended_disposition=disposition,
+                caregiver_wording=render_caregiver_wording(category, disposition),
+            )
         disposition = RecommendedDisposition.CAREGIVER_EVENT
         category = (
             ExplanationCategory.ROUTINE_MOVEMENT
@@ -282,6 +307,7 @@ def _process(
     baseline: BaselineSnapshot | None = None,
     resident_away: bool = False,
     possible_multiple_people: bool = False,
+    tenant_id: str = TENANT_ID,
     resident_id: str = RESIDENT_ID,
     room_id: str = ROOM_ID,
     resident_memory: ResidentMemory | None = None,
@@ -291,6 +317,7 @@ def _process(
         baseline=baseline or _baseline(),
         context_key="resident_global",
         anomaly_id=anomaly_id,
+        tenant_id=tenant_id,
         resident_id=resident_id,
         room_id=room_id,
         config_version="synthetic_config_v4",
@@ -387,6 +414,23 @@ def test_untrusted_or_unavailable_ai_uses_objective_fallback(mode: str) -> None:
     assert result.event is not None
 
 
+def test_evidence_free_routine_no_action_uses_objective_fallback() -> None:
+    # Break caught: unsupported routine/no-action output suppresses caregiver work.
+    client = RecordingClient("unsupported_no_action")
+    engine = MonitoringIntelligenceEngine(llm_client=client)
+
+    result = _activate(engine)
+
+    assert len(client.calls) == 1
+    assert result.interpretation is None
+    assert result.interpretation_error == (
+        "non_unknown_explanation_requires_supporting_evidence",
+    )
+    assert result.decision.fallback_used
+    assert result.decision.disposition is PolicyDisposition.CAREGIVER_EVENT
+    assert result.event is not None
+
+
 def test_provider_recovery_keeps_one_event_for_the_same_anomaly() -> None:
     # Break caught: fallback and later validated categories split one episode into two events.
     client = RecordingClient("raise")
@@ -474,6 +518,26 @@ def test_same_lane_frame_identity_rejects_conflicting_complete_inputs() -> None:
         _process(engine, conflicting)
 
 
+@pytest.mark.parametrize(
+    ("passed_field", "passed_value"),
+    (
+        ("tenant_id", "tenant_other"),
+        ("room_id", "room_other"),
+        ("resident_id", "resident_other"),
+    ),
+)
+def test_process_frame_rejects_passed_identity_that_does_not_match_frame(
+    passed_field: str,
+    passed_value: str,
+) -> None:
+    # Break caught: orchestration relabels a frame into a different assignment lane.
+    engine = MonitoringIntelligenceEngine(llm_client=RecordingClient())
+    identity = {passed_field: passed_value}
+
+    with pytest.raises(ValueError, match="frame assignment identity must match"):
+        _process(engine, _movement_frame(0, 0.0), **identity)
+
+
 def test_exact_replay_rehydrates_current_event_without_reinvoking_ai() -> None:
     # Break caught: replay returns the cached OPEN snapshot after acknowledgment.
     client = RecordingClient()
@@ -558,6 +622,40 @@ def test_anomaly_recovery_does_not_resolve_caregiver_event() -> None:
     assert result.anomaly.episode.state is AnomalyState.CLOSED
     assert result.decision.disposition is PolicyDisposition.NO_ACTION
     assert engine.event_store.get(opened.event.event_id).status is EventStatus.OPEN
+
+
+def test_failed_persistence_candidate_closes_silently_before_later_episode() -> None:
+    # Break caught: a short candidate emits a packet/event or blocks a later anomaly ID.
+    client = RecordingClient()
+    engine = MonitoringIntelligenceEngine(llm_client=client)
+    started = _process(
+        engine,
+        _movement_frame(0, 0.5),
+        anomaly_id="short_candidate",
+    )
+    retired = _process(
+        engine,
+        _movement_frame(1, 0.0),
+        anomaly_id="short_candidate",
+    )
+
+    assert started.evidence is None
+    assert retired.anomaly is not None and retired.anomaly.episode is not None
+    assert retired.anomaly.episode.state is AnomalyState.CLOSED
+    assert retired.evidence is None
+    assert retired.interpretation is None
+    assert retired.event is None
+    assert client.calls == []
+
+    later = None
+    for second in (2, 3, 4):
+        later = _process(
+            engine,
+            _movement_frame(second, 0.5),
+            anomaly_id="later_anomaly",
+        )
+    assert later is not None and later.event is not None
+    assert later.event.source_anomaly_id == "later_anomaly"
 
 
 def test_post_recovery_anomaly_creates_linked_event() -> None:
@@ -687,7 +785,12 @@ def test_interleaved_resident_lanes_keep_anomaly_state_and_events_isolated() -> 
     for second in range(3):
         result_a = _process(
             engine,
-            _movement_frame(second, 0.5),
+            _movement_frame(
+                second,
+                0.5,
+                resident_id="resident_a",
+                room_id="room_a",
+            ),
             resident_id="resident_a",
             room_id="room_a",
             anomaly_id="anomaly_a",
@@ -698,7 +801,12 @@ def test_interleaved_resident_lanes_keep_anomaly_state_and_events_isolated() -> 
         )
         result_b = _process(
             engine,
-            _movement_frame(second, 0.0),
+            _movement_frame(
+                second,
+                0.0,
+                resident_id="resident_b",
+                room_id="room_b",
+            ),
             resident_id="resident_b",
             room_id="room_b",
             anomaly_id="anomaly_b",
@@ -716,6 +824,28 @@ def test_interleaved_resident_lanes_keep_anomaly_state_and_events_isolated() -> 
     assert len(client.calls) == 1
 
 
+def test_same_resident_and_room_are_isolated_across_tenants() -> None:
+    # Break caught: same-named assignment lanes share anomaly, replay, or event state.
+    client = RecordingClient()
+    engine = MonitoringIntelligenceEngine(llm_client=client)
+    results = {}
+    for second in range(3):
+        for tenant_id in ("tenant_a", "tenant_b"):
+            results[tenant_id] = _process(
+                engine,
+                _movement_frame(second, 0.5, tenant_id=tenant_id),
+                tenant_id=tenant_id,
+                anomaly_id="same_anomaly_id",
+            )
+
+    event_a = results["tenant_a"].event
+    event_b = results["tenant_b"].event
+    assert event_a is not None and event_b is not None
+    assert event_a.event_id != event_b.event_id
+    assert event_a.signal_count == event_b.signal_count == 1
+    assert len(client.calls) == 2
+
+
 def test_interleaved_fall_lanes_do_not_cross_contaminate_or_misattribute() -> None:
     # Break caught: one global fall state combines alternating room evidence.
     engine = MonitoringIntelligenceEngine(llm_client=RecordingClient("raise"))
@@ -726,7 +856,7 @@ def test_interleaved_fall_lanes_do_not_cross_contaminate_or_misattribute() -> No
     for current_a, current_b in zip(sequence_a, sequence_b, strict=True):
         result_a = _process(
             engine,
-            current_a,
+            replace(current_a, resident_id="resident_a", room_id="room_a"),
             resident_id="resident_a",
             room_id="room_a",
             anomaly_id="fall_a",
@@ -738,7 +868,7 @@ def test_interleaved_fall_lanes_do_not_cross_contaminate_or_misattribute() -> No
         )
         result_b = _process(
             engine,
-            current_b,
+            replace(current_b, resident_id="resident_b", room_id="room_b"),
             resident_id="resident_b",
             room_id="room_b",
             anomaly_id="fall_b",

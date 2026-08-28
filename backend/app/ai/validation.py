@@ -348,7 +348,7 @@ def validate_interpretation(
                     reasons,
                     f"invalid_alternative_confidence:{confidence_rank}",
                 )
-            _category(
+            alternative_category = _category(
                 alternative.label,
                 field="alternative_label",
                 request=request,
@@ -375,6 +375,16 @@ def validate_interpretation(
             )
             if supporting is not None:
                 alternative_refs.append(supporting)
+                if (
+                    alternative_category is not None
+                    and alternative_category != ExplanationCategory.UNKNOWN
+                    and not supporting
+                ):
+                    _append(
+                        reasons,
+                        "non_unknown_alternative_requires_supporting_evidence:"
+                        f"{expected_rank}",
+                    )
             if contradicting is not None:
                 alternative_refs.append(contradicting)
 
@@ -397,6 +407,25 @@ def validate_interpretation(
         for reference in refs:
             if reference not in available_refs:
                 _append(reasons, f"invented_evidence_ref:{reference}")
+    if supporting_refs is not None:
+        if (
+            likely_category is not None
+            and likely_category != ExplanationCategory.UNKNOWN
+            and not supporting_refs
+        ):
+            _append(
+                reasons,
+                "non_unknown_explanation_requires_supporting_evidence",
+            )
+        if (
+            disposition_value is not None
+            and disposition_value != RecommendedDisposition.NO_ACTION.value
+            and not supporting_refs
+        ):
+            _append(
+                reasons,
+                "action_recommendation_requires_supporting_evidence",
+            )
 
     described_measurements = _text_tuple(
         result.described_measurements,

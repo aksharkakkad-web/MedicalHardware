@@ -37,6 +37,9 @@ class FeatureEvidence:
 @dataclass(frozen=True)
 class AlignedFrame:
     frame_id: str
+    tenant_id: str
+    room_id: str
+    resident_id: str
     window_start: datetime
     window_end: datetime
     sources_present: tuple[str, ...]
@@ -47,7 +50,12 @@ class AlignedFrame:
     schema_version: str = "1.0"
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "frame_id", require_nonblank_text(self.frame_id, "frame_id"))
+        for field in ("frame_id", "tenant_id", "room_id", "resident_id"):
+            object.__setattr__(
+                self,
+                field,
+                require_nonblank_text(getattr(self, field), field),
+            )
         window_start = _require_utc(self.window_start, "window_start")
         window_end = _require_utc(self.window_end, "window_end")
         if window_end <= window_start:
@@ -151,11 +159,22 @@ def align_observations(
         raise ValueError("observations must be a tuple")
     if any(not isinstance(observation, NormalizedObservation) for observation in observations):
         raise ValueError("observations must contain NormalizedObservation records")
+    if not observations:
+        raise ValueError("observations must not be empty")
     frame_window_start = _require_utc(window_start, "window_start")
     frame_window_end = _require_utc(window_end, "window_end")
     if frame_window_end <= frame_window_start:
         raise ValueError("window_end must be after window_start")
     expected = _normalize_text_tuple(expected_sources, "expected_sources")
+    assignment_identities = {
+        (observation.tenant_id, observation.room_id, observation.resident_id)
+        for observation in observations
+    }
+    if len(assignment_identities) != 1:
+        raise ValueError(
+            "observations must have homogeneous tenant, room, and resident assignment"
+        )
+    tenant_id, room_id, resident_id = next(iter(assignment_identities))
     for observation in observations:
         if (
             observation.window_start < frame_window_start
@@ -185,6 +204,9 @@ def align_observations(
     )
     return AlignedFrame(
         frame_id=frame_id,
+        tenant_id=tenant_id,
+        room_id=room_id,
+        resident_id=resident_id,
         window_start=frame_window_start,
         window_end=frame_window_end,
         sources_present=sources_present,

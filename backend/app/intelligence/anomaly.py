@@ -257,6 +257,11 @@ class AnomalyEpisode:
         if self.state == AnomalyState.CANDIDATE:
             if self.activated_at is not None or self.packet_revision != 0:
                 raise ValueError("candidate episodes cannot have activation evidence")
+        elif self.state == AnomalyState.CLOSED and self.activated_at is None:
+            if self.packet_revision != 0:
+                raise ValueError(
+                    "closed unactivated candidates cannot have packet revisions"
+                )
         elif self.activated_at is None:
             raise ValueError("active, recovering, and closed episodes require activated_at")
         if self.state == AnomalyState.CLOSED:
@@ -555,8 +560,12 @@ def advance_episode(
                 evidence_limited=False,
                 limitations=(),
             )
-        recurrence_of = episode.anomaly_id if episode is not None else None
-        if recurrence_of == selected_id:
+        recurrence_of = (
+            episode.anomaly_id
+            if episode is not None and episode.activated_at is not None
+            else None
+        )
+        if episode is not None and episode.anomaly_id == selected_id:
             raise ValueError("a recurrence requires a new anomaly_id")
         created = AnomalyEpisode(
             anomaly_id=selected_id,
@@ -626,6 +635,40 @@ def advance_episode(
     next_episode: AnomalyEpisode
 
     if episode.state == AnomalyState.CANDIDATE:
+        returned_to_normal = (
+            bool(related_names)
+            and all_initiating_good
+            and all(
+                abs(item.robust_z) < policy.end_abs_z
+                for item in related
+            )
+        )
+        if returned_to_normal:
+            next_episode = replace(
+                episode,
+                state=AnomalyState.CLOSED,
+                current_time=frame.window_end,
+                activation_count=0,
+                consecutive_missing_frames=0,
+                related_frame_count=related_frame_count,
+                last_frame_id=frame.frame_id,
+                closed_at=frame.window_end,
+            )
+            return _update_record(
+                next_episode,
+                deviations,
+                frame=frame,
+                baseline=baseline,
+                context_key=context,
+                resident_id=resident,
+                room_id=room,
+                config_version=config,
+                unknowns=explicit_unknowns,
+                missing_initiating_features=(),
+                policy=policy,
+                evidence_limited=False,
+                limitations=(),
+            )
         new_streak = bool(crossing) and episode.activation_count == 0
         activation_count = episode.activation_count + 1 if crossing else 0
         activated = activation_count >= policy.activation_frames

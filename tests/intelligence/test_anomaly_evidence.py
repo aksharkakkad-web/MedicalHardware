@@ -68,6 +68,9 @@ def _frame(
     window_start = _START + timedelta(seconds=second)
     return AlignedFrame(
         frame_id=f"frame_{second}",
+        tenant_id="tenant_demo",
+        room_id="room_214",
+        resident_id="resident_demo_a",
         window_start=window_start,
         window_end=window_start + timedelta(seconds=1),
         sources_present=() if not evidence else ("radar",),
@@ -202,6 +205,28 @@ def test_third_consecutive_threshold_crossing_activates_one_episode() -> None:
     assert third.episode.packet_revision == 1
 
 
+def test_candidate_returning_to_normal_closes_without_packet_and_allows_new_id() -> None:
+    # Break caught: a failed persistence candidate remains open and blocks a later episode ID.
+    first = _advance(None, 0, 14.0, anomaly_id="candidate_short")
+
+    retired = _advance(first.episode, 1, 10.0, anomaly_id="candidate_short")
+
+    assert retired.episode is not None
+    assert retired.episode.state is AnomalyState.CLOSED
+    assert retired.episode.activated_at is None
+    assert retired.episode.packet_revision == 0
+    assert retired.episode.closed_at == _START + timedelta(seconds=2)
+
+    with pytest.raises(ValueError, match="new anomaly_id"):
+        _advance(retired.episode, 2, 14.0, anomaly_id="candidate_short")
+
+    later = _advance(retired.episode, 2, 14.0, anomaly_id="anomaly_later")
+    assert later.episode is not None
+    assert later.episode.state is AnomalyState.CANDIDATE
+    assert later.episode.anomaly_id == "anomaly_later"
+    assert later.episode.recurrence_of is None
+
+
 def test_missing_frame_pauses_recovery_and_three_good_frames_close() -> None:
     # Break caught: absent evidence is interpreted as recovery or recovery closes too early.
     active = _active_episode().episode
@@ -296,6 +321,9 @@ def test_new_extreme_feature_during_recovery_returns_episode_to_active() -> None
     window_start = _START + timedelta(seconds=5)
     frame = AlignedFrame(
         frame_id="frame_new_extreme",
+        tenant_id="tenant_demo",
+        room_id="room_214",
+        resident_id="resident_demo_a",
         window_start=window_start,
         window_end=window_start + timedelta(seconds=1),
         sources_present=("radar",),
@@ -349,6 +377,9 @@ def test_evidence_packet_preserves_exact_facts_versions_missingness_and_unknowns
     )
     frame = AlignedFrame(
         frame_id="frame_rich",
+        tenant_id="tenant_demo",
+        room_id="room_214",
+        resident_id="resident_demo_a",
         window_start=_START + timedelta(seconds=3),
         window_end=_START + timedelta(seconds=4),
         sources_present=("radar", "thermal"),
@@ -556,16 +587,20 @@ def test_packet_bound_identifiers_versions_and_unknowns_are_validated(
         advance_episode(None, **arguments)
 
 
-def test_broken_candidate_streak_resets_start_and_stale_feature_provenance() -> None:
-    # Break caught: an old crossing contributes timing/features to a later activation streak.
+def test_retired_candidate_does_not_leak_stale_feature_provenance() -> None:
+    # Break caught: a retired candidate contributes timing/features to a later episode.
     first = _advance(None, 0, 14.0)
     broken = _advance(first.episode, 1, 10.0)
+    assert broken.episode.state is AnomalyState.CLOSED
     assert broken.episode.activation_count == 0
 
     def respiration_frame(second: int) -> AlignedFrame:
         window_start = _START + timedelta(seconds=second)
         return AlignedFrame(
             frame_id=f"frame_respiration_{second}",
+            tenant_id="tenant_demo",
+            room_id="room_214",
+            resident_id="resident_demo_a",
             window_start=window_start,
             window_end=window_start + timedelta(seconds=1),
             sources_present=("radar",),
@@ -590,7 +625,7 @@ def test_broken_candidate_streak_resets_start_and_stale_feature_provenance() -> 
             frame=respiration_frame(second),
             baseline=_baseline_with_respiration(),
             context_key="resident_global",
-            anomaly_id="anomaly_1",
+            anomaly_id="anomaly_2",
             resident_id="resident_demo_a",
             room_id="room_214",
             config_version="synthetic_config_v4",
@@ -599,6 +634,8 @@ def test_broken_candidate_streak_resets_start_and_stale_feature_provenance() -> 
         )
 
     assert update.episode.state == AnomalyState.ACTIVE
+    assert update.episode.anomaly_id == "anomaly_2"
+    assert update.episode.recurrence_of is None
     assert update.episode.candidate_started_at == _START + timedelta(seconds=2)
     assert update.episode.activated_at == _START + timedelta(seconds=5)
     assert update.episode.initiating_features == ("respiratory_rate",)
@@ -613,6 +650,9 @@ def test_same_candidate_streak_unions_each_crossing_feature() -> None:
         window_start = _START + timedelta(seconds=second)
         frame = AlignedFrame(
             frame_id=f"frame_union_{second}",
+            tenant_id="tenant_demo",
+            room_id="room_214",
+            resident_id="resident_demo_a",
             window_start=window_start,
             window_end=window_start + timedelta(seconds=1),
             sources_present=("radar",),
@@ -668,6 +708,9 @@ def test_partial_initiating_feature_loss_is_missing_not_limited_quality() -> Non
             )
         return AlignedFrame(
             frame_id=f"frame_partial_{second}",
+            tenant_id="tenant_demo",
+            room_id="room_214",
+            resident_id="resident_demo_a",
             window_start=window_start,
             window_end=window_start + timedelta(seconds=1),
             sources_present=("radar",),

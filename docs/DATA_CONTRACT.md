@@ -529,6 +529,11 @@ V1 supports one assigned resident per monitored room. This is configuration data
 
 Only one active resident assignment is allowed per monitored room in V1. If the assignment is missing or conflicting, the backend must not create resident-specific observations or events. If sensing suggests multiple people may be present, resident-specific output is marked ambiguous, low-confidence, or unavailable; the system does not guess who produced a signal.
 
+Cross-sensor alignment is assignment-scoped: every fused frame contains
+observations from exactly one `(tenant_id, room_id, resident_id)` assignment
+and preserves that identity for downstream orchestration. Empty or mixed-
+assignment observation sets are rejected rather than assigned implicitly.
+
 ### Optional diagnostic raw capture
 
 Endpoint concept:
@@ -715,6 +720,9 @@ separate from caregiver event lifecycle:
 
 An active episode produces immutable revisioned evidence packets. The packet
 is richer than a prose summary but does not contain continuous raw streams.
+A candidate that returns inside recovery bounds before persistence is met
+closes without a packet or caregiver event; a later deviation starts with a
+new anomaly ID.
 
 ```json
 {

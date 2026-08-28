@@ -65,6 +65,9 @@ def _frame(
 ) -> AlignedFrame:
     return AlignedFrame(
         frame_id=frame_id,
+        tenant_id="tenant_demo",
+        room_id="room_214",
+        resident_id="resident_demo_a",
         window_start=window_start,
         window_end=window_start + timedelta(minutes=1),
         sources_present=tuple(sorted({item.source for item in evidence})),
@@ -105,7 +108,11 @@ def _guard(
     )
 
 
-def _expected_behavior() -> MemoryEntry:
+def _expected_behavior(
+    *,
+    effective_from: datetime | None = None,
+    effective_until: datetime | None = None,
+) -> MemoryEntry:
     return MemoryEntry(
         entry_id="memory_expected_walk",
         description="Resident expects a higher evening movement level.",
@@ -115,6 +122,8 @@ def _expected_behavior() -> MemoryEntry:
         created_at=_WINDOW_START,
         source_kind="operator",
         context_kind="expected_new_behavior",
+        effective_from=effective_from,
+        effective_until=effective_until,
     )
 
 
@@ -468,6 +477,99 @@ def test_ineligible_bound_window_does_not_advance_new_normal_candidate() -> None
     assert updated.clean_window_values == (20.0, 21.0)
     assert updated.last_ineligibility_reasons == ("recovery_freeze",)
     assert published is None
+
+
+@pytest.mark.parametrize(
+    ("expected_behavior", "window_start", "reason"),
+    (
+        (
+            _expected_behavior(effective_from=_WINDOW_START + timedelta(minutes=2)),
+            _WINDOW_START,
+            "expected_behavior_not_yet_effective",
+        ),
+        (
+            _expected_behavior(effective_until=_WINDOW_START + timedelta(minutes=1)),
+            _WINDOW_START + timedelta(minutes=1),
+            "expected_behavior_expired",
+        ),
+    ),
+)
+def test_learning_window_must_be_inside_expected_behavior_effective_period(
+    expected_behavior: MemoryEntry,
+    window_start: datetime,
+    reason: str,
+) -> None:
+    # Break caught: an inactive semantic window advances numerical normality.
+    updated, published = advance_new_normal(
+        _candidate(),
+        baseline=_baseline_snapshot(),
+        expected_behavior=expected_behavior,
+        learning_guard=_guard(
+            (_evidence(20.0),),
+            frame_id=f"outside_{reason}",
+            window_start=window_start,
+        ),
+        calibration_progress=_established_calibration(),
+        new_baseline_id="baseline_2",
+        policy=BaselinePolicy(),
+    )
+
+    assert updated.clean_windows == 0
+    assert updated.last_ineligibility_reasons == (reason,)
+    assert published is None
+
+
+def test_expiry_after_partial_progress_terminates_adoption_without_publication() -> None:
+    # Break caught: four clean windows publish after their expected context expires.
+    expected = _expected_behavior(
+        effective_from=_WINDOW_START,
+        effective_until=_WINDOW_START + timedelta(minutes=5),
+    )
+    candidate = _candidate()
+    arguments = {
+        "baseline": _baseline_snapshot(),
+        "expected_behavior": expected,
+        "calibration_progress": _established_calibration(),
+        "new_baseline_id": "baseline_2",
+        "policy": BaselinePolicy(),
+    }
+    for number in range(1, 5):
+        candidate, published = advance_new_normal(
+            candidate,
+            learning_guard=_guard(
+                (_evidence(20.0 + number),),
+                frame_id=f"effective_{number}",
+                window_start=_WINDOW_START + timedelta(minutes=number),
+            ),
+            **arguments,
+        )
+        assert published is None
+
+    expired, published = advance_new_normal(
+        candidate,
+        learning_guard=_guard(
+            (_evidence(25.0),),
+            frame_id="expired_fifth",
+            window_start=_WINDOW_START + timedelta(minutes=5),
+        ),
+        **arguments,
+    )
+
+    assert expired.clean_windows == 4
+    assert expired.last_ineligibility_reasons == ("expected_behavior_expired",)
+    assert published is None
+
+    terminated, replay_publication = advance_new_normal(
+        expired,
+        learning_guard=_guard(
+            (_evidence(25.0),),
+            frame_id="backfilled_fifth",
+            window_start=_WINDOW_START + timedelta(minutes=4),
+        ),
+        **arguments,
+    )
+    assert terminated == expired
+    assert replay_publication is None
 
 
 def test_different_source_subsets_from_one_frame_count_once() -> None:

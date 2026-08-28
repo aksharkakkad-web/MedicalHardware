@@ -63,7 +63,7 @@ class IntelligenceResult:
     schema_version: str = "1.0"
 
 
-LaneKey = tuple[str, str]
+LaneKey = tuple[str, str, str]
 
 
 @dataclass(frozen=True)
@@ -72,6 +72,7 @@ class _ProcessBinding:
     baseline: BaselineSnapshot
     context_key: str
     anomaly_id: str
+    tenant_id: str
     resident_id: str
     room_id: str
     config_version: str
@@ -114,6 +115,7 @@ class MonitoringIntelligenceEngine:
         model_version: str = "fake-v1",
     ) -> None:
         self.event_store = event_store or EventStore()
+        self._event_stores: dict[str, EventStore] = {}
         self.llm_client = llm_client
         self.disposition_policy = disposition_policy or SyntheticDispositionPolicy()
         self.attention_policy = attention_policy or EventAttentionPolicy()
@@ -137,6 +139,7 @@ class MonitoringIntelligenceEngine:
         baseline: BaselineSnapshot,
         context_key: str,
         anomaly_id: str,
+        tenant_id: str,
         resident_id: str,
         room_id: str,
         config_version: str,
@@ -146,12 +149,20 @@ class MonitoringIntelligenceEngine:
         possible_multiple_people: bool = False,
         relevant_context_entry_ids: tuple[str, ...] = (),
     ) -> IntelligenceResult:
-        lane = (resident_id, room_id)
+        identity = (tenant_id, room_id, resident_id)
+        if identity != (frame.tenant_id, frame.room_id, frame.resident_id):
+            raise ValueError(
+                "frame assignment identity must match passed tenant_id, room_id, "
+                "and resident_id"
+            )
+        lane = identity
+        event_store = self._event_store_for(tenant_id)
         binding = _ProcessBinding(
             frame=frame,
             baseline=baseline,
             context_key=context_key,
             anomaly_id=anomaly_id,
+            tenant_id=tenant_id,
             resident_id=resident_id,
             room_id=room_id,
             config_version=config_version,
@@ -164,7 +175,7 @@ class MonitoringIntelligenceEngine:
             attention_policy=self.attention_policy,
             anomaly_policy=self.anomaly_policy,
             fall_policy=self.fall_policy,
-            event_policy_version=self.event_store.policy.policy_version,
+            event_policy_version=event_store.policy.policy_version,
             model_id=self.model_id,
             model_version=self.model_version,
             llm_boundary=(
@@ -268,7 +279,7 @@ class MonitoringIntelligenceEngine:
             if decision.priority is None:
                 raise RuntimeError("caregiver-event decisions require priority")
             related_event_ids = self._recurrence_event_ids(lane, anomaly)
-            event = self.event_store.record_signal(
+            event = event_store.record_signal(
                 resident_id=resident_id,
                 room_id=room_id,
                 objective_family=decision.objective_family,
@@ -319,12 +330,13 @@ class MonitoringIntelligenceEngine:
         actor_id: str,
         at: datetime,
     ) -> MonitoringEvent:
-        event = self.event_store.get(event_id)
+        event_store = self._store_containing_event(event_id)
+        event = event_store.get(event_id)
         suppressed_until = self.attention_policy.suppression_until(
             event.priority,
             at,
         )
-        return self.event_store.acknowledge(
+        return event_store.acknowledge(
             event_id,
             actor_id=actor_id,
             at=at,
@@ -363,9 +375,34 @@ class MonitoringIntelligenceEngine:
     def _packet(anomaly: AnomalyUpdate | None) -> EvidencePacket | None:
         if anomaly is None or anomaly.episode is None:
             return None
-        if anomaly.episode.state == AnomalyState.CANDIDATE:
+        if (
+            anomaly.episode.state == AnomalyState.CANDIDATE
+            or anomaly.episode.activated_at is None
+        ):
             return None
         return build_evidence_packet(anomaly)
+
+    def _event_store_for(self, tenant_id: str) -> EventStore:
+        store = self._event_stores.get(tenant_id)
+        if store is not None:
+            return store
+        store = (
+            self.event_store
+            if not self._event_stores
+            else EventStore(policy=self.event_store.policy)
+        )
+        self._event_stores[tenant_id] = store
+        return store
+
+    def _store_containing_event(self, event_id: str) -> EventStore:
+        stores = tuple(dict.fromkeys((self.event_store, *self._event_stores.values())))
+        for store in stores:
+            try:
+                store.get(event_id)
+            except KeyError:
+                continue
+            return store
+        raise KeyError(f"Unknown event: {event_id}")
 
     def _existing_event(
         self,
@@ -373,7 +410,11 @@ class MonitoringIntelligenceEngine:
         anomaly_id: str,
     ) -> MonitoringEvent | None:
         event_id = self._event_ids_by_anomaly.get((lane, anomaly_id))
-        return self.event_store.get(event_id) if event_id is not None else None
+        return (
+            self._event_store_for(lane[0]).get(event_id)
+            if event_id is not None
+            else None
+        )
 
     def _recurrence_event_ids(
         self,

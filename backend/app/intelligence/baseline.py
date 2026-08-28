@@ -640,6 +640,8 @@ def advance_new_normal(
         raise ValueError("learning-window setup must match calibration setup")
     if candidate.adopted_baseline_id is not None:
         raise ValueError("candidate has already been adopted")
+    if "expected_behavior_expired" in candidate.last_ineligibility_reasons:
+        return candidate, None
 
     prior_feature = baseline.feature(candidate.feature_name, candidate.context_key)
     if prior_feature.purpose != candidate.purpose:
@@ -666,6 +668,31 @@ def advance_new_normal(
         )
     if learning_guard.setup_version != updated.setup_version:
         raise ValueError("learning-window setup must match candidate setup")
+
+    if (
+        expected_behavior.effective_from is not None
+        and learning_guard.window_start < expected_behavior.effective_from
+    ):
+        return (
+            replace(
+                updated,
+                last_ineligibility_reasons=(
+                    "expected_behavior_not_yet_effective",
+                ),
+            ),
+            None,
+        )
+    if (
+        expected_behavior.effective_until is not None
+        and learning_guard.window_end > expected_behavior.effective_until
+    ):
+        return (
+            replace(
+                updated,
+                last_ineligibility_reasons=("expected_behavior_expired",),
+            ),
+            None,
+        )
 
     if not learning_guard.eligible:
         return (

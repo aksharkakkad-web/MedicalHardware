@@ -430,6 +430,7 @@ def _process(
         baseline=baseline,
         context_key=CONTEXT_KEY,
         anomaly_id=anomaly_id,
+        tenant_id=TENANT_ID,
         resident_id=RESIDENT_ID,
         room_id=ROOM_ID,
         config_version=CONFIG_VERSION,

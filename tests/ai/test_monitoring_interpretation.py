@@ -373,6 +373,72 @@ def test_validator_rejects_attempt_to_downgrade_urgent_deterministic_event() -> 
     )
 
 
+@pytest.mark.parametrize(
+    ("category", "disposition", "expected_reason"),
+    (
+        (
+            ai_client.ExplanationCategory.ROUTINE_MOVEMENT,
+            RecommendedDisposition.NO_ACTION,
+            "non_unknown_explanation_requires_supporting_evidence",
+        ),
+        (
+            ai_client.ExplanationCategory.UNKNOWN,
+            RecommendedDisposition.OBSERVE,
+            "action_recommendation_requires_supporting_evidence",
+        ),
+    ),
+)
+def test_factual_explanation_and_action_require_supporting_evidence(
+    category: ai_client.ExplanationCategory,
+    disposition: RecommendedDisposition,
+    expected_reason: str,
+) -> None:
+    # Break caught: an evidence-free explanation or action crosses the trust boundary.
+    request = _request()
+    result = replace(
+        _valid_result(request),
+        likely_explanation=category,
+        alternatives=(),
+        supporting_evidence_refs=(),
+        described_measurements=(),
+        plain_english_summary=ai_client.render_plain_english_summary(category),
+        recommended_disposition=disposition,
+        caregiver_wording=ai_client.render_caregiver_wording(
+            category,
+            disposition,
+        ),
+    )
+
+    with pytest.raises(InterpretationValidationError) as exc_info:
+        validate_interpretation(request, result)
+
+    assert exc_info.value.reasons == (expected_reason,)
+
+
+def test_non_unknown_alternative_requires_its_own_supporting_evidence() -> None:
+    # Break caught: a ranked factual alternative borrows unrelated top-level evidence.
+    request = _request()
+    result = replace(
+        _valid_result(request),
+        alternatives=(
+            ai_client.InterpretationAlternative(
+                rank=1,
+                label=ai_client.ExplanationCategory.ROUTINE_MOVEMENT,
+                confidence=0.2,
+                supporting_evidence_refs=(),
+                contradicting_evidence_refs=(),
+            ),
+        ),
+    )
+
+    with pytest.raises(InterpretationValidationError) as exc_info:
+        validate_interpretation(request, result)
+
+    assert exc_info.value.reasons == (
+        "non_unknown_alternative_requires_supporting_evidence:1",
+    )
+
+
 def test_complete_result_exposes_ranked_evidence_bound_analysis() -> None:
     # Break caught: provider output collapses alternatives and limitations into opaque prose.
     request = _request()
@@ -648,7 +714,6 @@ def test_provider_cannot_override_deterministic_summary_with_pulse_claim() -> No
     request = _request()
     result = replace(
         _valid_result(request),
-        supporting_evidence_refs=(),
         contradicting_evidence_refs=(),
         described_measurements=(),
         plain_english_summary="Pulse was 120 bpm.",

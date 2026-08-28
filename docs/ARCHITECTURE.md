@@ -304,6 +304,8 @@ Sensor fusion consumes normalized compact features + room/resident assignment co
 Responsibilities:
 
 - align observations into common time windows;
+- reject empty or mixed tenant/room/resident assignments and preserve the
+  single assignment identity on each fused frame;
 - track which modalities are present;
 - determine monitoring suitability: resident present, resident away, possible multi-person, or unavailable;
 - compare independent evidence;
@@ -430,6 +432,8 @@ Responsibilities:
 Episode and recurrence rules:
 
 - `detected` is internal and `open` is the first user-visible state;
+- a candidate that returns to normal before persistence closes silently and a
+  later deviation receives a distinct anomaly identity;
 - related evidence inside a configurable quiet-time gap updates one active episode;
 - recurrence after that gap creates a new event linked to prior events;
 - resolved events remain immutable and never reopen;
@@ -498,6 +502,11 @@ Strict structured response:
 - evidence references;
 - no invented measurements;
 - `unknown` supported.
+
+Every non-unknown factual explanation and every recommendation other than
+`no_action` must cite at least one valid supporting evidence reference.
+Evidence-free structured output is invalid and takes the deterministic
+fallback path.
 
 ### Failure behavior
 
