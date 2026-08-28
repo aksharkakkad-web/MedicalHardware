@@ -204,6 +204,7 @@ def test_every_read_operation_documents_versioned_method_not_allowed(
         "/v1/residents/{resident_id}/status",
         "/v1/residents/{resident_id}/awareness",
         "/v1/residents/{resident_id}/calibration",
+        "/v1/residents/{resident_id}/notification-preferences",
         "/v1/events/{event_id}",
         "/v1/devices",
         "/v1/devices/{device_id}/health",

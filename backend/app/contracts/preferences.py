@@ -1,6 +1,13 @@
 from typing import Annotated, Literal
 
-from pydantic import Field, StrictBool, StrictInt, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictBool,
+    StrictInt,
+    model_validator,
+)
 
 from backend.app.contracts.common import ContractModel, RequestContractModel, UTCDateTime
 
@@ -8,13 +15,17 @@ from backend.app.contracts.common import ContractModel, RequestContractModel, UT
 ExpectedVersion = Annotated[StrictInt, Field(ge=0)]
 
 
-class EventDeliveryPreferences(ContractModel):
+class EventDeliveryPreferences(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     watch: StrictBool
     high: StrictBool
     critical: StrictBool
 
 
-class AwarenessDeliveryPreferences(ContractModel):
+class AwarenessDeliveryPreferences(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     away: StrictBool
     return_: StrictBool = Field(alias="return")
     limited: StrictBool
