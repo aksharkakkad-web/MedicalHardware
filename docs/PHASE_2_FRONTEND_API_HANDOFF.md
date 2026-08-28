@@ -1,6 +1,6 @@
 # Phase 2 Clinic Frontend API Handoff
 
-**Status:** Backend implementation in progress
+**Status:** Backend ready for frontend connection
 **Backend owner:** Akshar
 **Frontend connection owner:** Rishit
 **Purpose:** Replace selected clinic mock-client reads with the Product API
@@ -11,8 +11,9 @@ without exposing database details or redesigning the current screens.
 The resident overview is composed from three public reads:
 
 1. `GET /v1/residents` supplies assigned resident and room identity.
-2. `GET /v1/events` supplies the tenant's active attention queue once; the
-   frontend groups its items by `resident_id`.
+2. `GET /v1/events?limit=100` supplies the tenant's active attention queue;
+   the client follows `next_cursor` until it is `null`, then groups the complete
+   result by `resident_id`.
 3. `GET /v1/residents/{resident_id}/status` supplies current monitoring,
    calibration, assignment, and device-health state for each resident.
 
@@ -29,7 +30,7 @@ learn API or database shapes.
 | Monitoring explanation | `status.monitoring.reasons` plus `status.unavailable_reasons` | Translate known reason codes to plain language in the frontend. Never invent a safe value. |
 | Last monitoring update | `status.monitoring.observed_at` | This must be nullable in the frontend because history may not have started. |
 | Device state | `status.device.health.state` and `data_availability` | Support online, offline, degraded, buffering, retrying, assignment unavailable, and not-yet-available. |
-| Active event count | Count queue items grouped by `resident_id` | The initial queue request uses the endpoint's default active statuses. |
+| Active event count | Count all fetched active queue items grouped by `resident_id` | Follow every queue page before treating the count as complete; `total_items` is clinic-wide, not per resident. |
 | Highest attention priority/headline | First grouped event in API queue order | If no active event exists, use the frontend's neutral no-attention presentation. |
 
 High and critical event visibility does not depend on the resident's delivery
