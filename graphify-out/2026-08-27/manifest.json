@@ -828,9 +828,9 @@
     "semantic_hash": ""
   },
   "backend/app/api/v1/residents.py": {
-    "mtime": 1787862162.1250467,
-    "seen": 1787872525.195286,
-    "ast_hash": "751292f71588f04ad81256254ed91801",
+    "mtime": 1787876907.1994,
+    "seen": 1787876921.544775,
+    "ast_hash": "4737587c9e8e0d4c8da3fd1491e5ceda",
     "semantic_hash": ""
   },
   "backend/app/api/v1/router.py": {
@@ -1044,9 +1044,9 @@
     "semantic_hash": ""
   },
   "backend/app/services/queries.py": {
-    "mtime": 1787862162.1310124,
-    "seen": 1787872525.1953,
-    "ast_hash": "9b270457ba67eca71c018a1fe7a3776c",
+    "mtime": 1787876820.9575865,
+    "seen": 1787876921.5448,
+    "ast_hash": "eb3e5262f16c545d4f1caf1ef924812a",
     "semantic_hash": ""
   },
   "backend/app/services/setup_commands.py": {
@@ -1080,9 +1080,9 @@
     "semantic_hash": ""
   },
   "tests/api/test_contracts.py": {
-    "mtime": 1787876164.4667017,
-    "seen": 1787876182.1302662,
-    "ast_hash": "92b8272d757d3576b8014b26cacfbc28",
+    "mtime": 1787876907.1996264,
+    "seen": 1787876921.5448031,
+    "ast_hash": "9d1221555e5e62a7ebc6f0ad45a100ef",
     "semantic_hash": ""
   },
   "tests/api/test_event_lifecycle_api.py": {
@@ -2034,9 +2034,9 @@
     "semantic_hash": ""
   },
   "backend/app/contracts/preferences.py": {
-    "mtime": 1787876136.4112196,
-    "seen": 1787876182.130249,
-    "ast_hash": "cf7df593b7fe4c5625f285561eeb5664",
+    "mtime": 1787876849.3514385,
+    "seen": 1787876921.544783,
+    "ast_hash": "925b0d04325f02b34bb7b2ec1ad2b5af",
     "semantic_hash": ""
   },
   "tests/api/test_preference_memory_contracts.py": {
@@ -2109,6 +2109,24 @@
     "mtime": 1787876606.312071,
     "seen": 1787876651.853336,
     "ast_hash": "a4e65887a271a018ae373de4ab7fbbbe",
+    "semantic_hash": ""
+  },
+  "backend/app/services/resident_controls.py": {
+    "mtime": 1787876835.4263947,
+    "seen": 1787876921.5448,
+    "ast_hash": "b9baaa1dfcd92d3945d01fd8fa26ba1f",
+    "semantic_hash": ""
+  },
+  "tests/api/test_resident_controls_api.py": {
+    "mtime": 1787876709.2134914,
+    "seen": 1787876921.544807,
+    "ast_hash": "fd59ef317f9bacee290151502406a778",
+    "semantic_hash": ""
+  },
+  "tests/persistence/test_resident_controls_rollback.py": {
+    "mtime": 1787876907.1997917,
+    "seen": 1787876921.54482,
+    "ast_hash": "83f3e7a0460cabb60287c0c5fe9345e2",
     "semantic_hash": ""
   }
 }

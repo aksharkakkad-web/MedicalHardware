@@ -1,35 +1,35 @@
 # Graph Report - contactless_monitoring_build_docs  (2026-08-27)
 
 ## Corpus Check
-- 345 files · ~384,224 words
+- 347 files · ~384,809 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 5533 nodes · 13002 edges · 331 communities (282 shown, 49 thin omitted)
-- Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 758 edges (avg confidence: 0.92)
+- 5541 nodes · 13033 edges · 333 communities (285 shown, 48 thin omitted)
+- Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 763 edges (avg confidence: 0.92)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `134865b1`
+- Built from commit: `10602098`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- toy_scenario.py
+- require_nonblank_text
 - lib/env.py
 - SourceItem
-- ResidentMemory
+- test_repositories.py
 - x_judge.py
 - last30days.py
 - perplexity.py
-- doctor.py
+- Any
 - pipeline.py
 - discovery_handoff.py
-- Candidate
+- rerank.py
 - evaluate_search_quality.py
 - github.py
-- AccessContext
-- ResidentMemorySnapshotRow
+- test_preference_memory_contracts.py
+- test_feedback_api.py
 - timedelta
 - reddit.py
 - jobs.py
@@ -38,25 +38,25 @@
 - polymarket.py
 - Contactless Adaptive Care Platform — Data & API Contract
 - render.py
-- probe_dependency
+- prescriptions.py
 - http.py
-- log.py
+- dripstack.py
 - AuditLogRow
 - backends.py
 - Implementation sequence
-- repositories.py
+- test_feedback_rollback.py
 - index.ts
-- available_sources
+- ResidentMemoryService
 - planner.py
 - schema.py
 - x-com/manifest.json
-- v1/events.py
-- update_notification_preferences
+- submit_feedback
+- NotificationPreferenceRepository
 - instagram.py
 - get
-- dependencies.py
+- status_queries.py
 - Report
-- token_overlap_relevance
+- update_notification_preferences
 - freshness.py
 - trustpilot.py
 - GitLab API Reference
@@ -65,7 +65,7 @@
 - library_index.py
 - reddit_listing.py
 - google/manifest.json
-- source_log
+- digg.py
 - html_render.py
 - brightdata.py
 - chrome_cookies.py
@@ -76,32 +76,32 @@
 - bird_x.py
 - Team Ownership & Parallel Development
 - corpus.py
-- _connect
+- store.py
 - setup_wizard.py
 - Twitter Algorithm Optimizer
-- NotFoundError
+- test_status_repositories.py
 - ContractModel
 - cookie_extract.py
 - What You Must Do When Invoked
 - hackernews.py
-- hosted.py
+- source_log
 - providers.py
 - telegram.py
 - What You Must Do When Invoked
-- _fetch_x_backend
-- store.py
+- watchlist.py
+- Candidate
 - devDependencies
 - Three-track roadmap
 - V1 Product Logic Design
 - reddit_enrich.py
 - SourceOutcome
-- Any
+- _log
 - extract_cookies_with_source
 - topic_shape.py
 - 19. Product API Concepts
 - Phase 2 Backend Readiness Design
 - test_preference_memory_schema.py
-- ConcurrentUpdateError
+- AccessContext
 - bluesky.py
 - grok_x.py
 - lib/__init__.py
@@ -115,8 +115,8 @@
 - twitter-client-utils.js
 - Contactless Adaptive Care Platform — Technical Architecture
 - dedupe.py
-- YouTube (yt-dlp)
-- reddit_rss.py
+- 视频/播客
+- token_overlap_relevance
 - AGENTS.md
 - weighted_rrf
 - 13. Monitoring Event
@@ -124,13 +124,13 @@
 - ProgressDisplay
 - 21. Idempotency and Replay
 - Contactless Adaptive Care Platform — Product Requirements Document
-- Cluster
+- Counter
 - twitter-client-features.js
 - twitter-client-constants.js
 - Any
 - Final Fix Report — Backend Domain Toy Slice
 - 4. Edge Telemetry Ingestion Envelope
-- competitors.py
+- FeedbackLearningTests
 - install.sh
 - publish_html
 - search_and_transcribe
@@ -151,12 +151,12 @@
 - permission_preflight.py
 - 16. Feedback Record
 - safari_cookies.py
-- match_discovery_topic
+- record_discovery_surfacing
 - Contactless Adaptive Care Platform — Build Plan
 - Common helpers
 - compilerOptions
 - search_youtube
-- collect_html_warnings
+- log.py
 - bird-search.mjs
 - package.json
 - verify_v3.py
@@ -165,8 +165,8 @@
 - Agent Reach — 互联网能力路由器
 - Agent Reach — internet capability router
 - DeviceHealthRepository
-- _render_comparison_scaffold
-- AudienceRegister
+- domain/device_health.py
+- Cluster
 - Spinner
 - ui.py
 - Global Constraints
@@ -175,7 +175,7 @@
 - Task 1 Report — Backend Runtime and Health Boundary
 - graphify reference: extra exports and benchmark
 - 7. Room and Resident Monitoring Assignment
-- parse_search_response
+- DeviceRepository
 - graphify reference: extra exports and benchmark
 - Current Project Stage
 - Phase 2 Review — Product Backbone Slice
@@ -189,7 +189,7 @@
 - Judge Agent: Synthesize All Sources
 - 7. Milestone 2 — Production UI/UX on Mock Data
 - Task 1 Report: Monitoring Suitability State
-- _record
+- doctor.py
 - test_status_schema.py
 - agent-browser
 - Twitter/X (twitter-cli)
@@ -227,7 +227,7 @@
 - graphify reference: add a URL and watch a folder
 - graphify reference: commit hook and native CLAUDE.md integration
 - graphify reference: incremental update and cluster-only
-- _run_query
+- test_device_repositories.py
 - extract_brave_cookies_macos
 - extract_chrome_cookies_macos
 - update_finding
@@ -257,7 +257,7 @@
 - graphify reference: GitHub clone and cross-repo merge
 - graphify reference: transcribe video and audio
 - xurl_x.py
-- PaidSourceBudget
+- checkpoints/device_health.py
 - If QUERY_TYPE = COMPARISON
 - graphify reference: GitHub clone and cross-repo merge
 - graphify reference: transcribe video and audio
@@ -279,10 +279,10 @@
 - .claude/skills/graphify/references/extraction-spec.md
 - build-skill.sh
 - compare.sh
-- extract_compound_terms
+- cluster_candidates
 - Phase 2 Backend Checkpoint B Review
-- SourceHealth
-- _ytdlp_comments_result
+- _resolve_careers_page
+- Any
 - read_skill_version
 - fanout.py
 - setup-keychain.sh
@@ -303,30 +303,32 @@
 - web_search_keyless.py
 - Clinic Dashboard Foundation Design
 - grounding.py
-- extract_core_subject
-- _fetch_transcript_ytdlp
-- leading_mentions
+- pinterest.py
+- _apply_engagement_rescue
+- DeadlineExceeded
 - web_fetch_keyless.py
 - Clinic Dashboard Foundation Implementation Plan
-- has_stored_auth
+- v1/devices.py
 - Clinic Dashboard
 - clinic-dashboard/AGENTS.md
 - eslint.config.mjs
 - next.config.ts
-- _qualifying_representative_ids
-- enrich_with_comments
-- parse_x_response
+- test_resident_device_composition.py
+- ProductQueryService
+- test_contracts.py
 - test_device_schema.py
-- search_x
-- _invoke
-- Namespace
+- YouTube (yt-dlp)
+- cache_path
+- render_discovery
 - search_products
-- footer_entry
+- _amazon_footer_line
 - .end_web_only
 - .show_bird_auth_help
 - .show_web_only_complete
 - .start_web_only
-- GroundedClaimText
+- discovery_engagement_total
+- submit_with_context
+- render_library_search
 
 ## God Nodes (most connected - your core abstractions)
 1. `SourceItem` - 85 edges
@@ -335,8 +337,8 @@
 4. `Report` - 76 edges
 5. `main()` - 69 edges
 6. `Candidate` - 66 edges
-7. `seed_synthetic_story()` - 61 edges
-8. `AuditLogRow` - 59 edges
+7. `seed_synthetic_story()` - 63 edges
+8. `AuditLogRow` - 61 edges
 9. `run()` - 58 edges
 10. `token_overlap_relevance()` - 57 edges
 
@@ -345,97 +347,97 @@
   tests/api/test_preference_memory_contracts.py → backend/app/contracts/feedback.py
 - `test_memory_entry_contract_requires_consistent_retirement_metadata()` --uses--> `MemoryEntryResponse`  [INFERRED]
   tests/api/test_preference_memory_contracts.py → backend/app/contracts/feedback.py
-- `test_preference_response_requires_honest_available_shape()` --uses--> `ResidentNotificationPreferencesResponse`  [INFERRED]
-  tests/api/test_preference_memory_contracts.py → backend/app/contracts/preferences.py
-- `test_preference_response_requires_honest_missing_shape()` --uses--> `ResidentNotificationPreferencesResponse`  [INFERRED]
-  tests/api/test_preference_memory_contracts.py → backend/app/contracts/preferences.py
 - `test_concurrent_resident_memory_version_has_one_canonical_loser()` --indirect_call--> `submit()`  [INFERRED]
   tests/persistence/test_feedback_rollback.py → .claude/skills/last30days/scripts/lib/hosted.py
+- `_race_same_idempotency_key()` --indirect_call--> `post()`  [INFERRED]
+  tests/api/test_event_lifecycle_api.py → .claude/skills/last30days/scripts/lib/http.py
+- `test_same_event_feedback_race_has_one_versioned_concurrent_loser()` --indirect_call--> `post()`  [INFERRED]
+  tests/persistence/test_feedback_rollback.py → .claude/skills/last30days/scripts/lib/http.py
 
 ## Import Cycles
 - None detected.
 
-## Communities (331 total, 49 thin omitted)
+## Communities (333 total, 48 thin omitted)
 
-### Community 0 - "toy_scenario.py"
-Cohesion: 0.07
-Nodes (31): _aggregate_dimension_status(), BaselineStatus, CalibrationDimensionProgress, CalibrationPolicy, CalibrationProgress, _normalize_dimensions(), observe_calibration_window(), datetime (+23 more)
+### Community 0 - "require_nonblank_text"
+Cohesion: 0.06
+Nodes (42): _aggregate_dimension_status(), BaselineStatus, CalibrationDimensionProgress, CalibrationPolicy, CalibrationProgress, _normalize_dimensions(), observe_calibration_window(), datetime (+34 more)
 
 ### Community 1 - "lib/env.py"
-Cohesion: 0.05
-Nodes (77): _github_record(), _check_file_permissions(), config_exists(), ConfigLoadPolicy, cookie_extraction_browsers(), extract_browser_credentials(), _find_project_env(), get_config() (+69 more)
+Cohesion: 0.04
+Nodes (100): Return (backups, comments) metadata for a source, or ([], None)., _sub_lanes_for(), _check_file_permissions(), config_exists(), ConfigLoadPolicy, cookie_extraction_browsers(), extract_browser_credentials(), _find_project_env() (+92 more)
 
 ### Community 2 - "SourceItem"
 Cohesion: 0.06
-Nodes (96): Calculate recency score (0-100). 0 days before reference_date = 100, max_days…, recency_score(), analyze(), _build_signal(), _confidence_label(), _confidence_score(), infer_company_size(), _interpretation() (+88 more)
+Nodes (94): days_ago(), get_date_confidence(), Determine confidence level for a date. Args: date_str: The date to check (YYYY-…, Calculate how many days before the reference date a date is. If reference_date…, Calculate recency score (0-100). 0 days before reference_date = 100, max_days…, recency_score(), analyze(), _build_signal() (+86 more)
 
-### Community 3 - "ResidentMemory"
+### Community 3 - "test_repositories.py"
 Cohesion: 0.07
-Nodes (44): event_from_rows(), _normalize_nonblank_tuple(), EventAction, EventActionType, EventPriority, EventStatus, EventStore, MonitoringEvent (+36 more)
+Nodes (56): event_from_rows(), event_to_rows(), EventRowBundle, feedback_from_row(), memory_from_rows(), memory_to_rows(), MemoryRowBundle, datetime (+48 more)
 
 ### Community 4 - "x_judge.py"
 Cohesion: 0.24
 Nodes (12): _compute_relevance(), judge_x_corpus(), promotable_handles(), prune_off_topic_items(), Any, X corpus judging for retrieve-judge-retry. No I/O: judges items already…, Determine which handles should be promoted to the FROM lane. Split FROM…, Determine if X search should retry with wider keyword query. Skip retry on… (+4 more)
 
 ### Community 5 - "last30days.py"
-Cohesion: 0.05
-Nodes (77): activate_telegram_for_explicit_sources(), activate_trustpilot_for_explicit_domain(), add_deep_research_source(), apply_vs_competitor_routing(), _audience_register_for_run(), build_parser(), comparison_topic(), compute_output_path_display() (+69 more)
+Cohesion: 0.04
+Nodes (105): activate_telegram_for_explicit_sources(), activate_trustpilot_for_explicit_domain(), add_deep_research_source(), _annotate_and_record_discovery_queue(), apply_vs_competitor_routing(), _audience_register_for_run(), build_parser(), compute_output_path_display() (+97 more)
 
 ### Community 6 - "perplexity.py"
-Cohesion: 0.06
-Nodes (80): post(), Make a POST request with JSON body., _agent_failure_artifact(), _agent_model(), _agent_preset(), _agent_result(), _agent_search(), _agent_timeout() (+72 more)
+Cohesion: 0.12
+Nodes (49): _agent_failure_artifact(), _agent_model(), _agent_preset(), _agent_result(), _agent_search(), _agent_timeout(), AgentBackgroundFailed, AgentBackgroundPollError (+41 more)
 
-### Community 7 - "doctor.py"
-Cohesion: 0.07
-Nodes (62): _age_label(), _apply_probe(), _audit_source_line(), audit_state(), build_postmortem(), build_report(), cache_path(), cache_ttl_seconds() (+54 more)
+### Community 7 - "Any"
+Cohesion: 0.06
+Nodes (50): _age_label(), _apply_probe(), _audit_source_line(), audit_state(), build_postmortem(), build_report(), cache_ttl_seconds(), _cli_health_lines() (+42 more)
 
 ### Community 8 - "pipeline.py"
-Cohesion: 0.05
-Nodes (82): classify_run_failure(), Map Bird's subprocess-only failure shapes to run outcome states., get_date_range(), Get the date range for the last N days. When as_of_date is provided, the range…, classify_failure(), Map a request failure to the doctor-aligned per-run vocabulary., _apply_hiring_signal_gate(), _classify_source_failure() (+74 more)
+Cohesion: 0.04
+Nodes (91): classify_run_failure(), Map Bird's subprocess-only failure shapes to run outcome states., get_date_range(), Get the date range for the last N days. When as_of_date is provided, the range…, Ordered list of available X backends. ``chain[0]`` is the default X source; the…, x_backend_chain(), classify_failure(), Map a request failure to the doctor-aligned per-run vocabulary. (+83 more)
 
 ### Community 9 - "discovery_handoff.py"
-Cohesion: 0.07
-Nodes (61): build_host_digest(), BundleNomination, _clamped_worthiness(), handoff_state_dir(), HandoffContractError, HostAngles, HostJudgment, judgment_for() (+53 more)
+Cohesion: 0.06
+Nodes (65): build_host_digest(), BundleNomination, _clamped_worthiness(), handoff_state_dir(), HandoffContractError, HostAngles, HostJudgment, judgment_for() (+57 more)
 
-### Community 10 - "Candidate"
-Cohesion: 0.07
-Nodes (62): _apply_engagement_rescue(), _apply_fallback_scores(), _apply_first_party_floor(), _apply_fun_fallback(), _apply_fun_scores(), _apply_interaction_signal(), _apply_llm_scores(), _apply_single_fun_fallback() (+54 more)
+### Community 10 - "rerank.py"
+Cohesion: 0.09
+Nodes (36): _apply_fallback_scores(), _apply_first_party_floor(), _apply_interaction_signal(), _apply_llm_scores(), _build_fun_prompt(), _build_prompt(), _candidate_author_handle(), _candidate_mentioned_handles() (+28 more)
 
 ### Community 11 - "evaluate_search_quality.py"
 Cohesion: 0.16
 Nodes (31): build_judge_prompt(), build_parser(), build_ranked_items(), call_gemini_judge(), create_eval_env(), create_worktree(), extract_gemini_text(), get_judgments() (+23 more)
 
 ### Community 12 - "github.py"
-Cohesion: 0.08
-Nodes (56): apply_star_map(), _compute_relevance(), enrich_candidates_with_stars(), _enrich_external_repo(), _enrich_own_repo(), _enrich_project_repo(), _enrich_top_items(), enrich_with_comments() (+48 more)
+Cohesion: 0.06
+Nodes (71): apply_star_map(), _compute_relevance(), enrich_candidates_with_stars(), _enrich_external_repo(), _enrich_own_repo(), _enrich_project_repo(), _enrich_top_items(), enrich_with_comments() (+63 more)
 
-### Community 13 - "AccessContext"
-Cohesion: 0.26
-Nodes (12): ResidentMemoryResponse, model_validator, ResidentNotificationPreferencesResponse, InvalidTransitionError, AccessContext, notification_preferences_response(), AwarenessDeliveryPreferences, datetime (+4 more)
+### Community 13 - "test_preference_memory_contracts.py"
+Cohesion: 0.12
+Nodes (21): RequestContractModel, AddMemoryEntryRequest, CorrectMemoryEntryRequest, field_validator, RetireMemoryEntryRequest, SubmitFeedbackRequest, AwarenessDeliveryPreferences, EventDeliveryPreferences (+13 more)
 
-### Community 14 - "ResidentMemorySnapshotRow"
-Cohesion: 0.53
-Nodes (18): FeedbackRecordRow, ResidentMemorySnapshotRow, _feedback_audit_count(), _headers(), parametrize, TestClient, _resolve_event(), _row_count() (+10 more)
+### Community 14 - "test_feedback_api.py"
+Cohesion: 0.51
+Nodes (16): _feedback_audit_count(), _headers(), parametrize, TestClient, _resolve_event(), _row_count(), test_changed_feedback_reusing_idempotency_key_is_rejected_without_effects(), test_conflicting_second_feedback_requires_explicit_correction() (+8 more)
 
 ### Community 15 - "timedelta"
-Cohesion: 0.08
-Nodes (4): EventFlowTests, datetime, FeedbackLearningTests, timedelta
+Cohesion: 0.17
+Nodes (3): EventFlowTests, datetime, timedelta
 
 ### Community 16 - "reddit.py"
 Cohesion: 0.07
-Nodes (55): Submit a worker with the caller's failure-capture context., submit_with_context(), infer_query_intent(), Shared query preprocessing utilities: noise-word stripping, core subject…, Classify a topic into a coarse intent for adapter query expansion. Returns one…, _compute_post_relevance(), _days_to_reddit_bucket(), _dedupe_posts() (+47 more)
+Nodes (51): infer_query_intent(), Classify a topic into a coarse intent for adapter query expansion. Returns one…, _compute_post_relevance(), _days_to_reddit_bucket(), _dedupe_posts(), discover_subreddits(), enrich_with_comments(), expand_reddit_queries() (+43 more)
 
 ### Community 17 - "jobs.py"
-Cohesion: 0.09
-Nodes (51): expected_misses(), Exclude adapter-declared probe misses from captured run failures., _artifact(), _ats_item(), _candidate_slugs(), _clean_html(), _company_slug(), _date_part() (+43 more)
+Cohesion: 0.12
+Nodes (40): _artifact(), _ats_item(), _clean_html(), _date_part(), detect_ats(), _domain(), _epoch_ms_to_date(), extract_jsonld_jobs() (+32 more)
 
 ### Community 18 - "Any"
 Cohesion: 0.14
 Nodes (20): _as_float(), enrich_source_items(), enrich_with_reviews(), fetch_reviews(), infer_brand(), parse_review_date(), parse_reviews(), Any (+12 more)
 
 ### Community 19 - "resolve.py"
-Cohesion: 0.09
-Nodes (32): _CategoryEntry, detect_category(), peer_subs_for(), Category-peer subreddit map for Step 0.55 community resolution. When a topic is…, Classify a topic into a known category by compound-term match. Returns the…, Return the priority-ordered peer subreddit list for a category. Returns an…, auto_resolve(), _build_context_summary() (+24 more)
+Cohesion: 0.06
+Nodes (47): _CategoryEntry, detect_category(), peer_subs_for(), Category-peer subreddit map for Step 0.55 community resolution. When a topic is…, Classify a topic into a known category by compound-term match. Returns the…, Return the priority-ordered peer subreddit list for a category. Returns an…, _candidate_ok(), discover_competitors() (+39 more)
 
 ### Community 20 - "polymarket.py"
 Cohesion: 0.07
@@ -446,24 +448,24 @@ Cohesion: 0.09
 Nodes (21): 10. Fused Frame, 11. Baseline Snapshot, 12. Anomaly Candidate, 14. LLM Interpretation Input, 15. LLM Interpretation Output, 17. Resident Memory Snapshot, 18. Device Health Record, 18A. Resident Notification Preferences (+13 more)
 
 ### Community 22 - "render.py"
-Cohesion: 0.06
-Nodes (49): _aggregate_engagement(), _candidate_freshness_flag(), _comment_attribution(), _comment_insight(), _defang_corpus_sentinels(), _digg_posts_for(), _effective_fun_score(), _escape_atx_heading_prefix() (+41 more)
+Cohesion: 0.05
+Nodes (107): _aggregate_engagement(), _append_html_footer(), _assistant_safety_lines(), _best_take_relevance_ok(), _candidate_freshness_flag(), _candidates_for_auxiliary_sections(), _clusters_clearing_relevance_floor(), _comment_attribution() (+99 more)
 
-### Community 23 - "probe_dependency"
-Cohesion: 0.07
-Nodes (38): _amazon_record(), _arxiv_record(), _bluesky_record(), _cli_gated_record(), _digg_record(), _fix_text(), Render a registry entry as one actionable fix line (NL + CLI forms)., A source gated purely on a keyless downloaded CLI (mirrors _digg_record). ok ->… (+30 more)
+### Community 23 - "prescriptions.py"
+Cohesion: 0.25
+Nodes (10): _dependency_failure(), _entry(), for_dependency_probe(), lookup(), Prescription, Fix-prescription registry: the single remediation vocabulary (KTD 7). Each…, Return the registered entry for (source, failure), or None., Map a failed dependency probe onto a registered (source, failure). (+2 more)
 
 ### Community 24 - "http.py"
-Cohesion: 0.06
-Nodes (55): _collect_secret_values(), DeadlineExceeded, _fixture_key(), fixture_module_capture(), _fixture_record(), _fixture_redactions(), _fixture_replay(), _fixture_request() (+47 more)
+Cohesion: 0.07
+Nodes (54): capture_failures(), _collect_secret_values(), _fixture_key(), fixture_module_capture(), _fixture_record(), _fixture_redactions(), _fixture_replay(), _fixture_request() (+46 more)
 
-### Community 25 - "log.py"
-Cohesion: 0.20
-Nodes (12): _get_json(), _log(), parse_dripstack_response(), Any, DripStack source for last30days — premium financial newsletter search.…, Normalize DripStack search results into engine-style item dicts. Each item maps…, Search DripStack for articles matching the topic. Returns a list of raw item…, search_dripstack() (+4 more)
+### Community 25 - "dripstack.py"
+Cohesion: 0.33
+Nodes (8): _get_json(), _log(), parse_dripstack_response(), Any, DripStack source for last30days — premium financial newsletter search.…, Normalize DripStack search results into engine-style item dicts. Each item maps…, Search DripStack for articles matching the topic. Returns a list of raw item…, search_dripstack()
 
 ### Community 26 - "AuditLogRow"
-Cohesion: 0.17
-Nodes (44): AuditLogRow, EventActionRow, IdempotencyRecordRow, MonitoringSetupChangeRow, _action_body(), _headers(), parametrize, Response (+36 more)
+Cohesion: 0.19
+Nodes (43): AuditLogRow, EventActionRow, IdempotencyRecordRow, MonitoringSetupChangeRow, _action_body(), _headers(), parametrize, Response (+35 more)
 
 ### Community 27 - "backends.py"
 Cohesion: 0.09
@@ -473,61 +475,61 @@ Nodes (37): BackendFinding, BackendResolution, BackendSpec, ChainDescriptor, get
 Cohesion: 0.11
 Nodes (17): Completion proof, Frozen behavior, Implementation sequence, Non-goals, Notification and awareness preferences, Phase 2 Checkpoint C — Preferences and Resident-Memory Administration, Product outcome, Public clinic surface (+9 more)
 
-### Community 29 - "repositories.py"
-Cohesion: 0.06
-Nodes (57): event_to_rows(), EventRowBundle, feedback_from_row(), feedback_to_row(), memory_from_rows(), memory_to_rows(), MemoryRowBundle, datetime (+49 more)
+### Community 29 - "test_feedback_rollback.py"
+Cohesion: 0.08
+Nodes (37): feedback_to_row(), FeedbackRecordRow, ResidentMemoryEntryRow, ResidentMemorySnapshotRow, FeedbackRepository, _is_feedback_event_conflict(), datetime, IntegrityError (+29 more)
 
 ### Community 30 - "index.ts"
 Cohesion: 0.06
 Nodes (36): geistMono, geistSans, metadata, monitoringClient, Providers(), AppShell(), futureDestinations, StatusPill() (+28 more)
 
-### Community 31 - "available_sources"
-Cohesion: 0.09
-Nodes (24): Inject AUTH_TOKEN/CT0 from .env config so Node subprocesses can use them., set_credentials(), _permissions_block(), Secret-free permission summary via the existing preflight provider., _x_record(), get_x_source(), is_native_search(), is_pinterest_available() (+16 more)
+### Community 31 - "ResidentMemoryService"
+Cohesion: 0.16
+Nodes (17): FeedbackService, _latest_memory_timestamp(), datetime, Pure operator commands over immutable resident-memory snapshots., _require_expected_memory_version(), ResidentMemoryService, _feedback_memory(), parametrize (+9 more)
 
 ### Community 32 - "planner.py"
-Cohesion: 0.10
-Nodes (39): _ensure_perplexity_in_plan(), Route a bounded paid Perplexity action through the whole topic. Deep Research…, build_discovery_plan(), _build_prompt(), _comparison_entities(), _default_cluster_mode(), _default_freshness(), _default_source_weights() (+31 more)
+Cohesion: 0.09
+Nodes (43): _ensure_perplexity_in_plan(), Route a bounded paid Perplexity action through the whole topic. Deep Research…, build_discovery_plan(), build_drill_plan(), _build_prompt(), _comparison_entities(), _default_cluster_mode(), _default_freshness() (+35 more)
 
 ### Community 33 - "schema.py"
-Cohesion: 0.11
-Nodes (36): _agent_generated_at(), candidate_from_dict(), cluster_from_dict(), discovery_report_from_dict(), discovery_topic_from_dict(), DiscoveryPlan, DiscoveryReport, DiscoveryTopic (+28 more)
+Cohesion: 0.09
+Nodes (45): _agent_engagement(), _agent_generated_at(), _agent_summary(), candidate_from_dict(), candidate_primary_item(), cluster_from_dict(), discovery_report_from_dict(), discovery_topic_from_dict() (+37 more)
 
 ### Community 34 - "x-com/manifest.json"
 Cohesion: 0.06
 Nodes (37): maxPosts, query, browserTools, post_from_active_element, domains, args, callable, description (+29 more)
 
-### Community 35 - "v1/events.py"
-Cohesion: 0.14
-Nodes (33): event_mutation_services(), EventMutationServices, acknowledge_event(), check_event(), _execute_action(), _feedback_repository(), get_event(), _learning_decision_response() (+25 more)
+### Community 35 - "submit_feedback"
+Cohesion: 0.24
+Nodes (19): event_mutation_services(), EventMutationServices, acknowledge_event(), check_event(), _execute_action(), _feedback_repository(), get_event(), Depends (+11 more)
 
-### Community 36 - "update_notification_preferences"
-Cohesion: 0.08
-Nodes (52): AwarenessDeliveryPreferences, EventDeliveryPreferences, BaseModel, ResidentNotificationPreferenceVersionRow, preference_from_row(), preference_to_row(), datetime, Mappings for append-only resident notification preference versions. (+44 more)
+### Community 36 - "NotificationPreferenceRepository"
+Cohesion: 0.12
+Nodes (26): ResidentNotificationPreferenceVersionRow, preference_from_row(), preference_to_row(), datetime, Mappings for append-only resident notification preference versions., _utc(), _is_version_conflict(), NotificationPreferenceRepository (+18 more)
 
 ### Community 37 - "instagram.py"
-Cohesion: 0.10
-Nodes (35): capture_failures(), Capture terminal request failures in the current retrieval context. Source…, enrich_with_comments(), expand_instagram_queries(), _extract_core_subject(), _extract_hashtags(), fetch_captions(), _fetch_post_comments() (+27 more)
+Cohesion: 0.11
+Nodes (33): enrich_with_comments(), expand_instagram_queries(), _extract_core_subject(), _extract_hashtags(), fetch_captions(), _fetch_post_comments(), _ig_total_engagement(), _log() (+25 more)
 
 ### Community 38 - "get"
 Cohesion: 0.12
 Nodes (34): get(), Build ScrapeCreators request headers (x-api-key + JSON content type)., scrapecreators_headers(), _clean_webvtt(), enrich_with_comments(), expand_tiktok_queries(), _extract_core_subject(), fetch_captions() (+26 more)
 
-### Community 39 - "dependencies.py"
-Cohesion: 0.07
-Nodes (50): Depends, Request, Session, setup_mutation_services(), SetupMutationServices, status_query_service(), change_resident_setup(), get_resident_awareness() (+42 more)
+### Community 39 - "status_queries.py"
+Cohesion: 0.12
+Nodes (34): status_query_service(), change_resident_setup(), get_resident_awareness(), get_resident_calibration(), get_resident_status(), Depends, get, post (+26 more)
 
 ### Community 40 - "Report"
 Cohesion: 0.09
-Nodes (67): emit_comparison_output(), emit_output(), claim_source_map(), Expose only candidate claims that have a clean primary-item trace. Freshness…, _append_html_footer(), _assess_data_freshness(), _assistant_safety_lines(), _candidates_for_auxiliary_sections() (+59 more)
+Nodes (37): comparison_topic(), compute_save_path_display(), emit_comparison_output(), emit_output(), Opt-in machine-detectable degraded-run signal (issue #384). When…, Compute the user-friendly save path string that will be shown in the footer.…, _render_save_and_print(), _report_has_private_corpus() (+29 more)
 
-### Community 41 - "token_overlap_relevance"
-Cohesion: 0.13
-Nodes (21): _cjk_tokens(), has_cjk(), CJK-aware tokenization for relevance scoring and near-duplicate detection. The…, True if the text contains any CJK / kana / hangul character., Tokenize mixed CJK / Latin text into a flat list of lowercased tokens. CJK runs…, segment(), _as_prepared(), _normalize_phrase() (+13 more)
+### Community 41 - "update_notification_preferences"
+Cohesion: 0.21
+Nodes (21): AwarenessDeliveryPreferences, EventDeliveryPreferences, datetime, Immutable resident notification and awareness preference rules., Create the next preference version after validating its current view., _require_expected_version(), update_notification_preferences(), _awareness_delivery() (+13 more)
 
 ### Community 42 - "freshness.py"
-Cohesion: 0.15
-Nodes (28): _candidate_star_claims(), Claim, _claim_id(), _coerce_refetched(), _default_refetchers(), extract_claims(), _format_verdict_value(), _github_repo() (+20 more)
+Cohesion: 0.12
+Nodes (32): _candidate_star_claims(), Claim, _claim_id(), _coerce_refetched(), _default_refetchers(), extract_claims(), _format_verdict_value(), _github_repo() (+24 more)
 
 ### Community 43 - "trustpilot.py"
 Cohesion: 0.12
@@ -538,28 +540,28 @@ Cohesion: 0.06
 Nodes (29): Check if any pipeline is running, Fetch jobs for a pipeline (to find the Greptile job), Fetch MR details, Fetch MR notes (to find Greptile's confidence score), Fetch pipelines for an MR, Fetch unresolved discussions (inline comments), Find pipeline for a specific commit SHA, GitLab API Reference (+21 more)
 
 ### Community 45 - "run_discover_resume"
-Cohesion: 0.06
-Nodes (43): Re-run the nominate-stage casefold/entity-token collision rules over host-…, resolve_name_collisions(), _best_community_comment(), _disambiguated_topic_name(), DiscoverResumeResult, _discovery_engagement(), _discovery_momentum(), enrich_nominations() (+35 more)
+Cohesion: 0.07
+Nodes (34): _best_community_comment(), _disambiguated_topic_name(), DiscoverResumeResult, _discovery_engagement(), _discovery_momentum(), enrich_nominations(), _enriched_evidence_items(), EnrichedTopic (+26 more)
 
 ### Community 46 - "health.py"
-Cohesion: 0.13
-Nodes (24): clear_dependency_probe_cache(), installer_bin_dirs(), _is_pp_cli(), _manager_available(), _nvm_present(), _off_path_binary(), _off_path_candidate_dirs(), _path_hint() (+16 more)
+Cohesion: 0.10
+Nodes (30): clear_dependency_probe_cache(), DependencyProbe, installer_bin_dirs(), _is_pp_cli(), _manager_available(), _nvm_present(), _off_path_binary(), _off_path_candidate_dirs() (+22 more)
 
 ### Community 47 - "library_index.py"
 Cohesion: 0.07
 Nodes (59): _format_timestamp(), datetime, Deterministic Atom rendering for the saved research library., Render an Atom feed whose IDs and timestamps are stable across runs., render_atom(), _tag(), _briefing_markdown(), _briefing_summary() (+51 more)
 
 ### Community 48 - "reddit_listing.py"
-Cohesion: 0.17
-Nodes (22): _attr(), fetch_discovery_listings(), fetch_listings(), _fetch_one(), _fetch_one_with_status(), _listing_url(), _log(), _matches_discovery_domain() (+14 more)
+Cohesion: 0.15
+Nodes (24): _attr(), fetch_discovery_listings(), fetch_listings(), _fetch_one(), _fetch_one_with_status(), _listing_url(), _log(), _matches_discovery_domain() (+16 more)
 
 ### Community 49 - "google/manifest.json"
 Cohesion: 0.07
 Nodes (30): maxResults, query, browserTools, get_autocomplete_suggestions, domains, args, description, path (+22 more)
 
-### Community 50 - "source_log"
-Cohesion: 0.11
-Nodes (32): _build_posts_args(), _build_search_args(), _build_url(), enrich_source_items(), enrich_with_top_posts(), fetch_top_posts(), _is_available(), _is_safe_http_url() (+24 more)
+### Community 50 - "digg.py"
+Cohesion: 0.12
+Nodes (30): _build_posts_args(), _build_search_args(), _build_url(), enrich_source_items(), enrich_with_top_posts(), fetch_top_posts(), _is_available(), _is_safe_http_url() (+22 more)
 
 ### Community 51 - "html_render.py"
 Cohesion: 0.14
@@ -567,7 +569,7 @@ Nodes (30): _build_colophon(), _generated_date(), _inline_markdown(), _is_safe_l
 
 ### Community 52 - "brightdata.py"
 Cohesion: 0.12
-Nodes (27): _api_key(), _build_args(), _child_env(), _config_dir(), _extract_records(), gate_status(), has_credentials(), is_available() (+19 more)
+Nodes (29): _api_key(), _build_args(), _child_env(), _config_dir(), _extract_records(), gate_status(), has_credentials(), is_available() (+21 more)
 
 ### Community 53 - "chrome_cookies.py"
 Cohesion: 0.11
@@ -578,20 +580,20 @@ Cohesion: 0.13
 Nodes (27): _alternate_url(), _author_names(), _build_search_args(), _build_search_query(), _clean_phrase(), _extract_entries(), _is_available(), _is_entry_envelope() (+19 more)
 
 ### Community 55 - "transcribe.py"
-Cohesion: 0.17
-Nodes (17): _acquire_audio(), _chunk_audio(), _degraded(), is_available(), _post_audio(), Caption-free transcription: compress -> chunk -> provider-fallback. When a…, Produce a compressed mono/16kHz/low-bitrate audio file, or None. For a URL,…, Return [audio_path] when small enough, else ffmpeg-segmented chunk paths. (+9 more)
+Cohesion: 0.11
+Nodes (22): probe_command(), Typed outcome for a source or the tool backing it. ``state`` is one of the…, True when the source produced something worth keeping (ok/degraded)., Probe an external command, distinguishing missing/broken/timeout/ok. Separating…, SourceHealth, _acquire_audio(), _chunk_audio(), _degraded() (+14 more)
 
 ### Community 56 - "seed_synthetic_story"
 Cohesion: 0.06
-Nodes (86): main(), Prove the Checkpoint A resident status story through the real Product API., _require(), run_checkpoint(), get_settings(), Settings, Base, Durable product storage primitives. (+78 more)
+Nodes (75): FastAPI, register_error_handlers(), main(), Prove the Checkpoint C resident-controls product story., _require(), run_checkpoint(), main(), Prove the Checkpoint A resident status story through the real Product API. (+67 more)
 
 ### Community 57 - "linkedin.py"
 Cohesion: 0.13
 Nodes (27): _best_author_match(), enrich_articles(), _extract_posts(), _int_field(), _is_article(), _log(), _normalize_name(), _parse_date() (+19 more)
 
 ### Community 58 - "bird_x.py"
-Cohesion: 0.12
-Nodes (25): register_child_pid(), unregister_child_pid(), check_npm_available(), get_bird_status(), _has_injected_credentials(), _has_process_credentials(), install_bird(), _invoke_bird_subprocess() (+17 more)
+Cohesion: 0.06
+Nodes (51): register_child_pid(), unregister_child_pid(), build_topic_query(), check_npm_available(), _extract_core_subject(), _first_of(), get_bird_status(), _has_injected_credentials() (+43 more)
 
 ### Community 59 - "Team Ownership & Parallel Development"
 Cohesion: 0.07
@@ -601,25 +603,25 @@ Nodes (27): 10. Balance Principle, 1. Core Operating Model, 2. Akshar — Backen
 Cohesion: 0.17
 Nodes (26): BaseException, _bounded_entries(), _cache_entry_fragment_size(), _cache_entry_put(), _cache_payload_size(), CorpusScanResult, _display_path(), _ensure_private_directory() (+18 more)
 
-### Community 61 - "_connect"
-Cohesion: 0.13
-Nodes (23): add_topic(), _connect(), delete_finding(), ensure_private_db_files(), _get_db_path(), get_setting(), get_stats(), init_db() (+15 more)
+### Community 61 - "store.py"
+Cohesion: 0.08
+Nodes (45): add_topic(), _cli_query(), _cli_search(), _cli_stats(), _cli_trending(), _connect(), delete_finding(), ensure_private_db_files() (+37 more)
 
 ### Community 62 - "setup_wizard.py"
 Cohesion: 0.05
-Nodes (66): _brightdata_off_path_binary(), brightdata_status(), _device_handle_path(), _digg_bin_candidate_paths(), _digg_bin_dir_hint(), _digg_off_path_binary(), _digg_on_path(), _existing_scrapecreators_key() (+58 more)
+Nodes (64): _brightdata_off_path_binary(), _device_handle_path(), _digg_bin_candidate_paths(), _digg_bin_dir_hint(), _digg_off_path_binary(), _digg_on_path(), _existing_scrapecreators_key(), fetch_api_key() (+56 more)
 
 ### Community 63 - "Twitter Algorithm Optimizer"
 Cohesion: 0.07
 Nodes (26): 1. Maximize Real-graph (Follower Engagement), 2. Leverage SimClusters (Community Resonance), 3. Improve TwHIN Mapping (Content-User Fit), 4. Boost Tweepcred (Authority/Credibility), 5. Maximize Engagement Signals, 6. Prevent Negative Signals, Best Practices for Algorithm Optimization, Common Pitfalls to Avoid (+18 more)
 
-### Community 64 - "NotFoundError"
-Cohesion: 0.13
-Nodes (37): CalibrationSnapshotRow, MonitoringStatusSnapshotRow, SeededStory, calibration_from_rows(), calibration_to_row(), latest_setup_change_to_row(), monitoring_from_row(), monitoring_to_row() (+29 more)
+### Community 64 - "test_status_repositories.py"
+Cohesion: 0.12
+Nodes (36): MonitoringStatusSnapshotRow, SeededStory, calibration_from_rows(), calibration_to_row(), latest_setup_change_to_row(), monitoring_from_row(), monitoring_to_row(), datetime (+28 more)
 
 ### Community 65 - "ContractModel"
 Cohesion: 0.11
-Nodes (29): device_query_service(), get_device_health(), list_devices(), Depends, get, Tenant-safe clinic reads for devices and operational health., ContractModel, ErrorEnvelope (+21 more)
+Nodes (30): ContractModel, ErrorDetail, ErrorEnvelope, HealthResponse, BaseModel, datetime, _require_utc(), DeviceAssignmentResponse (+22 more)
 
 ### Community 66 - "cookie_extract.py"
 Cohesion: 0.14
@@ -633,13 +635,13 @@ Nodes (24): For /graphify add and --watch, For /graphify query, For the commit h
 Cohesion: 0.14
 Nodes (24): _date_to_unix(), enrich_top_stories(), fetch_discovery_listings(), _fetch_item_comments(), _flatten_query_for_algolia(), _log(), parse_hackernews_response(), Any (+16 more)
 
-### Community 69 - "hosted.py"
-Cohesion: 0.16
-Nodes (24): _api_base(), _auth_headers(), _billing_url(), _err(), _handle_clarify(), _handle_http_error(), _parse_error_body(), poll() (+16 more)
+### Community 69 - "source_log"
+Cohesion: 0.15
+Nodes (26): _api_base(), _auth_headers(), _billing_url(), _err(), _handle_clarify(), _handle_http_error(), _parse_error_body(), poll() (+18 more)
 
 ### Community 70 - "providers.py"
 Cohesion: 0.12
-Nodes (23): extract_gemini_text(), extract_json(), extract_openai_text(), GeminiClient, mock_runtime(), OpenAIClient, OpenRouterClient, Any (+15 more)
+Nodes (21): extract_gemini_text(), extract_json(), extract_openai_text(), GeminiClient, mock_runtime(), OpenAIClient, OpenRouterClient, Any (+13 more)
 
 ### Community 71 - "telegram.py"
 Cohesion: 0.14
@@ -649,13 +651,13 @@ Nodes (24): _fetch_channel_posts(), _get_channel_sources(), InvalidChannelHandle
 Cohesion: 0.08
 Nodes (24): For /graphify add and --watch, For /graphify query, For the commit hook and native CLAUDE.md integration, For --update and --cluster-only, /graphify, Honesty Rules, Interpreter guard for subcommands, Part A - Structural extraction for code files (+16 more)
 
-### Community 73 - "_fetch_x_backend"
-Cohesion: 0.12
-Nodes (20): build_topic_query(), _extract_core_subject(), _first_of(), _log(), parse_bird_response(), _plain_query_tokens(), Any, Extract core subject from verbose query for X search. X search is literal… (+12 more)
+### Community 73 - "watchlist.py"
+Cohesion: 0.16
+Nodes (21): post(), Make a POST request with JSON body., build_parser(), cmd_add(), cmd_config(), cmd_delta(), cmd_list(), cmd_remove() (+13 more)
 
-### Community 74 - "store.py"
-Cohesion: 0.12
-Nodes (22): _cli_query(), _cli_search(), _cli_stats(), _cli_trending(), get_daily_cost(), get_new_findings(), get_topic(), get_trending() (+14 more)
+### Community 74 - "Candidate"
+Cohesion: 0.15
+Nodes (20): _candidate_is_duplicate(), merge_drill_report(), Merge a narrow follow-up into its cached report while preserving other clusters., _warnings(), _apply_fun_fallback(), _apply_fun_scores(), _apply_single_fun_fallback(), candidate_relevance_ok() (+12 more)
 
 ### Community 75 - "devDependencies"
 Cohesion: 0.04
@@ -671,15 +673,15 @@ Nodes (22): Calibration behavior, Complete product loop, Controlled personal bas
 
 ### Community 78 - "reddit_enrich.py"
 Cohesion: 0.14
-Nodes (21): Convert Unix timestamp to YYYY-MM-DD string., timestamp_to_date(), enrich_reddit_item(), enrich_reddit_item_sc(), extract_comment_insights(), extract_reddit_path(), fetch_thread_data(), get_top_comments() (+13 more)
+Nodes (23): Convert Unix timestamp to YYYY-MM-DD string., timestamp_to_date(), _enrich_reddit_items(), Enrich web search results that are Reddit URLs with thread body and comments.…, enrich_reddit_item(), enrich_reddit_item_sc(), extract_comment_insights(), extract_reddit_path() (+15 more)
 
 ### Community 79 - "SourceOutcome"
 Cohesion: 0.12
 Nodes (14): _degraded_discovery_sources(), DiscoverNominateResult, _discovery_report_warnings(), nominate_nothing_solid_report(), Sources whose outcome is neither clean nor an expected skip., Leg 1 output of the host-judged discovery protocol: the ranked judge pool as…, The honest-empty leg-1 report: a zero-nomination sweep renders the same…, Coverage warnings shared by the one-shot and resume discovery paths. The resume… (+6 more)
 
-### Community 80 - "Any"
-Cohesion: 0.16
-Nodes (20): _clean_vtt(), fetch_transcript(), _fetch_transcript_direct(), _log(), Any, Search YouTube via ScrapeCreators API (fallback when yt-dlp is unavailable).…, Call ScrapeCreators YouTube search endpoint. Args: keyword: Search keyword…, Extract caption text from a ScrapeCreators transcript segment. The transcript… (+12 more)
+### Community 80 - "_log"
+Cohesion: 0.17
+Nodes (17): backfill_transcripts(), _clean_vtt(), fetch_transcript(), _fetch_transcript_direct(), _fetch_transcript_ytdlp_via_ssh(), fetch_transcripts_parallel(), _log(), Fetch transcripts for multiple videos in parallel. Args: video_ids: List of… (+9 more)
 
 ### Community 81 - "extract_cookies_with_source"
 Cohesion: 0.12
@@ -701,17 +703,17 @@ Nodes (19): 10. Completion Gate, 1. Outcome, 2. Existing Foundation to Extend, 3
 Cohesion: 0.57
 Nodes (7): _database(), _insert_preference(), Path, _seed_residents(), test_checkpoint_c_migration_adds_preferences_and_memory_provenance(), test_memory_provenance_allows_operator_entries_without_fake_feedback(), test_preference_versions_are_resident_tenant_safe_and_append_only()
 
-### Community 86 - "ConcurrentUpdateError"
-Cohesion: 0.16
-Nodes (15): FastAPI, register_error_handlers(), _status_code(), ErrorDetail, BaseModel, ConcurrentUpdateError, IdempotencyConflictError, InvalidInputError (+7 more)
+### Community 86 - "AccessContext"
+Cohesion: 0.09
+Nodes (37): setup_mutation_services(), SetupMutationServices, _status_code(), _learning_decision_response(), FeedbackResponse, LearningDecisionResponse, MemoryEntryResponse, model_validator (+29 more)
 
 ### Community 87 - "bluesky.py"
 Cohesion: 0.16
 Nodes (17): _create_session(), _extract_core_subject(), _log(), parse_bluesky_response(), _parse_date(), Any, Bluesky search via AT Protocol (requires app password). Uses bsky.social for…, Create an AT Protocol session and return the access token. Args: handle:… (+9 more)
 
 ### Community 88 - "grok_x.py"
-Cohesion: 0.15
-Nodes (18): classify_run_failure(), clear_availability_cache(), _decode_snowflake(), _looks_generated(), _parse_expires_at(), datetime, Path, X (Twitter) search via the Grok CLI — no X credential of any kind. The `grok`… (+10 more)
+Cohesion: 0.06
+Nodes (62): _as_int(), binary_path(), classify_run_failure(), _clean_handle(), clear_availability_cache(), _decode_snowflake(), _fanout_queries(), _find_expires_at() (+54 more)
 
 ### Community 89 - "lib/__init__.py"
 Cohesion: 0.15
@@ -734,8 +736,8 @@ Cohesion: 0.11
 Nodes (18): Caregiver actions, Completion decision, Failure behavior, First end-to-end story, First Product API, Idempotency and chronology, Initial durable records, Non-goals (+10 more)
 
 ### Community 94 - "xquik.py"
-Cohesion: 0.12
-Nodes (27): _execute_search(), _is_own(), _log(), _parse_tweet(), parse_xquik_response(), probe_reason(), probe_works(), Any (+19 more)
+Cohesion: 0.08
+Nodes (38): _name_lane_subject(), Resolve the entity name to search for by name, not the whole topic. Phrase-…, extract_compound_terms(), leading_mentions(), Shared query preprocessing utilities: noise-word stripping, core subject…, Detect multi-word terms that should be quoted in search queries. Identifies: -…, Return the handles a post is directed at: the leading run of @mentions in the…, _execute_search() (+30 more)
 
 ### Community 95 - "reddit_shreddit.py"
 Cohesion: 0.19
@@ -754,16 +756,16 @@ Cohesion: 0.11
 Nodes (17): 10. Layer 7 — Device Health / Monitoring Quality, 11. Layer 8 — Anomaly Engine, 13. Layer 10 — Context Builder, 16. Layer 13 — Feedback Engine, 19. Suggested Repository Layout, 1. Architecture Goal, 20. Single-Resident Room and Ambiguity Architecture, 21. Time Model (+9 more)
 
 ### Community 99 - "dedupe.py"
-Cohesion: 0.13
-Nodes (29): _candidate_text(), cluster_candidates(), _cluster_sort_key(), _cluster_uncertainty(), _merge_entity_clusters(), _mmr_representatives(), Candidate clustering and representative selection., Merge small clusters that cover the same story across different sources. The… (+21 more)
+Cohesion: 0.16
+Nodes (20): _cjk_tokens(), has_cjk(), CJK-aware tokenization for relevance scoring and near-duplicate detection. The…, True if the text contains any CJK / kana / hangul character., Tokenize mixed CJK / Latin text into a flat list of lowercased tokens. CJK runs…, segment(), dedupe_items(), get_ngrams() (+12 more)
 
-### Community 100 - "YouTube (yt-dlp)"
-Cohesion: 0.12
-Nodes (17): B站 / Bilibili（bili-cli 为主，OpenCLI 补字幕）, YouTube (yt-dlp), 下载字幕, 前置要求, 字幕 (OpenCLI，需要桌面 Chrome), 字幕失败时的重试链（按序执行，拿到实质内容即停）, 小宇宙播客 / Xiaoyuzhou Podcast, 搜索视频 (+9 more)
-
-### Community 101 - "reddit_rss.py"
+### Community 100 - "视频/播客"
 Cohesion: 0.20
-Nodes (16): _build_urls(), _fetch_feed(), _iso_to_date(), _iso_to_epoch(), _log(), _parse_feed(), Any, Keyless Reddit discovery via public RSS/Atom feeds. Reddit's ``.json`` search… (+8 more)
+Nodes (10): B站 / Bilibili（bili-cli 为主，OpenCLI 补字幕）, 前置要求, 字幕 (OpenCLI，需要桌面 Chrome), 小宇宙播客 / Xiaoyuzhou Podcast, 检查状态, 视频/播客, 视频详情/搜索/热门/排行 (bili-cli，只读无需登录), 转录单集播客（可选 --polish 增强标点） (+2 more)
+
+### Community 101 - "token_overlap_relevance"
+Cohesion: 0.10
+Nodes (29): _build_urls(), _fetch_feed(), _iso_to_date(), _iso_to_epoch(), _log(), _parse_feed(), Any, Keyless Reddit discovery via public RSS/Atom feeds. Reddit's ``.json`` search… (+21 more)
 
 ### Community 102 - "AGENTS.md"
 Cohesion: 0.12
@@ -778,8 +780,8 @@ Cohesion: 0.50
 Nodes (4): 13. Monitoring Event, Event kind, Event status enum, Resolution outcome enum
 
 ### Community 105 - "test_read_api.py"
-Cohesion: 0.22
-Nodes (16): FeedbackRecord, TestClient, test_blank_access_header_uses_the_versioned_error_contract(), test_cross_tenant_resources_use_the_same_not_found_response(), test_get_event_matches_the_resident_event_contract(), test_get_resident_memory_maps_nested_entries_to_public_contracts(), test_get_resident_memory_returns_versioned_empty_memory(), test_get_resident_returns_the_versioned_assignment() (+8 more)
+Cohesion: 0.25
+Nodes (14): TestClient, test_blank_access_header_uses_the_versioned_error_contract(), test_cross_tenant_resources_use_the_same_not_found_response(), test_get_event_matches_the_resident_event_contract(), test_get_resident_memory_returns_versioned_empty_memory(), test_get_resident_returns_the_versioned_assignment(), test_list_resident_events_returns_complete_versioned_history(), test_list_residents_is_tenant_scoped() (+6 more)
 
 ### Community 107 - "21. Idempotency and Replay"
 Cohesion: 0.50
@@ -789,9 +791,9 @@ Nodes (4): 21. Idempotency and Replay, Ingestion, LLM, Processing
 Cohesion: 0.12
 Nodes (15): 10. Data Quality and Confidence, 14. Event Lifecycle, 17. Active Learning, 18. Device Health and Degraded Operation, 19. Simulator-First Development, 20. Privacy, Security, and Development Data, 22. V1 Requirements, 23. Non-Goals for Initial Build (+7 more)
 
-### Community 109 - "Cluster"
-Cohesion: 0.07
-Nodes (38): entity_overlap(), extract_entities(), _extract_subreddits(), extract_text_entities(), _extract_x_handles(), _extract_x_hashtags(), has_anchor_signal(), Any (+30 more)
+### Community 109 - "Counter"
+Cohesion: 0.13
+Nodes (23): entity_overlap(), extract_entities(), _extract_subreddits(), extract_text_entities(), _extract_x_handles(), _extract_x_hashtags(), has_anchor_signal(), Any (+15 more)
 
 ### Community 110 - "twitter-client-features.js"
 Cohesion: 0.30
@@ -813,10 +815,6 @@ Nodes (14): Controller-deferred boundaries, Final Fix Report — Backend Domain 
 Cohesion: 0.67
 Nodes (3): 4. Edge Telemetry Ingestion Envelope, `payload_format`, `source` enum
 
-### Community 115 - "competitors.py"
-Cohesion: 0.18
-Nodes (15): _candidate_ok(), discover_competitors(), _extract_peer_entities(), _log(), _normalize_candidate(), _queries_for(), Discover peer entities ("competitors") for a topic via web search. Mirrors the…, Collapse whitespace and strip trailing punctuation. (+7 more)
-
 ### Community 116 - "install.sh"
 Cohesion: 0.36
 Nodes (13): cleanup(), die(), find_ego_browser_in_app(), find_ego_lite_app(), install_ego_lite(), is_ego_lite_app(), log(), main() (+5 more)
@@ -827,11 +825,11 @@ Nodes (12): _error_message(), HtmlPublishBatchResult, HtmlPublishError, publish_
 
 ### Community 118 - "search_and_transcribe"
 Cohesion: 0.14
-Nodes (16): backfill_transcripts(), expand_youtube_queries(), _extract_core_subject(), extract_transcript_highlights(), fetch_transcripts_parallel(), _prefer_search_error(), Fetch transcripts for multiple videos in parallel. Args: video_ids: List of…, Extract quotable highlights from a YouTube transcript. Filters filler… (+8 more)
+Nodes (16): expand_youtube_queries(), _extract_core_subject(), extract_transcript_highlights(), _prefer_search_error(), Extract quotable highlights from a YouTube transcript. Filters filler…, Sort key for transcript candidate selection. Combines views with recency so…, Keep the most actionable search failure across multi-query merges., Full YouTube search: find videos, then fetch transcripts for top results. Uses… (+8 more)
 
 ### Community 119 - "amazon.py"
-Cohesion: 0.25
-Nodes (14): _as_int(), five_star_share(), product_stats(), datetime, Amazon product and review signals via the Bright Data CLI. Two-stage source,…, Derive a scannable footer handle from a long product name. Live names are pipe-…, Compute the stat block for a rendered SourceItem. Enrichment stores a…, Share of ratings that are 5-star, from the star-distribution object. (+6 more)
+Cohesion: 0.14
+Nodes (25): _as_int(), canonical_product_url(), five_star_share(), _is_sponsored(), parse_search_response(), product_stats(), datetime, Amazon product and review signals via the Bright Data CLI. Two-stage source,… (+17 more)
 
 ### Community 121 - "Task 2 Report: Calibration Eligibility and Recalibration"
 Cohesion: 0.14
@@ -858,8 +856,8 @@ Cohesion: 0.27
 Nodes (12): createRuntimeQueryIdStore(), discoverBundles(), DISCOVERY_PAGES, extractOperations(), fetchAndExtract(), fetchText(), HEADERS, OPERATION_PATTERNS (+4 more)
 
 ### Community 127 - "v1/residents.py"
-Cohesion: 0.10
-Nodes (41): alias, access_context(), database_session(), query_service(), request_idempotency_key(), add_resident_memory_entry(), correct_resident_memory_entry(), _execute_control_mutation() (+33 more)
+Cohesion: 0.25
+Nodes (26): alias, access_context(), database_session(), Request, Session, query_service(), request_idempotency_key(), add_resident_memory_entry() (+18 more)
 
 ### Community 128 - "search_feeds"
 Cohesion: 0.23
@@ -874,8 +872,8 @@ Cohesion: 0.27
 Nodes (3): GitHub (gh CLI), 开发工具, 选择指南
 
 ### Community 131 - "_build_source_footer_lines"
-Cohesion: 0.14
-Nodes (15): _amazon_footer_line(), _build_source_footer_lines(), _footer_line_for_source(), _format_outcome(), _format_web_line_sources(), _polymarket_top_markets(), Strip boilerplate from a Polymarket question to produce a compact descriptor.…, Build short summary strings for the top Polymarket markets by volume. Returns… (+7 more)
+Cohesion: 0.25
+Nodes (8): _build_source_footer_lines(), _footer_line_for_source(), _format_web_line_sources(), Return a clean publication name for a URL, or a bare domain fallback. Strips…, Return comma-separated clean publication names for the Web line. Deduplicates…, Return emoji-tree lines for populated sources only (>=1 item). Sources that…, _site_name_for_url(), _sum_engagement()
 
 ### Community 132 - "threads.py"
 Cohesion: 0.22
@@ -889,9 +887,9 @@ Nodes (11): build(), _dedupe_writes(), _format_names(), Any, Permission prefligh
 Cohesion: 0.23
 Nodes (11): extract_safari_cookies_macos(), _parse_binary_cookies(), _parse_cookie_record(), _parse_page(), Safari binary cookie extractor for macOS. Parses…, Parse raw binary cookie data. Separated for testability., Read a null-terminated string from data starting at offset., Parse a single cookie record. Returns dict with url, name, value, path or None. (+3 more)
 
-### Community 136 - "match_discovery_topic"
-Cohesion: 0.17
-Nodes (12): _discovery_anchor_entities(), _discovery_entity_key(), mark_discovery_covered(), match_discovery_topic(), _normalize_discovery_name(), Queue identity: lowercased, punctuation-stripped, whitespace-collapsed (thin…, Sorted joined significant tokens, computed once at write time., Anchor tokens for fuzzy matching: capitalized, all-caps, or digit-bearing words… (+4 more)
+### Community 136 - "record_discovery_surfacing"
+Cohesion: 0.25
+Nodes (8): _discovery_entity_key(), mark_discovery_covered(), _normalize_discovery_name(), Queue identity: lowercased, punctuation-stripped, whitespace-collapsed (thin…, Sorted joined significant tokens, computed once at write time., Upsert a queue row by normalized name. A fresh topic inserts with surface_count…, Mark a queued topic covered by EXACT normalized name. Returns the updated row,…, record_discovery_surfacing()
 
 ### Community 137 - "Contactless Adaptive Care Platform — Build Plan"
 Cohesion: 0.17
@@ -909,9 +907,9 @@ Nodes (28): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModu
 Cohesion: 0.16
 Nodes (15): _await_search_slot(), _claim_search_slot(), _finish_search_slot(), is_ytdlp_installed(), Return ``(cached, event, slot, is_leader)`` for search coalesce. - Cache hit:…, Publish a search result to waiters; cache only clean (non-error) payloads.…, Wait for a leader search to publish. Waiters block until the leader finishes…, Check if yt-dlp is available locally, or if SSH routing is configured. When… (+7 more)
 
-### Community 141 - "collect_html_warnings"
-Cohesion: 0.21
-Nodes (13): collect_html_warnings(), collect_html_warnings_comparison(), _dedupe_notes(), _is_pre_research_eligible(), Collect comparison-mode warnings, prefixed by entity label., Return True if the topic looks like a person, project, brand, or product.…, Emit a Pre-Research Status warning block when the engine was called without…, Emit a user-visible DEGRADED RUN WARNING block when: - The engine ran the… (+5 more)
+### Community 141 - "log.py"
+Cohesion: 0.17
+Nodes (14): debug(), is_debug(), Shared logging utilities for last30days skill., Log debug message to stderr (only when LAST30DAYS_DEBUG is set)., _log(), _log_error(), parse_x_response(), Any (+6 more)
 
 ### Community 142 - "bird-search.mjs"
 Cohesion: 0.24
@@ -942,16 +940,16 @@ Cohesion: 0.20
 Nodes (10): Agent Reach — internet capability router, Configure a channel, Detailed references, Discovering OpenCLI adapters, Environment check, Login-backed platforms (pick by doctor's active_backend), Routing table, Standing rules (apply for the whole session) (+2 more)
 
 ### Community 149 - "DeviceHealthRepository"
-Cohesion: 0.07
-Nodes (63): main(), _observation(), datetime, Prove the Checkpoint B device assignment and health product story., _require(), run_checkpoint(), health_from_row(), health_to_row() (+55 more)
+Cohesion: 0.19
+Nodes (22): health_from_row(), health_to_row(), datetime, Mappings between device domain records and durable rows., _stored_nonblank(), _stored_string_list(), _utc(), DeviceHealthRepository (+14 more)
 
-### Community 150 - "_render_comparison_scaffold"
-Cohesion: 0.50
-Nodes (4): _parse_comparison_entities(), Return entity names if topic is a comparison query, else None. Delegates to…, Emit a markdown comparison table scaffold for synthesizer to fill. Returns…, _render_comparison_scaffold()
+### Community 150 - "domain/device_health.py"
+Cohesion: 0.27
+Nodes (13): DeviceSourceHealth, DeviceSourceHealthState, datetime, StrEnum, Product-facing device assignment and operational health concepts., _require_utc(), _observation(), parametrize (+5 more)
 
-### Community 151 - "AudienceRegister"
-Cohesion: 0.21
-Nodes (9): AudienceRegister, get_register(), _preset(), Named audience registers for standard research brief synthesis., Return a named register, rejecting unsupported/free-form templates., A bounded renderer/synthesis preset for one intended audience., _clusters_for_register(), Apply a preset's source emphasis without mutating pipeline rankings. (+1 more)
+### Community 151 - "Cluster"
+Cohesion: 0.11
+Nodes (18): _drill_cluster_text(), Resolve a 1-based cluster index or fuzzy title/entity description., resolve_drill_clusters(), AudienceRegister, get_register(), _preset(), Named audience registers for standard research brief synthesis., Return a named register, rejecting unsupported/free-form templates. (+10 more)
 
 ### Community 153 - "ui.py"
 Cohesion: 0.22
@@ -977,9 +975,9 @@ Nodes (9): Concerns, Files changed, Full-suite evidence, GREEN evidence, Impleme
 Cohesion: 0.22
 Nodes (8): graphify reference: extra exports and benchmark, Step 6b - Wiki (only if --wiki flag), Step 7 - Neo4j export (only if --neo4j or --neo4j-push flag), Step 7a - FalkorDB export (only if --falkordb or --falkordb-push flag), Step 7b - SVG export (only if --svg flag), Step 7c - GraphML export (only if --graphml flag), Step 7d - MCP server (only if --mcp flag), Step 8 - Token reduction benchmark (only if total_words > 5000)
 
-### Community 160 - "parse_search_response"
-Cohesion: 0.20
-Nodes (11): canonical_product_url(), _is_sponsored(), parse_search_response(), Repair the CLI's doubled string fields. Observed live: ``review_header``…, The flag arrives as the string 'true'/'false', not a bool. Recorded in metadata…, Accept only https URLs on the configured Amazon host., Strip Amazon's tracking tail down to a stable /dp/<asin> link. Search records…, Turn raw search records into deduped, relevance-gated product dicts. Dedupe is… (+3 more)
+### Community 160 - "DeviceRepository"
+Cohesion: 0.29
+Nodes (4): StoredDevice, StoredDeviceAssignment, DeviceRepository, Session
 
 ### Community 161 - "graphify reference: extra exports and benchmark"
 Cohesion: 0.22
@@ -994,8 +992,8 @@ Cohesion: 0.22
 Nodes (8): Caregiver walkthrough, Gate decision, Phase 2 Review — Product Backbone Slice, Safety and failure checks, What is still deferred inside Phase 2, What now works, What Rishit can rely on, What survives restart
 
 ### Community 164 - "dates.py"
-Cohesion: 0.20
-Nodes (10): days_ago(), get_date_confidence(), parse_as_of_date(), parse_date(), datetime, Date utilities for last30days skill., Determine confidence level for a date. Args: date_str: The date to check (YYYY-…, Calculate how many days before the reference date a date is. If reference_date… (+2 more)
+Cohesion: 0.33
+Nodes (6): parse_as_of_date(), parse_date(), datetime, Date utilities for last30days skill., Parse a date string in various formats. Supports: YYYY-MM-DD, ISO 8601, Unix…, Validate and normalize an --as-of date. Args: as_of_date: Date string in YYYY-…
 
 ### Community 165 - "_record_sightings"
 Cohesion: 0.25
@@ -1006,8 +1004,8 @@ Cohesion: 0.25
 Nodes (7): How Akshar can verify it, Phase 2 Backend Checkpoint A Review, Safety and honesty checks, Verification evidence, What now works, What remains, What the frontend can rely on
 
 ### Community 167 - "run_with_timeout"
-Cohesion: 0.24
-Nodes (9): callable, Exception, Subprocess helpers: safe timeout + process-group cleanup. Used by bird_x.py…, Raised when a subprocess exceeds its timeout and is killed., Result of a subprocess run that captured stdout and stderr., Run a subprocess with process-group cleanup on timeout. Spawns ``cmd`` inside…, run_with_timeout(), SubprocResult (+1 more)
+Cohesion: 0.21
+Nodes (11): callable, Exception, Subprocess helpers: safe timeout + process-group cleanup. Used by bird_x.py…, Raised when a subprocess exceeds its timeout and is killed., Result of a subprocess run that captured stdout and stderr., Run a subprocess with process-group cleanup on timeout. Spawns ``cmd`` inside…, run_with_timeout(), SubprocResult (+3 more)
 
 ### Community 168 - "V2EX (公开 API)"
 Cohesion: 0.29
@@ -1033,9 +1031,9 @@ Nodes (7): 7. Milestone 2 — Production UI/UX on Mock Data, Acceptance criteria
 Cohesion: 0.29
 Nodes (6): Concerns, Files, Self-review, Task 1 Report: Monitoring Suitability State, TDD evidence, What changed
 
-### Community 174 - "_record"
-Cohesion: 0.13
-Nodes (21): _count_saved_briefs(), _hackernews_record(), _instagram_record(), _jobs_record(), _library_record(), _linkedin_record(), _perplexity_record(), _pinterest_record() (+13 more)
+### Community 174 - "doctor.py"
+Cohesion: 0.10
+Nodes (44): _amazon_record(), _arxiv_record(), _bluesky_record(), _chained_record(), _cli_gated_record(), _digg_record(), _finding_json(), _fix_text() (+36 more)
 
 ### Community 175 - "test_status_schema.py"
 Cohesion: 0.62
@@ -1177,9 +1175,9 @@ Nodes (3): For git commit hook, For native CLAUDE.md integration, graphify refer
 Cohesion: 0.50
 Nodes (3): For --cluster-only, For --update (incremental re-extraction), graphify reference: incremental update and cluster-only
 
-### Community 212 - "_run_query"
-Cohesion: 0.19
-Nodes (16): _clean_handle(), _find_expires_at(), _log(), Any, Recursively find expires_at in a nested dict/list structure. The Grok auth.json…, Create the child's throwaway HOME holding only the credential file. Copies…, Return a grammar-valid handle, or '' when the value is not one., Run one query, retrying only when the response looks fabricated. A clean empty… (+8 more)
+### Community 212 - "test_device_repositories.py"
+Cohesion: 0.42
+Nodes (12): DeviceHealthState, _health(), datetime, fixture, parametrize, _seed_devices(), session(), test_device_repository_lists_current_assignment_and_hides_other_tenants() (+4 more)
 
 ### Community 213 - "extract_brave_cookies_macos"
 Cohesion: 0.50
@@ -1198,8 +1196,8 @@ Cohesion: 0.26
 Nodes (11): _epoch_to_date(), fetch_listings(), fetch_scores(), _log(), _normalize_listing_row(), Any, Arctic-shift score resolver — post upvote counts by id, keyless and free.…, Epoch seconds -> YYYY-MM-DD (UTC), or None on garbage. (+3 more)
 
 ### Community 217 - "youtube_yt.py"
-Cohesion: 0.15
-Nodes (14): _env_positive_float(), get_transcript_fetch_stats(), parse_youtube_response(), YouTube search and transcript extraction via yt-dlp for the v3.0.0 pipeline.…, Parse YouTube search response to normalized format. Returns: List of item dicts…, Read a positive finite float from the environment, else ``default``., Return the ytsearch timeout, preserving the 120s default., # NOTE: --dateafter intentionally omitted — YouTube search returns (+6 more)
+Cohesion: 0.11
+Nodes (23): _env_positive_float(), _fetch_transcript_ytdlp(), get_transcript_fetch_stats(), _pick_ytdlp_vtt(), Path, YouTube search and transcript extraction via yt-dlp for the v3.0.0 pipeline.…, Read a positive finite float from the environment, else ``default``., Return the ytsearch timeout, preserving the 120s default. (+15 more)
 
 ### Community 218 - "briefing.py"
 Cohesion: 0.27
@@ -1278,8 +1276,12 @@ Cohesion: 0.67
 Nodes (3): Fallback 方案, LinkedIn, 职场招聘
 
 ### Community 243 - "xurl_x.py"
-Cohesion: 0.11
-Nodes (21): get_x_source_with_method(), Return (source, method) for X search, where method describes the auth origin.…, clear_availability_cache(), has_stored_auth(), is_available(), _is_available_uncached(), _log(), parse_x_response() (+13 more)
+Cohesion: 0.13
+Nodes (19): clear_availability_cache(), has_stored_auth(), is_available(), _is_available_uncached(), _log(), parse_x_response(), Any, Path (+11 more)
+
+### Community 244 - "checkpoints/device_health.py"
+Cohesion: 0.33
+Nodes (8): main(), _observation(), datetime, Prove the Checkpoint B device assignment and health product story., _require(), run_checkpoint(), DeviceRoomAssignmentRow, test_checkpoint_b_story_proves_complete_device_health_flow()
 
 ### Community 245 - "If QUERY_TYPE = COMPARISON"
 Cohesion: 0.67
@@ -1313,21 +1315,21 @@ Nodes (3): 15. Feedback Loop, Basic flow, Feedback confidence
 Cohesion: 0.67
 Nodes (3): 5A. UI/UX-First Development Philosophy, Desired progression, Rules
 
-### Community 267 - "extract_compound_terms"
-Cohesion: 0.25
-Nodes (8): _name_lane_subject(), Resolve the entity name to search for by name, not the whole topic. Phrase-…, extract_compound_terms(), Detect multi-word terms that should be quoted in search queries. Identifies: -…, expand_xquik_queries(), _extract_core_subject(), Extract core subject for X search queries., Generate query variants based on depth. Args: topic: Research topic depth:…
+### Community 267 - "cluster_candidates"
+Cohesion: 0.36
+Nodes (10): _candidate_text(), cluster_candidates(), _cluster_sort_key(), _cluster_uncertainty(), _merge_entity_clusters(), _mmr_representatives(), Candidate clustering and representative selection., Merge small clusters that cover the same story across different sources. The… (+2 more)
 
 ### Community 268 - "Phase 2 Backend Checkpoint B Review"
 Cohesion: 0.25
 Nodes (7): How Akshar can verify it, Phase 2 Backend Checkpoint B Review, Product and safety checks, Verification evidence, What now works, What remains, What the frontend can rely on
 
-### Community 270 - "SourceHealth"
-Cohesion: 0.29
-Nodes (5): probe_command(), Typed outcome for a source or the tool backing it. ``state`` is one of the…, True when the source produced something worth keeping (ok/degraded)., Probe an external command, distinguishing missing/broken/timeout/ok. Separating…, SourceHealth
+### Community 270 - "_resolve_careers_page"
+Cohesion: 0.20
+Nodes (11): expected_misses(), Exclude adapter-declared probe misses from captured run failures., _candidate_slugs(), _company_slug(), _looks_like_careers_html(), _probe_ats(), Find and fetch the company's careers page HTML. Tries conventional URLs on a…, Use the configured web backend to locate the careers page URL. (+3 more)
 
-### Community 271 - "_ytdlp_comments_result"
-Cohesion: 0.33
-Nodes (6): _fetch_video_comments(), _fetch_video_comments_ytdlp(), Fetch top comments via yt-dlp, returning ``(comments, ran_cleanly)``. The bool…, Comments for a video via yt-dlp (free, keyless), or [] on any failure. Thin…, Fetch comments for one video, preferring the free yt-dlp path. yt-dlp is tried…, _ytdlp_comments_result()
+### Community 271 - "Any"
+Cohesion: 0.14
+Nodes (17): enrich_with_comments(), _fetch_video_comments(), _fetch_video_comments_ytdlp(), parse_youtube_response(), Any, Parse YouTube search response to normalized format. Returns: List of item dicts…, Combined engagement score for ranking which videos to enrich., Enrich top YouTube videos with comment data from ScrapeCreators. For the top N… (+9 more)
 
 ### Community 272 - "read_skill_version"
 Cohesion: 0.40
@@ -1350,20 +1352,20 @@ Cohesion: 0.12
 Nodes (16): Acceptance criteria, Clinic Dashboard Foundation Design, Error and uncertainty behavior, Excluded, Frontend architecture, Goal, Implementation approach decision, Included (+8 more)
 
 ### Community 300 - "grounding.py"
+Cohesion: 0.28
+Nodes (15): brave_search(), _domain(), exa_search(), _in_date_range(), _normalize_date(), parallel_search(), _parse_serper_date(), Web search retrieval via Brave Search, Exa, Serper, Parallel, or a keyless… (+7 more)
+
+### Community 301 - "pinterest.py"
 Cohesion: 0.24
-Nodes (17): brave_search(), _domain(), _enrich_reddit_items(), exa_search(), _in_date_range(), _normalize_date(), parallel_search(), _parse_serper_date() (+9 more)
+Nodes (11): _extract_core_subject(), _log(), _parse_items(), parse_pinterest_response(), Any, Pinterest search via ScrapeCreators API for /last30days. Uses ScrapeCreators…, Search Pinterest via ScrapeCreators API. Args: topic: Search topic from_date:…, Extract core subject from verbose query for Pinterest search. (+3 more)
 
-### Community 301 - "extract_core_subject"
-Cohesion: 0.11
-Nodes (26): _extract_core_subject(), _log(), _parse_items(), parse_pinterest_response(), Any, Pinterest search via ScrapeCreators API for /last30days. Uses ScrapeCreators…, Search Pinterest via ScrapeCreators API. Args: topic: Search topic from_date:…, Extract core subject from verbose query for Pinterest search. (+18 more)
+### Community 302 - "_apply_engagement_rescue"
+Cohesion: 0.18
+Nodes (11): _apply_engagement_rescue(), _candidate_engagement(), _candidate_haystack(), _is_entity_grounded(), _is_x_candidate(), True when the candidate originates from X (top-level or any source item)., Whether the candidate plausibly mentions the primary entity in its text.…, Engagement rescue floor: 0 at/below the median, scaling linearly to… (+3 more)
 
-### Community 302 - "_fetch_transcript_ytdlp"
-Cohesion: 0.15
-Nodes (15): _fetch_transcript_ytdlp(), _fetch_transcript_ytdlp_via_ssh(), _pick_ytdlp_vtt(), Path, Run a yt-dlp (or SSH-wrapped) command under the process-wide concurrency gate., Fetch transcript via yt-dlp on a remote SSH host (mktemp + cat pipeline)., Caption languages to try, from LAST30DAYS_YT_SUB_LANGS (default en,es,pt)., Return the best on-disk VTT match for video_id, preferring priority order. (+7 more)
-
-### Community 303 - "leading_mentions"
-Cohesion: 0.50
-Nodes (4): _leading_mentions(), Leading-run @mention parse, shared with other X-shaped sources (xquik). Thin…, leading_mentions(), Return the handles a post is directed at: the leading run of @mentions in the…
+### Community 303 - "DeadlineExceeded"
+Cohesion: 0.20
+Nodes (5): DeadlineExceeded, RateLimiter, The caller's shared wall deadline expired across request retries., Thread-safe token-bucket throttle for an endpoint family. The keyless source…, Consume one token, blocking only when the bucket is empty.
 
 ### Community 304 - "web_fetch_keyless.py"
 Cohesion: 0.31
@@ -1373,61 +1375,73 @@ Nodes (8): _detect_cached_snapshot(), fetch_markdown(), KeylessFetchResult, _loo
 Cohesion: 0.25
 Nodes (7): Clinic Dashboard Foundation Implementation Plan, Task 1: Bootstrap the clinic application, Task 2: Define the monitoring boundary and mock client, Task 3: Add the provider and honest asynchronous states, Task 4: Build the clinic shell and visual system, Task 5: Build the resident overview, Task 6: Browser verification and repository handoff
 
-### Community 306 - "has_stored_auth"
-Cohesion: 0.22
-Nodes (10): binary_path(), has_stored_auth(), is_available(), _is_available_uncached(), Resolved `grok` path, or None when it is not on PATH. PATH resolution is the…, True when grok binary is on PATH and credentials are stored. NOTE: This returns…, Research-time availability. May spawn a subprocess; memoized per process., Research-time availability check. Returns True when grok is on PATH and… (+2 more)
-
-### Community 311 - "_qualifying_representative_ids"
-Cohesion: 0.50
-Nodes (4): _best_take_relevance_ok(), _qualifying_representative_ids(), Exclude off-topic-but-viral candidates from Best Takes. Delegates to…, Keep qualifying MMR representatives, or promote a conservative fallback.
-
-### Community 315 - "enrich_with_comments"
-Cohesion: 0.50
-Nodes (4): enrich_with_comments(), Combined engagement score for ranking which videos to enrich., Enrich top YouTube videos with comment data from ScrapeCreators. For the top N…, _total_engagement()
-
-### Community 316 - "parse_x_response"
+### Community 306 - "v1/devices.py"
 Cohesion: 0.33
-Nodes (6): _as_int(), _parse_date(), parse_x_response(), Split the model's prose into per-post blocks. Keyed on the post-id field…, Parse a grok response into normalized X item dicts. Total: returns [] on error…, _split_blocks()
+Nodes (7): device_query_service(), Depends, get_device_health(), list_devices(), Depends, get, Tenant-safe clinic reads for devices and operational health.
+
+### Community 311 - "test_resident_device_composition.py"
+Cohesion: 0.42
+Nodes (8): parametrize, TestClient, _record_health(), test_missing_device_assignment_is_explicit_and_never_guessed(), test_missing_health_is_explicit_and_never_treated_as_online(), test_non_online_device_makes_current_monitoring_unavailable_not_history(), test_online_device_is_composed_into_active_resident_status(), test_online_recovery_restores_latest_valid_monitoring_view()
+
+### Community 316 - "test_contracts.py"
+Cohesion: 0.39
+Nodes (7): BaseModel, datetime, parametrize, TestClient, test_every_read_operation_documents_versioned_method_not_allowed(), test_public_command_contracts_require_version_and_utc(), test_public_datetime_contracts_reject_values_that_are_not_utc()
 
 ### Community 317 - "test_device_schema.py"
 Cohesion: 0.64
 Nodes (7): _database(), Path, _seed_device_ownership(), test_checkpoint_b_migration_upgrades_and_downgrades_only_its_tables(), test_device_assignment_cannot_cross_tenant_boundaries(), test_health_observation_cannot_reference_cross_tenant_device(), test_one_active_device_per_room_and_one_active_room_per_device()
 
-### Community 318 - "search_x"
-Cohesion: 0.33
-Nodes (6): _fanout_queries(), _is_proper_name(), True when topic looks like a title-cased proper name (person/product). "Peter…, Search X for a topic, fanning out to reach the depth's target count. The…, Distinct query formulations for one topic, widest signal first. Each returns at…, search_x()
+### Community 318 - "YouTube (yt-dlp)"
+Cohesion: 0.29
+Nodes (7): YouTube (yt-dlp), 下载字幕, 字幕失败时的重试链（按序执行，拿到实质内容即停）, 搜索视频, 无字幕兜底：Whisper 音频转写, 获取视频元数据, 获取评论
 
-### Community 320 - "_invoke"
-Cohesion: 0.33
-Nodes (6): _invoke(), is_auth_revoked_error(), Minimal environment for the `grok` child process, rooted at a throwaway HOME.…, True when the error indicates the Grok session was revoked mid-run. Distinct…, Run `grok` once. Never raises; every failure returns {'error': str}. When the…, _subprocess_env()
+### Community 320 - "cache_path"
+Cohesion: 0.29
+Nodes (7): cache_path(), _count_saved_briefs(), _last_report_path(), Path, The doctor cache file, beside last-run.json (None in clean mode)., Cheap count of saved research briefs (directory listing, no file parse). Globs…, The engine's last-report.json, beside the doctor cache (None in clean mode).
 
-### Community 322 - "Namespace"
-Cohesion: 0.08
-Nodes (40): _annotate_and_record_discovery_queue(), _discover_domain(), _discover_handoff_state_dir(), _discover_subreddits(), _discovery_strict_exit_code(), _emit_and_save_discovery_report(), _pre_run_prior_state(), Reconstruct the queue state a topic had BEFORE this run identity recorded it. A… (+32 more)
+### Community 322 - "render_discovery"
+Cohesion: 0.40
+Nodes (5): _format_discovery_engagement(), _ordinal(), Render a compact topic-per-section discovery brief., 1 -> 1st, 2 -> 2nd, 3 -> 3rd, 11-13 -> th (Pipeline card line)., render_discovery()
 
 ### Community 323 - "search_products"
 Cohesion: 0.67
 Nodes (3): _log(), Run one product search. Never raises; returns the adapter envelope., search_products()
 
+### Community 324 - "_amazon_footer_line"
+Cohesion: 0.50
+Nodes (4): footer_entry(), Render one product's segment of the emoji-footer line (R1c). Shapes, by drift…, _amazon_footer_line(), Build the 📦 Amazon emoji-footer line (R1c). Follows the Polymarket shape --…
+
+### Community 329 - "discovery_engagement_total"
+Cohesion: 0.50
+Nodes (4): discovery_engagement_total(), engagement_velocity_score(), Return comparable native interaction counts for discovery evidence., Weight native engagement by age, with an explicit first-week boost.
+
+### Community 330 - "submit_with_context"
+Cohesion: 0.67
+Nodes (3): Submit a worker with the caller's failure-capture context., submit_with_context(), Future
+
+### Community 331 - "render_library_search"
+Cohesion: 0.67
+Nodes (3): _format_library_engagement(), Render dated FTS matches grouped by the topic run that produced them., render_library_search()
+
 ## Knowledge Gaps
 - **850 isolated node(s):** `id`, `name`, `google.com`, `www.google.com`, `notes/overview.md` (+845 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **49 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **48 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `_mock_discovery_items()` connect `pipeline.py` to `timedelta`?**
-  _High betweenness centrality (0.048) - this node is a cross-community bridge._
-- **Why does `get_date_range()` connect `pipeline.py` to `dates.py`, `trustpilot.py`, `timedelta`, `resolve.py`, `competitors.py`?**
-  _High betweenness centrality (0.032) - this node is a cross-community bridge._
-- **Why does `post()` connect `perplexity.py` to `search_feeds`, `hosted.py`, `jobs.py`, `http.py`, `AuditLogRow`, `repositories.py`?**
-  _High betweenness centrality (0.029) - this node is a cross-community bridge._
+  _High betweenness centrality (0.058) - this node is a cross-community bridge._
+- **Why does `get_date_range()` connect `pipeline.py` to `trustpilot.py`, `resolve.py`, `dates.py`, `timedelta`?**
+  _High betweenness centrality (0.037) - this node is a cross-community bridge._
+- **Why does `seed_synthetic_story()` connect `seed_synthetic_story` to `test_status_repositories.py`, `require_nonblank_text`, `test_repositories.py`, `timedelta`, `checkpoints/device_health.py`, `DeviceHealthRepository`, `test_device_repositories.py`, `domain/device_health.py`, `test_feedback_rollback.py`?**
+  _High betweenness centrality (0.030) - this node is a cross-community bridge._
 - **Are the 81 inferred relationships involving `timedelta` (e.g. with `_observation()` and `run_checkpoint()`) actually correct?**
   _`timedelta` has 81 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 29 inferred relationships involving `AccessContext` (e.g. with `get_device_health()` and `list_devices()`) actually correct?**
   _`AccessContext` has 29 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `id`, `name`, `google.com` to the rest of the system?**
   _850 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `toy_scenario.py` be split into smaller, more focused modules?**
-  _Cohesion score 0.06826506826506827 - nodes in this community are weakly interconnected._
+- **Should `require_nonblank_text` be split into smaller, more focused modules?**
+  _Cohesion score 0.05755879059350504 - nodes in this community are weakly interconnected._
