@@ -1,4 +1,6 @@
 import type {
+  ClinicDeviceDetailResponse,
+  ClinicDeviceListResponse,
   EventAction,
   EventFeedbackInput,
   MonitoringClient,
@@ -7,6 +9,7 @@ import type {
   ResidentDetailResponse,
   ResidentOverviewResponse,
 } from "@/lib/monitoring";
+import { createDeviceListFixture } from "./devices";
 import { createEventDetailFixtures } from "./events";
 import { createResidentOverviewFixture } from "./residents";
 
@@ -50,6 +53,23 @@ export class MockMonitoringClient implements MonitoringClient {
     private readonly now: () => Date = () => new Date(),
     private readonly storage?: MonitoringEventStorage,
   ) {}
+
+  async listDevices(): Promise<ClinicDeviceListResponse> {
+    return structuredClone(createDeviceListFixture(this.now()));
+  }
+
+  async getDevice(deviceId: string): Promise<ClinicDeviceDetailResponse> {
+    const devices = await this.listDevices();
+    const device = devices.items.find((item) => item.deviceId === deviceId);
+    if (!device) {
+      throw new Error("The requested device could not be found.");
+    }
+    return structuredClone({
+      schemaVersion: "1.0",
+      generatedAt: this.now().toISOString(),
+      device,
+    });
+  }
 
   async listResidentOverview(): Promise<ResidentOverviewResponse> {
     const response = createResidentOverviewFixture(this.now());

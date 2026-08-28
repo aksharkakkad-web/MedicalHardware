@@ -5,6 +5,11 @@ export {
 } from "./provider";
 export type {
   AttentionPriority,
+  ClinicDevice,
+  ClinicDeviceDetailResponse,
+  ClinicDeviceListResponse,
+  ClinicDeviceStatus,
+  DataAvailability,
   DeviceStatus,
   EventAction,
   EventFeedbackInput,

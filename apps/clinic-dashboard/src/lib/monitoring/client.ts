@@ -1,4 +1,6 @@
 import type {
+  ClinicDeviceDetailResponse,
+  ClinicDeviceListResponse,
   EventAction,
   EventFeedbackInput,
   MonitoringEventDetail,
@@ -8,6 +10,8 @@ import type {
 } from "./types";
 
 export interface MonitoringClient {
+  listDevices(): Promise<ClinicDeviceListResponse>;
+  getDevice(deviceId: string): Promise<ClinicDeviceDetailResponse>;
   listResidentOverview(): Promise<ResidentOverviewResponse>;
   listEvents(): Promise<MonitoringEventListResponse>;
   getResident(residentId: string): Promise<ResidentDetailResponse>;

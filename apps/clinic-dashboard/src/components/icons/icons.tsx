@@ -20,6 +20,18 @@ export function EventIcon(props: IconProps) {
   return <Icon {...props}><path d="M12 3.5 3.8 18a1.7 1.7 0 0 0 1.5 2.5h13.4a1.7 1.7 0 0 0 1.5-2.5L12 3.5Z" /><path d="M12 9v4.5M12 17h.01" /></Icon>;
 }
 
+export function DeviceIcon(props: IconProps) {
+  return <Icon {...props}><rect x="5" y="3" width="14" height="18" rx="3" /><path d="M9 7h6M9 11h6M9 15h3" /><circle cx="16" cy="16" r="1" /></Icon>;
+}
+
+export function ChevronLeftIcon(props: IconProps) {
+  return <Icon {...props}><path d="m15 18-6-6 6-6" /></Icon>;
+}
+
+export function SignalIcon(props: IconProps) {
+  return <Icon {...props}><path d="M5 16.5a10 10 0 0 1 14 0M8 13a6 6 0 0 1 8 0M11 9.8a2 2 0 0 1 2 0" /><circle cx="12" cy="19" r="1" /></Icon>;
+}
+
 export function ResidentsIcon(props: IconProps) {
   return <Icon {...props}><path d="M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20M9.5 10.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM16 4a3.4 3.4 0 0 1 0 6.6M21 20v-1.5a4 4 0 0 0-3-3.8" /></Icon>;
 }

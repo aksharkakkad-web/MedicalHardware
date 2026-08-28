@@ -2,6 +2,44 @@ import { describe, expect, it } from "vitest";
 import { MockMonitoringClient } from "./mock-monitoring-client";
 
 describe("MockMonitoringClient", () => {
+  it("returns a complete device inventory without inventing missing setup data", async () => {
+    const client = new MockMonitoringClient(
+      () => new Date("2026-08-27T18:00:00.000Z"),
+    );
+    const result = await client.listDevices();
+
+    expect(result.schemaVersion).toBe("1.0");
+    expect(result.items).toHaveLength(6);
+    expect(result.items.map((item) => item.health.status)).toEqual([
+      "online",
+      "buffering",
+      "online",
+      "degraded",
+      "offline",
+      "unavailable",
+    ]);
+    expect(result.items.at(-1)).toMatchObject({
+      assignmentStatus: "unassigned",
+      roomId: null,
+      residentId: null,
+      health: { dataAvailability: "not_yet_available", lastSeenAt: null },
+      setup: { version: 0, state: "not_started" },
+    });
+  });
+
+  it("returns cloned device details and rejects unknown devices", async () => {
+    const client = new MockMonitoringClient();
+    const first = await client.getDevice("dev_room_104");
+
+    first.device.displayLabel = "Changed outside client";
+
+    expect((await client.getDevice("dev_room_104")).device).toMatchObject({
+      displayLabel: "Northstar 104",
+      health: { status: "degraded", dataAvailability: "limited" },
+    });
+    await expect(client.getDevice("dev_missing")).rejects.toThrow(/could not be found/i);
+  });
+
   it("returns five synthetic residents covering honest monitoring states", async () => {
     const result = await new MockMonitoringClient().listResidentOverview();
 

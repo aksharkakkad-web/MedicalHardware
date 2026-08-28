@@ -28,6 +28,8 @@ function residentClient(
 ): MonitoringClient {
   const fallback = new MockMonitoringClient();
   return {
+    listDevices: () => fallback.listDevices(),
+    getDevice: (deviceId) => fallback.getDevice(deviceId),
     listResidentOverview,
     listEvents: () => fallback.listEvents(),
     getResident: (residentId) => fallback.getResident(residentId),

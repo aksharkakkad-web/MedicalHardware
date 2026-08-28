@@ -8,6 +8,62 @@ export type AttentionPriority = "none" | "watch" | "high" | "critical";
 
 export type DeviceStatus = "online" | "degraded" | "offline" | "unknown";
 
+export type ClinicDeviceStatus =
+  | "online"
+  | "degraded"
+  | "offline"
+  | "buffering"
+  | "retrying"
+  | "unavailable";
+
+export type DataAvailability =
+  | "available"
+  | "limited"
+  | "unavailable"
+  | "not_yet_available";
+
+export interface ClinicDevice {
+  schemaVersion: "1.0";
+  deviceId: string;
+  displayLabel: string;
+  modelLabel: string;
+  roomId: string | null;
+  roomLabel: string | null;
+  residentId: string | null;
+  residentLabel: string | null;
+  assignmentStatus: "assigned" | "unassigned" | "conflicting";
+  health: {
+    status: ClinicDeviceStatus;
+    dataAvailability: DataAvailability;
+    summary: string;
+    lastSeenAt: string | null;
+  };
+  setup: {
+    version: number;
+    state: "ready" | "calibrating" | "needs_attention" | "not_started";
+    updatedAt: string;
+  };
+  sources: Array<{
+    sourceId: "radar" | "thermal" | "wifi";
+    label: string;
+    status: "available" | "limited" | "unavailable";
+    detail: string;
+    lastSeenAt: string | null;
+  }>;
+}
+
+export interface ClinicDeviceListResponse {
+  schemaVersion: "1.0";
+  generatedAt: string;
+  items: ClinicDevice[];
+}
+
+export interface ClinicDeviceDetailResponse {
+  schemaVersion: "1.0";
+  generatedAt: string;
+  device: ClinicDevice;
+}
+
 export type EventStatus =
   | "detected"
   | "open"
