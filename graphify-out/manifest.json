@@ -1506,8 +1506,8 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/resident-overview.tsx": {
-    "mtime": 1787885256.1059906,
-    "ast_hash": "22b5def331df3487b06a53b2a2d0fd91",
+    "mtime": 1787886260.34489,
+    "ast_hash": "319910bcb7c406eab00c5cddec0408cb",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/use-resident-overview.test.tsx": {
@@ -1877,13 +1877,13 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/events/event-detail.tsx": {
-    "mtime": 1787885392.4568942,
-    "ast_hash": "47e9c02ca885b972034682e934166d94",
+    "mtime": 1787886285.7713323,
+    "ast_hash": "6a323a01741890d5cfc29c73bbaf8b5a",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/events/event-history.tsx": {
-    "mtime": 1787883752.6513736,
-    "ast_hash": "6c05e91479719340137295a2c9650dff",
+    "mtime": 1787886285.7719064,
+    "ast_hash": "19a9c91a9ddfdcb40ed7095ddf16de43",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/events/event-resolution-form.tsx": {
@@ -1912,8 +1912,8 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/components/icons/icons.tsx": {
-    "mtime": 1787884770.4890234,
-    "ast_hash": "de1f6a17a0243f70f6a5d53aa2a6c9c1",
+    "mtime": 1787886260.3439817,
+    "ast_hash": "5b23684d2daa782a9e4b406d3ec7ed90",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/events/event-list.test.tsx": {
@@ -1952,18 +1952,13 @@
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-08-27-clinic-dashboard-redesign-design.md": {
-    "mtime": 1787884358.5265856,
-    "ast_hash": "885390050e705610f1a8219e8f7e6f7b",
+    "mtime": 1787886260.3398786,
+    "ast_hash": "c9f2932ca485615ac242b10a3d0fb098",
     "semantic_hash": ""
   },
-  ".impeccable/review/desktop.png": {
-    "mtime": 1787885915.0625575,
-    "ast_hash": "bc42cb0ebdcd9e757ed05a9b8d9ff1fd",
-    "semantic_hash": ""
-  },
-  ".impeccable/review/mobile.png": {
-    "mtime": 1787885915.0645456,
-    "ast_hash": "afa75c1fa04180d7f877771cbb245d73",
+  "DESIGN.md": {
+    "mtime": 1787886892.918746,
+    "ast_hash": "f4b74b65b41abd248ab2589db9e1c81f",
     "semantic_hash": ""
   }
 }
