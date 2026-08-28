@@ -1,6 +1,6 @@
 # V1 Product Logic Design
 
-**Status:** Approved in product discussion; awaiting written-spec review
+**Status:** Approved product foundation; Phase 5 intelligence details are superseded by `2026-08-28-phase5-monitoring-intelligence-design.md`
 **Date:** 2026-08-26
 **Scope:** Clinic-first V1 using toy data first, then real radar, thermal, and Wi-Fi CSI data
 
@@ -33,9 +33,9 @@ Define how the complete product behaves from room setup through calibration, mon
 4. The system continuously checks presence, room suitability, freshness, sensor quality, missing data, and device health.
 5. Suitable radar, thermal, and Wi-Fi CSI evidence is aligned and fused.
 6. Current behavior is compared with the resident's available baseline.
-7. Broad unusual patterns, validated warning rules, or unknown anomalies may create an event.
-8. The event appears immediately with evidence, confidence, limitations, and priority.
-9. AI may add an explanation later but cannot create, hide, downgrade, or cancel a deterministic warning.
+7. Broad unusual patterns open a numerical anomaly episode and produce rich revisioned evidence.
+8. Strong urgent deterministic evidence may create a provisional event immediately; other meaningful episodes receive selective AI interpretation first.
+9. Deterministic policy uses the evidence and validated interpretation to decide whether caregiver work is warranted. AI cannot hide, downgrade, or cancel a deterministic warning.
 10. A caregiver acknowledges, checks, resolves, and optionally explains what happened.
 11. Trusted feedback may update resident memory quickly, make selected normal data eligible for controlled baseline learning, and add a labeled example to offline evaluation.
 12. Future monitoring uses the updated context without silently rewriting safety behavior.
@@ -76,6 +76,7 @@ A monitoring setup change is recorded when the resident changes rooms, the devic
 
 ## Event creation, grouping, and recurrence
 
+- Numerical anomaly lifecycle (`candidate → active → recovering → closed`) is separate from caregiver event lifecycle.
 - `detected` is an internal candidate state; `open` is the first user-visible event state.
 - Related signals inside a configurable quiet-time gap update one active event episode.
 - A recurrence after that gap creates a new event linked to prior related events.
@@ -168,8 +169,8 @@ Device offline, missing sensors, stale data, low quality, assignment problems, a
 2. Progress through `new`, `calibrating`, `partial`, and `established` using eligible toy data.
 3. Show resident-away awareness and resume monitoring after return.
 4. Show monitoring limited while a caregiver may be present.
-5. Produce an unusual-movement event after monitoring becomes suitable again.
-6. Display evidence, confidence, priority, and AI-pending behavior.
+5. Produce an unusual-movement anomaly episode after monitoring becomes suitable again.
+6. Build rich evidence, run selective AI interpretation, and let deterministic policy create the caregiver event; urgent synthetic evidence bypasses AI delay.
 7. A caregiver acknowledges, checks, and resolves the event as a false positive caused by an assisted transfer.
 8. Resident memory records the routine.
 9. The numerical baseline does not immediately rewrite itself; only the eligible confirmed-normal window may influence a later controlled update.

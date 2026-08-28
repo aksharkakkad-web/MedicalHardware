@@ -188,6 +188,109 @@ def test_memory_add_correct_retire_preserves_history_and_links(api_client) -> No
     assert _count(api_client, AuditLogRow, action="resident_memory.entry_retired") == 1
 
 
+def test_memory_api_round_trips_flexible_context_and_correction_replaces_it(
+    api_client,
+) -> None:
+    add = api_client.post(
+        f"{MEMORY_PATH}/entries",
+        headers=_headers("memory-flexible-add"),
+        json={
+            "schema_version": "1.0",
+            "expected_version": 0,
+            "description": "A new medication may increase bathroom trips.",
+            "context_kind": "expected_new_behavior",
+            "effective_from": "2026-08-25T15:10:00Z",
+            "effective_until": "2026-09-01T15:10:00Z",
+            "local_time_start": "07:30",
+            "local_time_end": "11:00",
+            "recurrence_note": "May happen several times each morning",
+            "flexibility_note": "Timing varies day to day",
+            "changed_at": "2026-08-25T15:10:00Z",
+        },
+    )
+
+    assert add.status_code == 200
+    added = add.json()["entries"][0]
+    assert {
+        field: added[field]
+        for field in (
+            "context_kind",
+            "effective_from",
+            "effective_until",
+            "local_time_start",
+            "local_time_end",
+            "recurrence_note",
+            "flexibility_note",
+        )
+    } == {
+        "context_kind": "expected_new_behavior",
+        "effective_from": "2026-08-25T15:10:00Z",
+        "effective_until": "2026-09-01T15:10:00Z",
+        "local_time_start": "07:30",
+        "local_time_end": "11:00",
+        "recurrence_note": "May happen several times each morning",
+        "flexibility_note": "Timing varies day to day",
+    }
+
+    correct = api_client.post(
+        f"{MEMORY_PATH}/entries/{added['entry_id']}/correct",
+        headers=_headers("memory-flexible-correct"),
+        json={
+            "schema_version": "1.0",
+            "expected_version": 1,
+            "description": "Bathroom frequency is no longer expected to change.",
+            "reason": "Medication was discontinued.",
+            "changed_at": "2026-08-25T15:20:00Z",
+        },
+    )
+
+    assert correct.status_code == 200
+    replacement = correct.json()["entries"][-1]
+    assert replacement["context_kind"] == "general_context"
+    assert replacement["effective_from"] is None
+    assert replacement["effective_until"] is None
+    assert replacement["local_time_start"] is None
+    assert replacement["local_time_end"] is None
+    assert replacement["recurrence_note"] is None
+    assert replacement["flexibility_note"] is None
+
+    with api_client.app.state.session_factory() as session:
+        audit_rows = session.scalars(
+            select(AuditLogRow)
+            .where(
+                AuditLogRow.action.in_(
+                    (
+                        "resident_memory.entry_added",
+                        "resident_memory.entry_corrected",
+                    )
+                )
+            )
+            .order_by(AuditLogRow.audit_id)
+        ).all()
+    assert audit_rows[0].details["context_kind"] == "expected_new_behavior"
+    assert audit_rows[0].details["effective_until"] == "2026-09-01T15:10:00Z"
+    assert audit_rows[1].details["context_kind"] == "general_context"
+    assert audit_rows[1].details["effective_from"] is None
+
+
+def test_memory_api_rejects_non_increasing_effective_range(api_client) -> None:
+    response = api_client.post(
+        f"{MEMORY_PATH}/entries",
+        headers=_headers("memory-invalid-range"),
+        json={
+            "schema_version": "1.0",
+            "expected_version": 0,
+            "description": "Temporary context",
+            "context_kind": "temporary_change",
+            "effective_from": "2026-08-25T15:10:00Z",
+            "effective_until": "2026-08-25T15:10:00Z",
+            "changed_at": "2026-08-25T15:10:00Z",
+        },
+    )
+
+    assert response.status_code == 422
+
+
 def test_memory_replay_stale_and_cross_tenant_commands_are_safe(api_client) -> None:
     body = {
         "schema_version": "1.0",

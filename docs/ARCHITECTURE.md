@@ -1,7 +1,7 @@
 # Contactless Adaptive Care Platform — Technical Architecture
 
 **Status:** Pre-build architecture source of truth
-**Version:** 1.4
+**Version:** 1.5
 **Companion docs:** `PRD.md`, `DATA_CONTRACT.md`, `BUILD_PLAN.md`, root `AGENTS.md`
 
 ---
@@ -17,7 +17,9 @@ The architecture must support:
 - replaceable hardware/edge adapters;
 - personal baselines;
 - general anomaly/event detection;
-- LLM interpretation only after event creation;
+- selective LLM interpretation of rich anomaly evidence before final policy
+  for non-urgent paths, with urgent deterministic event creation independent
+  of the LLM;
 - separate clinic and home product surfaces;
 - fast human feedback;
 - controlled personalization/learning;
@@ -34,7 +36,10 @@ The architecture must support:
 - Embedded device does not perform cross-sensor fusion, personal baselines, anomaly/event decisions, LLM reasoning, or feedback learning.
 - Cloud is the intelligence layer.
 - Python handles filtering, feature extraction, fusion, baseline, anomaly detection, confidence, device health, and deterministic warnings.
-- LLM interprets already-created events; it does not monitor continuous telemetry or suppress deterministic events.
+- For non-urgent paths, LLM interprets an active anomaly evidence packet before
+  deterministic policy chooses whether to create caregiver work. Strong urgent
+  deterministic evidence may create a provisional event first. LLM does not
+  monitor continuous telemetry or suppress deterministic events.
 - Data collection is continuous.
 - Vendor/raw hardware formats are hidden behind edge adapters; the cloud primarily receives compact edge telemetry.
 - A versioned normalized internal contract is the stable software boundary.
@@ -84,17 +89,24 @@ WIFI CSI ────┘      • per-sensor raw→usable conversion
                          v
                   Anomaly engine
                          |
+              +----------+-----------+
+              |                      |
+              v                      v
+       urgent safety path       evidence packet
+              |                      |
+              |                      v
+              |               context builder
+              |                      |
+              |                      v
+              |               LLM interpreter
+              |                      |
+              +----------+-----------+
+                         v
+               deterministic policy
+                         |
                          v
                     Event engine
-              +----------+----------+
-              |                     |
-              v                     v
-      deterministic policy     context builder
-              |                     |
-              |                     v
-              |              LLM interpreter
-              |                     |
-              +----------+----------+
+                         |
                          v
                   Product event API
                  /                 \n                v                   v
@@ -292,6 +304,8 @@ Sensor fusion consumes normalized compact features + room/resident assignment co
 Responsibilities:
 
 - align observations into common time windows;
+- reject empty or mixed tenant/room/resident assignments and preserve the
+  single assignment identity on each fused frame;
 - track which modalities are present;
 - determine monitoring suitability: resident present, resident away, possible multi-person, or unavailable;
 - compare independent evidence;
@@ -393,26 +407,34 @@ Do not hard-code the codebase around one event type.
 
 ---
 
-## 12. Layer 9 — Event and Policy Engine
+## 12. Layer 9 — Anomaly Disposition, Event, and Policy Engine
 
-An anomaly candidate is not automatically a user-facing alert.
+An anomaly candidate is not automatically a user-facing alert. Numerical
+anomaly episodes use their own `candidate → active → recovering → closed`
+lifecycle, separate from caregiver acknowledgment and resolution.
 
 The event engine decides when evidence becomes a durable domain `MonitoringEvent`.
 
 Responsibilities:
 
+- anomaly persistence/hysteresis and evidence-packet revision;
+- deterministic disposition to no action, observe, awareness, or event;
 - event creation/deduplication;
 - priority assignment;
 - event lifecycle state;
 - merge/update related anomaly windows;
 - attach evidence and baseline version;
 - trigger deterministic/LLM-independent warning policy;
-- trigger optional LLM interpretation;
+- trigger non-urgent LLM interpretation before final disposition and urgent
+  event enrichment afterward;
 - route event to product surfaces.
 
 Episode and recurrence rules:
 
 - `detected` is internal and `open` is the first user-visible state;
+- a candidate closes silently when good initiating evidence breaks consecutive
+  activation persistence; missing or limited evidence does not prove closure,
+  and a later deviation receives a distinct anomaly identity;
 - related evidence inside a configurable quiet-time gap updates one active episode;
 - recurrence after that gap creates a new event linked to prior events;
 - resolved events remain immutable and never reopen;
@@ -421,19 +443,19 @@ Episode and recurrence rules:
 
 ### Deterministic warning policy
 
-Hard-warning rules are configurable and versioned. They may raise priority/create an event without the LLM.
+Hard-warning rules are configurable and versioned. They may raise priority/create an event without the LLM. The LLM cannot downgrade, hide, or cancel that event.
 
 The initial repo must not invent unvalidated medical thresholds. Use simulator/demo rules labeled as synthetic/test-only until validated.
 
 ---
 
-## 13. Layer 10 — Context Builder
+## 13. Layer 10 — Evidence and Context Builder
 
 The LLM should receive only relevant structured context.
 
 Context builder retrieves:
 
-- event facts/evidence;
+- anomaly/event facts, bounded multi-resolution evidence, and provenance;
 - confidence/quality;
 - resident memory;
 - relevant recent/previous events;
@@ -445,17 +467,30 @@ Do not dump full raw sensor history or entire resident records into the LLM.
 
 ---
 
-## 14. Layer 11 — LLM Interpreter
+## 14. Layer 11 — Situation-Specific LLM Interpreter
 
 The interpreter is behind a provider-neutral interface.
 
 ### Runtime prompt components
 
-Implementation should eventually create versioned prompt/skill files such as:
+Implementation creates a shared core plus versioned situation skill files such
+as:
 
-- `prompts/event_interpreter.md`
+- `prompts/monitoring/core.md`
+- `prompts/monitoring/fall_like.md`
+- `prompts/monitoring/inactivity.md`
+- `prompts/monitoring/movement.md`
+- `prompts/monitoring/respiration.md`
+- `prompts/monitoring/routine_change.md`
+- `prompts/monitoring/monitoring_degraded.md`
+- `prompts/monitoring/multi_person.md`
+- `prompts/monitoring/unknown_anomaly.md`
 - `prompts/feedback_agent.md`
 - `prompts/resident_memory_updater.md`
+
+One primary structured interpretation transaction assembles only the relevant
+skills and may use narrow read-only retrieval tools. Separate skill files do
+not imply a chain of many independent LLM calls.
 
 ### Event interpreter outputs
 
@@ -469,14 +504,20 @@ Strict structured response:
 - no invented measurements;
 - `unknown` supported.
 
+Every non-unknown factual explanation and every recommendation other than
+`no_action` must cite at least one valid supporting evidence reference.
+Evidence-free structured output is invalid and takes the deterministic
+fallback path.
+
 ### Failure behavior
 
 If LLM invocation fails:
 
-- event remains valid;
-- product shows objective evidence;
+- urgent deterministic events remain valid;
+- non-urgent policy can continue with objective evidence and template wording;
 - interpretation status is `unavailable`;
-- retry policy may run asynchronously.
+- retry policy may run asynchronously;
+- no missing interpretation is treated as evidence of normality.
 
 ---
 

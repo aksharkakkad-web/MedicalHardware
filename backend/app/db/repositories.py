@@ -19,6 +19,7 @@ from backend.app.db.mappers import (
 )
 from backend.app.db.models import (
     EventActionRow,
+    EventBridgeRecordRow,
     EventPriorityHistoryRow,
     FeedbackRecordRow,
     MonitoringEventRow,
@@ -45,6 +46,27 @@ def _is_feedback_event_conflict(error: IntegrityError) -> bool:
         "unique constraint failed: feedback_records.tenant_id, "
         "feedback_records.event_id"
     ) in str(error.orig).casefold()
+
+
+def _same_bridge_row(
+    left: EventBridgeRecordRow,
+    right: EventBridgeRecordRow,
+) -> bool:
+    for column in EventBridgeRecordRow.__table__.columns:
+        if column.name == "event_bridge_record_id":
+            continue
+        left_value = getattr(left, column.name)
+        right_value = getattr(right, column.name)
+        if isinstance(left_value, datetime) and isinstance(right_value, datetime):
+            if left_value.tzinfo is None:
+                left_value = left_value.replace(tzinfo=timezone.utc)
+            if right_value.tzinfo is None:
+                right_value = right_value.replace(tzinfo=timezone.utc)
+            left_value = left_value.astimezone(timezone.utc)
+            right_value = right_value.astimezone(timezone.utc)
+        if left_value != right_value:
+            return False
+    return True
 
 
 @dataclass(frozen=True)
@@ -295,43 +317,83 @@ class EventRepository:
         expected_version: int,
     ) -> StoredEvent:
         bundle = event_to_rows(tenant_id, event, expected_version + 1)
-        values = {
-            column.name: getattr(bundle.event, column.name)
-            for column in MonitoringEventRow.__table__.columns
-            if column.name not in {"event_id", "tenant_id", "version"}
-        }
-        values["version"] = expected_version + 1
-        result = self._session.execute(
-            update(MonitoringEventRow)
-            .where(
-                MonitoringEventRow.event_id == event.event_id,
-                MonitoringEventRow.tenant_id == tenant_id,
-                MonitoringEventRow.version == expected_version,
-            )
-            .values(**values)
-        )
-        if result.rowcount == 0:
-            raise ConcurrentUpdateError()
+        try:
+            with self._session.begin_nested():
+                existing_bridges = {
+                    row.idempotency_key: row
+                    for row in self._session.scalars(
+                        select(EventBridgeRecordRow).where(
+                            EventBridgeRecordRow.tenant_id == tenant_id,
+                            EventBridgeRecordRow.idempotency_key.in_(
+                                bridge.idempotency_key for bridge in bundle.bridges
+                            ),
+                        )
+                    )
+                }
+                for bridge in bundle.bridges:
+                    existing_bridge = existing_bridges.get(bridge.idempotency_key)
+                    if existing_bridge is not None and not _same_bridge_row(
+                        existing_bridge,
+                        bridge,
+                    ):
+                        raise ConcurrentUpdateError()
 
-        action_sequence = self._latest_sequence(
-            EventActionRow,
-            EventActionRow.sequence,
-            tenant_id,
-            event.event_id,
-        )
-        priority_sequence = self._latest_sequence(
-            EventPriorityHistoryRow,
-            EventPriorityHistoryRow.sequence,
-            tenant_id,
-            event.event_id,
-        )
-        self._session.add_all(
-            row for row in bundle.actions if row.sequence > action_sequence
-        )
-        self._session.add_all(
-            row for row in bundle.priorities if row.sequence > priority_sequence
-        )
-        self._session.flush()
+                if expected_version == 0:
+                    existing_event = self._session.scalar(
+                        select(MonitoringEventRow).where(
+                            MonitoringEventRow.event_id == event.event_id,
+                            MonitoringEventRow.tenant_id == tenant_id,
+                        )
+                    )
+                    if existing_event is not None:
+                        raise ConcurrentUpdateError()
+                    self._session.add(bundle.event)
+                    self._session.flush()
+                    action_sequence = priority_sequence = 0
+                else:
+                    values = {
+                        column.name: getattr(bundle.event, column.name)
+                        for column in MonitoringEventRow.__table__.columns
+                        if column.name not in {"event_id", "tenant_id", "version"}
+                    }
+                    values["version"] = expected_version + 1
+                    result = self._session.execute(
+                        update(MonitoringEventRow)
+                        .where(
+                            MonitoringEventRow.event_id == event.event_id,
+                            MonitoringEventRow.tenant_id == tenant_id,
+                            MonitoringEventRow.version == expected_version,
+                        )
+                        .values(**values)
+                    )
+                    if result.rowcount == 0:
+                        raise ConcurrentUpdateError()
+                    action_sequence = self._latest_sequence(
+                        EventActionRow,
+                        EventActionRow.sequence,
+                        tenant_id,
+                        event.event_id,
+                    )
+                    priority_sequence = self._latest_sequence(
+                        EventPriorityHistoryRow,
+                        EventPriorityHistoryRow.sequence,
+                        tenant_id,
+                        event.event_id,
+                    )
+                self._session.add_all(
+                    row for row in bundle.actions if row.sequence > action_sequence
+                )
+                self._session.add_all(
+                    row for row in bundle.priorities if row.sequence > priority_sequence
+                )
+                self._session.add_all(
+                    bridge
+                    for bridge in bundle.bridges
+                    if bridge.idempotency_key not in existing_bridges
+                )
+                self._session.flush()
+        except IntegrityError as exc:
+            raise ConcurrentUpdateError() from exc
         return self.get(tenant_id, event.event_id)
 
     def _hydrate(
@@ -355,7 +417,15 @@ class EventRepository:
             )
             .order_by(EventPriorityHistoryRow.sequence)
         ).all()
-        return event_from_rows(event_row, actions, priorities)
+        bridges = self._session.scalars(
+            select(EventBridgeRecordRow)
+            .where(
+                EventBridgeRecordRow.tenant_id == tenant_id,
+                EventBridgeRecordRow.event_id == event_row.event_id,
+            )
+            .order_by(EventBridgeRecordRow.event_bridge_record_id)
+        ).all()
+        return event_from_rows(event_row, actions, priorities, bridges)
 
     def _hydrate_many(
         self,
@@ -384,21 +454,38 @@ class EventRepository:
                 EventPriorityHistoryRow.sequence,
             )
         ).all()
+        bridges = self._session.scalars(
+            select(EventBridgeRecordRow)
+            .where(
+                EventBridgeRecordRow.tenant_id == tenant_id,
+                EventBridgeRecordRow.event_id.in_(event_ids),
+            )
+            .order_by(
+                EventBridgeRecordRow.event_id,
+                EventBridgeRecordRow.event_bridge_record_id,
+            )
+        ).all()
         actions_by_event: dict[str, list[EventActionRow]] = {
             event_id: [] for event_id in event_ids
         }
         priorities_by_event: dict[str, list[EventPriorityHistoryRow]] = {
             event_id: [] for event_id in event_ids
         }
+        bridges_by_event: dict[str, list[EventBridgeRecordRow]] = {
+            event_id: [] for event_id in event_ids
+        }
         for action in actions:
             actions_by_event[action.event_id].append(action)
         for priority in priorities:
             priorities_by_event[priority.event_id].append(priority)
+        for bridge in bridges:
+            bridges_by_event[bridge.event_id].append(bridge)
         return tuple(
             event_from_rows(
                 event_row,
                 actions_by_event[event_row.event_id],
                 priorities_by_event[event_row.event_id],
+                bridges_by_event[event_row.event_id],
             )
             for event_row in event_rows
         )

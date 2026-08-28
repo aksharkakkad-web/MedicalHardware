@@ -40,11 +40,14 @@ Radar, thermal, and Wi-Fi CSI evidence are combined
         ↓
 The system compares the current state with the resident's personal baseline
         ↓
-The system finds a known pattern, a deterministic warning, or an unknown anomaly
+The numerical filter opens an anomaly episode only when a change is strong or sustained enough
         ↓
-An event is created with priority, confidence, evidence, and limitations
+It builds a rich evidence packet with the changed numbers, quality, timing, agreements, contradictions, routines, and unknowns
         ↓
-AI may explain the already-created event using resident context
+For non-urgent cases, situation-specific AI skills interpret what might be happening
+For strong urgent evidence, a provisional event is created immediately without waiting for AI
+        ↓
+A deterministic policy decides whether to stay quiet, watch, ask staff to verify, or create/raise an event
         ↓
 A caregiver opens and understands it
         ↓
@@ -84,7 +87,10 @@ Each phase follows one shared rhythm: agree on a clear story and non-goals, buil
 
 `docs/PHASE_GATES.md` is the operating dashboard for current status, phase entry criteria, exit checkpoints, and the frontend/backend/hardware tracks together.
 
-**Current status:** the toy-data product-logic foundation is complete. Phase 2 is ready to start; it makes the first caregiver event journey durable and connectable while Rishit builds the clinic flow on contract-valid mocks.
+**Current status:** the toy-data product-logic foundation and Phase 2 backend
+runway are complete. Rishit can continue the frontend connection independently.
+Akshar is now building Phase 5 monitoring intelligence on normalized simulated
+fixtures, before edge transport and real hardware are connected.
 
 ### Phase 1 — Product and project foundation
 

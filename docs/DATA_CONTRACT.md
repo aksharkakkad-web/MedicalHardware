@@ -1,7 +1,7 @@
 # Contactless Adaptive Care Platform — Data & API Contract
 
 **Status:** V1 contract for UI-first and simulator-first development
-**Version:** 1.7
+**Version:** 1.8
 **Important:** Final vendor-specific radar/CSI raw shapes are intentionally hardware-dependent. Production software stabilizes around a versioned **EdgeTelemetryEnvelope** emitted after lightweight on-device preprocessing. Optional raw/debug capture is separate and bounded.
 
 ## Phase 2 Checkpoint D — Clinic Event Queue
@@ -529,6 +529,11 @@ V1 supports one assigned resident per monitored room. This is configuration data
 
 Only one active resident assignment is allowed per monitored room in V1. If the assignment is missing or conflicting, the backend must not create resident-specific observations or events. If sensing suggests multiple people may be present, resident-specific output is marked ambiguous, low-confidence, or unavailable; the system does not guess who produced a signal.
 
+Cross-sensor alignment is assignment-scoped: every fused frame contains
+observations from exactly one `(tenant_id, room_id, resident_id)` assignment
+and preserves that identity for downstream orchestration. Empty or mixed-
+assignment observation sets are rejected rather than assigned implicitly.
+
 ### Optional diagnostic raw capture
 
 Endpoint concept:
@@ -582,25 +587,36 @@ Created by one cloud normalizer from compact edge telemetry.
       "name": "respiratory_rate",
       "value": 15.2,
       "unit": "breaths_per_min",
-      "quality": 0.92
+      "quality_class": "good",
+      "quality_reasons": [],
+      "usable_for": ["respiration"]
     },
     {
       "name": "movement_energy",
       "value": 0.18,
       "unit": "normalized",
-      "quality": 0.96
+      "quality_class": "good",
+      "quality_reasons": [],
+      "usable_for": ["movement", "presence"]
     }
   ],
-  "source_quality": 0.94,
+  "source_quality_class": "good",
+  "source_quality_reasons": [],
   "processor_version": "radar_processor_sim_v1"
 }
 ```
 
 ### Quality rules
 
-- normalized `0.0–1.0` where `1.0` means highest confidence/quality;
-- feature may omit `value` and include `status: "unavailable"` instead;
-- processor must include a reason for unavailable/low-quality values when known.
+- policy uses `good`, `limited`, or `unusable`, plus explicit reasons and
+  purpose eligibility;
+- sensor-native numeric diagnostics may be retained, but are not a universal
+  cross-sensor policy score;
+- a feature may omit `value` and use `quality_class: "unusable"` instead;
+- unavailable values are never zero-filled, imputed, or forward-filled;
+- only `good` features may teach a personal numerical baseline;
+- the same observation may be usable for movement and unusable for
+  respiration.
 
 ---
 
@@ -695,9 +711,19 @@ Exact math is replaceable. Baseline status enum:
 
 ---
 
-## 12. Anomaly Candidate
+## 12. Anomaly Episode and Evidence Packet
 
-Internal object; not necessarily user-facing.
+Internal objects; not necessarily user-facing. Numerical anomaly lifecycle is
+separate from caregiver event lifecycle:
+
+`candidate → active → recovering → closed`
+
+An active episode produces immutable revisioned evidence packets. The packet
+is richer than a prose summary but does not contain continuous raw streams.
+A candidate closes without a packet or caregiver event when good initiating
+evidence falls below the activation threshold before consecutive persistence
+is met; a later deviation starts with a new anomaly ID. Missing or limited
+evidence does not prove that the candidate ended.
 
 ```json
 {
@@ -705,33 +731,52 @@ Internal object; not necessarily user-facing.
   "anomaly_id": "anom_001",
   "resident_id": "resident_demo_a",
   "room_id": "room_214",
-  "window_start": "2026-08-24T21:02:00Z",
-  "window_end": "2026-08-24T21:02:10Z",
-  "anomaly_score": 0.89,
-  "confidence": 0.84,
-  "facts": [
+  "packet_revision": 2,
+  "lifecycle_state": "active",
+  "candidate_started_at": "2026-08-24T21:02:00Z",
+  "activated_at": "2026-08-24T21:02:03Z",
+  "current_time": "2026-08-24T21:02:10Z",
+  "overall_strength": 4.8,
+  "strength_scale": "max_abs_robust_z",
+  "progression": "sustained",
+  "changed_features": [
     {
       "feature": "movement",
-      "description": "movement increased sharply relative to personal baseline",
-      "magnitude": 3.8,
-      "unit": "x_baseline"
+      "source": "radar",
+      "value": 0.76,
+      "unit": "normalized",
+      "quality_class": "good",
+      "baseline_median": 0.18,
+      "baseline_mad": 0.08,
+      "robust_z": 4.8,
+      "direction": "up",
+      "trajectory": "sustained"
     },
     {
       "feature": "position_state",
       "description": "position changed from lying-like toward floor-like"
     }
   ],
-  "quality": {
-    "overall": 0.86,
-    "multi_person_state": "unlikely",
-    "missing_modalities": []
+  "monitoring": {
+    "presence_state": "resident_present",
+    "monitoring_state": "active",
+    "possible_multiple_people": false
   },
+  "sensor_evidence": {},
+  "agreements": [],
+  "contradictions": [],
+  "missing_modalities": [],
+  "short_timeline_ref": "evidence://anom_001/short",
+  "long_timeline_ref": "evidence://anom_001/long",
   "baseline_id": "baseline_a_0042",
-  "engine_version": "anomaly_v1"
+  "filter_version": "synthetic_anomaly_v1",
+  "config_version": "synthetic_config_v1",
+  "unknowns": ["cause_of_behavior_change"]
 }
 ```
 
-No semantic diagnosis is required here.
+No semantic diagnosis is required here. Missing evidence, contradictory
+evidence, unavailable evidence, and unknown cause are distinct states.
 
 ---
 
@@ -826,16 +871,14 @@ The LLM input is structured context, not raw sensor arrays.
 ```json
 {
   "schema_version": "1.0",
-  "event": {
-    "event_id": "evt_001",
-    "priority": "high",
-    "confidence": 0.84,
-    "facts": [
-      "movement increased 3.8x personal baseline",
-      "position changed toward floor-like",
-      "movement remained unusually low afterward"
-    ],
-    "sensor_quality": "high"
+  "anomaly_evidence": {
+    "anomaly_id": "anom_001",
+    "packet_revision": 2,
+    "overall_strength": 4.8,
+    "changed_feature_refs": ["movement_deviation"],
+    "agreements": [],
+    "contradictions": [],
+    "unknowns": ["cause_of_behavior_change"]
   },
   "resident_context": {
     "baseline_status": "established",
@@ -844,7 +887,8 @@ The LLM input is structured context, not raw sensor arrays.
   },
   "similar_events": [],
   "relevant_feedback": [],
-  "interpreter_prompt_version": "event_interpreter_v1"
+  "skill_bundle": ["core_v1", "movement_v1"],
+  "interpreter_prompt_version": "monitoring_interpreter_v1"
 }
 ```
 
@@ -860,7 +904,8 @@ Strict schema:
 {
   "schema_version": "1.0",
   "interpretation_id": "int_001",
-  "event_id": "evt_001",
+  "anomaly_id": "anom_001",
+  "packet_revision": 2,
   "status": "complete",
   "likely_explanation": {
     "label": "fall_like_or_collapse_like_movement",
@@ -872,8 +917,10 @@ Strict schema:
   "uncertainty": "The system cannot confirm the cause from sensor evidence alone.",
   "plain_english_summary": "A sudden large movement was followed by a floor-like position change and unusually little movement afterward.",
   "evidence_refs": ["movement_deviation", "position_change", "post_event_inactivity"],
+  "recommended_disposition": "observe",
   "model_id": "provider_model_tbd",
-  "prompt_version": "event_interpreter_v1"
+  "skill_bundle_version": "monitoring_skills_v1",
+  "prompt_version": "monitoring_interpreter_v1"
 }
 ```
 
@@ -1427,7 +1474,7 @@ Processing should record edge-preprocessor/fusion/anomaly versions so stored tel
 
 Interpretation calls should have an idempotency key based on:
 
-`event_id + prompt_version + relevant_context_version`
+`anomaly_id + packet_revision + prompt_version + skill_bundle_version + relevant_context_version`
 
 ---
 
@@ -1536,6 +1583,17 @@ tenant-and-filter-bound keyset cursors, strict single-value parameters, and
 resolved-history access. It also publishes one generated OpenAPI artifact and
 the exact frontend composition map. No trend, evidence, AI, notification, or
 clinical intelligence is fabricated by this handoff.
+
+### V1.8 Phase 5 monitoring-intelligence decision
+
+V1.8 replaces universal normalized quality scores with explicit
+`good`/`limited`/`unusable` policy classes, reasons, and purpose eligibility;
+separates numerical anomaly episodes from caregiver events; defines rich
+revisioned anomaly evidence; and moves non-urgent LLM interpretation before
+deterministic event disposition. Strong urgent deterministic evidence may
+still create a provisional event before LLM enrichment. Resident routines and
+expected changes are flexible semantic context, while numerical baseline
+adoption remains controlled and versioned.
 
 When changing any domain object:
 

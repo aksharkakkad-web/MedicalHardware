@@ -1,8 +1,9 @@
 import unittest
-from dataclasses import FrozenInstanceError
+from dataclasses import FrozenInstanceError, replace
 from datetime import datetime, timedelta, timezone
 
 from backend.app.domain.events import (
+    BridgeEvidenceKind,
     EventPriority,
     EventStatus,
     EventStore,
@@ -572,6 +573,453 @@ class EventFlowTests(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             EventStore(initial_events=(opened, opened))
+
+    def test_bridge_signal_is_idempotent_and_preserves_latest_evidence(self) -> None:
+        first = self.store.record_signal(
+            resident_id="resident_demo_a",
+            room_id="room_214",
+            objective_family="unusual_movement",
+            headline="Unusual movement detected",
+            priority=EventPriority.HIGH,
+            observed_at=self.started,
+            source_anomaly_id="anomaly_1",
+            evidence_revision=1,
+            bridge_idempotency_key="anomaly_1:1:synthetic_disposition_v1",
+        )
+
+        duplicate = self.store.record_signal(
+            resident_id="resident_demo_a",
+            room_id="room_214",
+            objective_family="unusual_movement",
+            headline="Unusual movement detected",
+            priority=EventPriority.HIGH,
+            observed_at=self.started,
+            source_anomaly_id="anomaly_1",
+            evidence_revision=1,
+            bridge_idempotency_key="anomaly_1:1:synthetic_disposition_v1",
+        )
+
+        self.assertEqual(duplicate.event_id, first.event_id)
+        self.assertEqual(duplicate.signal_count, 1)
+        self.assertEqual(duplicate.source_anomaly_id, "anomaly_1")
+        self.assertEqual(duplicate.latest_evidence_revision, 1)
+        self.assertEqual(
+            duplicate.bridge_idempotency_keys,
+            ("anomaly_1:1:synthetic_disposition_v1",),
+        )
+        self.assertFalse(duplicate.provisional_urgent)
+        self.assertIsNone(duplicate.attention_suppressed_until)
+        self.assertEqual(len(duplicate.bridge_records), 1)
+        with self.assertRaises(FrozenInstanceError):
+            duplicate.bridge_records[0].headline = "Changed"
+
+    def test_hydrated_bridge_replay_returns_current_event_and_rejects_conflict(self) -> None:
+        original = self.store.record_signal(
+            resident_id="resident_demo_a",
+            room_id="room_214",
+            objective_family="unusual_movement",
+            headline="Unusual movement detected",
+            priority=EventPriority.HIGH,
+            observed_at=self.started,
+            source_anomaly_id="anomaly_1",
+            evidence_revision=1,
+            bridge_idempotency_key="anomaly_1:1:synthetic_disposition_v1",
+        )
+        hydrated = EventStore(initial_events=(original,))
+        acknowledged = hydrated.acknowledge(
+            original.event_id,
+            actor_id="operator_001",
+            at=self.started + timedelta(minutes=1),
+        )
+
+        replayed = hydrated.record_signal(
+            resident_id="resident_demo_a",
+            room_id="room_214",
+            objective_family="unusual_movement",
+            headline="Unusual movement detected",
+            priority=EventPriority.HIGH,
+            observed_at=self.started,
+            source_anomaly_id="anomaly_1",
+            evidence_revision=1,
+            bridge_idempotency_key="anomaly_1:1:synthetic_disposition_v1",
+        )
+
+        self.assertEqual(replayed, acknowledged)
+        with self.assertRaisesRegex(ValueError, "bridge idempotency conflict"):
+            hydrated.record_signal(
+                resident_id="resident_demo_a",
+                room_id="room_214",
+                objective_family="changed_family",
+                headline="Unusual movement detected",
+                priority=EventPriority.HIGH,
+                observed_at=self.started,
+                source_anomaly_id="anomaly_1",
+                evidence_revision=1,
+                bridge_idempotency_key="anomaly_1:1:synthetic_disposition_v1",
+            )
+
+    def test_legacy_hydrated_bridge_key_replay_remains_idempotent(self) -> None:
+        # Break caught: pre-record bridge metadata duplicates its signal on hydration.
+        original = self.store.record_signal(
+            resident_id="resident_demo_a",
+            room_id="room_214",
+            objective_family="unusual_movement",
+            headline="Unusual movement detected",
+            priority=EventPriority.HIGH,
+            observed_at=self.started,
+            source_anomaly_id="anomaly_1",
+            evidence_revision=1,
+            bridge_idempotency_key="anomaly_1:1:synthetic_disposition_v1",
+        )
+        legacy = replace(original, bridge_records=())
+        hydrated = EventStore(initial_events=(legacy,))
+
+        replayed = hydrated.record_signal(
+            resident_id="resident_demo_a",
+            room_id="room_214",
+            objective_family="unusual_movement",
+            headline="Unusual movement detected",
+            priority=EventPriority.HIGH,
+            observed_at=self.started,
+            source_anomaly_id="anomaly_1",
+            evidence_revision=1,
+            bridge_idempotency_key="anomaly_1:1:synthetic_disposition_v1",
+        )
+
+        self.assertEqual(replayed, legacy)
+        self.assertEqual(replayed.signal_count, 1)
+        self.assertEqual(
+            replayed.bridge_idempotency_keys,
+            ("anomaly_1:1:synthetic_disposition_v1",),
+        )
+
+    def test_room_level_transition_clears_memory_and_preserves_packet_revision(self) -> None:
+        # Break caught: ambiguity exposes prior memory and replaces packet provenance.
+        memory = ResidentMemory(
+            resident_id="resident_demo_a",
+            version=7,
+            entries=(
+                MemoryEntry(
+                    entry_id="private",
+                    description="Private routine",
+                    source_feedback_id="feedback_001",
+                    status="active",
+                    created_by="operator_001",
+                    created_at=self.started,
+                ),
+            ),
+        )
+        original = self.store.record_signal(
+            resident_id="resident_demo_a",
+            room_id="room_214",
+            objective_family="unusual_movement",
+            headline="Unusual movement detected",
+            priority=EventPriority.HIGH,
+            observed_at=self.started,
+            resident_memory=memory,
+            source_anomaly_id="anomaly_1",
+            evidence_revision=5,
+            bridge_idempotency_key="anomaly_1:5:synthetic_disposition_v1",
+        )
+
+        room_level = self.store.record_signal(
+            resident_id="resident_demo_a",
+            room_id="room_214",
+            objective_family="fall_like",
+            headline="Room-level fall-like signal pattern",
+            priority=EventPriority.CRITICAL,
+            observed_at=self.started + timedelta(seconds=1),
+            source_anomaly_id="anomaly_1",
+            evidence_revision=1,
+            evidence_kind=BridgeEvidenceKind.PROVISIONAL,
+            bridge_idempotency_key=(
+                "anomaly_1:provisional-1:synthetic_disposition_v1"
+            ),
+            provisional_urgent=True,
+            room_level_only=True,
+        )
+
+        self.assertEqual(room_level.event_id, original.event_id)
+        self.assertTrue(room_level.room_level_only)
+        self.assertIsNone(room_level.resident_memory_version)
+        self.assertEqual(room_level.resident_memory_entry_ids, ())
+        self.assertEqual(room_level.latest_evidence_revision, 5)
+        self.assertEqual(room_level.latest_provisional_evidence_revision, 1)
+
+    def test_bridge_key_binds_exact_signal_payload(self) -> None:
+        base = {
+            "resident_id": "resident_demo_a",
+            "room_id": "room_214",
+            "objective_family": "unusual_movement",
+            "headline": "Unusual movement detected",
+            "priority": EventPriority.HIGH,
+            "observed_at": self.started,
+            "source_anomaly_id": "anomaly_1",
+            "evidence_revision": 1,
+            "bridge_idempotency_key": "anomaly_1:1:synthetic_disposition_v1",
+            "provisional_urgent": False,
+            "room_level_only": False,
+        }
+        self.store.record_signal(**base)
+        conflicts = (
+            {"resident_id": "resident_other"},
+            {"room_id": "room_other"},
+            {"source_anomaly_id": "anomaly_other"},
+            {"evidence_revision": 2},
+            {"objective_family": "inactivity"},
+            {"headline": "Changed headline"},
+            {"priority": EventPriority.CRITICAL},
+            {"provisional_urgent": True},
+            {"room_level_only": True},
+        )
+
+        for override in conflicts:
+            with self.subTest(override=override), self.assertRaisesRegex(
+                ValueError,
+                "bridge idempotency conflict",
+            ):
+                self.store.record_signal(**(base | override))
+
+    def test_bridge_key_must_match_anomaly_revision_and_revision_kind(self) -> None:
+        base = {
+            "resident_id": "resident_demo_a",
+            "room_id": "room_214",
+            "objective_family": "unusual_movement",
+            "headline": "Unusual movement detected",
+            "priority": EventPriority.HIGH,
+            "observed_at": self.started,
+            "source_anomaly_id": "anomaly_1",
+            "evidence_revision": 1,
+        }
+        invalid = (
+            {"bridge_idempotency_key": "anomaly_other:1:policy_v1"},
+            {"bridge_idempotency_key": "anomaly_1:2:policy_v1"},
+            {
+                "bridge_idempotency_key": "anomaly_1:1:policy_v1",
+                "evidence_kind": "provisional",
+            },
+        )
+
+        for override in invalid:
+            with self.subTest(override=override), self.assertRaisesRegex(
+                ValueError,
+                "bridge idempotency key",
+            ):
+                self.store.record_signal(**(base | override))
+
+    def test_new_source_anomaly_creates_linked_recurrence_inside_quiet_gap(self) -> None:
+        first = self.store.record_signal(
+            resident_id="resident_demo_a",
+            room_id="room_214",
+            objective_family="unusual_movement",
+            headline="Unusual movement detected",
+            priority=EventPriority.HIGH,
+            observed_at=self.started,
+            source_anomaly_id="anomaly_1",
+            evidence_revision=3,
+            bridge_idempotency_key="anomaly_1:3:synthetic_disposition_v1",
+        )
+        recurrence = self.store.record_signal(
+            resident_id="resident_demo_a",
+            room_id="room_214",
+            objective_family="unusual_movement",
+            headline="Unusual movement detected",
+            priority=EventPriority.HIGH,
+            observed_at=self.started + timedelta(seconds=1),
+            source_anomaly_id="anomaly_2",
+            evidence_revision=1,
+            bridge_idempotency_key="anomaly_2:1:synthetic_disposition_v1",
+        )
+
+        self.assertNotEqual(recurrence.event_id, first.event_id)
+        self.assertEqual(recurrence.related_event_ids, (first.event_id,))
+        self.assertEqual(recurrence.recurrence_count, 2)
+
+    def test_explicit_lineage_links_recurrence_across_objective_families(self) -> None:
+        first = self.store.record_signal(
+            resident_id="resident_demo_a",
+            room_id="room_214",
+            objective_family="unknown_anomaly",
+            headline="Unclassified anomaly evidence",
+            priority=EventPriority.HIGH,
+            observed_at=self.started,
+            source_anomaly_id="anomaly_1",
+            evidence_revision=1,
+            bridge_idempotency_key="anomaly_1:1:synthetic_disposition_v1",
+        )
+
+        recurrence = self.store.record_signal(
+            resident_id="resident_demo_a",
+            room_id="room_214",
+            objective_family="routine_movement",
+            headline="Possible routine movement pattern",
+            priority=EventPriority.HIGH,
+            observed_at=self.started + timedelta(minutes=1),
+            source_anomaly_id="anomaly_2",
+            evidence_revision=1,
+            bridge_idempotency_key="anomaly_2:1:synthetic_disposition_v1",
+            related_event_ids=(first.event_id,),
+        )
+
+        self.assertEqual(recurrence.related_event_ids, (first.event_id,))
+        self.assertEqual(recurrence.recurrence_count, 2)
+
+    def test_acknowledged_attention_stays_quiet_until_priority_escalates(self) -> None:
+        first = self.store.record_signal(
+            resident_id="resident_demo_a",
+            room_id="room_214",
+            objective_family="unusual_movement",
+            headline="Unusual movement detected",
+            priority=EventPriority.HIGH,
+            observed_at=self.started,
+            source_anomaly_id="anomaly_1",
+            evidence_revision=1,
+            bridge_idempotency_key="anomaly_1:1:synthetic_disposition_v1",
+        )
+        suppressed_until = self.started + timedelta(minutes=31)
+        self.store.acknowledge(
+            first.event_id,
+            actor_id="operator_001",
+            at=self.started + timedelta(minutes=1),
+            attention_suppressed_until=suppressed_until,
+        )
+        continued = self.store.record_signal(
+            resident_id="resident_demo_a",
+            room_id="room_214",
+            objective_family="unusual_movement",
+            headline="Unusual movement detected",
+            priority=EventPriority.HIGH,
+            observed_at=self.started + timedelta(minutes=2),
+            source_anomaly_id="anomaly_1",
+            evidence_revision=2,
+            bridge_idempotency_key="anomaly_1:2:synthetic_disposition_v1",
+        )
+        escalated = self.store.record_signal(
+            resident_id="resident_demo_a",
+            room_id="room_214",
+            objective_family="unusual_movement",
+            headline="Unusual movement detected",
+            priority=EventPriority.CRITICAL,
+            observed_at=self.started + timedelta(minutes=3),
+            source_anomaly_id="anomaly_1",
+            evidence_revision=3,
+            bridge_idempotency_key="anomaly_1:3:synthetic_disposition_v1",
+        )
+
+        self.assertEqual(continued.event_id, first.event_id)
+        self.assertEqual(continued.attention_suppressed_until, suppressed_until)
+        self.assertEqual(escalated.event_id, first.event_id)
+        self.assertIsNone(escalated.attention_suppressed_until)
+        self.assertEqual(escalated.priority, EventPriority.CRITICAL)
+
+    def test_invalid_attention_recommendation_does_not_partially_acknowledge(self) -> None:
+        event = self.record(at=self.started)
+
+        with self.assertRaises(ValueError):
+            self.store.acknowledge(
+                event.event_id,
+                actor_id="operator_001",
+                at=self.started + timedelta(minutes=1),
+                attention_suppressed_until=self.started,
+            )
+
+        self.assertEqual(self.store.get(event.event_id), event)
+
+    def test_resolved_event_is_not_reopened_for_same_source_anomaly(self) -> None:
+        event = self.store.record_signal(
+            resident_id="resident_demo_a",
+            room_id="room_214",
+            objective_family="unusual_movement",
+            headline="Unusual movement detected",
+            priority=EventPriority.HIGH,
+            observed_at=self.started,
+            source_anomaly_id="anomaly_1",
+            evidence_revision=1,
+            bridge_idempotency_key="anomaly_1:1:synthetic_disposition_v1",
+        )
+        self.store.acknowledge(
+            event.event_id,
+            actor_id="operator_001",
+            at=self.started + timedelta(minutes=1),
+        )
+        self.store.check(
+            event.event_id,
+            actor_id="operator_001",
+            at=self.started + timedelta(minutes=2),
+        )
+        resolved = self.store.resolve(
+            event.event_id,
+            ResolutionOutcome.UNCERTAIN,
+            actor_id="operator_001",
+            at=self.started + timedelta(minutes=3),
+        )
+
+        continuing = self.store.record_signal(
+            resident_id="resident_demo_a",
+            room_id="room_214",
+            objective_family="unusual_movement",
+            headline="Unusual movement detected",
+            priority=EventPriority.HIGH,
+            observed_at=self.started + timedelta(minutes=4),
+            source_anomaly_id="anomaly_1",
+            evidence_revision=2,
+            bridge_idempotency_key="anomaly_1:2:synthetic_disposition_v1",
+        )
+
+        self.assertEqual(continuing, resolved)
+        self.assertEqual(continuing.status, EventStatus.RESOLVED)
+
+    def test_sourced_anomaly_updates_same_event_beyond_legacy_quiet_gap(self) -> None:
+        for target_status in (
+            EventStatus.OPEN,
+            EventStatus.ACKNOWLEDGED,
+            EventStatus.CHECKED,
+        ):
+            with self.subTest(target_status=target_status):
+                store = EventStore(quiet_gap=timedelta(minutes=5))
+                first = store.record_signal(
+                    resident_id="resident_demo_a",
+                    room_id="room_214",
+                    objective_family="unusual_movement",
+                    headline="Unusual movement detected",
+                    priority=EventPriority.HIGH,
+                    observed_at=self.started,
+                    source_anomaly_id="anomaly_1",
+                    evidence_revision=1,
+                    bridge_idempotency_key=(
+                        "anomaly_1:1:synthetic_disposition_v1"
+                    ),
+                )
+                if target_status != EventStatus.OPEN:
+                    store.acknowledge(
+                        first.event_id,
+                        actor_id="operator_001",
+                        at=self.started + timedelta(minutes=1),
+                    )
+                if target_status == EventStatus.CHECKED:
+                    store.check(
+                        first.event_id,
+                        actor_id="operator_001",
+                        at=self.started + timedelta(minutes=2),
+                    )
+
+                continued = store.record_signal(
+                    resident_id="resident_demo_a",
+                    room_id="room_214",
+                    objective_family="unusual_movement",
+                    headline="Unusual movement detected",
+                    priority=EventPriority.HIGH,
+                    observed_at=self.started + timedelta(hours=2),
+                    source_anomaly_id="anomaly_1",
+                    evidence_revision=2,
+                    bridge_idempotency_key=(
+                        "anomaly_1:2:synthetic_disposition_v1"
+                    ),
+                )
+
+                self.assertEqual(continued.event_id, first.event_id)
+                self.assertEqual(continued.status, target_status)
+                self.assertEqual(continued.signal_count, 2)
 
 
 if __name__ == "__main__":

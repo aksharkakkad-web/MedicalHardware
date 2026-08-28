@@ -23,6 +23,28 @@ All three tracks work in parallel. A phase is not a rule that Akshar, Rishit, or
 | --- | --- | --- |
 | Phase 1 — product-logic foundation | **Complete** | The agreed monitoring, calibration, event, feedback, recurrence, and resident-memory behavior runs with deterministic toy data. |
 | Phase 2 — first complete event experience | **In progress** | The durable event slice and backend Checkpoints A–D are complete. Rishit's remaining clinic/home mock experiences, the real-client connection, and hardware's real device work remain open. |
+| Phase 5 — monitoring intelligence | **Backend lane complete; shared gate open** | The 24-scenario normalized-fixture backend replay passes with zero contamination and duplicate events. Frontend presentation and hardware quality validation remain open, so the whole shared phase is not marked complete. |
+
+### Phase 5 backend lane evidence
+
+The backend now runs quality, robust baseline, anomaly/evidence, deterministic
+fake-AI validation, disposition, and caregiver-event components from synthetic
+normalized fixtures. The measured replay captured 7/7 declared meaningful
+scenarios at the internal packet-or-urgent boundary, with no missing declared
+downstream caregiver work, zero false packets, and zero false caregiver events
+across 24 declared scenario exposure units, admitted zero contaminated windows
+across 57 evaluated learning windows, and produced zero duplicate events
+across 10 event signal groups. Invalid and unavailable AI both used objective
+fallback; urgent fall-like evidence created provisional work with zero AI
+attempts. One nonurgent AI request used explicitly selected resident context,
+and a repository-backed restart hydrated the complete anomaly-to-event chain.
+Exact two-run canonical JSON reproduction passed. Exposure units are fixture
+weights, not elapsed resident-days or operating-time rates. See
+`docs/PHASE_5_BACKEND_REVIEW.md`.
+
+This closes Akshar's Phase 5 backend lane only. Rishit's frontend work and the
+hardware engineer's quality-validation work retain their documented ownership;
+the shared Phase 5 exit checkpoint remains open.
 
 ### Why Phase 2 is ready
 
@@ -63,7 +85,7 @@ not finished. They remain open work, so the overall Phase 2 gate stays
 | 2. First complete event experience | Make the clinic and home user experiences real enough to build against. | Build the full clinic and separate home experiences on contract-valid mocks: clinic operations stay clinic-only, while the home experience uses family-safe language and simple feedback. | **Event slice + Checkpoints A–D complete:** durable events, feedback, resident status/awareness, calibration, setup history, device assignment/health, resident delivery preferences, correctable memory, clinic event queue, and generated API handoff. **Next:** support frontend real-client convergence. | **Product-facing device state contract complete:** online, offline, degraded, buffering, retrying, assignment unavailable, and honest missing data. Real device production remains open. | Clinic and home mock experiences complete their agreed stories without contradicting backend rules or each other. |
 | 3. First convergence on toy data | Connect the user experience to the real backend with no product redesign. | Replace one mock path with the real API; preserve mock mode and clear loading/failure states. | Serve the same contract, actions, audit history, and access boundaries. | Produce device-shaped toy messages at the agreed boundary. | The clinic experience runs on real backend toy data; the simulator can plug in later. |
 | 4. Feedback and understandable explanations | Make events understandable and feedback useful. | Fast feedback, clear uncertainty, event explanation, resident-context editing. | Trusted feedback history, resident memory, recommendation/explanation support; deterministic warnings remain independent of AI. | Continue independent research and edge preparation. | A caregiver understands an event, records what happened, and sees that context preserved. |
-| 5. Monitoring intelligence on normalized simulated data | Personalize responsibly and make confidence meaningful before edge transport is introduced. | Show calibration, trends, confidence, degraded monitoring, and device health clearly. | Use normalized simulated fixtures for fusion, personal baselines, anomaly logic, confidence, and deterministic event decisions. | Validate sensor availability/quality reporting. | Normal situations stay mostly quiet; meaningful simulated changes create understandable events, and weak data visibly lowers confidence. |
+| 5. Monitoring intelligence on normalized simulated data | Personalize responsibly and make confidence meaningful before edge transport is introduced. | Show calibration, trends, confidence, degraded monitoring, and device health clearly. **Open.** | **Backend lane complete:** 24 deterministic normalized-fixture scenarios cover quality, baselines, anomaly/evidence, fake-AI validation, deterministic disposition, urgent bypass, event lifecycle, recurrence, and controlled learning. | Validate sensor availability/quality reporting. **Open.** | Backend evidence passes; the shared phase remains open until frontend and hardware responsibilities meet this checkpoint. |
 | 6. Simulated telemetry and ingestion | Drive the established monitoring intelligence through the same edge-telemetry boundary future hardware will use. | Scenario views for normal activity, device trouble, uncertainty, and recovery; show the resulting event journey. | Ingest, persist, validate, deduplicate, and replay simulated signals, then pass them through the Phase 5 monitoring/event engine; handle delay, missing input, and connectivity changes. | Refine realistic simulated output and quality signals. | A room scenario safely travels from simulated telemetry through the established event engine into the product UI; device/transport quality remains honest. |
 | 7. Home/family product | Connect and validate the existing separate home experience against mature monitoring data. | Replace the home mock client with a family-safe real-data client; validate language and permissions without copying clinic operations or rebuilding the core screens. | Provide an appropriate, permissioned view of the same core information. | No new product dependency. | The existing home experience works safely on mature data while clinic and family users receive different purpose-built views. |
 | 8. Evaluation and learning | Measure whether the product is useful, not just functional. | Test comprehension, effort, and alert-fatigue risks. | Replay scenarios and measure missed events, false alerts, response, confidence, and personalization. | Contribute hardware quality evidence. | Versions can be compared with evidence rather than impressions. |
@@ -110,3 +132,4 @@ The output is one of three outcomes: **approved and advance**, **revise this pha
 - Detailed build tasks: `docs/BUILD_PLAN.md`
 - Ownership and integration boundaries: `docs/TEAM_OWNERSHIP.md`
 - Plain-language founder roadmap: `docs/AKSHAR_START_HERE.md`
+- Phase 5 backend monitoring review: `docs/PHASE_5_BACKEND_REVIEW.md`

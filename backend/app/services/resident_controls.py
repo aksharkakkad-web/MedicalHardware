@@ -13,7 +13,12 @@ from backend.app.contracts.preferences import (
 from backend.app.db.models import AuditLogRow
 from backend.app.db.preference_repositories import NotificationPreferenceRepository
 from backend.app.db.repositories import FeedbackRepository, ResidentRepository
-from backend.app.domain.feedback import ResidentMemory, ResidentMemoryService
+from backend.app.domain.feedback import (
+    MemoryContextKind,
+    MemoryEntry,
+    ResidentMemory,
+    ResidentMemoryService,
+)
 from backend.app.domain.preferences import (
     AwarenessDeliveryPreferences,
     EventDeliveryPreferences,
@@ -81,6 +86,13 @@ def resident_memory_response(memory: ResidentMemory) -> ResidentMemoryResponse:
                 retired_by=entry.retired_by,
                 retired_at=entry.retired_at,
                 retirement_reason=entry.retirement_reason,
+                context_kind=entry.context_kind,
+                effective_from=entry.effective_from,
+                effective_until=entry.effective_until,
+                local_time_start=entry.local_time_start,
+                local_time_end=entry.local_time_end,
+                recurrence_note=entry.recurrence_note,
+                flexibility_note=entry.flexibility_note,
             )
             for entry in memory.entries
         ],
@@ -155,6 +167,13 @@ class ResidentControlService:
         expected_version: int,
         description: str,
         changed_at: datetime,
+        context_kind: MemoryContextKind = "general_context",
+        effective_from: datetime | None = None,
+        effective_until: datetime | None = None,
+        local_time_start: str | None = None,
+        local_time_end: str | None = None,
+        recurrence_note: str | None = None,
+        flexibility_note: str | None = None,
     ) -> ResidentMemoryResponse:
         current = self._memory_context(context, resident_id, expected_version)
         service = ResidentMemoryService(
@@ -167,6 +186,13 @@ class ResidentControlService:
                 description=description,
                 actor_id=context.actor_id,
                 changed_at=changed_at,
+                context_kind=context_kind,
+                effective_from=effective_from,
+                effective_until=effective_until,
+                local_time_start=local_time_start,
+                local_time_end=local_time_end,
+                recurrence_note=recurrence_note,
+                flexibility_note=flexibility_note,
             )
         except ValueError as error:
             raise InvalidTransitionError() from error
@@ -183,7 +209,11 @@ class ResidentControlService:
             entry.entry_id,
             "resident_memory.entry_added",
             changed_at,
-            {"memory_version": saved.version, "description": entry.description},
+            {
+                "memory_version": saved.version,
+                "description": entry.description,
+                **_memory_context_details(entry),
+            },
         )
         return resident_memory_response(saved)
 
@@ -197,6 +227,13 @@ class ResidentControlService:
         description: str,
         reason: str,
         changed_at: datetime,
+        context_kind: MemoryContextKind = "general_context",
+        effective_from: datetime | None = None,
+        effective_until: datetime | None = None,
+        local_time_start: str | None = None,
+        local_time_end: str | None = None,
+        recurrence_note: str | None = None,
+        flexibility_note: str | None = None,
     ) -> ResidentMemoryResponse:
         current = self._memory_context(context, resident_id, expected_version)
         try:
@@ -210,6 +247,13 @@ class ResidentControlService:
                 reason=reason,
                 actor_id=context.actor_id,
                 changed_at=changed_at,
+                context_kind=context_kind,
+                effective_from=effective_from,
+                effective_until=effective_until,
+                local_time_start=local_time_start,
+                local_time_end=local_time_end,
+                recurrence_note=recurrence_note,
+                flexibility_note=flexibility_note,
             )
         except KeyError as error:
             raise NotFoundError() from error
@@ -232,6 +276,7 @@ class ResidentControlService:
                 "memory_version": saved.version,
                 "replacement_entry_id": replacement.entry_id,
                 "reason": reason,
+                **_memory_context_details(replacement),
             },
         )
         return resident_memory_response(saved)
@@ -268,13 +313,20 @@ class ResidentControlService:
             expected_version=expected_version,
             changed_at=changed_at,
         )
+        retired_entry = next(
+            entry for entry in saved.entries if entry.entry_id == entry_id
+        )
         self._audit_memory(
             context,
             resident_id,
             entry_id,
             "resident_memory.entry_retired",
             changed_at,
-            {"memory_version": saved.version, "reason": reason},
+            {
+                "memory_version": saved.version,
+                "reason": reason,
+                **_memory_context_details(retired_entry),
+            },
         )
         return resident_memory_response(saved)
 
@@ -369,3 +421,21 @@ __all__ = [
     "notification_preferences_response",
     "resident_memory_response",
 ]
+
+
+def _memory_context_details(entry: MemoryEntry) -> dict[str, object]:
+    return {
+        "context_kind": entry.context_kind,
+        "effective_from": _json_datetime(entry.effective_from),
+        "effective_until": _json_datetime(entry.effective_until),
+        "local_time_start": entry.local_time_start,
+        "local_time_end": entry.local_time_end,
+        "recurrence_note": entry.recurrence_note,
+        "flexibility_note": entry.flexibility_note,
+    }
+
+
+def _json_datetime(value: datetime | None) -> str | None:
+    if value is None:
+        return None
+    return value.isoformat().replace("+00:00", "Z")

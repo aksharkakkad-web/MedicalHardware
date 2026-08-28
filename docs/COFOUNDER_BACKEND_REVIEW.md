@@ -1,16 +1,21 @@
 # Cofounder Backend Review
 
-**Review date:** August 27, 2026  
-**Audience:** Founders and product reviewers  
-**Current decision:** The Phase 2 backend runway is complete and ready to
-connect to the clinic frontend using toy data. The complete monitoring product
-is not finished.
+**Review date:** August 28, 2026
+**Audience:** Founders and product reviewers
+**Current decision:** The Phase 2 backend runway remains complete and ready for
+frontend connection. The Phase 5 backend monitoring-intelligence lane is also
+complete on deterministic synthetic normalized fixtures. The shared frontend,
+hardware, Phase 6 ingestion, and real-world product gates remain open.
 
 ## Executive verdict
 
 Akshar has completed the backend foundation that manages residents, rooms,
 devices, monitoring availability, calibration state, caregiver events,
-feedback, resident context, settings, history, and auditability.
+feedback, resident context, settings, history, and auditability. He has also
+completed the normalized-fixture intelligence path that turns synthetic
+quality-controlled features into baseline comparisons, anomaly evidence,
+validated deterministic fake-AI interpretation, policy decisions, and
+idempotent caregiver work.
 
 The complete downstream caregiver workflow is working:
 
@@ -23,20 +28,23 @@ An event already exists
 → related resident context and every change survive restart
 ```
 
-The upstream monitoring-intelligence workflow is designed but not implemented:
+The normalized-fixture upstream monitoring-intelligence workflow is now
+implemented:
 
 ```text
-Real sensor data
-→ clean and validate each signal
-→ combine radar, thermal, and Wi-Fi CSI
-→ learn a personal numerical baseline
-→ calculate anomaly score and confidence
-→ decide whether a real event should be created
+synthetic normalized features
+→ quality, missingness, agreement, and contradiction
+→ personal numerical baseline and learning guard
+→ anomaly episode and evidence revision
+→ validated fake-AI interpretation or objective fallback
+→ deterministic disposition
+→ existing caregiver event workflow
 ```
 
-Therefore, the backend is ready for frontend convergence with deterministic
-toy data. It is not ready to claim that it detects real physiological or
-movement anomalies from hardware.
+Therefore, the backend is ready for frontend convergence and for a separate
+Phase 6 producer to drive the same normalized boundary. It is not ready to
+claim real physiological or movement detection from hardware. The detailed
+Phase 5 evidence is in `docs/PHASE_5_BACKEND_REVIEW.md`.
 
 ## What has been implemented
 
@@ -90,8 +98,10 @@ backend does not yet infer them from live sensor signals.
 - Unaffected calibration progress and all earlier history remain intact.
 - Setup-change retries and conflicting versions are handled safely.
 
-This is the calibration workflow and bookkeeping. The real mathematical
-baseline learner that consumes sensor observations is later work.
+The Phase 2 calibration workflow and bookkeeping remain intact. Phase 5 now
+also implements the synthetic normalized-fixture numerical baseline learner;
+real raw/device observation ingestion and production threshold validation are
+later work.
 
 ### 5. Device assignment and health
 
@@ -200,35 +210,49 @@ The automated founder walkthrough performs this story:
 
 ### Implemented
 
-- The contracts describe normalized observations, fused frames, personal
-  baselines, anomaly candidates, evidence, confidence, and event priorities.
-- Synthetic domain tests prove event lifecycle, recurrence, escalation,
-  calibration eligibility, and quality-state behavior.
-- The backend can store and expose an event labeled as a known or unknown
-  anomaly.
-- Once an event exists, its complete caregiver workflow is implemented.
+- Normalized observations, quality/missingness, deterministic aligned frames,
+  robust personal baselines, learning guards, anomaly episodes, evidence
+  packets, monitoring degradation, and the synthetic fall-like fast path.
+- Situation-specific skills, bounded resident context, deterministic fake
+  provider, provenance/claim validation, and objective fallback.
+- Deterministic disposition, confidence/priority separation, urgent bypass,
+  idempotent event bridging, acknowledgment suppression, recovery, and linked
+  recurrence.
+- A 24-scenario canonical replay with computed metrics and a nonzero-on-failure
+  founder checkpoint.
 
 ### Not implemented
 
-- Receiving a continuous stream of real or simulated edge telemetry.
-- Cleaning radar, thermal, or Wi-Fi CSI measurements in the cloud.
-- Aligning and combining multiple sensor streams.
-- Calculating real personal baselines from normalized observations.
-- Calculating an anomaly score from current behavior versus baseline.
-- Calculating production confidence from sensor agreement and quality.
-- Assigning real priority from severity, duration, change rate, recurrence,
-  confidence, and missing information.
-- Automatically turning an anomaly candidate into a durable event.
+- Receiving or persisting a continuous stream of real or simulated edge
+  telemetry; that is Phase 6.
+- Raw/vendor radar, thermal, or Wi-Fi CSI parsing and conversion.
+- Production thresholds, production confidence calibration, and real-world
+  priority validation.
 - Validated clinical or physiological warning thresholds.
-- AI explanations of event evidence.
+- A live production AI provider and its real latency/cost/reliability evidence.
 
-The architecture for this flow is documented so it can be added without
-redesigning the event workflow. The implementation belongs primarily to the
-monitoring-intelligence and simulated-telemetry phases.
+The normalized intelligence flow is complete without changing the event
+workflow. Phase 6 must add edge-telemetry ingestion through this boundary,
+without moving raw streams into the Phase 5 engine.
+
+### Phase 5 measured replay
+
+The canonical synthetic run measured 24 scenarios, 7/7 internal
+packet-or-urgent meaningful anomaly captures, no missing declared downstream
+caregiver work, zero false packets, and zero false caregiver events
+across 24 declared scenario exposure units, zero baseline contamination across
+57 learning windows, and zero duplicate events across 10 event signal groups.
+Interpretation results were 12 attempted, 10 valid, 1 rejected, and 1
+unavailable. The urgent fall-like scenario created provisional caregiver work
+with no AI attempt. A nonurgent request used explicitly selected resident
+context, and the repository restart hydrated the complete anomaly-to-event
+lineage. Two fresh replay commands emitted the same 40,571 bytes. Exposure
+units are fixture weights, not elapsed resident-days or operating-time rates.
+These are engineering-fixture measurements, not clinical or hardware claims.
 
 ## Verification and review evidence
 
-Final clean-`main` verification after merge produced:
+The preserved Phase 2 merge evidence remains:
 
 - 373 passing backend tests: the 372 Checkpoint D cases plus one final
   cross-framework API-contract regression added before merge;
@@ -283,9 +307,10 @@ Rishit's real clinic interface:
 6. show honest loading, missing, limited, unavailable, and failure states; and
 7. repeat the journey after a backend restart.
 
-After frontend/backend convergence, Akshar's next major backend responsibility
-is monitoring intelligence on normalized simulated data, followed by telemetry
-ingestion through the same boundary that real hardware will eventually use.
+Akshar's next separate backend responsibility is Phase 6 simulated telemetry
+ingestion through the normalized boundary that real hardware will eventually
+use. Rishit's frontend convergence and hardware validation remain independently
+owned and are not claimed complete here.
 
 ## Related source-of-truth documents
 
@@ -297,3 +322,4 @@ ingestion through the same boundary that real hardware will eventually use.
 - Detailed backend Checkpoint D review:
   `docs/PHASE_2_CHECKPOINT_D_REVIEW.md`
 - Frontend connection instructions: `docs/PHASE_2_FRONTEND_API_HANDOFF.md`
+- Phase 5 backend monitoring review: `docs/PHASE_5_BACKEND_REVIEW.md`

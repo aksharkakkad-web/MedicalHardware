@@ -53,7 +53,11 @@ Agents should stay inside the requesting founder's owned areas unless the task e
 - Data collection is continuous while the device is operating.
 - Sensor fusion is preferred over adding redundant core sensors.
 - Edge firmware handles lightweight per-sensor decoding/filtering/feature reduction. Cloud Python handles telemetry validation, cross-sensor fusion, baselines, anomaly detection, confidence, device health, and deterministic warnings.
-- The LLM interprets already-created events; it does not monitor sensor telemetry streams.
+- For non-urgent anomalies, the LLM interprets a rich anomaly evidence packet
+  before deterministic policy decides whether to create caregiver work. Strong
+  urgent deterministic evidence may create a provisional event first and be
+  enriched afterward. The LLM never monitors telemetry streams or suppresses
+  deterministic events/warnings.
 - The LLM cannot suppress deterministic events/warnings.
 - Low-quality data must be shown as low-confidence/unavailable, not as fake precision.
 - Resident-away and possible-multi-person periods pause resident-specific baseline learning.

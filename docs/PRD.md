@@ -2,7 +2,7 @@
 
 **Status:** Pre-build source of truth
 **Audience:** Founders, Codex, engineering collaborators, future research/clinical advisors
-**Version:** 1.4
+**Version:** 1.5
 **Purpose:** Define what the product is, what V1 must do, and what is intentionally left flexible until hardware testing and customer discovery.
 
 ---
@@ -21,7 +21,7 @@ The embedded device is intentionally **small and efficient, not dumb**. It perfo
 
 The device does **not** perform the main intelligence pipeline: no cross-sensor fusion, personal baseline modeling, anomaly/event decisions, LLM reasoning, or feedback learning. Those remain in the cloud.
 
-The cloud combines the compact edge telemetry into useful resident-level measurements and events. Python-based processing validates and fuses the modalities, learns a personal baseline, detects anomalies and hard warning conditions, and assigns confidence. An LLM is called selectively for detected events to interpret what may have happened and explain it in plain English. Caregivers or families can then provide quick feedback, which improves resident context and later detection quality in a controlled way.
+The cloud combines the compact edge telemetry into useful resident-level measurements and events. Python-based processing validates and fuses the modalities, learns a personal baseline, detects anomalies and hard warning conditions, and assigns confidence. For non-urgent anomalies, an LLM is called selectively on a rich structured evidence packet before deterministic policy decides whether caregiver work is warranted. Strong urgent deterministic evidence may create a provisional event first and receive LLM enrichment afterward. Caregivers or families can then provide quick feedback, which improves resident context and later detection quality in a controlled way.
 
 ### One-line product thesis
 
@@ -318,12 +318,13 @@ The system should:
 5. synchronize and fuse sensor evidence for the resident assigned to the monitored room;
 6. compare against individual baselines;
 7. create anomaly candidates and deterministic warning candidates;
-8. create an event when policy requires it;
-9. selectively invoke the LLM for interpretation;
-10. surface the event in the relevant product;
-11. capture human outcome/feedback;
-12. update resident memory and eligible baseline data;
-13. use accumulated labeled events for future system improvements.
+8. immediately create a provisional event when strong urgent deterministic policy requires it;
+9. selectively invoke the LLM on rich anomaly evidence for non-urgent interpretation or urgent-event enrichment;
+10. apply deterministic product policy to choose no action, continued observation, awareness, or caregiver work;
+11. surface approved events in the relevant product;
+12. capture human outcome/feedback;
+13. update resident memory and eligible baseline data;
+14. use accumulated labeled events for future system improvements.
 
 Exact processed-history and optional raw/debug retention durations are intentionally configurable and not locked yet. Continuous raw upload/storage is not a production requirement.
 
@@ -404,7 +405,7 @@ Calibration should depend on sufficient valid data, not a hard-coded number of c
 
 ## 12. Anomaly and Event System
 
-Python/numerical processing decides whether something is sufficiently unusual or matches a deterministic warning condition to create an event.
+Python/numerical processing decides whether something is sufficiently unusual to become an anomaly episode and whether a strong deterministic warning condition requires immediate provisional caregiver work. Non-urgent anomaly episodes are interpreted from structured evidence before deterministic product policy chooses whether to create an event.
 
 ### Event evidence may include
 
@@ -445,11 +446,11 @@ This is LLM-independent, not necessarily internet-independent. True on-device/of
 
 ## 13. LLM Interpretation Layer
 
-The LLM is called only for meaningful events or scheduled context-maintenance tasks, not continuously for raw sensor streams.
+The LLM is called only for meaningful anomaly episodes, event enrichment, or scheduled context-maintenance tasks, not continuously for raw sensor streams.
 
 ### Inputs
 
-- structured event facts;
+- structured anomaly/event facts and evidence references;
 - resident memory/context;
 - relevant previous events;
 - relevant previous human feedback;
@@ -468,7 +469,7 @@ The LLM is called only for meaningful events or scheduled context-maintenance ta
 
 The LLM must be allowed to output `unknown` / `insufficient evidence`.
 
-If the LLM is unavailable, the event still exists and the product still shows the numerical evidence.
+If the LLM is unavailable, urgent deterministic events still exist and non-urgent deterministic policy can still use objective evidence and fallback wording. No safety path depends on a successful LLM call.
 
 ---
 
@@ -554,6 +555,18 @@ Accumulated labeled events can later improve:
 - global AI instructions.
 
 System-wide changes must be evaluated and versioned before deployment. Feedback does not automatically rewrite safety logic or the global skill file after each event.
+
+### Flexible routines and legitimate new behavior
+
+Authorized operators may record broad routines, habits, temporary changes,
+and expected new behavior before an anomaly or through later feedback. These
+entries immediately inform relevant LLM context but do not act as rigid
+schedules and do not directly suppress urgent physical evidence. A legitimate
+new normal enters numerical baselines only after controlled, clean,
+single-person, good-quality coverage; the prior baseline remains versioned and
+replayable. Every admitted learning window must fall inside the expected-
+behavior entry's effective interval. When that context expires, an in-progress
+adoption stops without publishing a numerical baseline.
 
 ---
 

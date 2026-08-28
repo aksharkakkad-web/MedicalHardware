@@ -15,6 +15,23 @@ from backend.app.domain._validation import (
 from backend.app.domain.events import EventStatus, MonitoringEvent, ResolutionOutcome
 
 
+MemoryContextKind = Literal[
+    "routine",
+    "habit",
+    "temporary_change",
+    "expected_new_behavior",
+    "general_context",
+]
+MEMORY_CONTEXT_KINDS = (
+    "routine",
+    "habit",
+    "temporary_change",
+    "expected_new_behavior",
+    "general_context",
+)
+_LOCAL_TIME_PATTERN = re.compile(r"(?:[01][0-9]|2[0-3]):[0-5][0-9]\Z")
+
+
 def normalize_event_label(value: object) -> str:
     value = require_nonblank_text(value, "actual_event_label")
     normalized = re.sub(r"[^a-z0-9]+", "_", value.casefold()).strip("_")
@@ -50,6 +67,13 @@ class MemoryEntry:
     schema_version: str = "1.0"
     source_kind: Literal["feedback", "operator"] = "feedback"
     supersedes_entry_id: str | None = None
+    context_kind: MemoryContextKind = "general_context"
+    effective_from: datetime | None = None
+    effective_until: datetime | None = None
+    local_time_start: str | None = None
+    local_time_end: str | None = None
+    recurrence_note: str | None = None
+    flexibility_note: str | None = None
 
     def __post_init__(self) -> None:
         require_nonblank_text(self.entry_id, "entry_id")
@@ -58,6 +82,13 @@ class MemoryEntry:
         require_aware_datetime(self.created_at, "created_at")
         if self.source_kind not in ("feedback", "operator"):
             raise ValueError("source_kind must be feedback or operator")
+        validate_memory_context(
+            context_kind=self.context_kind,
+            effective_from=self.effective_from,
+            effective_until=self.effective_until,
+            local_time_start=self.local_time_start,
+            local_time_end=self.local_time_end,
+        )
         if self.source_kind == "feedback":
             require_nonblank_text(
                 self.source_feedback_id,
@@ -104,6 +135,23 @@ class ResidentMemory:
     def active_entries(self) -> tuple[MemoryEntry, ...]:
         return tuple(entry for entry in self.entries if entry.status == "active")
 
+    def relevant_entries(
+        self,
+        at: datetime,
+        *,
+        context_kinds: Sequence[MemoryContextKind] = (),
+    ) -> tuple[MemoryEntry, ...]:
+        at = require_aware_datetime(at, "at")
+        selected_kinds = set(context_kinds)
+        return tuple(
+            entry
+            for entry in self.entries
+            if entry.status == "active"
+            and (not selected_kinds or entry.context_kind in selected_kinds)
+            and (entry.effective_from is None or entry.effective_from <= at)
+            and (entry.effective_until is None or at < entry.effective_until)
+        )
+
 
 @dataclass(frozen=True)
 class LearningDecision:
@@ -113,6 +161,36 @@ class LearningDecision:
     baseline_window_eligible: bool
     global_label_recorded: bool
     schema_version: str = "1.0"
+
+
+def validate_memory_context(
+    *,
+    context_kind: object,
+    effective_from: datetime | None,
+    effective_until: datetime | None,
+    local_time_start: str | None,
+    local_time_end: str | None,
+) -> None:
+    if context_kind not in MEMORY_CONTEXT_KINDS:
+        raise ValueError("context_kind is invalid")
+    if effective_from is not None:
+        require_aware_datetime(effective_from, "effective_from")
+    if effective_until is not None:
+        require_aware_datetime(effective_until, "effective_until")
+    if (
+        effective_from is not None
+        and effective_until is not None
+        and effective_until <= effective_from
+    ):
+        raise ValueError("effective_until must be later than effective_from")
+    if (local_time_start is None) != (local_time_end is None):
+        raise ValueError("local_time_start and local_time_end must be provided together")
+    for value, field_name in (
+        (local_time_start, "local_time_start"),
+        (local_time_end, "local_time_end"),
+    ):
+        if value is not None and _LOCAL_TIME_PATTERN.fullmatch(value) is None:
+            raise ValueError(f"{field_name} must use HH:MM format")
 
 
 class FeedbackService:
@@ -321,6 +399,13 @@ class ResidentMemoryService:
         description: str,
         actor_id: str,
         changed_at: datetime,
+        context_kind: MemoryContextKind = "general_context",
+        effective_from: datetime | None = None,
+        effective_until: datetime | None = None,
+        local_time_start: str | None = None,
+        local_time_end: str | None = None,
+        recurrence_note: str | None = None,
+        flexibility_note: str | None = None,
     ) -> ResidentMemory:
         resident_id, actor_id, changed_at, memory = self._command_context(
             resident_id=resident_id,
@@ -333,6 +418,13 @@ class ResidentMemoryService:
             description=description,
             actor_id=actor_id,
             changed_at=changed_at,
+            context_kind=context_kind,
+            effective_from=effective_from,
+            effective_until=effective_until,
+            local_time_start=local_time_start,
+            local_time_end=local_time_end,
+            recurrence_note=recurrence_note,
+            flexibility_note=flexibility_note,
         )
         updated = ResidentMemory(
             resident_id,
@@ -352,6 +444,13 @@ class ResidentMemoryService:
         reason: str,
         actor_id: str,
         changed_at: datetime,
+        context_kind: MemoryContextKind = "general_context",
+        effective_from: datetime | None = None,
+        effective_until: datetime | None = None,
+        local_time_start: str | None = None,
+        local_time_end: str | None = None,
+        recurrence_note: str | None = None,
+        flexibility_note: str | None = None,
     ) -> ResidentMemory:
         resident_id, actor_id, changed_at, memory = self._command_context(
             resident_id=resident_id,
@@ -374,6 +473,13 @@ class ResidentMemoryService:
             actor_id=actor_id,
             changed_at=changed_at,
             supersedes_entry_id=target.entry_id,
+            context_kind=context_kind,
+            effective_from=effective_from,
+            effective_until=effective_until,
+            local_time_start=local_time_start,
+            local_time_end=local_time_end,
+            recurrence_note=recurrence_note,
+            flexibility_note=flexibility_note,
         )
         updated_entries = tuple(
             retired if entry.entry_id == entry_id else entry
@@ -462,6 +568,13 @@ class ResidentMemoryService:
         actor_id: str,
         changed_at: datetime,
         supersedes_entry_id: str | None = None,
+        context_kind: MemoryContextKind = "general_context",
+        effective_from: datetime | None = None,
+        effective_until: datetime | None = None,
+        local_time_start: str | None = None,
+        local_time_end: str | None = None,
+        recurrence_note: str | None = None,
+        flexibility_note: str | None = None,
     ) -> MemoryEntry:
         return MemoryEntry(
             entry_id=f"memory_{uuid4().hex}",
@@ -472,6 +585,13 @@ class ResidentMemoryService:
             status="active",
             created_by=actor_id,
             created_at=changed_at,
+            context_kind=context_kind,
+            effective_from=effective_from,
+            effective_until=effective_until,
+            local_time_start=local_time_start,
+            local_time_end=local_time_end,
+            recurrence_note=recurrence_note,
+            flexibility_note=flexibility_note,
         )
 
     @staticmethod
