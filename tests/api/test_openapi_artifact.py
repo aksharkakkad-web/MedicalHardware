@@ -43,4 +43,3 @@ def test_every_v1_operation_documents_development_access_headers() -> None:
                 continue
             parameters = {item["name"] for item in operation["parameters"]}
             assert {"X-Tenant-Id", "X-Actor-Id"} <= parameters
-

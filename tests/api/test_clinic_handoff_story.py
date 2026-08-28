@@ -7,6 +7,7 @@ from backend.app.checkpoints.clinic_handoff import run_checkpoint
 
 EXPECTED_LINES = [
     "PASS clinic overview composes residents, monitoring, and device state",
+    "PASS multiple rooms keep resident attention correctly separated",
     "PASS active events filter and page in caregiver attention order",
     "PASS lifecycle moves resolved events into preserved history",
     "PASS delivery preferences never hide urgent dashboard events",
@@ -32,4 +33,3 @@ def test_founder_clinic_handoff_command_prints_plain_language_proof() -> None:
 
     assert completed.returncode == 0
     assert completed.stdout.splitlines() == EXPECTED_LINES
-

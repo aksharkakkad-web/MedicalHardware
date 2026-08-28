@@ -1,5 +1,6 @@
 """Prove the complete Checkpoint D clinic Product API handoff story."""
 
+from collections import Counter
 from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
@@ -11,6 +12,11 @@ from fastapi.testclient import TestClient
 
 from backend.app.config import Settings
 from backend.app.db.mappers import event_to_rows
+from backend.app.db.models import (
+    ResidentRow,
+    RoomResidentAssignmentRow,
+    RoomRow,
+)
 from backend.app.db.seed import seed_synthetic_story
 from backend.app.domain.events import EventPriority, EventStatus, MonitoringEvent
 from backend.app.main import create_app
@@ -21,6 +27,7 @@ ACCESS_HEADERS = {
     "X-Actor-Id": "operator_1",
 }
 RESIDENT_ID = "resident_demo_a"
+SECOND_RESIDENT_ID = "resident_demo_b"
 RESIDENT_PATH = f"/v1/residents/{RESIDENT_ID}"
 EVENT_ID = "evt_phase2_demo"
 EVENT_PATH = f"/v1/events/{EVENT_ID}"
@@ -37,8 +44,8 @@ def _seed_queue_events(app) -> None:
         MonitoringEvent(
             event_id="evt_handoff_critical",
             episode_id="episode_handoff_critical",
-            resident_id=RESIDENT_ID,
-            room_id="room_214",
+            resident_id=SECOND_RESIDENT_ID,
+            room_id="room_302",
             objective_family="unknown_anomaly",
             headline="Critical synthetic attention",
             priority=EventPriority.CRITICAL,
@@ -66,6 +73,37 @@ def _seed_queue_events(app) -> None:
             session.flush()
             session.add_all(bundle.actions)
             session.add_all(bundle.priorities)
+        session.commit()
+
+
+def _seed_second_resident(app) -> None:
+    with app.state.session_factory() as session:
+        session.add(
+            RoomRow(
+                room_id="room_302",
+                tenant_id="tenant_demo",
+                label="Room 302",
+            )
+        )
+        session.add(
+            ResidentRow(
+                resident_id=SECOND_RESIDENT_ID,
+                tenant_id="tenant_demo",
+                display_label="Resident B",
+            )
+        )
+        session.flush()
+        session.add(
+            RoomResidentAssignmentRow(
+                assignment_id="assign_room_302_b",
+                tenant_id="tenant_demo",
+                room_id="room_302",
+                resident_id=SECOND_RESIDENT_ID,
+                status="active",
+                effective_from=datetime(2026, 8, 24, tzinfo=timezone.utc),
+                effective_to=None,
+            )
+        )
         session.commit()
 
 
@@ -104,16 +142,33 @@ def run_checkpoint() -> list[str]:
         first_app = create_app(Settings(app_env="test", database_url=database_url))
         with first_app.state.session_factory() as session:
             seed_synthetic_story(session)
+        _seed_second_resident(first_app)
         _seed_queue_events(first_app)
 
         with TestClient(first_app) as client:
             residents = client.get("/v1/residents", headers=ACCESS_HEADERS)
             status = client.get(f"{RESIDENT_PATH}/status", headers=ACCESS_HEADERS)
+            second_status = client.get(
+                f"/v1/residents/{SECOND_RESIDENT_ID}/status",
+                headers=ACCESS_HEADERS,
+            )
             devices = client.get("/v1/devices", headers=ACCESS_HEADERS)
-            _require(residents.status_code == status.status_code == devices.status_code == 200)
+            _require(
+                residents.status_code
+                == status.status_code
+                == second_status.status_code
+                == devices.status_code
+                == 200
+            )
+            _require(len(residents.json()["items"]) == 2)
             _require(residents.json()["items"][0]["room_id"] == "room_214")
             _require(status.json()["monitoring"]["monitoring_state"] == "active")
             _require(status.json()["device"]["health"]["state"] == "online")
+            _require(second_status.json()["data_availability"] == "not_yet_available")
+            _require(
+                second_status.json()["device_assignment_state"]
+                == "assignment_unavailable"
+            )
 
             first_page = client.get(
                 "/v1/events",
@@ -138,6 +193,15 @@ def run_checkpoint() -> list[str]:
                 [item["event_id"] for item in second_page.json()["items"]]
                 == ["evt_handoff_watch"]
             )
+            complete_queue = (
+                first_page.json()["items"] + second_page.json()["items"]
+            )
+            attention_counts = Counter(
+                item["resident_id"] for item in complete_queue
+            )
+            _require(attention_counts == {RESIDENT_ID: 2, SECOND_RESIDENT_ID: 1})
+            _require(complete_queue[0]["resident_id"] == SECOND_RESIDENT_ID)
+            _require(complete_queue[0]["headline"] == "Critical synthetic attention")
 
             actions = (
                 _event_action(client, "acknowledge", "2026-08-24T21:03:00Z", 1),
@@ -266,6 +330,10 @@ def run_checkpoint() -> list[str]:
             durable_reads = {
                 "residents": client.get("/v1/residents", headers=ACCESS_HEADERS),
                 "status": client.get(f"{RESIDENT_PATH}/status", headers=ACCESS_HEADERS),
+                "second_status": client.get(
+                    f"/v1/residents/{SECOND_RESIDENT_ID}/status",
+                    headers=ACCESS_HEADERS,
+                ),
                 "events": client.get("/v1/events", headers=ACCESS_HEADERS),
                 "history": client.get(
                     "/v1/events",
@@ -291,7 +359,17 @@ def run_checkpoint() -> list[str]:
                 ),
             }
             _require(all(response.status_code == 200 for response in durable_reads.values()))
+            _require(len(durable_reads["residents"].json()["items"]) == 2)
+            _require(
+                durable_reads["second_status"].json()["data_availability"]
+                == "not_yet_available"
+            )
             _require(durable_reads["events"].json()["total_items"] == 2)
+            durable_counts = Counter(
+                item["resident_id"]
+                for item in durable_reads["events"].json()["items"]
+            )
+            _require(durable_counts == {RESIDENT_ID: 1, SECOND_RESIDENT_ID: 1})
             _require(durable_reads["history"].json()["items"][0]["event_id"] == EVENT_ID)
             _require(durable_reads["calibration"].json()["version"] == 2)
             _require(durable_reads["preferences"].json()["version"] == 1)
@@ -299,6 +377,7 @@ def run_checkpoint() -> list[str]:
 
     return [
         "PASS clinic overview composes residents, monitoring, and device state",
+        "PASS multiple rooms keep resident attention correctly separated",
         "PASS active events filter and page in caregiver attention order",
         "PASS lifecycle moves resolved events into preserved history",
         "PASS delivery preferences never hide urgent dashboard events",

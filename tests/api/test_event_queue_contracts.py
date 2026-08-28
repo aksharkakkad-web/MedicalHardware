@@ -71,4 +71,3 @@ def test_clinic_event_status_excludes_internal_detected_state() -> None:
         "checked",
         "resolved",
     }
-

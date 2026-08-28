@@ -1,7 +1,7 @@
 # Contactless Adaptive Care Platform — Data & API Contract
 
 **Status:** V1 contract for UI-first and simulator-first development
-**Version:** 1.6
+**Version:** 1.7
 **Important:** Final vendor-specific radar/CSI raw shapes are intentionally hardware-dependent. Production software stabilizes around a versioned **EdgeTelemetryEnvelope** emitted after lightweight on-device preprocessing. Optional raw/debug capture is separate and bounded.
 
 ## Phase 2 Checkpoint D — Clinic Event Queue
@@ -1527,6 +1527,15 @@ authorized resident-memory add, correction, and retirement actions. Preference
 delivery choices never hide high or critical clinic events. Memory entries now
 carry explicit feedback/operator provenance and correction links; history is
 never deleted and memory remains separate from calibration and safety policy.
+
+### V1.7 clinic event queue and API handoff
+
+V1.7 adds the tenant-scoped clinic event queue with active-work defaults,
+combined status/priority/resident/room filters, caregiver-attention ordering,
+tenant-and-filter-bound keyset cursors, strict single-value parameters, and
+resolved-history access. It also publishes one generated OpenAPI artifact and
+the exact frontend composition map. No trend, evidence, AI, notification, or
+clinical intelligence is fabricated by this handoff.
 
 When changing any domain object:
 
