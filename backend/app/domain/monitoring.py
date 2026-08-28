@@ -30,6 +30,7 @@ class MonitoringState(StrEnum):
 class MonitoringReason(StrEnum):
     ASSIGNMENT_INVALID = "assignment_invalid"
     DEVICE_UNHEALTHY = "device_unhealthy"
+    DEVICE_HEALTH_UNAVAILABLE = "device_health_unavailable"
     RESIDENT_AWAY = "resident_away"
     POSSIBLE_MULTI_PERSON = "possible_multi_person"
     PRESENCE_UNKNOWN = "presence_unknown"

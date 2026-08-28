@@ -199,7 +199,12 @@ def test_every_read_operation_documents_versioned_method_not_allowed(
         "/v1/residents/{resident_id}",
         "/v1/residents/{resident_id}/events",
         "/v1/residents/{resident_id}/memory",
+        "/v1/residents/{resident_id}/status",
+        "/v1/residents/{resident_id}/awareness",
+        "/v1/residents/{resident_id}/calibration",
         "/v1/events/{event_id}",
+        "/v1/devices",
+        "/v1/devices/{device_id}/health",
     )
 
     for path in read_paths:

@@ -1,7 +1,7 @@
 # Contactless Adaptive Care Platform — Data & API Contract
 
 **Status:** V1 contract for UI-first and simulator-first development
-**Version:** 1.4
+**Version:** 1.5
 **Important:** Final vendor-specific radar/CSI raw shapes are intentionally hardware-dependent. Production software stabilizes around a versioned **EdgeTelemetryEnvelope** emitted after lightweight on-device preprocessing. Optional raw/debug capture is separate and bounded.
 
 ## Phase 2 Checkpoint A — Resident Status and Calibration
@@ -33,6 +33,32 @@ Example status response:
   "room_id": "room_214",
   "data_availability": "available",
   "unavailable_reasons": [],
+  "device_assignment_state": "assigned",
+  "device": {
+    "schema_version": "1.0",
+    "device_id": "device_room_214",
+    "display_label": "Room 214 monitor",
+    "assignment": {
+      "schema_version": "1.0",
+      "location_id": "location_demo",
+      "location_label": "Demo clinic",
+      "room_id": "room_214",
+      "room_label": "Room 214",
+      "assigned_at": "2026-08-24T00:00:00Z"
+    },
+    "health": {
+      "schema_version": "1.0",
+      "device_id": "device_room_214",
+      "data_availability": "available",
+      "state": "online",
+      "observed_at": "2026-08-24T21:02:11Z",
+      "last_seen_at": "2026-08-24T21:02:11Z",
+      "sources": [],
+      "limitations": [],
+      "policy_version": "synthetic_device_health_v1",
+      "policy_test_only": true
+    }
+  },
   "monitoring": {
     "schema_version": "1.0",
     "resident_id": "resident_demo_a",
@@ -81,12 +107,24 @@ Example status before monitoring and calibration histories exist:
   "data_availability": "not_yet_available",
   "unavailable_reasons": [
     "monitoring_not_yet_available",
-    "calibration_not_yet_available"
+    "calibration_not_yet_available",
+    "device_assignment_unavailable"
   ],
+  "device_assignment_state": "assignment_unavailable",
+  "device": null,
   "monitoring": null,
   "calibration": null
 }
 ```
+
+Resident status composes the current active device assignment and latest
+device-health observation with the newest resident monitoring snapshot. A
+known non-`online` device makes the current monitoring view `unavailable` and
+prevents learning/measurements. Missing health uses
+`device_health_not_yet_available`; missing assignment uses
+`device_assignment_unavailable`. These current-view rules do not rewrite the
+awareness timeline and do not create resident warning events. A later
+`online` observation restores the latest otherwise-valid monitoring view.
 
 Example setup-change request:
 
@@ -861,21 +899,58 @@ Memory is versioned and auditable. It is not the same object as the numerical ba
 
 ## 18. Device Health Record
 
+Device health is operational product state, not resident health. Phase 2
+supports `online`, `offline`, `degraded`, `buffering`, `retrying`, and
+`assignment_unavailable`. Health observations and assignments are historical
+facts; current state is the newest tenant-owned record. All examples in this
+checkpoint are synthetic and test-only.
+
+Example current health response:
+
 ```json
 {
   "schema_version": "1.0",
-  "device_id": "dev_room_214",
-  "observed_at": "2026-08-24T21:10:00Z",
-  "overall_status": "degraded",
-  "sources": {
-    "radar": "ok",
-    "thermal": "ok",
-    "wifi_csi": "missing"
-  },
-  "last_seen": "2026-08-24T21:09:59Z",
-  "notes": ["CSI stream missing for 60 seconds"]
+  "device_id": "device_room_214",
+  "data_availability": "available",
+  "state": "degraded",
+  "observed_at": "2026-08-25T14:00:00Z",
+  "last_seen_at": "2026-08-25T13:59:55Z",
+  "sources": [
+    {
+      "schema_version": "1.0",
+      "source": "thermal",
+      "state": "degraded",
+      "limitations": ["reduced_frame_rate"]
+    }
+  ],
+  "limitations": ["thermal_detail_reduced"],
+  "policy_version": "synthetic_device_health_v1",
+  "policy_test_only": true
 }
 ```
+
+A known device with no health history returns `200` without inventing a state:
+
+```json
+{
+  "schema_version": "1.0",
+  "device_id": "device_new",
+  "data_availability": "not_yet_available",
+  "state": null,
+  "observed_at": null,
+  "last_seen_at": null,
+  "sources": [],
+  "limitations": [],
+  "policy_version": null,
+  "policy_test_only": null
+}
+```
+
+Each `GET /v1/devices` item contains `device_id`, `display_label`, the current
+nullable `assignment`, and the same `health` object. An assignment contains
+`location_id`, `location_label`, `room_id`, `room_label`, and UTC
+`assigned_at`. One active room is allowed per device and one active device per
+room. Missing assignment is explicit and never guessed from telemetry.
 
 ---
 
@@ -1232,6 +1307,13 @@ V1.3 removes the wearable/reader identity source from the production ingestion c
 ### V1.4 product-logic expansion
 
 V1.4 adds resident presence/monitoring states, setup-versioned calibration, linked event episodes and recurrence, overdue behavior, correctable feedback, and editable/versioned resident memory semantics.
+
+### V1.5 device-health composition
+
+V1.5 adds durable locations, device-to-room assignment history, append-only
+operational health states, and explicit resident-status composition. Device
+health remains separate from resident health, and missing/unhealthy device
+conditions never produce fake resident measurements.
 
 When changing any domain object:
 

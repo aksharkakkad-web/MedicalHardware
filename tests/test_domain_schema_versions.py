@@ -13,6 +13,10 @@ from backend.app.domain.events import (
     MonitoringEvent,
     SyntheticEventEpisodePolicy,
 )
+from backend.app.domain.device_health import (
+    DeviceHealthObservation,
+    DeviceSourceHealth,
+)
 from backend.app.domain.feedback import (
     FeedbackRecord,
     LearningDecision,
@@ -35,6 +39,8 @@ class DomainSchemaVersionTests(unittest.TestCase):
             CalibrationDimensionProgress,
             SetupChangeAction,
             CalibrationProgress,
+            DeviceSourceHealth,
+            DeviceHealthObservation,
             EventAction,
             EventPriorityHistoryEntry,
             SyntheticEventEpisodePolicy,

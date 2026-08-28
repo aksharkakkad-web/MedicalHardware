@@ -4,6 +4,8 @@ from alembic import command
 from alembic.config import Config
 from fastapi.testclient import TestClient
 from httpx import Response
+from datetime import datetime, timedelta, timezone
+
 from sqlalchemy import func, select
 
 from backend.app.config import Settings
@@ -18,6 +20,21 @@ from backend.app.db.models import (
     ResidentMemoryEntryRow,
     ResidentMemorySnapshotRow,
     RoomResidentAssignmentRow,
+    DeviceHealthObservationRow,
+    DeviceRoomAssignmentRow,
+    DeviceRow,
+    LocationRow,
+    RoomRow,
+    TenantRow,
+)
+from backend.app.db.device_repositories import (
+    DeviceHealthRepository,
+    DeviceRepository,
+)
+from backend.app.domain.device_health import (
+    DeviceHealthObservation,
+    DeviceHealthState,
+    DeviceSourceHealth,
 )
 from backend.app.db.seed import seed_synthetic_story
 from backend.app.main import create_app
@@ -52,6 +69,92 @@ def test_application_shutdown_disposes_its_process_engine(tmp_path: Path) -> Non
         pass
 
     assert app.state.engine.pool is not process_pool
+
+
+def test_device_assignment_and_health_history_survive_restart(
+    tmp_path: Path,
+) -> None:
+    database_url = f"sqlite+pysqlite:///{tmp_path / 'device-restart.db'}"
+    config = Config("alembic.ini")
+    config.set_main_option("sqlalchemy.url", database_url)
+    command.upgrade(config, "head")
+    observed_at = datetime(2026, 8, 25, 14, 0, tzinfo=timezone.utc)
+
+    first_app = create_app(Settings(app_env="test", database_url=database_url))
+    with first_app.state.session_factory() as session:
+        session.add(TenantRow(tenant_id="tenant_device_restart"))
+        session.flush()
+        session.add_all(
+            [
+                LocationRow(
+                    location_id="location_restart",
+                    tenant_id="tenant_device_restart",
+                    label="Restart clinic",
+                ),
+                RoomRow(
+                    room_id="room_restart",
+                    tenant_id="tenant_device_restart",
+                    label="Restart room",
+                ),
+                DeviceRow(
+                    device_id="device_restart",
+                    tenant_id="tenant_device_restart",
+                    display_label="Restart monitor",
+                ),
+            ]
+        )
+        session.flush()
+        session.add(
+            DeviceRoomAssignmentRow(
+                assignment_id="assignment_restart",
+                tenant_id="tenant_device_restart",
+                device_id="device_restart",
+                location_id="location_restart",
+                room_id="room_restart",
+                status="active",
+                effective_from=observed_at - timedelta(days=1),
+                effective_to=None,
+            )
+        )
+        health = DeviceHealthRepository(session)
+        for offset, state in enumerate(
+            (DeviceHealthState.ONLINE, DeviceHealthState.BUFFERING)
+        ):
+            health.record(
+                "tenant_device_restart",
+                DeviceHealthObservation(
+                    device_id="device_restart",
+                    state=state,
+                    observed_at=observed_at + timedelta(minutes=offset),
+                    last_seen_at=observed_at,
+                    sources=(DeviceSourceHealth("radar", "online"),),
+                    limitations=(() if offset == 0 else ("upload_delayed",)),
+                ),
+            )
+        session.commit()
+    first_app.state.engine.dispose()
+
+    second_app = create_app(Settings(app_env="test", database_url=database_url))
+    with second_app.state.session_factory() as session:
+        device = DeviceRepository(session).get(
+            "tenant_device_restart",
+            "device_restart",
+        )
+        health = DeviceHealthRepository(session)
+
+        assert device.assignment is not None
+        assert device.assignment.room_id == "room_restart"
+        assert [item.state for item in health.timeline(
+            "tenant_device_restart",
+            "device_restart",
+        )] == [DeviceHealthState.ONLINE, DeviceHealthState.BUFFERING]
+        assert session.scalar(
+            select(func.count()).select_from(DeviceRoomAssignmentRow)
+        ) == 1
+        assert session.scalar(
+            select(func.count()).select_from(DeviceHealthObservationRow)
+        ) == 2
+    second_app.state.engine.dispose()
 
 
 def test_assignment_event_feedback_memory_audit_and_retries_are_durable(

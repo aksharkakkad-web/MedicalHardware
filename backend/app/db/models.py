@@ -23,6 +23,24 @@ class TenantRow(Base):
     tenant_id: Mapped[str] = mapped_column(String(255), primary_key=True)
 
 
+class LocationRow(Base):
+    __tablename__ = "locations"
+    __table_args__ = (UniqueConstraint("tenant_id", "location_id"),)
+
+    location_id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(ForeignKey("tenants.tenant_id"), index=True)
+    label: Mapped[str] = mapped_column(String(255))
+
+
+class DeviceRow(Base):
+    __tablename__ = "devices"
+    __table_args__ = (UniqueConstraint("tenant_id", "device_id"),)
+
+    device_id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(ForeignKey("tenants.tenant_id"), index=True)
+    display_label: Mapped[str] = mapped_column(String(255))
+
+
 class RoomRow(Base):
     __tablename__ = "rooms"
     __table_args__ = (UniqueConstraint("tenant_id", "room_id"),)
@@ -77,6 +95,77 @@ class RoomResidentAssignmentRow(Base):
     status: Mapped[str] = mapped_column(String(64))
     effective_from: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     effective_to: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class DeviceRoomAssignmentRow(Base):
+    __tablename__ = "device_room_assignments"
+    __table_args__ = (
+        Index(
+            "uq_active_device_room_assignment",
+            "tenant_id",
+            "device_id",
+            unique=True,
+            sqlite_where=text("status = 'active'"),
+            postgresql_where=text("status = 'active'"),
+        ),
+        Index(
+            "uq_active_room_device_assignment",
+            "tenant_id",
+            "room_id",
+            unique=True,
+            sqlite_where=text("status = 'active'"),
+            postgresql_where=text("status = 'active'"),
+        ),
+        ForeignKeyConstraint(
+            ("tenant_id", "device_id"),
+            ("devices.tenant_id", "devices.device_id"),
+        ),
+        ForeignKeyConstraint(
+            ("tenant_id", "location_id"),
+            ("locations.tenant_id", "locations.location_id"),
+        ),
+        ForeignKeyConstraint(
+            ("tenant_id", "room_id"),
+            ("rooms.tenant_id", "rooms.room_id"),
+        ),
+    )
+
+    assignment_id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(ForeignKey("tenants.tenant_id"), index=True)
+    device_id: Mapped[str] = mapped_column(ForeignKey("devices.device_id"), index=True)
+    location_id: Mapped[str] = mapped_column(
+        ForeignKey("locations.location_id"),
+        index=True,
+    )
+    room_id: Mapped[str] = mapped_column(ForeignKey("rooms.room_id"), index=True)
+    status: Mapped[str] = mapped_column(String(64))
+    effective_from: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    effective_to: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class DeviceHealthObservationRow(Base):
+    __tablename__ = "device_health_observations"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ("tenant_id", "device_id"),
+            ("devices.tenant_id", "devices.device_id"),
+        ),
+    )
+
+    device_health_observation_id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+    tenant_id: Mapped[str] = mapped_column(ForeignKey("tenants.tenant_id"), index=True)
+    device_id: Mapped[str] = mapped_column(ForeignKey("devices.device_id"), index=True)
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    state: Mapped[str] = mapped_column(String(64))
+    sources: Mapped[list[dict[str, object]]] = mapped_column(JSON)
+    limitations: Mapped[list[str]] = mapped_column(JSON)
+    policy_version: Mapped[str] = mapped_column(String(255))
+    policy_test_only: Mapped[bool] = mapped_column(Boolean)
 
 
 class MonitoringStatusSnapshotRow(Base):

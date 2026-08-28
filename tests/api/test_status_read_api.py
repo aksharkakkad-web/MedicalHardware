@@ -30,6 +30,51 @@ def test_resident_status_combines_latest_monitoring_and_calibration(
         "room_id": "room_214",
         "data_availability": "available",
         "unavailable_reasons": [],
+        "device_assignment_state": "assigned",
+        "device": {
+            "schema_version": "1.0",
+            "device_id": "device_room_214",
+            "display_label": "Room 214 monitor",
+            "assignment": {
+                "schema_version": "1.0",
+                "location_id": "location_demo",
+                "location_label": "Demo clinic",
+                "room_id": "room_214",
+                "room_label": "Room 214",
+                "assigned_at": "2026-08-24T00:00:00Z",
+            },
+            "health": {
+                "schema_version": "1.0",
+                "device_id": "device_room_214",
+                "data_availability": "available",
+                "state": "online",
+                "observed_at": "2026-08-24T20:59:00Z",
+                "last_seen_at": "2026-08-24T20:59:00Z",
+                "sources": [
+                    {
+                        "schema_version": "1.0",
+                        "source": "radar",
+                        "state": "online",
+                        "limitations": [],
+                    },
+                    {
+                        "schema_version": "1.0",
+                        "source": "thermal",
+                        "state": "online",
+                        "limitations": [],
+                    },
+                    {
+                        "schema_version": "1.0",
+                        "source": "wifi_csi",
+                        "state": "online",
+                        "limitations": [],
+                    },
+                ],
+                "limitations": [],
+                "policy_version": "synthetic_device_health_v1",
+                "policy_test_only": True,
+            },
+        },
         "monitoring": {
             "schema_version": "1.0",
             "resident_id": "resident_demo_a",
@@ -121,7 +166,10 @@ def test_existing_resident_without_status_history_is_explicitly_unavailable(
         "unavailable_reasons": [
             "monitoring_not_yet_available",
             "calibration_not_yet_available",
+            "device_assignment_unavailable",
         ],
+        "device_assignment_state": "assignment_unavailable",
+        "device": None,
         "monitoring": None,
         "calibration": None,
     }

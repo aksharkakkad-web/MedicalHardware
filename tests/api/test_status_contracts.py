@@ -51,6 +51,32 @@ CALIBRATION_PAYLOAD = {
     "setup_changes": [],
 }
 
+DEVICE_PAYLOAD = {
+    "schema_version": "1.0",
+    "device_id": "device_room_214",
+    "display_label": "Room 214 monitor",
+    "assignment": {
+        "schema_version": "1.0",
+        "location_id": "location_demo",
+        "location_label": "Demo clinic",
+        "room_id": "room_214",
+        "room_label": "Room 214",
+        "assigned_at": UTC_TIMESTAMP,
+    },
+    "health": {
+        "schema_version": "1.0",
+        "device_id": "device_room_214",
+        "data_availability": "available",
+        "state": "online",
+        "observed_at": UTC_TIMESTAMP,
+        "last_seen_at": UTC_TIMESTAMP,
+        "sources": [],
+        "limitations": [],
+        "policy_version": "synthetic_device_health_v1",
+        "policy_test_only": True,
+    },
+}
+
 
 def test_status_contracts_expose_the_exact_frontend_fields() -> None:
     monitoring = MonitoringStatusResponse.model_validate(MONITORING_PAYLOAD)
@@ -62,6 +88,8 @@ def test_status_contracts_expose_the_exact_frontend_fields() -> None:
             "room_id": "room_214",
             "data_availability": "available",
             "unavailable_reasons": [],
+            "device_assignment_state": "assigned",
+            "device": DEVICE_PAYLOAD,
             "monitoring": MONITORING_PAYLOAD,
             "calibration": CALIBRATION_PAYLOAD,
         }
@@ -201,7 +229,50 @@ def test_nested_status_objects_require_known_schema_versions() -> None:
                 "room_id": "room_214",
                 "data_availability": "available",
                 "unavailable_reasons": [],
+                "device_assignment_state": "assigned",
+                "device": DEVICE_PAYLOAD,
                 "monitoring": {**MONITORING_PAYLOAD, "unknown": True},
+                "calibration": CALIBRATION_PAYLOAD,
+            }
+        )
+
+
+@pytest.mark.parametrize(
+    "device_fields",
+    (
+        {
+            "device_assignment_state": "assigned",
+            "device": None,
+        },
+        {
+            "device_assignment_state": "assignment_unavailable",
+            "device": DEVICE_PAYLOAD,
+        },
+        {
+            "device_assignment_state": "assigned",
+            "device": {
+                **DEVICE_PAYLOAD,
+                "assignment": {
+                    **DEVICE_PAYLOAD["assignment"],
+                    "room_id": "room_other",
+                },
+            },
+        },
+    ),
+)
+def test_resident_status_rejects_contradictory_device_composition(
+    device_fields: dict[str, object],
+) -> None:
+    with pytest.raises(ValidationError):
+        ResidentStatusResponse.model_validate(
+            {
+                "schema_version": "1.0",
+                "resident_id": "resident_demo_a",
+                "room_id": "room_214",
+                "data_availability": "available",
+                "unavailable_reasons": [],
+                **device_fields,
+                "monitoring": MONITORING_PAYLOAD,
                 "calibration": CALIBRATION_PAYLOAD,
             }
         )

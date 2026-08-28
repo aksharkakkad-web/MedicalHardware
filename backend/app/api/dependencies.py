@@ -10,12 +10,17 @@ from backend.app.db.repositories import (
     FeedbackRepository,
     ResidentRepository,
 )
+from backend.app.db.device_repositories import (
+    DeviceHealthRepository,
+    DeviceRepository,
+)
 from backend.app.db.status_repositories import (
     CalibrationRepository,
     MonitoringStatusRepository,
 )
 from backend.app.domain._validation import require_nonblank_text
 from backend.app.services.event_commands import EventCommandService
+from backend.app.services.device_queries import ProductDeviceQueryService
 from backend.app.services.errors import InvalidInputError
 from backend.app.services.idempotency import IdempotencyService
 from backend.app.services.queries import AccessContext, ProductQueryService
@@ -61,6 +66,15 @@ def query_service(
     )
 
 
+def device_query_service(
+    session: Annotated[Session, Depends(database_session)],
+) -> ProductDeviceQueryService:
+    return ProductDeviceQueryService(
+        DeviceRepository(session),
+        DeviceHealthRepository(session),
+    )
+
+
 def status_query_service(
     session: Annotated[Session, Depends(database_session)],
 ) -> ProductStatusQueryService:
@@ -68,6 +82,8 @@ def status_query_service(
         ResidentRepository(session),
         MonitoringStatusRepository(session),
         CalibrationRepository(session),
+        DeviceRepository(session),
+        DeviceHealthRepository(session),
     )
 
 

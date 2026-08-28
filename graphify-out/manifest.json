@@ -798,9 +798,9 @@
     "semantic_hash": ""
   },
   "backend/app/api/dependencies.py": {
-    "mtime": 1787873251.4081209,
-    "seen": 1787873693.420664,
-    "ast_hash": "c109df15d8a956f8ad3e71c164fa6ace",
+    "mtime": 1787874793.4205692,
+    "seen": 1787874976.83173,
+    "ast_hash": "55542ee2fc7f795cfbb6956e3be6ee6c",
     "semantic_hash": ""
   },
   "backend/app/api/errors.py": {
@@ -822,8 +822,8 @@
     "semantic_hash": ""
   },
   "backend/app/api/v1/resident_status.py": {
-    "mtime": 1787873251.408372,
-    "seen": 1787873693.4206662,
+    "mtime": 1787873943.2401044,
+    "seen": 1787874241.134613,
     "ast_hash": "71124f3920121f442d9b1878cea0a108",
     "semantic_hash": ""
   },
@@ -834,20 +834,20 @@
     "semantic_hash": ""
   },
   "backend/app/api/v1/router.py": {
-    "mtime": 1787873251.399264,
-    "seen": 1787873693.420667,
-    "ast_hash": "aceae3a75ca13bfbb1180e7aed7acbd6",
+    "mtime": 1787874647.1829014,
+    "seen": 1787874691.58044,
+    "ast_hash": "a5d6c8c6877cae409cd1a546043fcbc1",
     "semantic_hash": ""
   },
   "backend/app/checkpoints/__init__.py": {
-    "mtime": 1787873251.41958,
-    "seen": 1787873693.420667,
+    "mtime": 1787873943.2402453,
+    "seen": 1787874241.134614,
     "ast_hash": "64f1285b0d09f5da3eef5e3dcd073415",
     "semantic_hash": ""
   },
   "backend/app/checkpoints/status_calibration.py": {
-    "mtime": 1787873251.6258528,
-    "seen": 1787873693.420668,
+    "mtime": 1787873943.240306,
+    "seen": 1787874241.134615,
     "ast_hash": "c0ca8dbc9b18ab4767264cdd3812dce3",
     "semantic_hash": ""
   },
@@ -858,9 +858,9 @@
     "semantic_hash": ""
   },
   "backend/app/contracts/__init__.py": {
-    "mtime": 1787873251.3703082,
-    "seen": 1787873693.4206688,
-    "ast_hash": "7a3fa1b5f5dcf3648f35f842d98537a3",
+    "mtime": 1787874793.4194155,
+    "seen": 1787874976.8317351,
+    "ast_hash": "b508415b9f0bb187cde0cead261ed8f2",
     "semantic_hash": ""
   },
   "backend/app/contracts/common.py": {
@@ -888,9 +888,9 @@
     "semantic_hash": ""
   },
   "backend/app/contracts/status.py": {
-    "mtime": 1787873639.2352047,
-    "seen": 1787873693.420671,
-    "ast_hash": "49a3ab3c52873290d9303c88ef3bee58",
+    "mtime": 1787874919.9849713,
+    "seen": 1787874976.831737,
+    "ast_hash": "7951abb59c931179804ac9780da97189",
     "semantic_hash": ""
   },
   "backend/app/db/__init__.py": {
@@ -924,15 +924,15 @@
     "semantic_hash": ""
   },
   "backend/app/db/migrations/versions/0002_status_calibration.py": {
-    "mtime": 1787873251.3801727,
-    "seen": 1787873693.420674,
+    "mtime": 1787873943.2405288,
+    "seen": 1787874241.134621,
     "ast_hash": "ed0f057b32c1f8278070b7968c5e7995",
     "semantic_hash": ""
   },
   "backend/app/db/models.py": {
-    "mtime": 1787873251.3804264,
-    "seen": 1787873693.420674,
-    "ast_hash": "dcf68056cd69eeaec5acdd372abd20b5",
+    "mtime": 1787874449.9623933,
+    "seen": 1787874556.420804,
+    "ast_hash": "51bbdce76c77e4df3d909be4a4b1b8dc",
     "semantic_hash": ""
   },
   "backend/app/db/repositories.py": {
@@ -942,9 +942,9 @@
     "semantic_hash": ""
   },
   "backend/app/db/seed.py": {
-    "mtime": 1787873251.4201767,
-    "seen": 1787873693.420675,
-    "ast_hash": "2e4b4049b67ee73ba05d467884b13d75",
+    "mtime": 1787874793.4202745,
+    "seen": 1787874976.831743,
+    "ast_hash": "e79ba6c5e7b63e1bf8c29130512d9a76",
     "semantic_hash": ""
   },
   "backend/app/db/session.py": {
@@ -954,14 +954,14 @@
     "semantic_hash": ""
   },
   "backend/app/db/status_mappers.py": {
-    "mtime": 1787873251.6260593,
-    "seen": 1787873693.420676,
+    "mtime": 1787873943.2409308,
+    "seen": 1787874241.134623,
     "ast_hash": "51ed5e3046902bdfb8a105a762140d20",
     "semantic_hash": ""
   },
   "backend/app/db/status_repositories.py": {
-    "mtime": 1787873639.2355642,
-    "seen": 1787873693.420676,
+    "mtime": 1787873943.2409887,
+    "seen": 1787874241.134624,
     "ast_hash": "dc4fbe6b4de5425f0980b7c6aaed2376",
     "semantic_hash": ""
   },
@@ -996,9 +996,9 @@
     "semantic_hash": ""
   },
   "backend/app/domain/monitoring.py": {
-    "mtime": 1787797862.2652335,
-    "seen": 1787872525.195296,
-    "ast_hash": "61ff6fabeec9da5eef4c9d163127b001",
+    "mtime": 1787874793.4182405,
+    "seen": 1787874976.831747,
+    "ast_hash": "e80688a138d036e61a625547295dd411",
     "semantic_hash": ""
   },
   "backend/app/domain/toy_scenario.py": {
@@ -1050,20 +1050,20 @@
     "semantic_hash": ""
   },
   "backend/app/services/setup_commands.py": {
-    "mtime": 1787873251.6263583,
-    "seen": 1787873693.420683,
+    "mtime": 1787873943.2410583,
+    "seen": 1787874241.134631,
     "ast_hash": "bd8e7915d76dce2328a8eef9e1450c73",
     "semantic_hash": ""
   },
   "backend/app/services/status_queries.py": {
-    "mtime": 1787873639.2362573,
-    "seen": 1787873693.420683,
-    "ast_hash": "50fa7fe2239465db08ba39d479f91ba5",
+    "mtime": 1787874818.1208153,
+    "seen": 1787874976.8317518,
+    "ast_hash": "284f3887cbd8bddbb99f6108aa44f351",
     "semantic_hash": ""
   },
   "pyproject.toml": {
-    "mtime": 1787873251.3442562,
-    "seen": 1787873693.420683,
+    "mtime": 1787873943.2828634,
+    "seen": 1787874241.134631,
     "ast_hash": "e7a0cc423736c4120c61d47038ede6c7",
     "semantic_hash": ""
   },
@@ -1080,9 +1080,9 @@
     "semantic_hash": ""
   },
   "tests/api/test_contracts.py": {
-    "mtime": 1787862162.1335845,
-    "seen": 1787872525.1953018,
-    "ast_hash": "588648b4f9d6c3ced3cf4698e96e3427",
+    "mtime": 1787874671.0684352,
+    "seen": 1787874691.5804648,
+    "ast_hash": "d41a02692af13030a8b0b309ac4419d8",
     "semantic_hash": ""
   },
   "tests/api/test_event_lifecycle_api.py": {
@@ -1116,27 +1116,27 @@
     "semantic_hash": ""
   },
   "tests/api/test_setup_change_api.py": {
-    "mtime": 1787873251.6524763,
-    "seen": 1787873693.4206872,
+    "mtime": 1787873943.2829633,
+    "seen": 1787874241.134636,
     "ast_hash": "fe346c9bab56b96da2ab0904969765a6",
     "semantic_hash": ""
   },
   "tests/api/test_status_calibration_story.py": {
-    "mtime": 1787873251.6538043,
-    "seen": 1787873693.420688,
+    "mtime": 1787873943.2830296,
+    "seen": 1787874241.134636,
     "ast_hash": "ac14ad3322d5ba4856d09b4af35d2f19",
     "semantic_hash": ""
   },
   "tests/api/test_status_contracts.py": {
-    "mtime": 1787873647.4328156,
-    "seen": 1787873693.420688,
-    "ast_hash": "c3f862793b263995a7377c9058d11e5a",
+    "mtime": 1787874905.3713193,
+    "seen": 1787874976.8317592,
+    "ast_hash": "12af639e7b56e1b528beabdfccf4dd0b",
     "semantic_hash": ""
   },
   "tests/api/test_status_read_api.py": {
-    "mtime": 1787873647.4324093,
-    "seen": 1787873693.4206889,
-    "ast_hash": "e1af329c71c69621b3ba44757777564c",
+    "mtime": 1787874860.2511156,
+    "seen": 1787874976.8317592,
+    "ast_hash": "35f73d3ea4f9f948918ec15789560221",
     "semantic_hash": ""
   },
   "tests/calibration_domain/__init__.py": {
@@ -1206,9 +1206,9 @@
     "semantic_hash": ""
   },
   "tests/persistence/test_migrations.py": {
-    "mtime": 1787873251.3811088,
-    "seen": 1787873693.420694,
-    "ast_hash": "536e771deaf0b5bfdce3d467f0e6876f",
+    "mtime": 1787874499.0363457,
+    "seen": 1787874556.420827,
+    "ast_hash": "6016004876e9661d82f007d078760422",
     "semantic_hash": ""
   },
   "tests/persistence/test_optimistic_concurrency.py": {
@@ -1224,15 +1224,15 @@
     "semantic_hash": ""
   },
   "tests/persistence/test_restart_durability.py": {
-    "mtime": 1787873251.515617,
-    "seen": 1787873693.420696,
-    "ast_hash": "00b28acd2abab23808efc2a1dde04580",
+    "mtime": 1787874532.0837708,
+    "seen": 1787874556.4208279,
+    "ast_hash": "8654c0e161c9dc8dc2b5c19826f59e0b",
     "semantic_hash": ""
   },
   "tests/persistence/test_seed.py": {
-    "mtime": 1787873251.517027,
-    "seen": 1787873693.420696,
-    "ast_hash": "9de425b323e5825697cb303c89f3a061",
+    "mtime": 1787875057.0988333,
+    "seen": 1787875176.943603,
+    "ast_hash": "971779291b18b6a68d3707bdba54f8a0",
     "semantic_hash": ""
   },
   "tests/persistence/test_session.py": {
@@ -1242,27 +1242,27 @@
     "semantic_hash": ""
   },
   "tests/persistence/test_setup_change_rollback.py": {
-    "mtime": 1787873251.5172682,
-    "seen": 1787873693.420697,
+    "mtime": 1787873943.2834802,
+    "seen": 1787874241.134646,
     "ast_hash": "f406d9a9b44351f94ad3a0a38be376fa",
     "semantic_hash": ""
   },
   "tests/persistence/test_status_repositories.py": {
-    "mtime": 1787873251.6552002,
-    "seen": 1787873693.420697,
+    "mtime": 1787873943.2835386,
+    "seen": 1787874241.1346471,
     "ast_hash": "e0e73e1c8e6e68c98141a9463ba8f3e5",
     "semantic_hash": ""
   },
   "tests/persistence/test_status_schema.py": {
-    "mtime": 1787873251.381297,
-    "seen": 1787873693.4206982,
+    "mtime": 1787873943.2835922,
+    "seen": 1787874241.1346471,
     "ast_hash": "a187c7f0150125ff8a2669829095c79b",
     "semantic_hash": ""
   },
   "tests/test_domain_schema_versions.py": {
-    "mtime": 1787797862.2695103,
-    "seen": 1787872525.195313,
-    "ast_hash": "26f9a5f3c1861527b68beb31c8e0413d",
+    "mtime": 1787874216.6637993,
+    "seen": 1787874241.1346471,
+    "ast_hash": "de80f9eaab8c12fff70f31255cb06f37",
     "semantic_hash": ""
   },
   "tests/test_repository_policy.py": {
@@ -1596,8 +1596,8 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1787873251.333504,
-    "seen": 1787873693.420724,
+    "mtime": 1787873943.2308643,
+    "seen": 1787874241.134672,
     "ast_hash": "23849366440977b04cbdd3304f4d956c",
     "semantic_hash": ""
   },
@@ -1620,39 +1620,39 @@
     "semantic_hash": ""
   },
   "docs/BUILD_PLAN.md": {
-    "mtime": 1787836491.5953505,
-    "seen": 1787872525.195334,
-    "ast_hash": "e7d55d431714d54e90b4722e4f4b1a42",
+    "mtime": 1787875135.5901606,
+    "seen": 1787875176.943635,
+    "ast_hash": "4e5ba134766a05f30c8e874e8492fc56",
     "semantic_hash": ""
   },
   "docs/CURRENT_STAGE.md": {
-    "mtime": 1787873719.7643023,
-    "seen": 1787873729.669918,
-    "ast_hash": "1a58bdfbedccf68f007b2393ad017d2d",
+    "mtime": 1787875151.9322312,
+    "seen": 1787875176.943635,
+    "ast_hash": "9634c6f5d8c2cacc161a987b848c06d0",
     "semantic_hash": ""
   },
   "docs/DATA_CONTRACT.md": {
-    "mtime": 1787873659.4923248,
-    "seen": 1787873693.420728,
-    "ast_hash": "e9c71a2e2fb49c214d43606ec5439633",
+    "mtime": 1787874891.2484574,
+    "seen": 1787874976.831799,
+    "ast_hash": "b9b18836afb443861a4bf25acc137d7f",
     "semantic_hash": ""
   },
   "docs/PHASE_2_CHECKPOINT_A_REVIEW.md": {
-    "mtime": 1787873719.7639022,
-    "seen": 1787873729.66992,
+    "mtime": 1787873943.24144,
+    "seen": 1787874241.134677,
     "ast_hash": "afd753bb6e6bfe97a92e724803b39a13",
     "semantic_hash": ""
   },
   "docs/PHASE_2_REVIEW.md": {
-    "mtime": 1787873251.4212112,
-    "seen": 1787873693.4207292,
-    "ast_hash": "667f681cb210ec678f84333e8179cad3",
+    "mtime": 1787875135.589602,
+    "seen": 1787875176.943637,
+    "ast_hash": "76dcc6614e54ece98eab455e26de618b",
     "semantic_hash": ""
   },
   "docs/PHASE_GATES.md": {
-    "mtime": 1787873251.4214087,
-    "seen": 1787873693.42073,
-    "ast_hash": "7a3110a6295893441ea6a84bc7c48f05",
+    "mtime": 1787875135.588974,
+    "seen": 1787875176.943638,
+    "ast_hash": "87d57cc3a2bbdda724ed5792e9cfe5f9",
     "semantic_hash": ""
   },
   "docs/PRD.md": {
@@ -1680,8 +1680,8 @@
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-08-27-phase2-checkpoint-a-status-calibration.md": {
-    "mtime": 1787873659.4933536,
-    "seen": 1787873693.420732,
+    "mtime": 1787873943.2421052,
+    "seen": 1787874241.13468,
     "ast_hash": "57c890ae4ab148c1fd1730708f0d7424",
     "semantic_hash": ""
   },
@@ -1698,8 +1698,8 @@
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-08-27-phase2-backend-readiness-design.md": {
-    "mtime": 1787873251.526845,
-    "seen": 1787873693.420734,
+    "mtime": 1787873943.2425506,
+    "seen": 1787874241.134683,
     "ast_hash": "0929e578991273598e666fe90aa34983",
     "semantic_hash": ""
   },
@@ -1722,207 +1722,315 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/eslint.config.mjs": {
-    "mtime": 1787873251.3344483,
-    "seen": 1787873693.4206522,
+    "mtime": 1787873943.231808,
+    "seen": 1787874241.1345978,
     "ast_hash": "dfa1f5f6a7037bf39dc510f30b180002",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/next.config.ts": {
-    "mtime": 1787873251.3346074,
-    "seen": 1787873693.420653,
+    "mtime": 1787873943.231978,
+    "seen": 1787874241.134599,
     "ast_hash": "9b77af189a21a7a64e4bd7a426f64176",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/package.json": {
-    "mtime": 1787873251.3347392,
-    "seen": 1787873693.420653,
+    "mtime": 1787873943.232148,
+    "seen": 1787874241.134599,
     "ast_hash": "45397a2681113477577250686ed5b71c",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/app/layout.tsx": {
-    "mtime": 1787873251.336694,
-    "seen": 1787873693.420653,
+    "mtime": 1787873943.2340233,
+    "seen": 1787874241.1346,
     "ast_hash": "def604cb876e60153ed2359b84a170b2",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/app/page.tsx": {
-    "mtime": 1787873251.3369303,
-    "seen": 1787873693.420654,
+    "mtime": 1787873943.234404,
+    "seen": 1787874241.1346,
     "ast_hash": "c36b3c183d58ecdcaa41f3480c2a9ac5",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/app/providers.tsx": {
-    "mtime": 1787873251.3371031,
-    "seen": 1787873693.420654,
+    "mtime": 1787873943.234631,
+    "seen": 1787874241.1346009,
     "ast_hash": "5bcbb132c786e397f2b0b6838ec5def2",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/components/app-shell/app-shell.test.tsx": {
-    "mtime": 1787873251.337443,
-    "seen": 1787873693.420655,
+    "mtime": 1787873943.2350972,
+    "seen": 1787874241.1346009,
     "ast_hash": "fdda16c5c0577a004c0642e99917236a",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/components/app-shell/app-shell.tsx": {
-    "mtime": 1787873251.337566,
-    "seen": 1787873693.420655,
+    "mtime": 1787873943.2353683,
+    "seen": 1787874241.134602,
     "ast_hash": "856e5a6c45565caf11bf65df6ad37e82",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/components/status-pill/status-pill.test.tsx": {
-    "mtime": 1787873251.3378716,
-    "seen": 1787873693.4206562,
+    "mtime": 1787873943.2358139,
+    "seen": 1787874241.134602,
     "ast_hash": "5c40d6ae53a123640afafb90b4ee5d93",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/components/status-pill/status-pill.tsx": {
-    "mtime": 1787873251.3379846,
-    "seen": 1787873693.4206562,
+    "mtime": 1787873943.235992,
+    "seen": 1787874241.134603,
     "ast_hash": "3c676de1c1d2230ff019fb779816c50a",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/resident-card.test.tsx": {
-    "mtime": 1787873251.33838,
-    "seen": 1787873693.4206562,
+    "mtime": 1787873943.2365975,
+    "seen": 1787874241.134603,
     "ast_hash": "04a2c7cef299926b7c66539bcc288417",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/resident-card.tsx": {
-    "mtime": 1787873251.3385496,
-    "seen": 1787873693.420657,
+    "mtime": 1787873943.2368338,
+    "seen": 1787874241.134603,
     "ast_hash": "48f88830f134f6d313ff2850cd8fb3db",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/resident-overview.test.tsx": {
-    "mtime": 1787873251.3388095,
-    "seen": 1787873693.420657,
+    "mtime": 1787873943.237297,
+    "seen": 1787874241.134604,
     "ast_hash": "d2298fb0d8b9bc46958a1c3f7981de00",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/resident-overview.tsx": {
-    "mtime": 1787873251.3389297,
-    "seen": 1787873693.4206579,
+    "mtime": 1787873943.237465,
+    "seen": 1787874241.134604,
     "ast_hash": "c201d054078dbedc3e63a2065bc0456f",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/use-resident-overview.test.tsx": {
-    "mtime": 1787873251.3390486,
-    "seen": 1787873693.4206579,
+    "mtime": 1787873943.2376256,
+    "seen": 1787874241.1346052,
     "ast_hash": "f30adafb5a79ab9d73d25b804c006304",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/use-resident-overview.ts": {
-    "mtime": 1787873251.3391674,
-    "seen": 1787873693.4206579,
+    "mtime": 1787873943.2377884,
+    "seen": 1787874241.1346052,
     "ast_hash": "e0a5bc872e91a4327ad924799bfac24c",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/lib/monitoring/client.ts": {
-    "mtime": 1787873251.3393874,
-    "seen": 1787873693.4206588,
+    "mtime": 1787873943.2380524,
+    "seen": 1787874241.1346061,
     "ast_hash": "fbe0395f416414e4bc36bd7c3eb3fe92",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/lib/monitoring/index.ts": {
-    "mtime": 1787873251.3395054,
-    "seen": 1787873693.4206588,
+    "mtime": 1787873943.238331,
+    "seen": 1787874241.1346061,
     "ast_hash": "05f500e4ea93fa99ddd8eed364951cf5",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/lib/monitoring/provider.tsx": {
-    "mtime": 1787873251.3396578,
-    "seen": 1787873693.42066,
+    "mtime": 1787873943.2386131,
+    "seen": 1787874241.1346061,
     "ast_hash": "9b398171564772f42a0166ce251236c0",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/lib/monitoring/types.ts": {
-    "mtime": 1787873251.3397954,
-    "seen": 1787873693.42066,
+    "mtime": 1787873943.2388027,
+    "seen": 1787874241.134607,
     "ast_hash": "0f27ce1c8a80de45afa27c8b3faccddd",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/mocks/mock-monitoring-client.test.ts": {
-    "mtime": 1787873251.3399587,
-    "seen": 1787873693.42066,
+    "mtime": 1787873943.2390044,
+    "seen": 1787874241.134607,
     "ast_hash": "fff62d947f2399268aae6eb7cc2b4416",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/mocks/mock-monitoring-client.ts": {
-    "mtime": 1787873251.3401146,
-    "seen": 1787873693.420661,
+    "mtime": 1787873943.239194,
+    "seen": 1787874241.1346078,
     "ast_hash": "4e5fa7872d4bd948c23f0c9df6172ea6",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/mocks/residents.ts": {
-    "mtime": 1787873251.3403058,
-    "seen": 1787873693.420661,
+    "mtime": 1787873943.2393832,
+    "seen": 1787874241.1346078,
     "ast_hash": "2da9a625855138138e19b56eb04de1ba",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/test/setup.ts": {
-    "mtime": 1787873251.3404932,
-    "seen": 1787873693.420662,
+    "mtime": 1787873943.2395802,
+    "seen": 1787874241.134609,
     "ast_hash": "522e3714e0d342c9b24b23367d8a85b2",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/tsconfig.json": {
-    "mtime": 1787873251.3406837,
-    "seen": 1787873693.420662,
+    "mtime": 1787873943.2397761,
+    "seen": 1787874241.134609,
     "ast_hash": "ee17fd1c97c735e9f3564e3f5251f125",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/vitest.config.ts": {
-    "mtime": 1787873251.3408008,
-    "seen": 1787873693.420662,
+    "mtime": 1787873943.239932,
+    "seen": 1787874241.134609,
     "ast_hash": "73487024c143f1687365479150ae9e9c",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/AGENTS.md": {
-    "mtime": 1787873251.3339512,
-    "seen": 1787873693.420725,
+    "mtime": 1787873943.2312727,
+    "seen": 1787874241.1346729,
     "ast_hash": "01e8142356e15c3404e0d84c48187cd0",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/CLAUDE.md": {
-    "mtime": 1787873251.3341043,
-    "seen": 1787873693.420725,
+    "mtime": 1787873943.2314403,
+    "seen": 1787874241.1346729,
     "ast_hash": "5c27369b226fcf2be8a6cfe52224e767",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/README.md": {
-    "mtime": 1787873251.3342948,
-    "seen": 1787873693.420726,
+    "mtime": 1787873943.2316222,
+    "seen": 1787874241.1346738,
     "ast_hash": "214c614089e80f8e58bb2ba5fb850e42",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/pnpm-workspace.yaml": {
-    "mtime": 1787873251.3357048,
-    "seen": 1787873693.420726,
+    "mtime": 1787873943.2327993,
+    "seen": 1787874241.1346738,
     "ast_hash": "a800062e52322b626879a0760092d845",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-08-27-clinic-dashboard-foundation.md": {
-    "mtime": 1787873251.343751,
-    "seen": 1787873693.420732,
+    "mtime": 1787873943.2420294,
+    "seen": 1787874241.13468,
     "ast_hash": "406de5809ced4eab9445965262bb3eff",
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-08-27-clinic-dashboard-foundation-design.md": {
-    "mtime": 1787873251.3439226,
-    "seen": 1787873693.420733,
+    "mtime": 1787873943.2424355,
+    "seen": 1787874241.1346822,
     "ast_hash": "a7194757b446a371eaa8063f76dfcb0c",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/public/next.svg": {
-    "mtime": 1787873251.3359985,
-    "seen": 1787873693.420736,
+    "mtime": 1787873943.2330387,
+    "seen": 1787874241.134685,
     "ast_hash": "8e061864f388b47f33a1c3780831193e",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/public/vercel.svg": {
-    "mtime": 1787873251.3361413,
-    "seen": 1787873693.420736,
+    "mtime": 1787873943.23321,
+    "seen": 1787874241.134685,
     "ast_hash": "c0af2f507b369b085b35ef4bbe3bcf1e",
+    "semantic_hash": ""
+  },
+  "backend/app/contracts/devices.py": {
+    "mtime": 1787874793.4187768,
+    "seen": 1787874976.831736,
+    "ast_hash": "002a7122ef75acb8a9b0fedd043ef862",
+    "semantic_hash": ""
+  },
+  "backend/app/domain/device_health.py": {
+    "mtime": 1787874188.2536063,
+    "seen": 1787874241.1346262,
+    "ast_hash": "2973d7f67c03533dbb5d225bbbbb1454",
+    "semantic_hash": ""
+  },
+  "tests/api/test_device_contracts.py": {
+    "mtime": 1787874128.3268557,
+    "seen": 1787874241.134633,
+    "ast_hash": "65f6a3b824959b57e706b59e26ddf973",
+    "semantic_hash": ""
+  },
+  "tests/device_health_domain/__init__.py": {
+    "mtime": 1787874128.325685,
+    "seen": 1787874241.134639,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": ""
+  },
+  "tests/device_health_domain/test_device_health.py": {
+    "mtime": 1787874128.3261073,
+    "seen": 1787874241.1346402,
+    "ast_hash": "5b966248daa5099e312036ec26924f8e",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-08-27-phase2-checkpoint-b-device-health.md": {
+    "mtime": 1787875135.5905797,
+    "seen": 1787875176.9436412,
+    "ast_hash": "d7eb0142ccdc88babd7e9f87c035327a",
+    "semantic_hash": ""
+  },
+  "backend/app/db/device_mappers.py": {
+    "mtime": 1787874449.9633508,
+    "seen": 1787874556.4208,
+    "ast_hash": "026bdae05744b2651e44e6d7abb95969",
+    "semantic_hash": ""
+  },
+  "backend/app/db/device_repositories.py": {
+    "mtime": 1787874532.0834293,
+    "seen": 1787874556.420801,
+    "ast_hash": "70afefdd8bbc36c5054d70931cdf4a45",
+    "semantic_hash": ""
+  },
+  "backend/app/db/migrations/versions/0003_device_health.py": {
+    "mtime": 1787874449.96316,
+    "seen": 1787874556.420804,
+    "ast_hash": "c75848da8b768cf1650daba4d22c7a9a",
+    "semantic_hash": ""
+  },
+  "tests/persistence/test_device_repositories.py": {
+    "mtime": 1787874338.6535718,
+    "seen": 1787874556.420825,
+    "ast_hash": "a58c500a3a9aad08431bc4c6e1629cae",
+    "semantic_hash": ""
+  },
+  "tests/persistence/test_device_schema.py": {
+    "mtime": 1787874338.6530316,
+    "seen": 1787874556.4208262,
+    "ast_hash": "dd9edc69964f4a7991c0a2a586b7e9d3",
+    "semantic_hash": ""
+  },
+  "backend/app/api/v1/devices.py": {
+    "mtime": 1787874647.182337,
+    "seen": 1787874691.580438,
+    "ast_hash": "7999d2afdd6de18b1896c3b40472f1b9",
+    "semantic_hash": ""
+  },
+  "backend/app/services/device_queries.py": {
+    "mtime": 1787874647.182129,
+    "seen": 1787874691.580459,
+    "ast_hash": "ba64c6b741bbe4962123045165a696b6",
+    "semantic_hash": ""
+  },
+  "tests/api/test_device_read_api.py": {
+    "mtime": 1787874944.893368,
+    "seen": 1787874976.831754,
+    "ast_hash": "ba88b578b97b67f1247407d4bc7a1125",
+    "semantic_hash": ""
+  },
+  "tests/api/test_resident_device_composition.py": {
+    "mtime": 1787874756.3174355,
+    "seen": 1787874976.831757,
+    "ast_hash": "b521c644c67d02d148882dbaa0e33c78",
+    "semantic_hash": ""
+  },
+  "backend/app/checkpoints/device_health.py": {
+    "mtime": 1787875041.5186532,
+    "seen": 1787875176.9435678,
+    "ast_hash": "6d4ea68f3654387e7e36914f5bdcdccf",
+    "semantic_hash": ""
+  },
+  "tests/api/test_device_health_story.py": {
+    "mtime": 1787874992.7892604,
+    "seen": 1787875176.9435892,
+    "ast_hash": "103dceeee2e39aaa15279b282ba9be0a",
+    "semantic_hash": ""
+  },
+  "docs/PHASE_2_CHECKPOINT_B_REVIEW.md": {
+    "mtime": 1787875135.587476,
+    "seen": 1787875176.943637,
+    "ast_hash": "ffe2e65573bcfff4699ade7a9bac4d73",
     "semantic_hash": ""
   }
 }
