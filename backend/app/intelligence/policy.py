@@ -112,23 +112,6 @@ class SyntheticDispositionPolicy:
     ) -> DispositionDecision:
         """Apply the fixed safety-first ordering to already-derived evidence."""
 
-        if fall_assessment.urgent_triggered:
-            room_level = fall_assessment.room_level_only or possible_multiple_people
-            return self._decision(
-                PolicyDisposition.CAREGIVER_EVENT,
-                priority=EventPriority.CRITICAL,
-                confidence=fall_assessment.confidence,
-                objective_family="fall_like",
-                headline=(
-                    "Room-level fall-like signal pattern"
-                    if room_level
-                    else "Fall-like signal pattern"
-                ),
-                reasons=("urgent_fall_like", *fall_assessment.limitations),
-                room_level_only=room_level,
-                provisional_urgent=True,
-            )
-
         if degradation.degraded:
             return self._decision(
                 PolicyDisposition.AWARENESS,
@@ -147,18 +130,31 @@ class SyntheticDispositionPolicy:
                 reasons=("resident_away",),
             )
 
-        if possible_multiple_people:
+        if possible_multiple_people and not fall_assessment.urgent_triggered:
             return self._decision(
-                (
-                    PolicyDisposition.AWARENESS
-                    if packet is not None
-                    else PolicyDisposition.NO_ACTION
-                ),
+                PolicyDisposition.AWARENESS,
                 confidence="attribution_ambiguous",
                 objective_family="multi_person_ambiguity",
                 headline="Room occupancy attribution is ambiguous",
                 reasons=("possible_multiple_people",),
                 room_level_only=True,
+            )
+
+        if fall_assessment.urgent_triggered:
+            room_level = fall_assessment.room_level_only or possible_multiple_people
+            return self._decision(
+                PolicyDisposition.CAREGIVER_EVENT,
+                priority=EventPriority.CRITICAL,
+                confidence=fall_assessment.confidence,
+                objective_family="fall_like",
+                headline=(
+                    "Room-level fall-like signal pattern"
+                    if room_level
+                    else "Fall-like signal pattern"
+                ),
+                reasons=("urgent_fall_like", *fall_assessment.limitations),
+                room_level_only=room_level,
+                provisional_urgent=True,
             )
 
         if packet is None or packet.lifecycle_state.value == "closed":

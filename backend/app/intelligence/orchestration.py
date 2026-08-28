@@ -13,7 +13,12 @@ from backend.app.ai.validation import (
     InterpretationValidationError,
     validate_interpretation,
 )
-from backend.app.domain.events import EventStatus, EventStore, MonitoringEvent
+from backend.app.domain.events import (
+    BridgeEvidenceKind,
+    EventStatus,
+    EventStore,
+    MonitoringEvent,
+)
 from backend.app.domain.feedback import ResidentMemory
 from backend.app.intelligence.anomaly import (
     AnomalyEpisode,
@@ -58,6 +63,41 @@ class IntelligenceResult:
     schema_version: str = "1.0"
 
 
+LaneKey = tuple[str, str]
+
+
+@dataclass(frozen=True)
+class _ProcessBinding:
+    frame: AlignedFrame
+    baseline: BaselineSnapshot
+    context_key: str
+    anomaly_id: str
+    resident_id: str
+    room_id: str
+    config_version: str
+    unknowns: tuple[str, ...]
+    resident_memory: ResidentMemory | None
+    resident_away: bool
+    possible_multiple_people: bool
+    relevant_context_entry_ids: tuple[str, ...]
+    disposition_policy: SyntheticDispositionPolicy
+    attention_policy: EventAttentionPolicy
+    anomaly_policy: SyntheticAnomalyPolicy
+    fall_policy: SyntheticFallPolicy
+    event_policy_version: str
+    model_id: str
+    model_version: str
+    llm_boundary: str
+
+
+@dataclass(frozen=True)
+class _ProcessedFrame:
+    binding: _ProcessBinding
+    result: IntelligenceResult
+    lane: LaneKey
+    anomaly_id: str
+
+
 class MonitoringIntelligenceEngine:
     """Stateful V1 lane over injected normalized frames; persistence is Task 8."""
 
@@ -81,10 +121,14 @@ class MonitoringIntelligenceEngine:
         self.fall_policy = fall_policy or SyntheticFallPolicy()
         self.model_id = model_id
         self.model_version = model_version
-        self._episode: AnomalyEpisode | None = None
-        self._fall_assessment: FallLikeAssessment | None = None
-        self._results: dict[tuple[object, ...], IntelligenceResult] = {}
-        self._event_ids_by_anomaly: dict[str, str] = {}
+        self._episodes: dict[LaneKey, AnomalyEpisode] = {}
+        self._fall_assessments: dict[LaneKey, FallLikeAssessment] = {}
+        self._processed_frames: dict[
+            tuple[LaneKey, str],
+            _ProcessedFrame,
+        ] = {}
+        self._urgent_revisions: dict[tuple[LaneKey, str], int] = {}
+        self._event_ids_by_anomaly: dict[tuple[LaneKey, str], str] = {}
 
     def process_frame(
         self,
@@ -102,37 +146,69 @@ class MonitoringIntelligenceEngine:
         possible_multiple_people: bool = False,
         relevant_context_entry_ids: tuple[str, ...] = (),
     ) -> IntelligenceResult:
-        cache_key = (
-            frame.frame_id,
-            baseline.baseline_id,
-            anomaly_id,
-            resident_id,
-            room_id,
-            resident_away,
-            possible_multiple_people,
-            self.disposition_policy.policy_version,
+        lane = (resident_id, room_id)
+        binding = _ProcessBinding(
+            frame=frame,
+            baseline=baseline,
+            context_key=context_key,
+            anomaly_id=anomaly_id,
+            resident_id=resident_id,
+            room_id=room_id,
+            config_version=config_version,
+            unknowns=unknowns,
+            resident_memory=resident_memory,
+            resident_away=resident_away,
+            possible_multiple_people=possible_multiple_people,
+            relevant_context_entry_ids=relevant_context_entry_ids,
+            disposition_policy=self.disposition_policy,
+            attention_policy=self.attention_policy,
+            anomaly_policy=self.anomaly_policy,
+            fall_policy=self.fall_policy,
+            event_policy_version=self.event_store.policy.policy_version,
+            model_id=self.model_id,
+            model_version=self.model_version,
+            llm_boundary=(
+                "unavailable"
+                if self.llm_client is None
+                else (
+                    f"{type(self.llm_client).__module__}."
+                    f"{type(self.llm_client).__qualname__}"
+                )
+            ),
         )
-        cached = self._results.get(cache_key)
+        cache_key = (lane, frame.frame_id)
+        cached = self._processed_frames.get(cache_key)
         if cached is not None:
-            return cached
+            if cached.binding != binding:
+                raise ValueError(
+                    "processed frame identity conflict: lane/frame reused with "
+                    "different inputs or versions"
+                )
+            return self._replay(cached)
 
         degradation = assess_monitoring_degradation(frame)
-        fall_assessment = advance_fall_like(
-            self._fall_assessment,
-            frame,
-            policy=self.fall_policy,
-            possible_multiple_people=possible_multiple_people,
-        )
-        self._fall_assessment = fall_assessment
+        confounded = degradation.degraded or resident_away
+        if confounded:
+            fall_assessment = advance_fall_like(
+                None,
+                frame,
+                policy=self.fall_policy,
+                possible_multiple_people=possible_multiple_people,
+            )
+            self._fall_assessments.pop(lane, None)
+        else:
+            fall_assessment = advance_fall_like(
+                self._fall_assessments.get(lane),
+                frame,
+                policy=self.fall_policy,
+                possible_multiple_people=possible_multiple_people,
+            )
+            self._fall_assessments[lane] = fall_assessment
 
         anomaly: AnomalyUpdate | None = None
-        if fall_assessment.urgent_triggered or (
-            not degradation.degraded
-            and not resident_away
-            and not possible_multiple_people
-        ):
+        if not degradation.degraded and not resident_away and not possible_multiple_people:
             anomaly = advance_episode(
-                self._episode,
+                self._episodes.get(lane),
                 frame=frame,
                 baseline=baseline,
                 context_key=context_key,
@@ -143,7 +219,8 @@ class MonitoringIntelligenceEngine:
                 unknowns=unknowns,
                 policy=self.anomaly_policy,
             )
-            self._episode = anomaly.episode
+            if anomaly.episode is not None:
+                self._episodes[lane] = anomaly.episode
 
         evidence = self._packet(anomaly)
         interpretation = None
@@ -169,19 +246,28 @@ class MonitoringIntelligenceEngine:
             possible_multiple_people=possible_multiple_people,
         )
 
-        event = self._existing_event(anomaly_id)
+        event = self._existing_event(lane, anomaly_id)
         bridge_key = None
         if decision.disposition == PolicyDisposition.CAREGIVER_EVENT:
-            revision = evidence.packet_revision if evidence is not None else 0
+            if evidence is not None:
+                revision = evidence.packet_revision
+                evidence_kind = BridgeEvidenceKind.PACKET
+                revision_component = str(revision)
+            else:
+                urgent_key = (lane, anomaly_id)
+                revision = self._urgent_revisions.get(urgent_key, 0) + 1
+                evidence_kind = BridgeEvidenceKind.PROVISIONAL
+                revision_component = f"provisional-{revision}"
             bridge_key = ":".join(
                 (
                     anomaly_id,
-                    str(revision),
+                    revision_component,
                     self.disposition_policy.policy_version,
                 )
             )
             if decision.priority is None:
                 raise RuntimeError("caregiver-event decisions require priority")
+            related_event_ids = self._recurrence_event_ids(lane, anomaly)
             event = self.event_store.record_signal(
                 resident_id=resident_id,
                 room_id=room_id,
@@ -189,24 +275,22 @@ class MonitoringIntelligenceEngine:
                 headline=decision.headline,
                 priority=decision.priority,
                 observed_at=frame.window_end,
-                resident_memory=resident_memory,
+                resident_memory=(
+                    None if decision.room_level_only else resident_memory
+                ),
                 source_anomaly_id=anomaly_id,
                 evidence_revision=revision,
                 bridge_idempotency_key=bridge_key,
                 provisional_urgent=decision.provisional_urgent,
+                evidence_kind=evidence_kind,
+                room_level_only=decision.room_level_only,
+                related_event_ids=related_event_ids,
             )
-            self._event_ids_by_anomaly[anomaly_id] = event.event_id
+            if evidence_kind == BridgeEvidenceKind.PROVISIONAL:
+                self._urgent_revisions[(lane, anomaly_id)] = revision
+            self._event_ids_by_anomaly[(lane, anomaly_id)] = event.event_id
 
-        attention_suppressed = bool(
-            event is not None
-            and event.status in (EventStatus.ACKNOWLEDGED, EventStatus.CHECKED)
-            and event.attention_suppressed_until is not None
-            and frame.window_end < event.attention_suppressed_until
-        )
-        decision = replace(
-            decision,
-            attention_suppressed=attention_suppressed,
-        )
+        decision = self._with_attention(decision, event, frame.window_end)
         result = IntelligenceResult(
             observation=frame,
             baseline=baseline,
@@ -220,7 +304,12 @@ class MonitoringIntelligenceEngine:
             fall_assessment=fall_assessment,
             degradation=degradation,
         )
-        self._results[cache_key] = result
+        self._processed_frames[cache_key] = _ProcessedFrame(
+            binding=binding,
+            result=result,
+            lane=lane,
+            anomaly_id=anomaly_id,
+        )
         return result
 
     def acknowledge_event(
@@ -278,9 +367,55 @@ class MonitoringIntelligenceEngine:
             return None
         return build_evidence_packet(anomaly)
 
-    def _existing_event(self, anomaly_id: str) -> MonitoringEvent | None:
-        event_id = self._event_ids_by_anomaly.get(anomaly_id)
+    def _existing_event(
+        self,
+        lane: LaneKey,
+        anomaly_id: str,
+    ) -> MonitoringEvent | None:
+        event_id = self._event_ids_by_anomaly.get((lane, anomaly_id))
         return self.event_store.get(event_id) if event_id is not None else None
+
+    def _recurrence_event_ids(
+        self,
+        lane: LaneKey,
+        anomaly: AnomalyUpdate | None,
+    ) -> tuple[str, ...]:
+        if (
+            anomaly is None
+            or anomaly.episode is None
+            or anomaly.episode.recurrence_of is None
+        ):
+            return ()
+        prior_event_id = self._event_ids_by_anomaly.get(
+            (lane, anomaly.episode.recurrence_of)
+        )
+        return (prior_event_id,) if prior_event_id is not None else ()
+
+    def _replay(self, cached: _ProcessedFrame) -> IntelligenceResult:
+        event = self._existing_event(cached.lane, cached.anomaly_id)
+        decision = self._with_attention(
+            cached.result.decision,
+            event,
+            cached.result.observation.window_end,
+        )
+        return replace(cached.result, event=event, decision=decision)
+
+    @staticmethod
+    def _with_attention(
+        decision: DispositionDecision,
+        event: MonitoringEvent | None,
+        observed_at: datetime,
+    ) -> DispositionDecision:
+        attention_suppressed = bool(
+            event is not None
+            and event.status in (EventStatus.ACKNOWLEDGED, EventStatus.CHECKED)
+            and event.attention_suppressed_until is not None
+            and observed_at < event.attention_suppressed_until
+        )
+        return replace(
+            decision,
+            attention_suppressed=attention_suppressed,
+        )
 
 
 __all__ = ["IntelligenceResult", "MonitoringIntelligenceEngine"]
