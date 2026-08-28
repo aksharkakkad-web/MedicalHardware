@@ -95,7 +95,7 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
   if (result.status === "error") {
     return (
       <section className={styles.page}>
-        <Link className={styles.backLink} href="/">← Back to residents</Link>
+        <Link className={styles.backLink} href="/events">← Back to events</Link>
         <div className={styles.error} role="alert">
           <h1>Event information is unavailable</h1>
           <p>{result.message} This does not mean the resident is safe or the event is resolved.</p>
@@ -113,11 +113,11 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
 
   return (
     <section className={styles.page}>
-      <Link className={styles.backLink} href="/">← Back to residents</Link>
+      <Link className={styles.backLink} href="/events">← Event queue</Link>
 
       <header className={styles.header}>
         <div>
-          <p className={styles.eyebrow}>{event.resident.roomLabel} · {event.resident.displayLabel}</p>
+          <Link className={styles.residentLink} href={`/residents/${event.resident.residentId}`}>{event.resident.roomLabel} · {event.resident.displayLabel}</Link>
           <h1>{event.headline}</h1>
           <p className={styles.timestamp}>Detected {formatTime(event.createdAt)}</p>
         </div>
