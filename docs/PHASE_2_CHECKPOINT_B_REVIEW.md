@@ -63,6 +63,8 @@ behavior survives.
 - founder Checkpoint B walkthrough: passed;
 - full pytest suite: 276 passed plus 85 subtests;
 - compatibility unittest suite: 75 passed;
+- independent backend review: no critical or important findings;
+- clinic frontend tests, lint, typecheck, and production build: passed;
 - backend/test compilation and diff checks: passed.
 
 ## What remains
