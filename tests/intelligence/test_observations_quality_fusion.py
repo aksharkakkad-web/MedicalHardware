@@ -167,6 +167,20 @@ def test_alignment_preserves_missing_source_and_position_contradiction() -> None
     )
 
 
+def test_alignment_preserves_conflicting_categorical_evidence_from_one_source() -> None:
+    frame = align_observations(
+        (radar_position("floor_like"), radar_position("upright_like")),
+        frame_id="frame_1b",
+        window_start=WINDOW_START,
+        window_end=WINDOW_END,
+        expected_sources=("radar",),
+    )
+
+    assert frame.contradictions == (
+        "position_state:radar=floor_like,radar=upright_like",
+    )
+
+
 def test_alignment_records_same_value_evidence_from_independent_sources() -> None:
     frame = align_observations(
         (radar_position("upright_like"), thermal_position("upright_like")),
@@ -181,6 +195,22 @@ def test_alignment_records_same_value_evidence_from_independent_sources() -> Non
         ("radar", "position_state"),
         ("thermal", "position_state"),
     )
+
+
+def test_alignment_renders_each_agreeing_source_once() -> None:
+    frame = align_observations(
+        (
+            radar_position("upright_like"),
+            radar_position("upright_like"),
+            thermal_position("upright_like"),
+        ),
+        frame_id="frame_2a",
+        window_start=WINDOW_START,
+        window_end=WINDOW_END,
+        expected_sources=("radar", "thermal"),
+    )
+
+    assert frame.agreements == ("position_state:radar=thermal=upright_like",)
 
 
 def test_alignment_groups_equal_evidence_even_when_sources_sort_between_it() -> None:

@@ -117,7 +117,7 @@ def _agreement_records(evidence: tuple[FeatureEvidence, ...]) -> tuple[str, ...]
         independent = tuple(sorted(items, key=lambda item: item.source))
         value = independent[0].feature.value
         if value is not None and len({item.source for item in independent}) > 1:
-            sources = "=".join(item.source for item in independent)
+            sources = "=".join(sorted({item.source for item in independent}))
             records.append(f"{name}:{sources}={value}")
     return tuple(records)
 
@@ -129,7 +129,7 @@ def _contradiction_records(evidence: tuple[FeatureEvidence, ...]) -> tuple[str, 
     for name, items in grouped:
         independent = tuple(sorted(items, key=lambda item: item.source))
         values = {item.feature.value for item in independent}
-        if len({item.source for item in independent}) > 1 and len(values) > 1:
+        if len(values) > 1:
             descriptions = ",".join(
                 f"{item.source}={item.feature.value}" for item in independent
             )
