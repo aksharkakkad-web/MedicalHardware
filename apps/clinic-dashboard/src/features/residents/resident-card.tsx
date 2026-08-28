@@ -1,4 +1,7 @@
+import Link from "next/link";
+
 import { StatusPill, type StatusTone } from "@/components/status-pill/status-pill";
+import { ArrowIcon } from "@/components/icons/icons";
 import type { ResidentOverviewItem } from "@/lib/monitoring";
 
 import styles from "./resident-card.module.css";
@@ -46,43 +49,12 @@ export function ResidentCard({ resident }: Readonly<{ resident: ResidentOverview
 
   return (
     <article className={styles.card} data-priority={resident.attention.priority}>
-      <div className={styles.header}>
-        <div>
-          <p className={styles.room}>{resident.roomLabel}</p>
-          <h2 className={styles.name}>{resident.displayLabel}</h2>
-        </div>
-        <StatusPill label={monitoring.label} tone={monitoring.tone} />
-      </div>
-
-      {resident.monitoring.contextLabel && (
-        <p className={styles.contextLabel}>
-          {resident.monitoring.contextLabel}
-        </p>
-      )}
-      <p className={styles.reason}>{resident.monitoring.reason}</p>
-
-      <div className={styles.details}>
-        <div className={styles.attention}>
-          <StatusPill label={attention.label} tone={attention.tone} />
-          {hasAttention && (
-            <p className={styles.attentionHeadline}>{resident.attention.headline}</p>
-          )}
-        </div>
-
-        {resident.device.status !== "online" && (
-          <div className={styles.deviceWarning}>
-            <strong>{deviceHeadline[resident.device.status]}</strong>
-            <span>{resident.device.label}</span>
-          </div>
-        )}
-      </div>
-
-      <p className={styles.updated}>
-        Updated{" "}
-        <time dateTime={resident.monitoring.lastUpdatedAt}>
-          {formattedTime(resident.monitoring.lastUpdatedAt)}
-        </time>
-      </p>
+      <Link className={styles.identity} href={`/residents/${resident.residentId}`}><span className={styles.room}>{resident.roomLabel}</span><strong className={styles.name}>{resident.displayLabel}</strong></Link>
+      <div className={styles.monitoring}><StatusPill label={monitoring.label} tone={monitoring.tone} /><small>{resident.monitoring.contextLabel ?? resident.monitoring.reason}</small></div>
+      <div className={styles.attention}><StatusPill label={attention.label} tone={attention.tone} />{hasAttention && <small>{resident.attention.headline}</small>}</div>
+      <div className={styles.device}><strong>{resident.device.status === "online" ? "Device online" : deviceHeadline[resident.device.status]}</strong><small>{resident.device.label}</small></div>
+      <time className={styles.updated} dateTime={resident.monitoring.lastUpdatedAt}>{formattedTime(resident.monitoring.lastUpdatedAt)}</time>
+      <div className={styles.actions}>{resident.attention.primaryEventId && <Link className={styles.reviewLink} href={`/events/${resident.attention.primaryEventId}`}>Review event</Link>}<Link className={styles.detailLink} href={`/residents/${resident.residentId}`} aria-label={`View ${resident.displayLabel}`}><ArrowIcon /></Link></div>
     </article>
   );
 }

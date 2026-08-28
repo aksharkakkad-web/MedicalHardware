@@ -77,4 +77,170 @@ describe("MockMonitoringClient", () => {
 
     expect(nextResult.items[0].displayLabel).not.toBe("Mutated label");
   });
+
+  it("lists event work in newest-first order and finds a resident", async () => {
+    const client = new MockMonitoringClient(
+      () => new Date("2026-08-27T18:00:00.000Z"),
+    );
+
+    const events = await client.listEvents();
+    const resident = await client.getResident("res_2c8d4f");
+
+    expect(events.items).toHaveLength(4);
+    expect(events.items[0].eventId).toBe("evt_unknown_pattern_104");
+    expect(resident.resident.displayLabel).toBe("Resident B");
+    expect(resident.events.map((event) => event.eventId)).toEqual([
+      "evt_unusual_movement_102",
+      "evt_previous_movement_102",
+    ]);
+    await expect(client.getResident("res_missing")).rejects.toThrow(
+      /could not be found/i,
+    );
+  });
+
+  it("shows stored event progress in event and resident lists", async () => {
+    const client = new MockMonitoringClient();
+    await client.performEventAction("evt_unusual_movement_102", "acknowledge");
+
+    expect(
+      (await client.listEvents()).items.find(
+        (event) => event.eventId === "evt_unusual_movement_102",
+      )?.status,
+    ).toBe("acknowledged");
+    expect((await client.getResident("res_2c8d4f")).events[0].status).toBe(
+      "acknowledged",
+    );
+  });
+
+  it("returns a contract-shaped event and preserves action progress", async () => {
+    const client = new MockMonitoringClient(
+      () => new Date("2026-08-27T18:00:00.000Z"),
+    );
+
+    const opened = await client.getEvent("evt_unusual_movement_102");
+    const acknowledged = await client.performEventAction(
+      opened.eventId,
+      "acknowledge",
+    );
+    const checked = await client.performEventAction(opened.eventId, "check");
+    const resolved = await client.resolveEventWithFeedback(opened.eventId, {
+      outcome: "confirmed",
+      actualEventLabel: "Assisted movement",
+      routine: true,
+    });
+
+    expect(opened.status).toBe("open");
+    expect(opened.evidence).toHaveLength(3);
+    expect(acknowledged.status).toBe("acknowledged");
+    expect(acknowledged.overdue).toBe(false);
+    expect(checked.status).toBe("checked");
+    expect(resolved.status).toBe("resolved");
+    expect(resolved.feedback).toMatchObject({
+      actualEventLabel: "Assisted movement",
+      routine: true,
+    });
+    expect(resolved.actionHistory.map((item) => item.action)).toEqual([
+      "opened",
+      "acknowledged",
+      "checked",
+      "resolved",
+    ]);
+    expect((await client.getEvent(opened.eventId)).status).toBe("resolved");
+  });
+
+  it("rejects actions that do not match the current event state", async () => {
+    const client = new MockMonitoringClient();
+
+    await expect(
+      client.performEventAction("evt_unusual_movement_102", "check"),
+    ).rejects.toThrow(/not available/i);
+  });
+
+  it("does not reset progress after an unknown event is requested", async () => {
+    const client = new MockMonitoringClient();
+    await client.performEventAction("evt_unusual_movement_102", "acknowledge");
+
+    await expect(client.getEvent("evt_missing")).rejects.toThrow(
+      /could not be found/i,
+    );
+    expect((await client.getEvent("evt_unusual_movement_102")).status).toBe(
+      "acknowledged",
+    );
+  });
+
+  it("provides contract-valid scenarios for uncertain and unavailable data", async () => {
+    const client = new MockMonitoringClient();
+    const unknownPattern = await client.getEvent("evt_unknown_pattern_104");
+    const deviceIssue = await client.getEvent("evt_device_issue_105");
+    const overdueEvent = await client.getEvent("evt_unusual_movement_102");
+
+    expect(unknownPattern).toMatchObject({
+      objectiveFamily: "Unknown anomaly",
+      confidence: { dataQuality: "limited" },
+      interpretation: { status: "unavailable" },
+    });
+    expect(deviceIssue).toMatchObject({
+      confidence: { dataQuality: "unavailable" },
+      interpretation: { status: "pending" },
+      device: { status: "offline" },
+    });
+    expect(overdueEvent.overdue).toBe(true);
+    expect(overdueEvent.relatedEventIds).toEqual(["evt_previous_movement_102"]);
+  });
+
+  it("keeps event progress after the client is recreated", async () => {
+    const savedValues = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => savedValues.get(key) ?? null,
+      setItem: (key: string, value: string) => savedValues.set(key, value),
+    };
+    const firstClient = new MockMonitoringClient(undefined, storage);
+
+    await firstClient.performEventAction(
+      "evt_unusual_movement_102",
+      "acknowledge",
+    );
+
+    const recreatedClient = new MockMonitoringClient(undefined, storage);
+    expect(
+      (await recreatedClient.getEvent("evt_unusual_movement_102")).status,
+    ).toBe("acknowledged");
+  });
+
+  it("falls back to safe fixtures when saved demo data is broken", async () => {
+    const client = new MockMonitoringClient(undefined, {
+      getItem: () => '[{"eventId":"evt_unusual_movement_102"}]',
+      setItem: () => undefined,
+    });
+
+    expect((await client.getEvent("evt_unusual_movement_102")).status).toBe(
+      "open",
+    );
+  });
+
+  it("updates the resident dashboard as staff complete the event workflow", async () => {
+    const client = new MockMonitoringClient();
+    const eventId = "evt_unusual_movement_102";
+
+    await client.performEventAction(eventId, "acknowledge");
+    expect(
+      (await client.listResidentOverview()).items[1].attention.headline,
+    ).toMatch(/resident check needed/i);
+
+    await client.performEventAction(eventId, "check");
+    expect(
+      (await client.listResidentOverview()).items[1].attention.headline,
+    ).toMatch(/resolution feedback needed/i);
+
+    await client.resolveEventWithFeedback(eventId, {
+      outcome: "confirmed",
+      actualEventLabel: "Assisted movement",
+      routine: true,
+    });
+    const resolvedResident = (await client.listResidentOverview()).items[1];
+    expect(resolvedResident.attention).toMatchObject({
+      priority: "none",
+      openEventCount: 0,
+    });
+  });
 });

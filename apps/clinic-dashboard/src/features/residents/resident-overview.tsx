@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { AlertIcon } from "@/components/icons/icons";
 import type { ResidentOverviewItem } from "@/lib/monitoring";
 
 import { ResidentCard } from "./resident-card";
@@ -17,13 +19,12 @@ function OverviewHeader() {
   return (
     <div className={styles.headingRow}>
       <div>
-        <p className={styles.eyebrow}>Residents</p>
-        <h1>Resident overview</h1>
+        <h1>Clinic overview</h1>
         <p className={styles.intro}>
-          Start with attention items, then check rooms with limited or unavailable monitoring.
+          See what needs attention, then move through each room with clear monitoring context.
         </p>
       </div>
-      <p className={styles.updatedLabel}>Live mock workspace</p>
+      <p className={styles.updatedLabel}>Live synthetic workspace</p>
     </div>
   );
 }
@@ -82,26 +83,25 @@ export function ResidentOverview() {
   const activeCount = residents.filter((resident) => resident.monitoring.state === "active").length;
   const limitedCount = residents.length - activeCount;
   const highPriorityCount = residents.filter((resident) => ["high", "critical"].includes(resident.attention.priority)).length;
+  const primaryAttention = residents.find((resident) => ["high", "critical"].includes(resident.attention.priority) && resident.attention.primaryEventId);
 
   return (
     <section className={styles.page}>
       <OverviewHeader />
 
-      <div className={styles.summary} aria-label="Resident monitoring summary">
-        <div><strong>{highPriorityCount}</strong><span>High-priority items</span></div>
-        <div><strong>{activeCount}</strong><span>Active monitoring</span></div>
-        <div><strong>{limitedCount}</strong><span>Limited, paused, or offline</span></div>
-      </div>
+      {primaryAttention && <Link className={styles.attentionBanner} href={`/events/${primaryAttention.attention.primaryEventId}`}><span className={styles.alertMark}><AlertIcon /></span><span><strong>{primaryAttention.attention.headline}</strong><small>{primaryAttention.displayLabel} · {primaryAttention.roomLabel} · Staff review is required</small></span><span>Review now →</span></Link>}
+
+      <div className={styles.summary} aria-label="Resident monitoring summary"><div><strong>{highPriorityCount}</strong><span>High priority</span></div><div><strong>{activeCount}</strong><span>Active monitoring</span></div><div><strong>{limitedCount}</strong><span>Limited, paused, or offline</span></div><Link href="/events">View all events →</Link></div>
 
       <div className={styles.sectionHeading}>
         <div>
-          <h2>Rooms at a glance</h2>
-          <p>Ordered by urgency so the most important room appears first.</p>
+          <h2>Residents and rooms</h2>
+          <p>Ordered by urgency. Select a resident for their complete room record.</p>
         </div>
         <span>{residents.length} monitored rooms</span>
       </div>
 
-      <div className={styles.grid}>
+      <div className={styles.grid}><div className={styles.columnLabels} aria-hidden="true"><span>Room and resident</span><span>Monitoring</span><span>Attention</span><span>Device</span><span>Updated</span><span /></div>
         {residents.map((resident) => <ResidentCard key={resident.residentId} resident={resident} />)}
       </div>
     </section>

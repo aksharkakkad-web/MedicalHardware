@@ -49,6 +49,7 @@ export function createResidentOverviewFixture(
           priority: "high",
           headline: "Unusual activity needs staff review",
           openEventCount: 1,
+          primaryEventId: "evt_unusual_movement_102",
         },
         device: {
           status: "online",
@@ -95,6 +96,7 @@ export function createResidentOverviewFixture(
           priority: "watch",
           headline: "Confirm room occupancy",
           openEventCount: 1,
+          primaryEventId: "evt_unknown_pattern_104",
         },
         device: {
           status: "online",
@@ -118,6 +120,7 @@ export function createResidentOverviewFixture(
           priority: "watch",
           headline: "Room device needs attention",
           openEventCount: 1,
+          primaryEventId: "evt_device_issue_105",
         },
         device: {
           status: "offline",

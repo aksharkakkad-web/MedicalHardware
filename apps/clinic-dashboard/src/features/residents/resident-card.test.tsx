@@ -53,3 +53,17 @@ describe("ResidentCard device health", () => {
     expect(screen.queryByText("Device offline")).not.toBeInTheDocument();
   });
 });
+
+describe("ResidentCard event navigation", () => {
+  it("links an attention item to its event details", () => {
+    const resident = residentWithDevice("online", "Room sensor online");
+    resident.attention.primaryEventId = "evt_test";
+
+    render(<ResidentCard resident={resident} />);
+
+    expect(screen.getByRole("link", { name: /review event/i })).toHaveAttribute(
+      "href",
+      "/events/evt_test",
+    );
+  });
+});
