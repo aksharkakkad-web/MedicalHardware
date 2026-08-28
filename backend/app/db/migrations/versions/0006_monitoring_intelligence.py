@@ -70,8 +70,7 @@ def upgrade() -> None:
             ["tenant_id", "resident_id"],
             ["residents.tenant_id", "residents.resident_id"],
         ),
-        sa.PrimaryKeyConstraint("baseline_id"),
-        sa.UniqueConstraint("tenant_id", "baseline_id"),
+        sa.PrimaryKeyConstraint("tenant_id", "baseline_id"),
     )
     op.create_index("ix_baseline_snapshots_tenant_id", "baseline_snapshots", ["tenant_id"])
     op.create_index("ix_baseline_snapshots_resident_id", "baseline_snapshots", ["resident_id"])
@@ -166,8 +165,7 @@ def upgrade() -> None:
                 "anomaly_revisions.packet_revision",
             ],
         ),
-        sa.PrimaryKeyConstraint("interpretation_id"),
-        sa.UniqueConstraint("tenant_id", "interpretation_id"),
+        sa.PrimaryKeyConstraint("tenant_id", "interpretation_id"),
     )
     op.create_index("ix_llm_interpretations_tenant_id", "llm_interpretations", ["tenant_id"])
     op.create_index(
@@ -222,8 +220,7 @@ def upgrade() -> None:
             ["tenant_id", "event_id"],
             ["monitoring_events.tenant_id", "monitoring_events.event_id"],
         ),
-        sa.PrimaryKeyConstraint("disposition_id"),
-        sa.UniqueConstraint("tenant_id", "disposition_id"),
+        sa.PrimaryKeyConstraint("tenant_id", "disposition_id"),
     )
     op.create_index("ix_disposition_decisions_tenant_id", "disposition_decisions", ["tenant_id"])
     op.create_index(

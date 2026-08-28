@@ -44,9 +44,14 @@ from backend.app.domain.device_health import (
 )
 from backend.app.domain.events import (
     BridgeEvidenceKind,
+    EventAction,
+    EventActionType,
     EventBridgeRecord,
     EventPriority,
+    EventPriorityHistoryEntry,
+    EventStatus,
     EventStore,
+    MonitoringEvent,
 )
 from backend.app.intelligence.policy import DispositionDecision, PolicyDisposition
 from tests.persistence.test_intelligence_repositories import (
@@ -64,6 +69,82 @@ ACCESS_HEADERS = {
     "X-Actor-Id": "operator_1",
 }
 EVENT_PATH = "/v1/events/evt_phase2_demo"
+
+
+def test_brand_new_intelligence_event_and_children_survive_restart(
+    tmp_path: Path,
+) -> None:
+    database_url = f"sqlite+pysqlite:///{tmp_path / 'new-event-restart.db'}"
+    config = Config("alembic.ini")
+    config.set_main_option("sqlalchemy.url", database_url)
+    command.upgrade(config, "head")
+    engine = create_engine_for_url(database_url)
+    opened_at = datetime(2026, 8, 28, 17, 0, tzinfo=timezone.utc)
+    bridge = EventBridgeRecord(
+        idempotency_key="anomaly_new:1:policy_v1",
+        resident_id="resident_demo_a",
+        room_id="room_214",
+        source_anomaly_id="anomaly_new",
+        evidence_revision=1,
+        evidence_kind=BridgeEvidenceKind.PACKET,
+        objective_family="unknown_anomaly",
+        headline="New durable event",
+        priority=EventPriority.HIGH,
+        provisional_urgent=False,
+        room_level_only=False,
+        observed_at=opened_at,
+        actor_id="system:monitoring_event",
+    )
+    event = MonitoringEvent(
+        event_id="event_new_intelligence",
+        episode_id="episode_new_intelligence",
+        resident_id="resident_demo_a",
+        room_id="room_214",
+        objective_family=bridge.objective_family,
+        headline=bridge.headline,
+        priority=bridge.priority,
+        status=EventStatus.OPEN,
+        created_at=opened_at,
+        last_signal_at=opened_at,
+        action_history=(
+            EventAction(
+                action=EventActionType.OPENED,
+                actor_id=bridge.actor_id,
+                occurred_at=opened_at,
+                previous_status=EventStatus.DETECTED,
+                status=EventStatus.OPEN,
+            ),
+        ),
+        priority_history=(
+            EventPriorityHistoryEntry(
+                previous_priority=None,
+                priority=bridge.priority,
+                actor_id=bridge.actor_id,
+                changed_at=opened_at,
+            ),
+        ),
+        source_anomaly_id=bridge.source_anomaly_id,
+        latest_evidence_revision=bridge.evidence_revision,
+        bridge_idempotency_keys=(bridge.idempotency_key,),
+        bridge_records=(bridge,),
+    )
+    with Session(engine) as session:
+        seed_synthetic_story(session)
+        saved = EventRepository(session).save(
+            "tenant_demo", event, expected_version=0
+        )
+        assert saved.version == 1
+        session.commit()
+    engine.dispose()
+
+    restarted = create_engine_for_url(database_url)
+    with Session(restarted) as session:
+        stored = EventRepository(session).get(
+            "tenant_demo", "event_new_intelligence"
+        )
+        assert stored.event == event
+        assert stored.version == 1
+    restarted.dispose()
 
 
 def test_complete_intelligence_trail_survives_database_restart(

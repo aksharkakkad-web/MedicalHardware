@@ -7,6 +7,7 @@ from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from backend.app.db.base import Base
 from backend.app.db.repositories import FeedbackRepository
 
 
@@ -361,11 +362,11 @@ EXPECTED_PRIMARY_KEYS = {
     "device_room_assignments": ("assignment_id",),
     "device_health_observations": ("device_health_observation_id",),
     "resident_notification_preference_versions": ("preference_version_id",),
-    "baseline_snapshots": ("baseline_id",),
+    "baseline_snapshots": ("tenant_id", "baseline_id"),
     "baseline_dimensions": ("baseline_dimension_id",),
     "anomaly_revisions": ("anomaly_revision_id",),
-    "llm_interpretations": ("interpretation_id",),
-    "disposition_decisions": ("disposition_id",),
+    "llm_interpretations": ("tenant_id", "interpretation_id"),
+    "disposition_decisions": ("tenant_id", "disposition_id"),
     "event_bridge_records": ("event_bridge_record_id",),
 }
 
@@ -511,13 +512,13 @@ EXPECTED_UNIQUES = {
         ("tenant_id", "resident_id", "version")
     },
     "monitoring_events": {("tenant_id", "event_id")},
-    "baseline_snapshots": {("tenant_id", "baseline_id")},
+    "baseline_snapshots": set(),
     "baseline_dimensions": {
         ("tenant_id", "baseline_id", "feature_name", "context_key")
     },
     "anomaly_revisions": {("tenant_id", "anomaly_id", "packet_revision")},
-    "llm_interpretations": {("tenant_id", "interpretation_id")},
-    "disposition_decisions": {("tenant_id", "disposition_id")},
+    "llm_interpretations": set(),
+    "disposition_decisions": set(),
     "event_bridge_records": {("tenant_id", "idempotency_key")},
 }
 
@@ -734,6 +735,43 @@ def test_initial_migration_creates_product_backbone(tmp_path: Path) -> None:
             for constraint in inspector.get_unique_constraints(table_name)
         }
         assert actual_uniques == EXPECTED_UNIQUES.get(table_name, set())
+
+    orm_engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(orm_engine)
+    orm_inspector = inspect(orm_engine)
+    task_8_tables = {
+        "monitoring_events",
+        "baseline_snapshots",
+        "baseline_dimensions",
+        "anomaly_revisions",
+        "llm_interpretations",
+        "disposition_decisions",
+        "event_bridge_records",
+    }
+    for table_name in task_8_tables:
+        migrated_uniques = {
+            (item["name"], tuple(item["column_names"]))
+            for item in inspector.get_unique_constraints(table_name)
+        }
+        orm_uniques = {
+            (item["name"], tuple(item["column_names"]))
+            for item in orm_inspector.get_unique_constraints(table_name)
+        }
+        assert orm_uniques == migrated_uniques
+
+    task_8_event_defaults = {
+        column["name"]: column["default"]
+        for column in inspector.get_columns("monitoring_events")
+        if column["name"]
+        in {"provisional_urgent", "room_level_only", "bridge_idempotency_keys"}
+    }
+    orm_event_defaults = {
+        column["name"]: column["default"]
+        for column in orm_inspector.get_columns("monitoring_events")
+        if column["name"] in task_8_event_defaults
+    }
+    assert orm_event_defaults == task_8_event_defaults
+    orm_engine.dispose()
 
     for table_name in EXPECTED_TABLES:
         actual_indexes = {

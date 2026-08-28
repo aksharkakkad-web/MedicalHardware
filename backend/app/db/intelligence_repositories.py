@@ -3,6 +3,7 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.app.ai.client import InterpretationRequest, InterpretationResult
@@ -28,6 +29,7 @@ from backend.app.db.models import (
     DispositionDecisionRow,
     EventBridgeRecordRow,
     LLMInterpretationRow,
+    MonitoringEventRow,
 )
 from backend.app.intelligence.anomaly import AnomalyUpdate
 from backend.app.intelligence.baseline import BaselineSnapshot
@@ -41,6 +43,28 @@ def _utc(value: datetime) -> datetime:
     return value.astimezone(timezone.utc)
 
 
+def _same_row(
+    left: object,
+    right: object,
+    *,
+    exclude: frozenset[str] = frozenset(),
+) -> bool:
+    table = type(left).__table__
+    if type(left) is not type(right):
+        return False
+    for column in table.columns:
+        if column.name in exclude:
+            continue
+        left_value = getattr(left, column.name)
+        right_value = getattr(right, column.name)
+        if isinstance(left_value, datetime) and isinstance(right_value, datetime):
+            left_value = _utc(left_value)
+            right_value = _utc(right_value)
+        if left_value != right_value:
+            return False
+    return True
+
+
 class IntelligenceRepository:
     def __init__(self, session: Session) -> None:
         self._session = session
@@ -52,26 +76,28 @@ class IntelligenceRepository:
         recorded_at: datetime,
     ) -> BaselineSnapshot:
         row, dimensions = baseline_to_rows(tenant_id, baseline, recorded_at)
-        existing = self._session.get(BaselineSnapshotRow, baseline.baseline_id)
+        existing = self._session.get(
+            BaselineSnapshotRow,
+            (tenant_id, baseline.baseline_id),
+        )
         if existing is not None:
-            if existing.tenant_id != tenant_id:
-                raise ConcurrentUpdateError()
-            existing_dimensions = self._baseline_dimensions(
-                tenant_id, baseline.baseline_id
+            return self._reconcile_baseline(existing, row, dimensions)
+        try:
+            with self._session.begin_nested():
+                self._session.add(row)
+                self._session.flush()
+                self._session.add_all(dimensions)
+                self._session.flush()
+        except IntegrityError as exc:
+            winner = self._session.get(
+                BaselineSnapshotRow,
+                (tenant_id, baseline.baseline_id),
+                populate_existing=True,
             )
-            if (
-                existing.payload_json != row.payload_json
-                or _utc(existing.recorded_at) != _utc(recorded_at)
-                or tuple(item.payload_json for item in existing_dimensions)
-                != tuple(item.payload_json for item in dimensions)
-            ):
-                raise ConcurrentUpdateError()
-            return baseline_from_rows(existing, existing_dimensions)
-        self._session.add(row)
-        self._session.flush()
-        self._session.add_all(dimensions)
-        self._session.flush()
-        return baseline
+            if winner is None:
+                raise ConcurrentUpdateError() from exc
+            return self._reconcile_baseline(winner, row, dimensions)
+        return baseline_from_rows(row, dimensions)
 
     def latest_baseline(
         self,
@@ -112,14 +138,30 @@ class IntelligenceRepository:
             )
         )
         if existing is not None:
-            if (
-                existing.update_json != candidate.update_json
-                or existing.packet_json != candidate.packet_json
+            if not _same_row(
+                existing,
+                candidate,
+                exclude=frozenset({"anomaly_revision_id"}),
             ):
                 raise ConcurrentUpdateError()
             return anomaly_from_row(existing)
-        self._session.add(candidate)
-        self._session.flush()
+        try:
+            with self._session.begin_nested():
+                self._session.add(candidate)
+                self._session.flush()
+        except IntegrityError as exc:
+            winner = self._anomaly_revision(
+                tenant_id,
+                packet.anomaly_id,
+                packet.packet_revision,
+            )
+            if winner is None or not _same_row(
+                winner,
+                candidate,
+                exclude=frozenset({"anomaly_revision_id"}),
+            ):
+                raise ConcurrentUpdateError() from exc
+            return anomaly_from_row(winner)
         return anomaly_from_row(candidate)
 
     def latest_anomaly(
@@ -149,18 +191,26 @@ class IntelligenceRepository:
             tenant_id, request, result, created_at
         )
         existing = self._session.get(
-            LLMInterpretationRow, result.interpretation_id
+            LLMInterpretationRow,
+            (tenant_id, result.interpretation_id),
         )
         if existing is not None:
-            if existing.tenant_id != tenant_id or (
-                existing.request_json != candidate.request_json
-                or existing.result_json != candidate.result_json
-                or _utc(existing.created_at) != _utc(created_at)
-            ):
+            if not _same_row(existing, candidate):
                 raise ConcurrentUpdateError()
             return interpretation_from_row(existing)
-        self._session.add(candidate)
-        self._session.flush()
+        try:
+            with self._session.begin_nested():
+                self._session.add(candidate)
+                self._session.flush()
+        except IntegrityError as exc:
+            winner = self._session.get(
+                LLMInterpretationRow,
+                (tenant_id, result.interpretation_id),
+                populate_existing=True,
+            )
+            if winner is None or not _same_row(winner, candidate):
+                raise ConcurrentUpdateError() from exc
+            return interpretation_from_row(winner)
         return interpretation_from_row(candidate)
 
     def find_interpretation(
@@ -181,25 +231,29 @@ class IntelligenceRepository:
         tenant_id: str,
         record: DispositionRecord,
     ) -> DispositionRecord:
+        self._validate_disposition_links(tenant_id, record)
         candidate = disposition_to_row(tenant_id, record)
         existing = self._session.get(
-            DispositionDecisionRow, record.disposition_id
+            DispositionDecisionRow,
+            (tenant_id, record.disposition_id),
         )
         if existing is not None:
-            if existing.tenant_id != tenant_id or (
-                existing.payload_json != candidate.payload_json
-                or existing.resident_id != candidate.resident_id
-                or existing.room_id != candidate.room_id
-                or existing.anomaly_id != candidate.anomaly_id
-                or existing.packet_revision != candidate.packet_revision
-                or existing.interpretation_id != candidate.interpretation_id
-                or existing.event_id != candidate.event_id
-                or _utc(existing.decided_at) != _utc(candidate.decided_at)
-            ):
+            if not _same_row(existing, candidate):
                 raise ConcurrentUpdateError()
             return disposition_from_row(existing)
-        self._session.add(candidate)
-        self._session.flush()
+        try:
+            with self._session.begin_nested():
+                self._session.add(candidate)
+                self._session.flush()
+        except IntegrityError as exc:
+            winner = self._session.get(
+                DispositionDecisionRow,
+                (tenant_id, record.disposition_id),
+                populate_existing=True,
+            )
+            if winner is None or not _same_row(winner, candidate):
+                raise ConcurrentUpdateError() from exc
+            return disposition_from_row(winner)
         return disposition_from_row(candidate)
 
     def find_disposition(
@@ -246,6 +300,91 @@ class IntelligenceRepository:
                 )
             )
         )
+
+    def _reconcile_baseline(
+        self,
+        existing: BaselineSnapshotRow,
+        candidate: BaselineSnapshotRow,
+        candidate_dimensions: tuple[BaselineDimensionRow, ...],
+    ) -> BaselineSnapshot:
+        existing_dimensions = self._baseline_dimensions(
+            existing.tenant_id,
+            existing.baseline_id,
+        )
+        if (
+            not _same_row(existing, candidate)
+            or len(existing_dimensions) != len(candidate_dimensions)
+            or any(
+                not _same_row(
+                    stored,
+                    proposed,
+                    exclude=frozenset({"baseline_dimension_id"}),
+                )
+                for stored, proposed in zip(
+                    existing_dimensions,
+                    candidate_dimensions,
+                    strict=True,
+                )
+            )
+        ):
+            raise ConcurrentUpdateError()
+        return baseline_from_rows(existing, existing_dimensions)
+
+    def _anomaly_revision(
+        self,
+        tenant_id: str,
+        anomaly_id: str,
+        packet_revision: int,
+    ) -> AnomalyRevisionRow | None:
+        return self._session.scalar(
+            select(AnomalyRevisionRow).where(
+                AnomalyRevisionRow.tenant_id == tenant_id,
+                AnomalyRevisionRow.anomaly_id == anomaly_id,
+                AnomalyRevisionRow.packet_revision == packet_revision,
+            )
+        )
+
+    def _validate_disposition_links(
+        self,
+        tenant_id: str,
+        record: DispositionRecord,
+    ) -> None:
+        anomaly = self._anomaly_revision(
+            tenant_id,
+            record.anomaly_id,
+            record.packet_revision,
+        )
+        if anomaly is None:
+            raise ValueError("disposition anomaly revision does not exist")
+        if (anomaly.resident_id, anomaly.room_id) != (
+            record.resident_id,
+            record.room_id,
+        ):
+            raise ValueError("disposition lane does not match anomaly revision")
+        if record.interpretation_id is not None:
+            interpretation = self._session.get(
+                LLMInterpretationRow,
+                (tenant_id, record.interpretation_id),
+            )
+            if interpretation is None or (
+                interpretation.anomaly_id,
+                interpretation.packet_revision,
+            ) != (record.anomaly_id, record.packet_revision):
+                raise ValueError(
+                    "disposition interpretation does not match anomaly revision"
+                )
+        if record.event_id is not None:
+            event = self._session.scalar(
+                select(MonitoringEventRow).where(
+                    MonitoringEventRow.tenant_id == tenant_id,
+                    MonitoringEventRow.event_id == record.event_id,
+                )
+            )
+            if event is None or (event.resident_id, event.room_id) != (
+                record.resident_id,
+                record.room_id,
+            ):
+                raise ValueError("disposition event does not match resident lane")
 
 
 __all__ = ["IntelligenceRepository"]

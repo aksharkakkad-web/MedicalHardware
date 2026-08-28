@@ -1,6 +1,6 @@
 """Explicit reversible mappings for immutable monitoring-intelligence records."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from datetime import datetime, timezone
 from enum import Enum
 import json
@@ -11,6 +11,7 @@ from backend.app.ai.client import (
     InterpretationRequest,
     InterpretationResult,
 )
+from backend.app.ai.validation import validate_interpretation
 from backend.app.db.models import (
     AnomalyRevisionRow,
     BaselineDimensionRow,
@@ -24,6 +25,10 @@ from backend.app.domain.events import (
     EventBridgeRecord,
     EventPriority,
 )
+from backend.app.domain._validation import (
+    require_aware_datetime,
+    require_nonblank_text,
+)
 from backend.app.intelligence.anomaly import (
     AnomalyEpisode,
     AnomalyState,
@@ -31,16 +36,23 @@ from backend.app.intelligence.anomaly import (
     FeatureDeviation,
 )
 from backend.app.intelligence.baseline import BaselineSnapshot, FeatureBaseline
-from backend.app.intelligence.evidence import EvidencePacket
+from backend.app.intelligence.evidence import EvidencePacket, build_evidence_packet
 from backend.app.intelligence.observations import FeaturePurpose, QualityClass
 from backend.app.intelligence.policy import (
     DispositionDecision,
     PolicyDisposition,
 )
+from backend.app.services.errors import ConcurrentUpdateError
 
 
 def canonical_json(value: object) -> str:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    return json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+        allow_nan=False,
+    )
 
 
 def _utc(value: datetime) -> datetime:
@@ -59,6 +71,16 @@ def _parse_time(value: str) -> datetime:
 
 def _value(value: object) -> object:
     return value.value if isinstance(value, Enum) else value
+
+
+def _require_shadow(field: str, actual: object, expected: object) -> None:
+    if isinstance(actual, datetime) and isinstance(expected, datetime):
+        actual = _utc(actual)
+        expected = _utc(expected)
+    if actual != expected:
+        raise ConcurrentUpdateError(
+            f"Stored {field} does not match canonical payload"
+        )
 
 
 def _feature_baseline_data(feature: FeatureBaseline) -> dict[str, object]:
@@ -108,7 +130,9 @@ def baseline_to_rows(
         "policy_version": baseline.policy_version,
         "prior_baseline_id": baseline.prior_baseline_id,
         "resident_id": baseline.resident_id,
+        "recorded_at": _time(recorded_at),
         "schema_version": baseline.schema_version,
+        "tenant_id": tenant_id,
     }
     snapshot = BaselineSnapshotRow(
         baseline_id=baseline.baseline_id,
@@ -131,9 +155,18 @@ def baseline_to_rows(
             purpose=feature.purpose.value,
             context_key=feature.context_key,
             unit=feature.unit,
-            payload_json=canonical_json(_feature_baseline_data(feature)),
+            payload_json=canonical_json(
+                {
+                    "baseline_id": baseline.baseline_id,
+                    "feature": _feature_baseline_data(feature),
+                    "tenant_id": tenant_id,
+                }
+            ),
         )
-        for feature in baseline.features
+        for feature in sorted(
+            baseline.features,
+            key=lambda item: (item.feature_name, item.context_key),
+        )
     )
     return snapshot, dimensions
 
@@ -143,17 +176,64 @@ def baseline_from_rows(
     dimensions: tuple[BaselineDimensionRow, ...],
 ) -> BaselineSnapshot:
     data = json.loads(snapshot.payload_json)
+    for field, actual in (
+        ("baseline_id", snapshot.baseline_id),
+        ("resident_id", snapshot.resident_id),
+        ("recorded_at", snapshot.recorded_at),
+        ("monitoring_setup_version", snapshot.monitoring_setup_version),
+        ("policy_version", snapshot.policy_version),
+        ("prior_baseline_id", snapshot.prior_baseline_id),
+        ("adoption_candidate_id", snapshot.adoption_candidate_id),
+        ("adoption_context_entry_id", snapshot.adoption_context_entry_id),
+        ("schema_version", snapshot.schema_version),
+        ("tenant_id", snapshot.tenant_id),
+    ):
+        expected = (
+            _parse_time(data[field]) if field == "recorded_at" else data[field]
+        )
+        _require_shadow(f"baseline.{field}", actual, expected)
+    features = []
+    for row in sorted(
+        dimensions,
+        key=lambda item: (item.feature_name, item.context_key),
+    ):
+        dimension_data = json.loads(row.payload_json)
+        feature = _feature_baseline(dimension_data["feature"])
+        _require_shadow(
+            "baseline_dimension.payload_tenant_id",
+            row.tenant_id,
+            dimension_data["tenant_id"],
+        )
+        _require_shadow(
+            "baseline_dimension.payload_baseline_id",
+            row.baseline_id,
+            dimension_data["baseline_id"],
+        )
+        for field in ("feature_name", "purpose", "context_key", "unit"):
+            expected = getattr(feature, field)
+            if isinstance(expected, Enum):
+                expected = expected.value
+            _require_shadow(
+                f"baseline_dimension.{field}",
+                getattr(row, field),
+                expected,
+            )
+        _require_shadow(
+            "baseline_dimension.baseline_id",
+            row.baseline_id,
+            snapshot.baseline_id,
+        )
+        _require_shadow(
+            "baseline_dimension.tenant_id",
+            row.tenant_id,
+            snapshot.tenant_id,
+        )
+        features.append(feature)
     return BaselineSnapshot(
         baseline_id=data["baseline_id"],
         resident_id=data["resident_id"],
         monitoring_setup_version=data["monitoring_setup_version"],
-        features=tuple(
-            _feature_baseline(json.loads(row.payload_json))
-            for row in sorted(
-                dimensions,
-                key=lambda item: (item.feature_name, item.context_key),
-            )
-        ),
+        features=tuple(features),
         policy_version=data["policy_version"],
         prior_baseline_id=data["prior_baseline_id"],
         adoption_candidate_id=data["adoption_candidate_id"],
@@ -393,10 +473,16 @@ def anomaly_to_row(
     update: AnomalyUpdate,
     packet: EvidencePacket,
 ) -> AnomalyRevisionRow:
-    if update.episode is None or update.episode.anomaly_id != packet.anomaly_id:
-        raise ValueError("anomaly update and evidence packet must share an anomaly")
-    if update.episode.packet_revision != packet.packet_revision:
-        raise ValueError("anomaly update and evidence packet must share a revision")
+    if update.episode is None:
+        raise ValueError("anomaly update must contain an episode")
+    expected_packet = build_evidence_packet(update)
+    if packet != expected_packet:
+        for field in fields(EvidencePacket):
+            if getattr(packet, field.name) != getattr(expected_packet, field.name):
+                raise ValueError(
+                    f"anomaly update/packet provenance mismatch: {field.name}"
+                )
+        raise ValueError("anomaly update/packet provenance mismatch")
     return AnomalyRevisionRow(
         tenant_id=tenant_id,
         anomaly_id=packet.anomaly_id,
@@ -406,16 +492,45 @@ def anomaly_to_row(
         baseline_id=packet.baseline_id,
         lifecycle_state=packet.lifecycle_state.value,
         recorded_at=_utc(packet.current_time),
-        update_json=canonical_json(_update_data(update)),
-        packet_json=canonical_json(_packet_data(packet)),
+        update_json=canonical_json(
+            {"tenant_id": tenant_id, "update": _update_data(update)}
+        ),
+        packet_json=canonical_json(
+            {"packet": _packet_data(packet), "tenant_id": tenant_id}
+        ),
     )
 
 
 def anomaly_from_row(row: AnomalyRevisionRow) -> StoredAnomalyRevision:
-    return StoredAnomalyRevision(
-        update=_update(json.loads(row.update_json)),
-        packet=_packet(json.loads(row.packet_json)),
+    update_payload = json.loads(row.update_json)
+    packet_payload = json.loads(row.packet_json)
+    _require_shadow(
+        "anomaly.update_tenant_id",
+        row.tenant_id,
+        update_payload["tenant_id"],
     )
+    _require_shadow(
+        "anomaly.packet_tenant_id",
+        row.tenant_id,
+        packet_payload["tenant_id"],
+    )
+    stored = StoredAnomalyRevision(
+        update=_update(update_payload["update"]),
+        packet=_packet(packet_payload["packet"]),
+    )
+    anomaly_to_row(row.tenant_id, stored.update, stored.packet)
+    packet = stored.packet
+    for field, expected in (
+        ("anomaly_id", packet.anomaly_id),
+        ("packet_revision", packet.packet_revision),
+        ("resident_id", packet.resident_id),
+        ("room_id", packet.room_id),
+        ("baseline_id", packet.baseline_id),
+        ("lifecycle_state", packet.lifecycle_state.value),
+        ("recorded_at", packet.current_time),
+    ):
+        _require_shadow(f"anomaly.{field}", getattr(row, field), expected)
+    return stored
 
 
 def _request_data(request: InterpretationRequest) -> dict[str, object]:
@@ -506,11 +621,7 @@ def interpretation_to_row(
     result: InterpretationResult,
     created_at: datetime,
 ) -> LLMInterpretationRow:
-    if (request.anomaly_id, request.packet_revision) != (
-        result.anomaly_id,
-        result.packet_revision,
-    ):
-        raise ValueError("interpretation request and result must share an anomaly revision")
+    validate_interpretation(request, result)
     return LLMInterpretationRow(
         interpretation_id=result.interpretation_id,
         tenant_id=tenant_id,
@@ -526,17 +637,56 @@ def interpretation_to_row(
         output_schema_version=result.output_schema_version,
         relevant_context_version=result.relevant_context_version,
         request_fingerprint=result.request_fingerprint,
-        request_json=canonical_json(_request_data(request)),
-        result_json=canonical_json(_result_data(result)),
+        request_json=canonical_json(
+            {"request": _request_data(request), "tenant_id": tenant_id}
+        ),
+        result_json=canonical_json(
+            {
+                "created_at": _time(created_at),
+                "result": _result_data(result),
+                "tenant_id": tenant_id,
+            }
+        ),
     )
 
 
 def interpretation_from_row(row: LLMInterpretationRow) -> StoredInterpretation:
-    return StoredInterpretation(
-        request=_request(json.loads(row.request_json)),
-        result=_result(json.loads(row.result_json)),
-        created_at=_utc(row.created_at),
+    request_payload = json.loads(row.request_json)
+    result_payload = json.loads(row.result_json)
+    _require_shadow(
+        "interpretation.request_tenant_id",
+        row.tenant_id,
+        request_payload["tenant_id"],
     )
+    _require_shadow(
+        "interpretation.result_tenant_id",
+        row.tenant_id,
+        result_payload["tenant_id"],
+    )
+    stored = StoredInterpretation(
+        request=_request(request_payload["request"]),
+        result=_result(result_payload["result"]),
+        created_at=_parse_time(result_payload["created_at"]),
+    )
+    validate_interpretation(stored.request, stored.result)
+    result = stored.result
+    for field, expected in (
+        ("interpretation_id", result.interpretation_id),
+        ("anomaly_id", result.anomaly_id),
+        ("packet_revision", result.packet_revision),
+        ("status", str(result.status)),
+        ("model_id", result.model_id),
+        ("model_version", result.model_version),
+        ("prompt_version", result.prompt_version),
+        ("skill_bundle_version", result.skill_bundle_version),
+        ("retrieval_contract_version", result.retrieval_contract_version),
+        ("output_schema_version", result.output_schema_version),
+        ("relevant_context_version", result.relevant_context_version),
+        ("request_fingerprint", result.request_fingerprint),
+        ("created_at", stored.created_at),
+    ):
+        _require_shadow(f"interpretation.{field}", getattr(row, field), expected)
+    return stored
 
 
 def _decision_data(decision: DispositionDecision) -> dict[str, object]:
@@ -587,8 +737,58 @@ class DispositionRecord:
     interpretation_id: str | None = None
     event_id: str | None = None
 
+    def __post_init__(self) -> None:
+        for field in (
+            "disposition_id",
+            "resident_id",
+            "room_id",
+            "anomaly_id",
+        ):
+            object.__setattr__(
+                self,
+                field,
+                require_nonblank_text(getattr(self, field), field),
+            )
+        if (
+            isinstance(self.packet_revision, bool)
+            or not isinstance(self.packet_revision, int)
+            or self.packet_revision < 1
+        ):
+            raise ValueError("packet_revision must be a positive integer")
+        object.__setattr__(
+            self,
+            "decided_at",
+            require_aware_datetime(self.decided_at, "decided_at"),
+        )
+        if not isinstance(self.decision, DispositionDecision):
+            raise ValueError("decision must be a DispositionDecision")
+        for field in ("interpretation_id", "event_id"):
+            value = getattr(self, field)
+            if value is not None:
+                object.__setattr__(
+                    self,
+                    field,
+                    require_nonblank_text(value, field),
+                )
+        if self.interpretation_id != self.decision.interpretation_id:
+            raise ValueError(
+                "interpretation_id must match decision.interpretation_id"
+            )
+
 
 def disposition_to_row(tenant_id: str, record: DispositionRecord) -> DispositionDecisionRow:
+    payload = {
+        "anomaly_id": record.anomaly_id,
+        "decided_at": _time(record.decided_at),
+        "decision": _decision_data(record.decision),
+        "disposition_id": record.disposition_id,
+        "event_id": record.event_id,
+        "interpretation_id": record.interpretation_id,
+        "packet_revision": record.packet_revision,
+        "resident_id": record.resident_id,
+        "room_id": record.room_id,
+        "tenant_id": tenant_id,
+    }
     return DispositionDecisionRow(
         disposition_id=record.disposition_id,
         tenant_id=tenant_id,
@@ -601,22 +801,38 @@ def disposition_to_row(tenant_id: str, record: DispositionRecord) -> Disposition
         status=record.decision.disposition.value,
         decided_at=_utc(record.decided_at),
         policy_version=record.decision.policy_version,
-        payload_json=canonical_json(_decision_data(record.decision)),
+        payload_json=canonical_json(payload),
     )
 
 
 def disposition_from_row(row: DispositionDecisionRow) -> DispositionRecord:
-    return DispositionRecord(
-        disposition_id=row.disposition_id,
-        resident_id=row.resident_id,
-        room_id=row.room_id,
-        anomaly_id=row.anomaly_id,
-        packet_revision=row.packet_revision,
-        decided_at=_utc(row.decided_at),
-        decision=_decision(json.loads(row.payload_json)),
-        interpretation_id=row.interpretation_id,
-        event_id=row.event_id,
+    payload = json.loads(row.payload_json)
+    _require_shadow("disposition.tenant_id", row.tenant_id, payload["tenant_id"])
+    record = DispositionRecord(
+        disposition_id=payload["disposition_id"],
+        resident_id=payload["resident_id"],
+        room_id=payload["room_id"],
+        anomaly_id=payload["anomaly_id"],
+        packet_revision=payload["packet_revision"],
+        decided_at=_parse_time(payload["decided_at"]),
+        decision=_decision(payload["decision"]),
+        interpretation_id=payload["interpretation_id"],
+        event_id=payload["event_id"],
     )
+    for field, expected in (
+        ("disposition_id", record.disposition_id),
+        ("resident_id", record.resident_id),
+        ("room_id", record.room_id),
+        ("anomaly_id", record.anomaly_id),
+        ("packet_revision", record.packet_revision),
+        ("interpretation_id", record.interpretation_id),
+        ("event_id", record.event_id),
+        ("status", record.decision.disposition.value),
+        ("decided_at", record.decided_at),
+        ("policy_version", record.decision.policy_version),
+    ):
+        _require_shadow(f"disposition.{field}", getattr(row, field), expected)
+    return record
 
 
 def event_bridge_data(record: EventBridgeRecord) -> dict[str, object]:
@@ -679,7 +895,13 @@ def event_bridge_to_row(
         evidence_kind=record.evidence_kind.value,
         priority=record.priority.value,
         observed_at=_utc(record.observed_at),
-        payload_json=canonical_json(event_bridge_data(record)),
+        payload_json=canonical_json(
+            {
+                "event_id": event_id,
+                "record": event_bridge_data(record),
+                "tenant_id": tenant_id,
+            }
+        ),
     )
 
 
@@ -690,10 +912,26 @@ class StoredEventBridge:
 
 
 def event_bridge_from_row(row: EventBridgeRecordRow) -> StoredEventBridge:
-    return StoredEventBridge(
+    payload = json.loads(row.payload_json)
+    _require_shadow("event_bridge.tenant_id", row.tenant_id, payload["tenant_id"])
+    _require_shadow("event_bridge.event_id", row.event_id, payload["event_id"])
+    stored = StoredEventBridge(
         event_id=row.event_id,
-        record=event_bridge_from_data(json.loads(row.payload_json)),
+        record=event_bridge_from_data(payload["record"]),
     )
+    record = stored.record
+    for field, expected in (
+        ("idempotency_key", record.idempotency_key),
+        ("resident_id", record.resident_id),
+        ("room_id", record.room_id),
+        ("source_anomaly_id", record.source_anomaly_id),
+        ("evidence_revision", record.evidence_revision),
+        ("evidence_kind", record.evidence_kind.value),
+        ("priority", record.priority.value),
+        ("observed_at", record.observed_at),
+    ):
+        _require_shadow(f"event_bridge.{field}", getattr(row, field), expected)
+    return stored
 
 
 __all__ = [

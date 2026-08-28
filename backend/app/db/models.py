@@ -9,6 +9,7 @@ from sqlalchemy import (
     Index,
     Integer,
     JSON,
+    PrimaryKeyConstraint,
     String,
     Text,
     UniqueConstraint,
@@ -277,7 +278,11 @@ class MonitoringSetupChangeRow(Base):
 class MonitoringEventRow(Base):
     __tablename__ = "monitoring_events"
     __table_args__ = (
-        UniqueConstraint("tenant_id", "event_id"),
+        UniqueConstraint(
+            "tenant_id",
+            "event_id",
+            name="uq_monitoring_events_tenant_event",
+        ),
         ForeignKeyConstraint(
             ("tenant_id", "room_id"),
             ("rooms.tenant_id", "rooms.room_id"),
@@ -314,9 +319,21 @@ class MonitoringEventRow(Base):
     attention_suppressed_until: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True)
     )
-    provisional_urgent: Mapped[bool] = mapped_column(Boolean, default=False)
-    room_level_only: Mapped[bool] = mapped_column(Boolean, default=False)
-    bridge_idempotency_keys: Mapped[list[str]] = mapped_column(JSON, default=list)
+    provisional_urgent: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        server_default=text("0"),
+    )
+    room_level_only: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        server_default=text("0"),
+    )
+    bridge_idempotency_keys: Mapped[list[str]] = mapped_column(
+        JSON,
+        default=list,
+        server_default=text("'[]'"),
+    )
     version: Mapped[int] = mapped_column(Integer)
 
 
@@ -353,14 +370,14 @@ class EventPriorityHistoryRow(Base):
 class BaselineSnapshotRow(Base):
     __tablename__ = "baseline_snapshots"
     __table_args__ = (
-        UniqueConstraint("tenant_id", "baseline_id"),
+        PrimaryKeyConstraint("tenant_id", "baseline_id"),
         ForeignKeyConstraint(
             ("tenant_id", "resident_id"),
             ("residents.tenant_id", "residents.resident_id"),
         ),
     )
 
-    baseline_id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    baseline_id: Mapped[str] = mapped_column(String(255))
     tenant_id: Mapped[str] = mapped_column(
         ForeignKey("tenants.tenant_id"), index=True
     )
@@ -447,7 +464,7 @@ class AnomalyRevisionRow(Base):
 class LLMInterpretationRow(Base):
     __tablename__ = "llm_interpretations"
     __table_args__ = (
-        UniqueConstraint("tenant_id", "interpretation_id"),
+        PrimaryKeyConstraint("tenant_id", "interpretation_id"),
         ForeignKeyConstraint(
             ("tenant_id", "anomaly_id", "packet_revision"),
             (
@@ -459,7 +476,7 @@ class LLMInterpretationRow(Base):
         Index("ix_llm_interpretations_anomaly_revision", "anomaly_id", "packet_revision"),
     )
 
-    interpretation_id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    interpretation_id: Mapped[str] = mapped_column(String(255))
     tenant_id: Mapped[str] = mapped_column(
         ForeignKey("tenants.tenant_id"), index=True
     )
@@ -482,7 +499,7 @@ class LLMInterpretationRow(Base):
 class DispositionDecisionRow(Base):
     __tablename__ = "disposition_decisions"
     __table_args__ = (
-        UniqueConstraint("tenant_id", "disposition_id"),
+        PrimaryKeyConstraint("tenant_id", "disposition_id"),
         ForeignKeyConstraint(
             ("tenant_id", "resident_id"),
             ("residents.tenant_id", "residents.resident_id"),
@@ -510,7 +527,7 @@ class DispositionDecisionRow(Base):
         Index("ix_disposition_decisions_anomaly_revision", "anomaly_id", "packet_revision"),
     )
 
-    disposition_id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    disposition_id: Mapped[str] = mapped_column(String(255))
     tenant_id: Mapped[str] = mapped_column(
         ForeignKey("tenants.tenant_id"), index=True
     )
