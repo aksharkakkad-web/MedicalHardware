@@ -347,4 +347,97 @@ describe("MockMonitoringClient", () => {
     expect(away).toMatchObject({ status: "established", learningState: "paused" });
     expect(away.dimensions.every((dimension) => dimension.status === "established")).toBe(true);
   });
+
+  it("saves first-time and existing notification preferences with version checks", async () => {
+    const client = new MockMonitoringClient(() => new Date("2026-08-28T18:00:00.000Z"));
+    const first = await client.getNotificationPreferences("res_assignment_review");
+    expect(first).toMatchObject({ dataAvailability: "not_yet_available", version: null });
+
+    const saved = await client.updateNotificationPreferences("res_assignment_review", {
+      expectedVersion: 0,
+      eventDelivery: { watch: false, high: true, critical: false },
+      awarenessDelivery: { away: true, return: true, limited: false, unavailable: true },
+    });
+    expect(saved).toMatchObject({
+      dataAvailability: "available",
+      version: 1,
+      highCriticalDashboardVisibility: "always_visible",
+      eventDelivery: { critical: false },
+      changedAt: "2026-08-28T18:00:00.000Z",
+    });
+
+    await expect(client.updateNotificationPreferences("res_assignment_review", {
+      expectedVersion: 0,
+      eventDelivery: saved.eventDelivery!,
+      awarenessDelivery: saved.awarenessDelivery!,
+    })).rejects.toThrow(/changed in another session/i);
+  });
+
+  it("adds, corrects, and retires resident context without deleting history", async () => {
+    const client = new MockMonitoringClient(() => new Date("2026-08-28T18:00:00.000Z"));
+    const added = await client.addMemoryEntry("res_2c8d4f", {
+      expectedVersion: 0,
+      description: "  Assisted walking is common after lunch.  ",
+    });
+    expect(added).toMatchObject({ version: 1, entries: [{ status: "active", sourceKind: "operator", description: "Assisted walking is common after lunch." }] });
+
+    const originalId = added.entries[0].entryId;
+    const corrected = await client.correctMemoryEntry("res_2c8d4f", originalId, {
+      expectedVersion: 1,
+      description: "Assisted walking is common before lunch.",
+      reason: "The time was recorded incorrectly.",
+    });
+    expect(corrected.version).toBe(2);
+    expect(corrected.entries).toHaveLength(2);
+    expect(corrected.entries[0]).toMatchObject({ status: "retired", retirementReason: "The time was recorded incorrectly." });
+    expect(corrected.entries[1]).toMatchObject({ status: "active", supersedesEntryId: originalId });
+
+    const retired = await client.retireMemoryEntry("res_2c8d4f", corrected.entries[1].entryId, {
+      expectedVersion: 2,
+      reason: "This routine is no longer current.",
+    });
+    expect(retired.version).toBe(3);
+    expect(retired.entries).toHaveLength(2);
+    expect(retired.entries.every((entry) => entry.status === "retired")).toBe(true);
+  });
+
+  it("preserves resident settings when the mock client is recreated", async () => {
+    const savedValues = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => savedValues.get(key) ?? null,
+      setItem: (key: string, value: string) => savedValues.set(key, value),
+    };
+    const firstClient = new MockMonitoringClient(undefined, storage);
+    await firstClient.addMemoryEntry("res_2c8d4f", { expectedVersion: 0, description: "A synthetic routine." });
+    const preferences = await firstClient.getNotificationPreferences("res_7f3a1c");
+    await firstClient.updateNotificationPreferences("res_7f3a1c", {
+      expectedVersion: preferences.version!,
+      eventDelivery: { ...preferences.eventDelivery!, watch: false },
+      awarenessDelivery: preferences.awarenessDelivery!,
+    });
+
+    const recreated = new MockMonitoringClient(undefined, storage);
+    expect((await recreated.getResidentMemory("res_2c8d4f")).version).toBe(1);
+    expect((await recreated.getNotificationPreferences("res_7f3a1c")).eventDelivery?.watch).toBe(false);
+  });
+
+  it("turns routine event feedback into traceable resident context", async () => {
+    const client = new MockMonitoringClient();
+    await client.performEventAction("evt_unusual_movement_102", "acknowledge");
+    await client.performEventAction("evt_unusual_movement_102", "check");
+    await client.resolveEventWithFeedback("evt_unusual_movement_102", {
+      outcome: "false_positive",
+      actualEventLabel: "Assisted movement",
+      routine: true,
+    });
+
+    const memory = await client.getResidentMemory("res_2c8d4f");
+    expect(memory).toMatchObject({ version: 1 });
+    expect(memory.entries[0]).toMatchObject({
+      description: "Assisted movement",
+      sourceKind: "feedback",
+      sourceFeedbackId: "fb_evt_unusual_movement_102",
+      status: "active",
+    });
+  });
 });

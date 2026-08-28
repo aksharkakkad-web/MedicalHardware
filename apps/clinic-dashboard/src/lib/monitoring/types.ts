@@ -209,6 +209,73 @@ export interface ResidentMonitoringSetupResponse {
   setup: ResidentMonitoringSetup;
 }
 
+export interface NotificationDeliveryChoices {
+  watch: boolean;
+  high: boolean;
+  critical: boolean;
+}
+
+export interface AwarenessDeliveryChoices {
+  away: boolean;
+  return: boolean;
+  limited: boolean;
+  unavailable: boolean;
+}
+
+export interface ResidentNotificationPreferencesResponse {
+  schemaVersion: "1.0";
+  residentId: string;
+  dataAvailability: "available" | "not_yet_available";
+  version: number | null;
+  eventDelivery: NotificationDeliveryChoices | null;
+  awarenessDelivery: AwarenessDeliveryChoices | null;
+  highCriticalDashboardVisibility: "always_visible";
+  changedBy: string | null;
+  changedAt: string | null;
+}
+
+export interface UpdateNotificationPreferencesInput {
+  expectedVersion: number;
+  eventDelivery: NotificationDeliveryChoices;
+  awarenessDelivery: AwarenessDeliveryChoices;
+}
+
+export interface ResidentMemoryEntry {
+  schemaVersion: "1.0";
+  entryId: string;
+  description: string;
+  sourceKind: "feedback" | "operator";
+  sourceFeedbackId: string | null;
+  supersedesEntryId: string | null;
+  status: "active" | "retired";
+  createdBy: string;
+  createdAt: string;
+  retiredBy: string | null;
+  retiredAt: string | null;
+  retirementReason: string | null;
+}
+
+export interface ResidentMemoryResponse {
+  schemaVersion: "1.0";
+  residentId: string;
+  version: number;
+  entries: ResidentMemoryEntry[];
+}
+
+export interface AddMemoryEntryInput {
+  expectedVersion: number;
+  description: string;
+}
+
+export interface CorrectMemoryEntryInput extends AddMemoryEntryInput {
+  reason: string;
+}
+
+export interface RetireMemoryEntryInput {
+  expectedVersion: number;
+  reason: string;
+}
+
 export interface MonitoringEventDetail {
   schemaVersion: "1.0";
   eventId: string;

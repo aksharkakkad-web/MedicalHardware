@@ -1,6 +1,8 @@
 import type {
+  AddMemoryEntryInput,
   ClinicDeviceDetailResponse,
   ClinicDeviceListResponse,
+  CorrectMemoryEntryInput,
   EventAction,
   EventFeedbackInput,
   MonitoringClient,
@@ -9,12 +11,18 @@ import type {
   ResidentDetailResponse,
   ResidentMonitoringSetup,
   ResidentMonitoringSetupResponse,
+  ResidentMemoryEntry,
+  ResidentMemoryResponse,
+  ResidentNotificationPreferencesResponse,
   ResidentOverviewResponse,
+  RetireMemoryEntryInput,
   SetupChangeInput,
+  UpdateNotificationPreferencesInput,
 } from "@/lib/monitoring";
 import { createDeviceListFixture } from "./devices";
 import { createEventDetailFixtures } from "./events";
 import { createResidentOverviewFixture } from "./residents";
+import { createMemoryFixtures, createPreferenceFixtures } from "./resident-settings";
 import { createMonitoringSetupFixtures } from "./setups";
 
 export interface MonitoringStorage {
@@ -24,6 +32,8 @@ export interface MonitoringStorage {
 
 const EVENT_STORAGE_KEY = "adaptive-care:clinic-events:v1";
 const SETUP_STORAGE_KEY = "adaptive-care:clinic-setups:v2";
+const PREFERENCE_STORAGE_KEY = "adaptive-care:clinic-preferences:v1";
+const MEMORY_STORAGE_KEY = "adaptive-care:resident-memory:v1";
 
 function isStoredEvent(candidate: unknown): candidate is MonitoringEventDetail {
   if (typeof candidate !== "object" || candidate === null) {
@@ -57,11 +67,27 @@ function isStoredSetup(candidate: unknown): candidate is ResidentMonitoringSetup
   return setup.schemaVersion === "1.0" && typeof setup.residentId === "string" && typeof setup.version === "number" && typeof setup.learningState === "string" && typeof setup.learningReason === "string" && typeof setup.status === "string" && allowedStatuses.has(setup.status) && Array.isArray(setup.dimensions) && setup.dimensions.every((dimension) => allowedStatuses.has(dimension.status)) && Array.isArray(setup.setupChanges);
 }
 
+function isStoredPreference(candidate: unknown): candidate is ResidentNotificationPreferencesResponse {
+  if (typeof candidate !== "object" || candidate === null) return false;
+  const preference = candidate as Partial<ResidentNotificationPreferencesResponse>;
+  return preference.schemaVersion === "1.0" && typeof preference.residentId === "string" && (preference.dataAvailability === "available" || preference.dataAvailability === "not_yet_available") && preference.highCriticalDashboardVisibility === "always_visible";
+}
+
+function isStoredMemory(candidate: unknown): candidate is ResidentMemoryResponse {
+  if (typeof candidate !== "object" || candidate === null) return false;
+  const memory = candidate as Partial<ResidentMemoryResponse>;
+  return memory.schemaVersion === "1.0" && typeof memory.residentId === "string" && typeof memory.version === "number" && Array.isArray(memory.entries);
+}
+
 export class MockMonitoringClient implements MonitoringClient {
   private readonly events = new Map<string, MonitoringEventDetail>();
   private readonly setups = new Map<string, ResidentMonitoringSetup>();
+  private readonly preferences = new Map<string, ResidentNotificationPreferencesResponse>();
+  private readonly memories = new Map<string, ResidentMemoryResponse>();
   private eventsLoaded = false;
   private setupsLoaded = false;
+  private preferencesLoaded = false;
+  private memoriesLoaded = false;
 
   constructor(
     private readonly now: () => Date = () => new Date(),
@@ -230,6 +256,120 @@ export class MockMonitoringClient implements MonitoringClient {
     return this.getResidentMonitoringSetup(residentId);
   }
 
+  async getNotificationPreferences(
+    residentId: string,
+  ): Promise<ResidentNotificationPreferencesResponse> {
+    this.loadPreferences();
+    const preferences = this.preferences.get(residentId);
+    if (!preferences) throw new Error("The requested notification preferences could not be found.");
+    return structuredClone(preferences);
+  }
+
+  async updateNotificationPreferences(
+    residentId: string,
+    input: UpdateNotificationPreferencesInput,
+  ): Promise<ResidentNotificationPreferencesResponse> {
+    const current = await this.getNotificationPreferences(residentId);
+    const actualVersion = current.version ?? 0;
+    if (input.expectedVersion !== actualVersion) {
+      throw new Error("These preferences changed in another session. Refresh before trying again.");
+    }
+    const updated: ResidentNotificationPreferencesResponse = {
+      schemaVersion: "1.0",
+      residentId,
+      dataAvailability: "available",
+      version: actualVersion + 1,
+      eventDelivery: { ...input.eventDelivery },
+      awarenessDelivery: { ...input.awarenessDelivery },
+      highCriticalDashboardVisibility: "always_visible",
+      changedBy: "Demo administrator",
+      changedAt: this.now().toISOString(),
+    };
+    this.preferences.set(residentId, updated);
+    this.persistPreferences();
+    return structuredClone(updated);
+  }
+
+  async getResidentMemory(residentId: string): Promise<ResidentMemoryResponse> {
+    this.loadMemories();
+    const memory = this.memories.get(residentId);
+    if (!memory) throw new Error("The requested resident context could not be found.");
+    return structuredClone(memory);
+  }
+
+  async addMemoryEntry(
+    residentId: string,
+    input: AddMemoryEntryInput,
+  ): Promise<ResidentMemoryResponse> {
+    const current = await this.getResidentMemory(residentId);
+    this.requireMemoryVersion(current, input.expectedVersion);
+    const description = this.requireText(input.description, "Describe the resident context before saving.");
+    const version = current.version + 1;
+    const changedAt = this.now().toISOString();
+    const entry: ResidentMemoryEntry = {
+      schemaVersion: "1.0",
+      entryId: `mem_${residentId}_${version}_${current.entries.length + 1}`,
+      description,
+      sourceKind: "operator",
+      sourceFeedbackId: null,
+      supersedesEntryId: null,
+      status: "active",
+      createdBy: "Demo caregiver",
+      createdAt: changedAt,
+      retiredBy: null,
+      retiredAt: null,
+      retirementReason: null,
+    };
+    return this.saveMemory({ ...current, version, entries: [...current.entries, entry] });
+  }
+
+  async correctMemoryEntry(
+    residentId: string,
+    entryId: string,
+    input: CorrectMemoryEntryInput,
+  ): Promise<ResidentMemoryResponse> {
+    const current = await this.getResidentMemory(residentId);
+    this.requireMemoryVersion(current, input.expectedVersion);
+    const target = this.requireActiveMemoryEntry(current, entryId);
+    const description = this.requireText(input.description, "Enter the corrected context before saving.");
+    const reason = this.requireText(input.reason, "Explain why this context is being corrected.");
+    const changedAt = this.now().toISOString();
+    const version = current.version + 1;
+    const retired = current.entries.map((entry) => entry.entryId === entryId ? { ...entry, status: "retired" as const, retiredBy: "Demo caregiver", retiredAt: changedAt, retirementReason: reason } : entry);
+    const replacement: ResidentMemoryEntry = {
+      ...target,
+      entryId: `mem_${residentId}_${version}_${current.entries.length + 1}`,
+      description,
+      sourceKind: "operator",
+      sourceFeedbackId: null,
+      supersedesEntryId: target.entryId,
+      status: "active",
+      createdBy: "Demo caregiver",
+      createdAt: changedAt,
+      retiredBy: null,
+      retiredAt: null,
+      retirementReason: null,
+    };
+    return this.saveMemory({ ...current, version, entries: [...retired, replacement] });
+  }
+
+  async retireMemoryEntry(
+    residentId: string,
+    entryId: string,
+    input: RetireMemoryEntryInput,
+  ): Promise<ResidentMemoryResponse> {
+    const current = await this.getResidentMemory(residentId);
+    this.requireMemoryVersion(current, input.expectedVersion);
+    this.requireActiveMemoryEntry(current, entryId);
+    const reason = this.requireText(input.reason, "Explain why this context is no longer current.");
+    const changedAt = this.now().toISOString();
+    return this.saveMemory({
+      ...current,
+      version: current.version + 1,
+      entries: current.entries.map((entry) => entry.entryId === entryId ? { ...entry, status: "retired" as const, retiredBy: "Demo caregiver", retiredAt: changedAt, retirementReason: reason } : entry),
+    });
+  }
+
   async getEvent(eventId: string): Promise<MonitoringEventDetail> {
     const event = this.getStoredEvent(eventId);
     return structuredClone(event);
@@ -315,6 +455,9 @@ export class MockMonitoringClient implements MonitoringClient {
     };
     this.events.set(eventId, updated);
     this.persistEvents();
+    if (feedback.routine && actualEventLabel.toLowerCase() !== "unknown") {
+      this.recordFeedbackMemory(updated, actualEventLabel);
+    }
     return structuredClone(updated);
   }
 
@@ -398,5 +541,103 @@ export class MockMonitoringClient implements MonitoringClient {
     } catch {
       // The workflow still works for this visit if browser storage is unavailable.
     }
+  }
+
+  private loadPreferences(): void {
+    if (this.preferencesLoaded) return;
+    this.preferencesLoaded = true;
+    createPreferenceFixtures(this.now()).forEach((fixture) => this.preferences.set(fixture.residentId, fixture));
+    this.loadStoredCollection(PREFERENCE_STORAGE_KEY, isStoredPreference, this.preferences);
+  }
+
+  private persistPreferences(): void {
+    this.persistCollection(PREFERENCE_STORAGE_KEY, this.preferences);
+  }
+
+  private loadMemories(): void {
+    if (this.memoriesLoaded) return;
+    this.memoriesLoaded = true;
+    createMemoryFixtures(this.now()).forEach((fixture) => this.memories.set(fixture.residentId, fixture));
+    this.loadStoredCollection(MEMORY_STORAGE_KEY, isStoredMemory, this.memories);
+  }
+
+  private persistMemories(): void {
+    this.persistCollection(MEMORY_STORAGE_KEY, this.memories);
+  }
+
+  private loadStoredCollection<T extends { residentId: string }>(
+    key: string,
+    validator: (candidate: unknown) => candidate is T,
+    target: Map<string, T>,
+  ): void {
+    try {
+      const saved = this.storage?.getItem(key);
+      if (!saved) return;
+      const parsed: unknown = JSON.parse(saved);
+      if (!Array.isArray(parsed)) return;
+      parsed.forEach((candidate) => {
+        if (validator(candidate) && target.has(candidate.residentId)) target.set(candidate.residentId, candidate);
+      });
+    } catch {
+      // Broken demo storage is ignored so the safe fixtures remain usable.
+    }
+  }
+
+  private persistCollection<T>(key: string, collection: Map<string, T>): void {
+    try {
+      this.storage?.setItem(key, JSON.stringify([...collection.values()]));
+    } catch {
+      // The workflow still works for this visit if browser storage is unavailable.
+    }
+  }
+
+  private requireMemoryVersion(memory: ResidentMemoryResponse, expectedVersion: number): void {
+    if (memory.version !== expectedVersion) {
+      throw new Error("This resident context changed in another session. Refresh before trying again.");
+    }
+  }
+
+  private requireActiveMemoryEntry(memory: ResidentMemoryResponse, entryId: string): ResidentMemoryEntry {
+    const entry = memory.entries.find((candidate) => candidate.entryId === entryId);
+    if (!entry || entry.status !== "active") throw new Error("This context entry is no longer available to change.");
+    return entry;
+  }
+
+  private requireText(value: string, message: string): string {
+    const normalized = value.trim();
+    if (!normalized) throw new Error(message);
+    return normalized;
+  }
+
+  private saveMemory(memory: ResidentMemoryResponse): ResidentMemoryResponse {
+    this.memories.set(memory.residentId, memory);
+    this.persistMemories();
+    return structuredClone(memory);
+  }
+
+  private recordFeedbackMemory(event: MonitoringEventDetail, description: string): void {
+    this.loadMemories();
+    const memory = this.memories.get(event.resident.residentId);
+    if (!memory) return;
+    const sourceFeedbackId = `fb_${event.eventId}`;
+    if (memory.entries.some((entry) => entry.sourceFeedbackId === sourceFeedbackId)) return;
+    const createdAt = this.now().toISOString();
+    const version = memory.version + 1;
+    const entry: ResidentMemoryEntry = {
+      schemaVersion: "1.0",
+      entryId: `mem_${event.resident.residentId}_${version}_${memory.entries.length + 1}`,
+      description,
+      sourceKind: "feedback",
+      sourceFeedbackId,
+      supersedesEntryId: null,
+      status: "active",
+      createdBy: "Demo caregiver",
+      createdAt,
+      retiredBy: null,
+      retiredAt: null,
+      retirementReason: null,
+    };
+    this.memories.set(memory.residentId, { ...memory, version, entries: [...memory.entries, entry] });
+    this.persistMemories();
   }
 }

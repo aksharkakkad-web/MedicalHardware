@@ -5,6 +5,8 @@ export {
 } from "./provider";
 export type {
   AttentionPriority,
+  AddMemoryEntryInput,
+  AwarenessDeliveryChoices,
   ClinicDevice,
   ClinicDeviceDetailResponse,
   ClinicDeviceListResponse,
@@ -23,12 +25,19 @@ export type {
   CalibrationDimensionId,
   CalibrationDimensionStatus,
   CalibrationStatus,
+  CorrectMemoryEntryInput,
+  NotificationDeliveryChoices,
   ResidentOverviewItem,
   ResidentOverviewResponse,
   ResidentDetailResponse,
   ResidentMonitoringSetup,
   ResidentMonitoringSetupResponse,
+  ResidentMemoryEntry,
+  ResidentMemoryResponse,
+  ResidentNotificationPreferencesResponse,
   ResolutionOutcome,
   SetupChangeInput,
   SetupChangeReason,
+  RetireMemoryEntryInput,
+  UpdateNotificationPreferencesInput,
 } from "./types";

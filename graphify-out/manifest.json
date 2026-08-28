@@ -1446,8 +1446,8 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/next.config.ts": {
-    "mtime": 1787873979.0973043,
-    "ast_hash": "9b77af189a21a7a64e4bd7a426f64176",
+    "mtime": 1787954615.1489494,
+    "ast_hash": "1cf426a4742119cb70565236ed18995a",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/package.json": {
@@ -1501,8 +1501,8 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/resident-overview.test.tsx": {
-    "mtime": 1787950129.7530475,
-    "ast_hash": "42b89ea3698f0c5268a260530a39d7ca",
+    "mtime": 1787954052.904657,
+    "ast_hash": "486c15797f7cf7f2473da80ea476853a",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/resident-overview.tsx": {
@@ -1511,8 +1511,8 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/use-resident-overview.test.tsx": {
-    "mtime": 1787950129.7538075,
-    "ast_hash": "bc4887ddebebdb7f9984e646aa81e1d2",
+    "mtime": 1787954052.9051013,
+    "ast_hash": "947f04d51df20ec09a9b89c048ff12d7",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/use-resident-overview.ts": {
@@ -1521,13 +1521,13 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/lib/monitoring/client.ts": {
-    "mtime": 1787949897.4152515,
-    "ast_hash": "4f75f96daafcb34424b970273847c14c",
+    "mtime": 1787953808.0142925,
+    "ast_hash": "3deda82b8adc4bee995fb0a5f78fcf76",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/lib/monitoring/index.ts": {
-    "mtime": 1787949897.4156435,
-    "ast_hash": "606d81872be32f1e46acaf41abf599db",
+    "mtime": 1787953808.0145197,
+    "ast_hash": "c73cfae31847f0ad8ad38e17503b1074",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/lib/monitoring/provider.tsx": {
@@ -1536,18 +1536,18 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/lib/monitoring/types.ts": {
-    "mtime": 1787950511.8165045,
-    "ast_hash": "1f061f287d868df596d82741a7819cbe",
+    "mtime": 1787953808.0137186,
+    "ast_hash": "eeff972c82c6a2adad56c62ff38da22b",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/mocks/mock-monitoring-client.test.ts": {
-    "mtime": 1787950527.3761296,
-    "ast_hash": "af29b45af7974e38ac661ca1fb038b92",
+    "mtime": 1787954469.1242592,
+    "ast_hash": "2aca3bbb17529100e746a823313e5a25",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/mocks/mock-monitoring-client.ts": {
-    "mtime": 1787950632.0506592,
-    "ast_hash": "af58891b46e2f16279c7f8c17bffea92",
+    "mtime": 1787954469.1235273,
+    "ast_hash": "9dcdcd340cc5c7df2510d4f98e322d70",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/mocks/residents.ts": {
@@ -1927,13 +1927,13 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/resident-detail.test.tsx": {
-    "mtime": 1787950096.1097791,
-    "ast_hash": "a5cb0473739ce430d6dbf4cd09005834",
+    "mtime": 1787954257.9141695,
+    "ast_hash": "4d22dfca9fc290d66c1b42041a8c9bb9",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/resident-detail.tsx": {
-    "mtime": 1787950078.047833,
-    "ast_hash": "849e5053c274e65a3093d2c2b95a36b1",
+    "mtime": 1787954224.6341784,
+    "ast_hash": "1ed474f7bc6ac16c5c8df4d4edc64333",
     "semantic_hash": ""
   },
   "PRODUCT.md": {
@@ -2034,6 +2034,46 @@
   "apps/clinic-dashboard/src/mocks/setups.ts": {
     "mtime": 1787950511.8169985,
     "ast_hash": "5e193ec43b5b139c5c4e847501cafcf8",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/app/residents/[residentId]/settings/page.tsx": {
+    "mtime": 1787954159.5836046,
+    "ast_hash": "90de863038161b372fdf761462108508",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/features/resident-settings/resident-settings.test.tsx": {
+    "mtime": 1787954257.9139006,
+    "ast_hash": "407a376b0f71158c9a5a8c1c1fa09d64",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/features/resident-settings/resident-settings.tsx": {
+    "mtime": 1787954615.148171,
+    "ast_hash": "4a0deac4e5f183dbe48f5b304741d3f3",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/mocks/resident-settings.ts": {
+    "mtime": 1787953808.014977,
+    "ast_hash": "216314006028bcb36e3d14c1de33f86e",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-08-28-resident-context-preferences.md": {
+    "mtime": 1787953739.2031734,
+    "ast_hash": "8bc0da4daed3d3971e99f3904673c8ea",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-08-28-resident-context-preferences-design.md": {
+    "mtime": 1787953739.2027383,
+    "ast_hash": "722330d85e1eef45543462cf3f6a932e",
+    "semantic_hash": ""
+  },
+  ".impeccable/review/desktop.png": {
+    "mtime": 1787954741.8030972,
+    "ast_hash": "5dc4e72fba6f4d1e803d50804e111cdd",
+    "semantic_hash": ""
+  },
+  ".impeccable/review/mobile.png": {
+    "mtime": 1787954741.8053772,
+    "ast_hash": "06c415988d1f44c24b7d184bb3ce24ec",
     "semantic_hash": ""
   }
 }

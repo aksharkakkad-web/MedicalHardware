@@ -35,6 +35,12 @@ function residentClient(
     getResident: (residentId) => fallback.getResident(residentId),
     getResidentMonitoringSetup: (residentId) => fallback.getResidentMonitoringSetup(residentId),
     recordSetupChange: (residentId, input) => fallback.recordSetupChange(residentId, input),
+    getNotificationPreferences: (residentId) => fallback.getNotificationPreferences(residentId),
+    updateNotificationPreferences: (residentId, input) => fallback.updateNotificationPreferences(residentId, input),
+    getResidentMemory: (residentId) => fallback.getResidentMemory(residentId),
+    addMemoryEntry: (residentId, input) => fallback.addMemoryEntry(residentId, input),
+    correctMemoryEntry: (residentId, entryId, input) => fallback.correctMemoryEntry(residentId, entryId, input),
+    retireMemoryEntry: (residentId, entryId, input) => fallback.retireMemoryEntry(residentId, entryId, input),
     getEvent: (eventId) => fallback.getEvent(eventId),
     performEventAction: (eventId, action) =>
       fallback.performEventAction(eventId, action),

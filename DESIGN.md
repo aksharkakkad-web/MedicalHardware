@@ -233,6 +233,14 @@ The desktop index is a translucent white rail with compact icon-and-label rows. 
 
 Rows use stable columns, hairline separation, compact labels, and semantic pills. Hover changes only the row surface. On small screens, secondary device and timestamp data recede before resident identity, monitoring truth, attention, or the disclosure action.
 
+### Versioned Context Records
+
+Versioned staff context stays in one continuous white sheet, with active entries first and compact source, status, time, and author metadata surrounding the readable statement. Correct and retire remain quiet outlined row actions. Retired text is muted and struck through, while its reason remains visible; historical information is visually de-emphasized, never removed or disguised as current.
+
+### Settings and Safety Boundaries
+
+Preference groups use full-width rows with a direct label, one-line consequence, and the switch aligned at the far edge. Group legends are compact uppercase scan labels. A nearby Cobalt Wash note names any invariant the switch cannot change, so the control's scope is understood before staff save it. On narrow screens, the settings rail stacks below the primary record and two-part boundary notes become one vertical sequence.
+
 ### Event Workflow Sheet
 
 Evidence uses a vertical sequence of cobalt-ringed nodes, while the next-action panel remains adjacent and sticky on wide screens. Acknowledge, check, and resolve transitions briefly change border, surface, or position to confirm the saved state; resolved work becomes a permanent summary rather than an editable active event.
@@ -244,6 +252,7 @@ Evidence uses a vertical sequence of cobalt-ringed nodes, while the next-action 
 - **Do** lead with the next caregiver decision, then reveal evidence, quality, device context, and history progressively.
 - **Do** keep synthetic-data labeling visible in persistent chrome.
 - **Do** pair every semantic color with words and preserve unavailable or limited states as explicit states.
+- **Do** place a control's immutable safety boundary beside the control in a quiet Cobalt Wash note; never leave staff to infer what a switch cannot change.
 - **Do** use the shared 0.75rem control radius, 1rem card radius, hairline borders, and ambient shadow for new operational surfaces.
 - **Do** preserve keyboard focus and reduced-motion behavior in every new control or transition.
 

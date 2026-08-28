@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-28T03:09:12Z",
+  "generatedAt": "2026-08-28T22:07:18Z",
   "title": "Design System: Adaptive Care Clinic Console",
   "extensions": {
     "colorMeta": {
@@ -108,6 +108,20 @@
       "description": "A compact radio-card for the event resolution outcome.",
       "html": "<label class=\"ds-outcome-selected\"><input type=\"radio\" checked><span><strong>Confirmed event</strong><small>The event reflected a real situation that needed attention.</small></span></label>",
       "css": ".ds-outcome-selected { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .6rem; padding: .7rem; border: 1px solid var(--color-accent-strong, #075bd8); border-radius: var(--radius-control, .75rem); color: var(--color-text, #1d1d1f); background: var(--color-accent-soft, #edf4ff); font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif; font-size: .8rem; cursor: pointer; } .ds-outcome-selected input { margin-top: .15rem; accent-color: var(--color-accent-strong, #075bd8); } .ds-outcome-selected strong, .ds-outcome-selected small { display: block; } .ds-outcome-selected small { margin-top: .2rem; color: var(--color-text-muted, #636366); font-size: .7rem; font-weight: 450; line-height: 1.4; } .ds-outcome-selected:focus-within { box-shadow: 0 0 0 3px rgb(7 91 216 / 22%); }"
+    },
+    {
+      "name": "Notification Switch Row",
+      "kind": "custom",
+      "description": "A full-row preference control that pairs a direct label and consequence with an edge-aligned switch.",
+      "html": "<label class=\"ds-switch-row\"><span><strong>Monitoring limited</strong><small>When room conditions reduce confidence.</small></span><input type=\"checkbox\" checked></label>",
+      "css": ".ds-switch-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .8rem; min-height: 4.2rem; padding: .7rem 1rem; border-top: 1px solid var(--color-border, #dedee3); color: var(--color-text, #1d1d1f); background: var(--color-surface, #fff); font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif; cursor: pointer; } .ds-switch-row strong, .ds-switch-row small { display: block; } .ds-switch-row strong { font-size: .75rem; } .ds-switch-row small { margin-top: .23rem; color: var(--color-text-muted, #636366); font-size: .75rem; line-height: 1.4; } .ds-switch-row input { width: 2.4rem; height: 1.42rem; appearance: none; border: 1px solid #b9b9be; border-radius: 999px; background: #d1d1d6; cursor: pointer; transition: background 150ms ease, border-color 150ms ease; } .ds-switch-row input::before { display: block; width: 1.05rem; height: 1.05rem; margin: .12rem; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / 25%); content: \"\"; transition: transform 150ms ease; } .ds-switch-row input:checked { border-color: var(--color-accent-strong, #075bd8); background: var(--color-accent-strong, #075bd8); } .ds-switch-row input:checked::before { transform: translateX(.96rem); } .ds-switch-row input:focus-visible { outline: 2px solid var(--color-accent-strong, #075bd8); outline-offset: 3px; box-shadow: 0 0 0 3px rgb(7 91 216 / 22%); }"
+    },
+    {
+      "name": "Retired Context Record",
+      "kind": "custom",
+      "description": "A versioned history row that de-emphasizes retired context while preserving its reason and provenance.",
+      "html": "<article class=\"ds-context-retired\"><div><span>Staff added</span><span class=\"ds-retired-pill\">retired</span><time>Aug 25, 2026</time></div><p>Assisted standing is common before breakfast.</p><small>Retired because: The routine time was entered incorrectly.</small></article>",
+      "css": ".ds-context-retired { padding: 1.05rem 1.15rem; border-bottom: 1px solid var(--color-border, #dedee3); color: var(--color-text-muted, #636366); background: #fafafa; font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif; } .ds-context-retired > div { display: flex; align-items: center; gap: .55rem; font-size: .75rem; } .ds-context-retired time { margin-left: auto; font-variant-numeric: tabular-nums; } .ds-retired-pill { display: inline-flex; align-items: center; min-height: 1.75rem; padding: .25rem .65rem; border: 1px solid currentColor; border-radius: 999px; font-weight: 650; } .ds-context-retired p { max-width: 68ch; margin: .75rem 0 .55rem; font-size: .86rem; font-weight: 580; line-height: 1.5; text-decoration: line-through; text-decoration-color: var(--color-border, #dedee3); } .ds-context-retired small { font-size: .75rem; line-height: 1.45; }"
     }
   ],
   "narrative": {
@@ -136,6 +150,7 @@
       "Do lead with the next caregiver decision, then reveal evidence, quality, device context, and history progressively.",
       "Do keep synthetic-data labeling visible in persistent chrome.",
       "Do pair every semantic color with words and preserve unavailable or limited states as explicit states.",
+      "Do place a control's immutable safety boundary beside the control in a quiet Cobalt Wash note; never leave staff to infer what a switch cannot change.",
       "Do use the shared 0.75rem control radius, 1rem card radius, hairline borders, and ambient shadow for new operational surfaces.",
       "Do preserve keyboard focus and reduced-motion behavior in every new control or transition."
     ],
