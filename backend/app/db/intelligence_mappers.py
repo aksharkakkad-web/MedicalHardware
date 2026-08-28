@@ -12,6 +12,7 @@ from backend.app.ai.client import (
     InterpretationRequest,
     InterpretationResult,
 )
+from backend.app.ai.context import validate_interpretation_request_payload
 from backend.app.ai.validation import validate_interpretation
 from backend.app.db.models import (
     AnomalyRevisionRow,
@@ -743,6 +744,7 @@ def interpretation_from_row(row: LLMInterpretationRow) -> StoredInterpretation:
         result=_result(result_payload["result"]),
         created_at=_parse_time(result_payload["created_at"]),
     )
+    validate_interpretation_request_payload(stored.request)
     validate_interpretation(stored.request, stored.result)
     result = stored.result
     for field, expected in (

@@ -2,6 +2,7 @@
 
 import json
 from hashlib import sha256
+from math import isfinite
 
 from backend.app.ai.client import InterpretationRequest
 from backend.app.ai.skills import select_skill_bundle
@@ -11,6 +12,263 @@ from backend.app.intelligence.evidence import EvidencePacket
 
 
 _MAX_RELEVANT_MEMORY_ENTRIES = 20
+_ANOMALY_EVIDENCE_KEYS = {
+    "agreements",
+    "anomaly_id",
+    "baseline_id",
+    "baseline_policy_version",
+    "changed_features",
+    "config_version",
+    "contradictions",
+    "current_time",
+    "evidence_limited",
+    "evidence_refs",
+    "feature_contract_version",
+    "filter_version",
+    "frame_id",
+    "limitations",
+    "lifecycle_state",
+    "missing_initiating_features",
+    "missing_modalities",
+    "monitoring_setup_version",
+    "overall_strength",
+    "packet_revision",
+    "progression",
+    "room_id",
+    "strength_scale",
+    "unknowns",
+}
+_CHANGED_FEATURE_KEYS = {
+    "direction",
+    "evidence_ref",
+    "feature_name",
+    "observation_id",
+    "persistence_frames",
+    "quality_class",
+    "quality_reasons",
+    "robust_z",
+    "source",
+    "trajectory",
+    "unit",
+    "value",
+}
+_CONTEXT_ENTRY_KEYS = {
+    "context_kind",
+    "context_ref",
+    "description",
+    "entry_id",
+    "flexibility_note",
+    "local_time_end",
+    "local_time_start",
+    "recurrence_note",
+}
+
+
+def _text_list(value: object) -> bool:
+    return isinstance(value, list) and all(
+        isinstance(item, str) and bool(item.strip()) for item in value
+    )
+
+
+def _number_or_none(value: object) -> bool:
+    return value is None or (
+        not isinstance(value, bool)
+        and isinstance(value, (int, float))
+        and isfinite(value)
+    )
+
+
+def _number(value: object) -> bool:
+    return value is not None and _number_or_none(value)
+
+
+def _canonical_json(value: object) -> str:
+    return json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+        allow_nan=False,
+    )
+
+
+def validate_interpretation_request_payload(
+    request: InterpretationRequest,
+) -> tuple[str, int, tuple[str, ...]]:
+    """Validate embedded request JSON as a total canonical trust boundary."""
+
+    if not isinstance(request, InterpretationRequest) or not isinstance(
+        request.payload_json,
+        str,
+    ):
+        raise ValueError("interpretation request payload must be JSON text")
+    try:
+        payload = json.loads(request.payload_json)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("interpretation request is not canonical JSON") from exc
+    if not isinstance(payload, dict):
+        raise ValueError("interpretation request payload must be an object")
+    try:
+        canonical_payload = _canonical_json(payload)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("interpretation request is not canonical JSON") from exc
+    if canonical_payload != request.payload_json:
+        raise ValueError("interpretation request is not canonical JSON")
+    if set(payload) != {
+        "anomaly_evidence",
+        "guardrails",
+        "request_fingerprint",
+        "resident_context",
+        "schema_version",
+        "skill_bundle",
+        "versions",
+    }:
+        raise ValueError("interpretation request does not use the exact payload schema")
+    anomaly = payload["anomaly_evidence"]
+    context = payload["resident_context"]
+    guardrails = payload["guardrails"]
+    versions = payload["versions"]
+    if not isinstance(anomaly, dict) or set(anomaly) != _ANOMALY_EVIDENCE_KEYS:
+        raise ValueError("interpretation anomaly evidence must use the exact schema")
+    for field in (
+        "agreements",
+        "contradictions",
+        "evidence_refs",
+        "limitations",
+        "missing_initiating_features",
+        "missing_modalities",
+        "unknowns",
+    ):
+        if not _text_list(anomaly[field]):
+            raise ValueError(f"interpretation anomaly {field} must be text list")
+    changed_features = anomaly["changed_features"]
+    if not isinstance(changed_features, list) or any(
+        not isinstance(item, dict)
+        or set(item) != _CHANGED_FEATURE_KEYS
+        or not _text_list(item["quality_reasons"])
+        or any(
+            not isinstance(item[field], str) or not item[field].strip()
+            for field in (
+                "direction",
+                "feature_name",
+                "observation_id",
+                "quality_class",
+                "source",
+                "trajectory",
+                "unit",
+            )
+        )
+        or (
+            item["evidence_ref"] is not None
+            and not isinstance(item["evidence_ref"], str)
+        )
+        or isinstance(item["persistence_frames"], bool)
+        or not isinstance(item["persistence_frames"], int)
+        or item["persistence_frames"] < 0
+        or not _number(item["robust_z"])
+        or not _number(item["value"])
+        for item in changed_features
+    ):
+        raise ValueError("interpretation changed features must use the exact schema")
+    for field in (
+        "anomaly_id",
+        "baseline_id",
+        "baseline_policy_version",
+        "config_version",
+        "current_time",
+        "feature_contract_version",
+        "filter_version",
+        "frame_id",
+        "lifecycle_state",
+        "monitoring_setup_version",
+        "progression",
+        "room_id",
+        "strength_scale",
+    ):
+        if not isinstance(anomaly[field], str) or not anomaly[field].strip():
+            raise ValueError(f"interpretation anomaly {field} must be text")
+    if (
+        not isinstance(anomaly["evidence_limited"], bool)
+        or isinstance(anomaly["packet_revision"], bool)
+        or not isinstance(anomaly["packet_revision"], int)
+        or anomaly["packet_revision"] < 1
+        or not _number_or_none(anomaly["overall_strength"])
+    ):
+        raise ValueError("interpretation anomaly scalar provenance is malformed")
+    if (
+        not isinstance(context, dict)
+        or set(context) != {"entries", "resident_id", "version"}
+        or not isinstance(context["resident_id"], str)
+        or not context["resident_id"].strip()
+        or isinstance(context["version"], bool)
+        or not isinstance(context["version"], int)
+        or context["version"] < 0
+        or not isinstance(context["entries"], list)
+    ):
+        raise ValueError("interpretation resident context must use the exact schema")
+    entry_ids: list[str] = []
+    for item in context["entries"]:
+        if (
+            not isinstance(item, dict)
+            or set(item) != _CONTEXT_ENTRY_KEYS
+            or any(
+                not isinstance(item[field], str) or not item[field].strip()
+                for field in ("context_kind", "context_ref", "description", "entry_id")
+            )
+            or any(
+                item[field] is not None and not isinstance(item[field], str)
+                for field in (
+                    "flexibility_note",
+                    "local_time_end",
+                    "local_time_start",
+                    "recurrence_note",
+                )
+            )
+        ):
+            raise ValueError("interpretation context entry must use the exact schema")
+        entry_ids.append(item["entry_id"])
+    if len(entry_ids) != len(set(entry_ids)):
+        raise ValueError("interpretation context entry IDs must be unique")
+    expected_refs = tuple(
+        "resident-memory://"
+        f"{context['resident_id']}/{context['version']}/entries/{entry_id}"
+        for entry_id in entry_ids
+    )
+    if (
+        not isinstance(request.retrieved_context_refs, tuple)
+        or not _text_list(list(request.retrieved_context_refs))
+        or tuple(request.retrieved_context_refs) != expected_refs
+        or tuple(item["context_ref"] for item in context["entries"])
+        != expected_refs
+        or not isinstance(request.urgent_deterministic_event, bool)
+        or guardrails
+        != {"urgent_deterministic_event": request.urgent_deterministic_event}
+        or not isinstance(payload["schema_version"], str)
+        or not payload["schema_version"].strip()
+        or payload["schema_version"] != request.schema_version
+        or not isinstance(payload["request_fingerprint"], str)
+        or not payload["request_fingerprint"].strip()
+        or not _text_list(payload["skill_bundle"])
+        or not isinstance(versions, dict)
+        or set(versions)
+        != {
+            "invocation",
+            "model",
+            "output_schema",
+            "prompt",
+            "relevant_context",
+            "retrieval_contract",
+            "skill_bundle",
+            "skills",
+        }
+        or not _text_list(versions["skills"])
+        or any(
+            not isinstance(versions[field], str) or not versions[field].strip()
+            for field in set(versions) - {"skills"}
+        )
+    ):
+        raise ValueError("interpretation request payload provenance is malformed")
+    return context["resident_id"], context["version"], tuple(entry_ids)
 
 
 def _anomaly_evidence_payload(packet: EvidencePacket) -> dict[str, object]:
@@ -81,54 +339,17 @@ def validate_interpretation_request_binding(
 ) -> None:
     """Bind a request to one exact stored packet and deterministic prompt bundle."""
 
+    validate_interpretation_request_payload(request)
     bundle = select_skill_bundle(packet)
-    try:
-        payload = json.loads(request.payload_json)
-    except (TypeError, ValueError) as exc:
-        raise ValueError("interpretation request is not canonical JSON") from exc
-    if (
-        json.dumps(payload, sort_keys=True, separators=(",", ":"))
-        != request.payload_json
-    ):
-        raise ValueError("interpretation request is not canonical JSON")
-    if set(payload) != {
-        "anomaly_evidence",
-        "guardrails",
-        "request_fingerprint",
-        "resident_context",
-        "schema_version",
-        "skill_bundle",
-        "versions",
-    }:
-        raise ValueError("interpretation request does not use the exact payload schema")
+    payload = json.loads(request.payload_json)
     missing, limitations, unsupported = _required_declarations(
         packet,
         bundle.skill_names,
     )
     context = payload.get("resident_context", {})
     context_entries = context.get("entries", ())
-    context_entry_keys = {
-        "context_kind",
-        "context_ref",
-        "description",
-        "entry_id",
-        "flexibility_note",
-        "local_time_end",
-        "local_time_start",
-        "recurrence_note",
-    }
     if (
-        not isinstance(context, dict)
-        or set(context) != {"entries", "resident_id", "version"}
-        or not isinstance(context_entries, list)
-        or any(
-            not isinstance(item, dict) or set(item) != context_entry_keys
-            for item in context_entries
-        )
-        or payload.get("guardrails")
-        != {"urgent_deterministic_event": request.urgent_deterministic_event}
-        or payload.get("schema_version") != request.schema_version
-        or request.relevant_context_version
+        request.relevant_context_version
         != f"resident_memory_v{context.get('version')}"
     ):
         raise ValueError("interpretation request does not use the exact payload schema")
@@ -246,7 +467,7 @@ def _request_fingerprint(
         "prompt": prompt,
         "skill_bundle": list(skill_bundle),
     }
-    canonical = json.dumps(material, sort_keys=True, separators=(",", ":"))
+    canonical = _canonical_json(material)
     return sha256(canonical.encode("utf-8")).hexdigest()
 
 
@@ -392,7 +613,7 @@ def build_interpretation_request(
         model_version=model_version,
         invocation_version=invocation_version,
         relevant_context_version=relevant_context_version,
-        payload_json=json.dumps(payload, sort_keys=True, separators=(",", ":")),
+        payload_json=_canonical_json(payload),
         available_evidence_refs=packet.evidence_refs,
         available_measurements=tuple(
             sorted({item.feature_name for item in packet.changed_features})
@@ -418,5 +639,6 @@ def build_interpretation_request(
 __all__ = [
     "InterpretationRequest",
     "build_interpretation_request",
+    "validate_interpretation_request_payload",
     "validate_interpretation_request_binding",
 ]

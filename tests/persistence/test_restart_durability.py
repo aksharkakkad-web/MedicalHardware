@@ -289,6 +289,7 @@ def test_complete_intelligence_trail_survives_database_restart(
                 objective_family=decision.objective_family,
                 headline=decision.headline,
                 priority=decision.priority,
+                last_signal_at=bridge.observed_at,
                 source_anomaly_id=bridge.source_anomaly_id,
                 latest_evidence_revision=bridge.evidence_revision,
                 provisional_urgent=decision.provisional_urgent,

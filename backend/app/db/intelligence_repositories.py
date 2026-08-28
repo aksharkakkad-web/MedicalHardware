@@ -7,7 +7,11 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.app.ai.client import InterpretationRequest, InterpretationResult
-from backend.app.ai.context import validate_interpretation_request_binding
+from backend.app.ai.context import (
+    build_interpretation_request,
+    validate_interpretation_request_binding,
+    validate_interpretation_request_payload,
+)
 from backend.app.db.intelligence_mappers import (
     DispositionRecord,
     StoredAnomalyRevision,
@@ -23,6 +27,7 @@ from backend.app.db.intelligence_mappers import (
     interpretation_from_row,
     interpretation_to_row,
 )
+from backend.app.db.mappers import memory_from_rows
 from backend.app.db.models import (
     AnomalyRevisionRow,
     BaselineDimensionRow,
@@ -30,8 +35,11 @@ from backend.app.db.models import (
     DispositionDecisionRow,
     EventBridgeRecordRow,
     LLMInterpretationRow,
-    MonitoringEventRow,
+    ResidentMemoryEntryRow,
+    ResidentMemorySnapshotRow,
 )
+from backend.app.db.repositories import EventRepository
+from backend.app.domain.feedback import ResidentMemory
 from backend.app.intelligence.anomaly import AnomalyUpdate
 from backend.app.intelligence.baseline import BaselineSnapshot
 from backend.app.intelligence.evidence import EvidencePacket
@@ -188,20 +196,11 @@ class IntelligenceRepository:
         result: InterpretationResult,
         created_at: datetime,
     ) -> StoredInterpretation:
-        anomaly = self._anomaly_revision(
-            tenant_id,
-            request.anomaly_id,
-            request.packet_revision,
-        )
-        if anomaly is None:
-            raise ValueError("interpretation anomaly revision does not exist")
-        validate_interpretation_request_binding(
-            anomaly_from_row(anomaly).packet,
-            request,
-        )
         candidate = interpretation_to_row(
             tenant_id, request, result, created_at
         )
+        proposed = interpretation_from_row(candidate)
+        self._validate_interpretation_links(tenant_id, proposed)
         existing = self._session.get(
             LLMInterpretationRow,
             (tenant_id, result.interpretation_id),
@@ -209,7 +208,7 @@ class IntelligenceRepository:
         if existing is not None:
             if not _same_row(existing, candidate):
                 raise ConcurrentUpdateError()
-            return interpretation_from_row(existing)
+            return self._hydrate_interpretation(tenant_id, existing)
         try:
             with self._session.begin_nested():
                 self._session.add(candidate)
@@ -222,8 +221,8 @@ class IntelligenceRepository:
             )
             if winner is None or not _same_row(winner, candidate):
                 raise ConcurrentUpdateError() from exc
-            return interpretation_from_row(winner)
-        return interpretation_from_row(candidate)
+            return self._hydrate_interpretation(tenant_id, winner)
+        return proposed
 
     def find_interpretation(
         self,
@@ -236,7 +235,7 @@ class IntelligenceRepository:
                 LLMInterpretationRow.interpretation_id == interpretation_id,
             )
         )
-        return None if row is None else interpretation_from_row(row)
+        return None if row is None else self._hydrate_interpretation(tenant_id, row)
 
     def save_disposition(
         self,
@@ -251,7 +250,7 @@ class IntelligenceRepository:
         if existing is not None:
             if not _same_row(existing, candidate):
                 raise ConcurrentUpdateError()
-            return disposition_from_row(existing)
+            return self._hydrate_disposition(tenant_id, existing)
         self._validate_disposition_links(tenant_id, record)
         try:
             with self._session.begin_nested():
@@ -265,7 +264,7 @@ class IntelligenceRepository:
             )
             if winner is None or not _same_row(winner, candidate):
                 raise ConcurrentUpdateError() from exc
-            return disposition_from_row(winner)
+            return self._hydrate_disposition(tenant_id, winner)
         return disposition_from_row(candidate)
 
     def find_disposition(
@@ -279,7 +278,7 @@ class IntelligenceRepository:
                 DispositionDecisionRow.disposition_id == disposition_id,
             )
         )
-        return None if row is None else disposition_from_row(row)
+        return None if row is None else self._hydrate_disposition(tenant_id, row)
 
     def find_event_bridge(
         self,
@@ -356,6 +355,83 @@ class IntelligenceRepository:
             )
         )
 
+    def _hydrate_interpretation(
+        self,
+        tenant_id: str,
+        row: LLMInterpretationRow,
+    ) -> StoredInterpretation:
+        stored = interpretation_from_row(row)
+        self._validate_interpretation_links(tenant_id, stored)
+        return stored
+
+    def _validate_interpretation_links(
+        self,
+        tenant_id: str,
+        stored: StoredInterpretation,
+    ) -> None:
+        request = stored.request
+        resident_id, memory_version, entry_ids = (
+            validate_interpretation_request_payload(request)
+        )
+        anomaly = self._anomaly_revision(
+            tenant_id,
+            request.anomaly_id,
+            request.packet_revision,
+        )
+        if anomaly is None:
+            raise ValueError("interpretation anomaly revision does not exist")
+        packet = anomaly_from_row(anomaly).packet
+        validate_interpretation_request_binding(packet, request)
+        if resident_id != packet.resident_id:
+            raise ValueError("interpretation resident memory does not match packet")
+        if memory_version == 0:
+            if entry_ids:
+                raise ValueError("resident memory version 0 must be explicitly empty")
+            memory = ResidentMemory(resident_id, 0, ())
+        else:
+            snapshot = self._session.scalar(
+                select(ResidentMemorySnapshotRow).where(
+                    ResidentMemorySnapshotRow.tenant_id == tenant_id,
+                    ResidentMemorySnapshotRow.resident_id == resident_id,
+                    ResidentMemorySnapshotRow.version == memory_version,
+                )
+            )
+            if snapshot is None:
+                raise ValueError(
+                    "interpretation resident memory snapshot does not exist"
+                )
+            entries = self._session.scalars(
+                select(ResidentMemoryEntryRow)
+                .where(
+                    ResidentMemoryEntryRow.tenant_id == tenant_id,
+                    ResidentMemoryEntryRow.resident_id == resident_id,
+                    ResidentMemoryEntryRow.memory_version == memory_version,
+                )
+                .order_by(ResidentMemoryEntryRow.memory_entry_row_id)
+            ).all()
+            memory = memory_from_rows(snapshot, entries)
+        rebuilt = build_interpretation_request(
+            packet,
+            memory,
+            model_id=request.model_id,
+            model_version=request.model_version,
+            urgent_deterministic_event=request.urgent_deterministic_event,
+            relevant_context_entry_ids=entry_ids,
+        )
+        if rebuilt != request:
+            raise ValueError("interpretation request does not match resident memory")
+        if _utc(stored.created_at) < _utc(packet.current_time):
+            raise ValueError("interpretation cannot precede packet evidence")
+
+    def _hydrate_disposition(
+        self,
+        tenant_id: str,
+        row: DispositionDecisionRow,
+    ) -> DispositionRecord:
+        record = disposition_from_row(row)
+        self._validate_disposition_links(tenant_id, record)
+        return record
+
     def _validate_disposition_links(
         self,
         tenant_id: str,
@@ -376,23 +452,32 @@ class IntelligenceRepository:
             record.room_id,
         ):
             raise ValueError("disposition lane does not match anomaly revision")
-        if _utc(record.decided_at) < _utc(anomaly.recorded_at):
+        packet = anomaly_from_row(anomaly).packet
+        if _utc(record.decided_at) < _utc(packet.current_time):
             raise ValueError("disposition cannot precede packet evidence")
         if record.interpretation_id is not None:
-            interpretation = self._session.get(
+            interpretation_row = self._session.get(
                 LLMInterpretationRow,
                 (tenant_id, record.interpretation_id),
             )
-            if interpretation is None or (
-                interpretation.anomaly_id,
-                interpretation.packet_revision,
+            if interpretation_row is None or (
+                interpretation_row.anomaly_id,
+                interpretation_row.packet_revision,
             ) != (record.anomaly_id, record.packet_revision):
                 raise ValueError(
                     "disposition interpretation does not match anomaly revision"
                 )
+            interpretation = self._hydrate_interpretation(
+                tenant_id,
+                interpretation_row,
+            )
             if _utc(record.decided_at) < _utc(interpretation.created_at):
                 raise ValueError("disposition cannot precede interpretation")
-        self._validate_disposition_event_chain(tenant_id, record)
+        self._validate_disposition_event_chain(
+            tenant_id,
+            record,
+            packet_time=packet.current_time,
+        )
 
     def _validate_provisional_disposition(
         self,
@@ -414,6 +499,8 @@ class IntelligenceRepository:
         self,
         tenant_id: str,
         record: DispositionRecord,
+        *,
+        packet_time: datetime | None = None,
     ) -> None:
         caregiver = record.decision.disposition.value == "caregiver_event"
         if not caregiver:
@@ -422,9 +509,22 @@ class IntelligenceRepository:
             return
         if record.event_id is None or record.decision.priority is None:
             raise ValueError("caregiver disposition requires linked event")
+        revision_component = (
+            f"provisional-{record.evidence_revision}"
+            if record.evidence_kind.value == "provisional"
+            else str(record.evidence_revision)
+        )
+        expected_key = ":".join(
+            (
+                record.anomaly_id,
+                revision_component,
+                record.decision.policy_version,
+            )
+        )
         bridge = self._session.scalar(
             select(EventBridgeRecordRow).where(
                 EventBridgeRecordRow.tenant_id == tenant_id,
+                EventBridgeRecordRow.idempotency_key == expected_key,
                 EventBridgeRecordRow.event_id == record.event_id,
                 EventBridgeRecordRow.source_anomaly_id == record.anomaly_id,
                 EventBridgeRecordRow.evidence_revision == record.evidence_revision,
@@ -434,19 +534,41 @@ class IntelligenceRepository:
         if bridge is None:
             raise ValueError("disposition bridge does not exist")
         stored_bridge = event_bridge_from_row(bridge).record
-        event = self._session.scalar(
-            select(MonitoringEventRow).where(
-                MonitoringEventRow.tenant_id == tenant_id,
-                MonitoringEventRow.event_id == record.event_id,
-            )
+        stored_event = EventRepository(self._session).find(
+            tenant_id,
+            record.event_id,
         )
-        if event is None or (event.resident_id, event.room_id) != (
+        if stored_event is None or (
+            stored_event.event.resident_id,
+            stored_event.event.room_id,
+        ) != (
             record.resident_id,
             record.room_id,
         ):
             raise ValueError("disposition event lane does not match")
+        event = stored_event.event
+        matching_event_bridges = tuple(
+            item
+            for item in event.bridge_records
+            if item.idempotency_key == expected_key
+        )
+        if (
+            expected_key not in event.bridge_idempotency_keys
+            or matching_event_bridges != (stored_bridge,)
+        ):
+            raise ValueError("disposition event bridge ledger does not match")
+        if any(
+            not (
+                _utc(event.created_at)
+                <= _utc(item.observed_at)
+                <= _utc(event.last_signal_at)
+            )
+            for item in event.bridge_records
+        ):
+            raise ValueError("disposition bridge falls outside event signal history")
         decision = record.decision
         expected_metadata = (
+            (stored_bridge.idempotency_key, expected_key),
             (stored_bridge.resident_id, record.resident_id),
             (stored_bridge.room_id, record.room_id),
             (stored_bridge.objective_family, decision.objective_family),
@@ -456,12 +578,22 @@ class IntelligenceRepository:
             (stored_bridge.room_level_only, decision.room_level_only),
             (event.objective_family, decision.objective_family),
             (event.headline, decision.headline),
-            (event.priority, decision.priority.value),
+            (event.priority, decision.priority),
             (event.provisional_urgent, decision.provisional_urgent),
             (event.room_level_only, decision.room_level_only),
         )
         if any(actual != expected for actual, expected in expected_metadata):
             raise ValueError("disposition event metadata does not match decision")
+        if packet_time is not None and _utc(stored_bridge.observed_at) < _utc(
+            packet_time
+        ):
+            raise ValueError("disposition bridge cannot precede packet evidence")
+        if not (
+            _utc(event.created_at)
+            <= _utc(stored_bridge.observed_at)
+            <= _utc(event.last_signal_at)
+        ):
+            raise ValueError("disposition bridge falls outside event signal history")
         if any(
             _utc(record.decided_at) < _utc(timestamp)
             for timestamp in (event.created_at, stored_bridge.observed_at)
