@@ -952,6 +952,129 @@ nullable `assignment`, and the same `health` object. An assignment contains
 `assigned_at`. One active room is allowed per device and one active device per
 room. Missing assignment is explicit and never guessed from telemetry.
 
+## 18A. Resident Notification Preferences
+
+Preferences store future delivery choices; Phase 2 does not send a real
+notification. High and critical events remain visible in the clinic dashboard
+even when their separate delivery toggle is off.
+
+Current saved preferences:
+
+```json
+{
+  "schema_version": "1.0",
+  "resident_id": "resident_demo_a",
+  "data_availability": "available",
+  "version": 2,
+  "event_delivery": {
+    "watch": false,
+    "high": true,
+    "critical": true
+  },
+  "awareness_delivery": {
+    "away": true,
+    "return": true,
+    "limited": false,
+    "unavailable": true
+  },
+  "high_critical_dashboard_visibility": "always_visible",
+  "changed_by": "operator_1",
+  "changed_at": "2026-08-25T15:00:00Z"
+}
+```
+
+A known resident without saved preferences returns `200` honestly:
+
+```json
+{
+  "schema_version": "1.0",
+  "resident_id": "resident_new",
+  "data_availability": "not_yet_available",
+  "version": null,
+  "event_delivery": null,
+  "awareness_delivery": null,
+  "high_critical_dashboard_visibility": "always_visible",
+  "changed_by": null,
+  "changed_at": null
+}
+```
+
+The update body is:
+
+```json
+{
+  "schema_version": "1.0",
+  "expected_version": 1,
+  "event_delivery": {
+    "watch": false,
+    "high": true,
+    "critical": true
+  },
+  "awareness_delivery": {
+    "away": true,
+    "return": true,
+    "limited": false,
+    "unavailable": true
+  },
+  "changed_at": "2026-08-25T15:00:00Z"
+}
+```
+
+The first update uses `expected_version: 0`. Every later update names the
+current version. A stale version returns a conflict rather than overwriting a
+newer choice. Each successful update appends one preference version, one audit
+record, and one idempotency result in the same transaction.
+
+## 18B. Resident-Memory Administration
+
+`GET /v1/residents/{resident_id}/memory` returns the complete current memory
+snapshot. Each entry includes provenance and an optional correction link:
+
+- `source_kind` is `feedback` or `operator`;
+- `source_feedback_id` is present only for feedback-created memory;
+- `supersedes_entry_id` links a corrected replacement to the retired entry;
+- retirement metadata preserves who retired an entry, when, and why.
+
+Direct add body:
+
+```json
+{
+  "schema_version": "1.0",
+  "expected_version": 2,
+  "description": "Assisted standing is common before breakfast.",
+  "changed_at": "2026-08-25T15:10:00Z"
+}
+```
+
+Correction body:
+
+```json
+{
+  "schema_version": "1.0",
+  "expected_version": 3,
+  "description": "Assisted standing is common after breakfast.",
+  "reason": "The routine time was entered incorrectly.",
+  "changed_at": "2026-08-25T15:20:00Z"
+}
+```
+
+Retirement body:
+
+```json
+{
+  "schema_version": "1.0",
+  "expected_version": 4,
+  "reason": "This routine is no longer current.",
+  "changed_at": "2026-08-25T15:30:00Z"
+}
+```
+
+Add creates one active operator-sourced entry. Correct retires the selected
+active entry and creates one linked active replacement in the same new memory
+version. Retire creates a new version with the selected entry retired. Old
+snapshots and entries are never deleted. These commands cannot change event
+history, numerical calibration, warning thresholds, or global behavior.
+
 ---
 
 ## 19. Product API Concepts
@@ -981,6 +1104,15 @@ room. Missing assignment is explicit and never guessed from telemetry.
 - `GET /v1/devices`
 - `GET /v1/devices/{device_id}/health`
 
+### Preferences and resident memory
+
+- `GET /v1/residents/{resident_id}/notification-preferences`
+- `PUT /v1/residents/{resident_id}/notification-preferences`
+- `GET /v1/residents/{resident_id}/memory`
+- `POST /v1/residents/{resident_id}/memory/entries`
+- `POST /v1/residents/{resident_id}/memory/entries/{entry_id}/correct`
+- `POST /v1/residents/{resident_id}/memory/entries/{entry_id}/retire`
+
 Exact REST paths may change, but domain objects and semantics should remain stable.
 
 ### Phase 2 first durable slice
@@ -999,6 +1131,7 @@ Implemented read paths:
 - `GET /v1/residents/{resident_id}/status`
 - `GET /v1/residents/{resident_id}/awareness`
 - `GET /v1/residents/{resident_id}/calibration`
+- `GET /v1/residents/{resident_id}/notification-preferences`
 - `GET /v1/events/{event_id}`
 
 Implemented caregiver action paths:
@@ -1008,6 +1141,10 @@ Implemented caregiver action paths:
 - `POST /v1/events/{event_id}/resolve`
 - `POST /v1/events/{event_id}/feedback`
 - `POST /v1/residents/{resident_id}/setup-changes`
+- `PUT /v1/residents/{resident_id}/notification-preferences`
+- `POST /v1/residents/{resident_id}/memory/entries`
+- `POST /v1/residents/{resident_id}/memory/entries/{entry_id}/correct`
+- `POST /v1/residents/{resident_id}/memory/entries/{entry_id}/retire`
 
 Every `/v1` request requires the development-only `X-Tenant-Id` and
 `X-Actor-Id` headers. Every caregiver action also requires
@@ -1134,7 +1271,9 @@ nested feedback, memory, and memory-entry fields:
         "schema_version": "1.0",
         "entry_id": "memory_synthetic_example",
         "description": "assisted_movement",
+        "source_kind": "feedback",
         "source_feedback_id": "fb_synthetic_example",
+        "supersedes_entry_id": null,
         "status": "active",
         "created_by": "operator_1",
         "created_at": "2026-08-24T21:06:00Z",
@@ -1314,6 +1453,14 @@ V1.5 adds durable locations, device-to-room assignment history, append-only
 operational health states, and explicit resident-status composition. Device
 health remains separate from resident health, and missing/unhealthy device
 conditions never produce fake resident measurements.
+
+### V1.6 resident controls and memory provenance
+
+V1.6 adds append-only resident notification/awareness preference versions and
+authorized resident-memory add, correction, and retirement actions. Preference
+delivery choices never hide high or critical clinic events. Memory entries now
+carry explicit feedback/operator provenance and correction links; history is
+never deleted and memory remains separate from calibration and safety policy.
 
 When changing any domain object:
 

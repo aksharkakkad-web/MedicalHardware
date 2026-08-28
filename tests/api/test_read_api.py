@@ -193,9 +193,11 @@ def test_get_resident_memory_maps_nested_entries_to_public_contracts(
         "entries": [
             {
                 "schema_version": "1.0",
-                "entry_id": "memory_read_contract",
-                "description": "assisted_movement",
-                "source_feedback_id": "fb_read_contract",
+                    "entry_id": "memory_read_contract",
+                    "description": "assisted_movement",
+                    "source_kind": "feedback",
+                    "source_feedback_id": "fb_read_contract",
+                    "supersedes_entry_id": None,
                 "status": "active",
                 "created_by": "operator_1",
                 "created_at": "2026-08-24T21:07:00Z",

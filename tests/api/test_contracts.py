@@ -40,7 +40,9 @@ EVENT_PAYLOAD = {
 ACTIVE_MEMORY_ENTRY_PAYLOAD = {
     "entry_id": "memory_contract_test",
     "description": "assisted_movement",
+    "source_kind": "feedback",
     "source_feedback_id": "fb_contract_test",
+    "supersedes_entry_id": None,
     "status": "active",
     "created_by": "operator_1",
     "created_at": UTC_TIMESTAMP,
