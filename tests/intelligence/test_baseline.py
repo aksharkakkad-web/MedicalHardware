@@ -1,5 +1,6 @@
 from dataclasses import FrozenInstanceError
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+from inspect import signature
 from math import isfinite
 
 import pytest
@@ -10,10 +11,7 @@ from backend.app.domain.calibration import (
     start_recalibration,
 )
 from backend.app.domain.feedback import MemoryEntry
-from backend.app.domain.monitoring import (
-    PresenceState,
-    derive_monitoring_snapshot,
-)
+from backend.app.domain.monitoring import PresenceState, derive_monitoring_snapshot
 from backend.app.intelligence.baseline import (
     BaselinePolicy,
     BaselineSnapshot,
@@ -24,12 +22,15 @@ from backend.app.intelligence.baseline import (
     robust_deviation,
     window_is_learning_eligible,
 )
-from backend.app.intelligence.fusion import FeatureEvidence
+from backend.app.intelligence.fusion import AlignedFrame, FeatureEvidence
 from backend.app.intelligence.observations import (
     FeaturePurpose,
     FeatureValue,
     QualityClass,
 )
+
+
+_WINDOW_START = datetime(2026, 8, 28, 12, 0, tzinfo=timezone.utc)
 
 
 def _evidence(
@@ -40,9 +41,10 @@ def _evidence(
     quality: QualityClass = QualityClass.GOOD,
     purpose: FeaturePurpose = FeaturePurpose.MOVEMENT,
     observation_id: str = "observation_1",
+    source: str = "radar",
 ) -> FeatureEvidence:
     return FeatureEvidence(
-        source="radar",
+        source=source,
         observation_id=observation_id,
         feature=FeatureValue(
             name=name,
@@ -55,12 +57,51 @@ def _evidence(
     )
 
 
+def _frame(
+    evidence: tuple[FeatureEvidence, ...],
+    *,
+    frame_id: str = "frame_1",
+    window_start: datetime = _WINDOW_START,
+) -> AlignedFrame:
+    return AlignedFrame(
+        frame_id=frame_id,
+        window_start=window_start,
+        window_end=window_start + timedelta(minutes=1),
+        sources_present=tuple(sorted({item.source for item in evidence})),
+        sources_missing=(),
+        feature_evidence=evidence,
+        agreements=(),
+        contradictions=(),
+    )
+
+
 def _active_monitoring():
     return derive_monitoring_snapshot(
         assignment_valid=True,
         device_healthy=True,
         presence=PresenceState.RESIDENT_PRESENT,
         signal_quality=0.9,
+    )
+
+
+def _guard(
+    evidence: tuple[FeatureEvidence, ...] = (_evidence(10.0),),
+    *,
+    frame_id: str = "frame_1",
+    window_start: datetime = _WINDOW_START,
+    resident_id: str = "resident_demo_a",
+    setup_version: str = "setup_v1",
+    purpose: FeaturePurpose = FeaturePurpose.MOVEMENT,
+    monitoring=None,
+    **flags,
+):
+    return window_is_learning_eligible(
+        _frame(evidence, frame_id=frame_id, window_start=window_start),
+        monitoring_snapshot=monitoring or _active_monitoring(),
+        resident_id=resident_id,
+        setup_version=setup_version,
+        purpose=purpose,
+        **flags,
     )
 
 
@@ -71,20 +112,26 @@ def _expected_behavior() -> MemoryEntry:
         source_feedback_id=None,
         status="active",
         created_by="operator_007",
-        created_at=datetime(2026, 8, 28, 12, 0, tzinfo=timezone.utc),
+        created_at=_WINDOW_START,
         source_kind="operator",
         context_kind="expected_new_behavior",
     )
 
 
-def _baseline_snapshot() -> BaselineSnapshot:
+def _baseline_snapshot(
+    *,
+    resident_id: str = "resident_demo_a",
+    setup_version: str = "setup_v1",
+    policy_version: str = "synthetic_baseline_v1",
+) -> BaselineSnapshot:
     return BaselineSnapshot(
         baseline_id="baseline_1",
-        resident_id="resident_demo_a",
-        monitoring_setup_version="setup_v1",
+        resident_id=resident_id,
+        monitoring_setup_version=setup_version,
         features=(
             FeatureBaseline(
                 feature_name="movement",
+                purpose=FeaturePurpose.MOVEMENT,
                 median=11.0,
                 mad=1.0,
                 iqr=2.0,
@@ -97,6 +144,7 @@ def _baseline_snapshot() -> BaselineSnapshot:
             ),
             FeatureBaseline(
                 feature_name="respiratory_rate",
+                purpose=FeaturePurpose.RESPIRATION,
                 median=15.0,
                 mad=1.0,
                 iqr=2.0,
@@ -108,12 +156,13 @@ def _baseline_snapshot() -> BaselineSnapshot:
                 context_key="night",
             ),
         ),
-        policy_version="synthetic_baseline_v1",
+        policy_version=policy_version,
     )
 
 
 def _candidate(
     *,
+    resident_id: str = "resident_demo_a",
     feature_name: str = "movement",
     unit: str = "normalized",
     purpose: FeaturePurpose = FeaturePurpose.MOVEMENT,
@@ -122,7 +171,7 @@ def _candidate(
 ) -> NewNormalCandidate:
     return NewNormalCandidate(
         candidate_id=f"candidate_{feature_name}",
-        resident_id="resident_demo_a",
+        resident_id=resident_id,
         feature_name=feature_name,
         unit=unit,
         purpose=purpose,
@@ -131,21 +180,60 @@ def _candidate(
         setup_version="setup_v1",
         clean_window_values=values,
         clean_window_keys=tuple(
-            f"prior_window_{index}" for index in range(len(values))
+            f"prior_frame_{index}|2026-08-28T11:{index:02d}:00+00:00"
+            for index in range(len(values))
         ),
     )
 
 
-def test_builds_robust_feature_baseline_from_literal_good_evidence() -> None:
-    # Break caught: mean/stddev or interpolated quantiles replace the specified robust math.
+def _established_calibration(setup_version: str = "setup_v1") -> CalibrationProgress:
+    return CalibrationProgress(
+        setup_version=setup_version,
+        status=BaselineStatus.ESTABLISHED,
+        eligible_windows=20,
+        excluded_windows=0,
+        reason="initial_setup",
+    )
+
+
+def test_learning_guard_binds_one_aligned_window_and_exact_evidence() -> None:
+    # Break caught: eligibility can be detached from the evidence/window it approved.
+    evidence = (_evidence(10.0, observation_id="observation_bound"),)
+    guard = _guard(evidence, frame_id="frame_bound")
+
+    assert guard.frame_id == "frame_bound"
+    assert guard.window_start == _WINDOW_START
+    assert guard.window_end == _WINDOW_START + timedelta(minutes=1)
+    assert guard.resident_id == "resident_demo_a"
+    assert guard.setup_version == "setup_v1"
+    assert guard.purpose == FeaturePurpose.MOVEMENT
+    assert guard.evidence == evidence
+    assert guard.eligible is True
+    assert guard.reasons == ()
+    with pytest.raises(FrozenInstanceError):
+        guard.eligible = False
+
+
+def test_baseline_consumers_have_no_separate_raw_evidence_parameter() -> None:
+    # Break caught: a caller can pair eligibility from frame A with values from frame B.
+    assert "evidence" not in signature(build_feature_baseline).parameters
+    assert "window_evidence" not in signature(advance_new_normal).parameters
+
+
+def test_builds_robust_feature_baseline_from_bound_good_window() -> None:
+    # Break caught: mean/stddev or interpolated quantiles replace the robust math.
     samples = (10.0, 10.0, 11.0, 12.0, 100.0)
-    evidence = tuple(
-        _evidence(value, observation_id=f"observation_{index}")
-        for index, value in enumerate(samples, start=1)
+    guard = _guard(
+        tuple(
+            _evidence(value, observation_id=f"observation_{index}")
+            for index, value in enumerate(samples, start=1)
+        )
     )
 
     baseline = build_feature_baseline(
-        evidence,
+        (guard,),
+        resident_id="resident_demo_a",
+        setup_version="setup_v1",
         feature_name="movement",
         purpose=FeaturePurpose.MOVEMENT,
         context_key="evening",
@@ -160,19 +248,24 @@ def test_builds_robust_feature_baseline_from_literal_good_evidence() -> None:
     assert baseline.upper_quantile == 100.0
     assert baseline.eligible_sample_count == 5
     assert baseline.unit == "normalized"
+    assert baseline.purpose == FeaturePurpose.MOVEMENT
     assert isfinite(robust_deviation(100.0, baseline))
     assert robust_deviation(13.9652, baseline) == pytest.approx(2.0)
     assert BaselinePolicy().test_only is True
-    assert BaselinePolicy().policy_version == "synthetic_baseline_v1"
 
 
 def test_robust_deviation_uses_resolution_floor_when_spread_is_zero() -> None:
-    # Break caught: zero-spread baselines divide by zero or report a fabricated infinity.
-    baseline = build_feature_baseline(
+    # Break caught: zero-spread baselines divide by zero or report infinity.
+    guard = _guard(
         tuple(
             _evidence(10.0, observation_id=f"observation_{index}")
             for index in range(5)
-        ),
+        )
+    )
+    baseline = build_feature_baseline(
+        (guard,),
+        resident_id="resident_demo_a",
+        setup_version="setup_v1",
         feature_name="movement",
         purpose=FeaturePurpose.MOVEMENT,
         context_key="evening",
@@ -184,7 +277,7 @@ def test_robust_deviation_uses_resolution_floor_when_spread_is_zero() -> None:
 
 
 @pytest.mark.parametrize(
-    ("monitoring", "evidence", "flags", "expected_reason"),
+    ("monitoring", "flags", "expected_reason"),
     (
         (
             derive_monitoring_snapshot(
@@ -193,7 +286,6 @@ def test_robust_deviation_uses_resolution_floor_when_spread_is_zero() -> None:
                 presence=PresenceState.RESIDENT_AWAY,
                 signal_quality=0.9,
             ),
-            (_evidence(10.0),),
             {},
             "resident_away",
         ),
@@ -204,104 +296,130 @@ def test_robust_deviation_uses_resolution_floor_when_spread_is_zero() -> None:
                 presence=PresenceState.POSSIBLE_MULTI_PERSON,
                 signal_quality=0.9,
             ),
-            (_evidence(10.0),),
             {},
             "possible_multi_person",
         ),
-        (
-            _active_monitoring(),
-            (_evidence(10.0, quality=QualityClass.LIMITED),),
-            {},
-            "limited_quality",
-        ),
-        (
-            _active_monitoring(),
-            (_evidence(None, quality=QualityClass.UNUSABLE),),
-            {},
-            "unusable_quality",
-        ),
-        (_active_monitoring(), (_evidence(10.0),), {"active_candidate": True}, "active_candidate"),
-        (
-            _active_monitoring(),
-            (_evidence(10.0),),
-            {"unresolved_anomaly": True},
-            "unresolved_anomaly",
-        ),
-        (_active_monitoring(), (_evidence(10.0),), {"setup_change": True}, "setup_change"),
-        (
-            _active_monitoring(),
-            (_evidence(10.0),),
-            {"recovery_freeze": True},
-            "recovery_freeze",
-        ),
+        (_active_monitoring(), {"active_candidate": True}, "active_candidate"),
+        (_active_monitoring(), {"unresolved_anomaly": True}, "unresolved_anomaly"),
+        (_active_monitoring(), {"setup_change": True}, "setup_change"),
+        (_active_monitoring(), {"recovery_freeze": True}, "recovery_freeze"),
     ),
 )
-def test_learning_guard_returns_explicit_reason_for_each_blocker(
-    monitoring, evidence, flags, expected_reason
+def test_learning_guard_returns_explicit_reason_for_each_window_blocker(
+    monitoring, flags, expected_reason
 ) -> None:
-    # Break caught: any safety/quality gate is accidentally omitted or made implicit.
-    decision = window_is_learning_eligible(
-        evidence,
-        monitoring_snapshot=monitoring,
-        purpose=FeaturePurpose.MOVEMENT,
-        **flags,
-    )
+    # Break caught: a monitoring/anomaly/setup/recovery gate is omitted.
+    guard = _guard(monitoring=monitoring, **flags)
 
-    assert decision.eligible is False
-    assert expected_reason in decision.reasons
+    assert guard.eligible is False
+    assert expected_reason in guard.reasons
 
 
-def test_clean_window_is_learning_eligible_and_decision_is_immutable() -> None:
-    # Break caught: a clean good-quality resident-present window is never learnable.
-    decision = window_is_learning_eligible(
-        (_evidence(10.0),),
-        monitoring_snapshot=_active_monitoring(),
-        purpose=FeaturePurpose.MOVEMENT,
-    )
+@pytest.mark.parametrize(
+    ("quality", "value", "expected_reason"),
+    (
+        (QualityClass.LIMITED, 10.0, "limited_quality"),
+        (QualityClass.UNUSABLE, None, "unusable_quality"),
+    ),
+)
+def test_learning_guard_blocks_limited_and_unusable_evidence(
+    quality, value, expected_reason
+) -> None:
+    # Break caught: non-good evidence becomes eligible numerical training data.
+    guard = _guard((_evidence(value, quality=quality),))
 
-    assert decision.eligible is True
-    assert decision.reasons == ()
-    with pytest.raises(FrozenInstanceError):
-        decision.eligible = False
+    assert guard.eligible is False
+    assert expected_reason in guard.reasons
 
 
-def test_expected_behavior_is_semantic_immediately_but_adopts_after_five_clean_windows() -> None:
-    # Break caught: trusted context immediately overwrites numerical normal, or never adopts.
+@pytest.mark.parametrize(
+    ("monitoring", "flags"),
+    (
+        (
+            derive_monitoring_snapshot(
+                assignment_valid=True,
+                device_healthy=True,
+                presence=PresenceState.RESIDENT_AWAY,
+                signal_quality=0.9,
+            ),
+            {},
+        ),
+        (_active_monitoring(), {"active_candidate": True}),
+        (_active_monitoring(), {"recovery_freeze": True}),
+    ),
+)
+def test_blocked_guard_cannot_contribute_to_initial_baseline(monitoring, flags) -> None:
+    # Break caught: initial construction bypasses its bound away/anomaly/freeze decision.
+    blocked_guard = _guard(monitoring=monitoring, **flags)
+    with pytest.raises(ValueError, match="eligible learning windows"):
+        build_feature_baseline(
+            (blocked_guard,),
+            resident_id="resident_demo_a",
+            setup_version="setup_v1",
+            feature_name="movement",
+            purpose=FeaturePurpose.MOVEMENT,
+            context_key="evening",
+            resolution_floor=0.1,
+            policy=BaselinePolicy(minimum_samples=1),
+        )
+
+
+def test_guard_for_resident_a_cannot_build_resident_b_baseline() -> None:
+    # Break caught: valid resident-A evidence is attributed to another resident.
+    with pytest.raises(ValueError, match="resident"):
+        build_feature_baseline(
+            (_guard(resident_id="resident_a"),),
+            resident_id="resident_b",
+            setup_version="setup_v1",
+            feature_name="movement",
+            purpose=FeaturePurpose.MOVEMENT,
+            context_key="evening",
+            resolution_floor=0.1,
+            policy=BaselinePolicy(minimum_samples=1),
+        )
+
+
+def test_guard_for_resident_a_cannot_advance_resident_b_candidate() -> None:
+    # Break caught: an eligible window is rebound to a different resident during adoption.
+    with pytest.raises(ValueError, match="resident"):
+        advance_new_normal(
+            _candidate(resident_id="resident_b"),
+            baseline=_baseline_snapshot(resident_id="resident_b"),
+            expected_behavior=_expected_behavior(),
+            learning_guard=_guard(resident_id="resident_a"),
+            calibration_progress=_established_calibration(),
+            new_baseline_id="baseline_2",
+            policy=BaselinePolicy(),
+        )
+
+
+def test_expected_behavior_adopts_only_after_five_distinct_clean_frames() -> None:
+    # Break caught: semantic context immediately overwrites numerical normal.
     policy = BaselinePolicy()
     memory = _expected_behavior()
     original = _baseline_snapshot()
     candidate = _candidate()
-    clean = window_is_learning_eligible(
-        (_evidence(20.0),),
-        monitoring_snapshot=_active_monitoring(),
-        purpose=FeaturePurpose.MOVEMENT,
-    )
-    calibration = CalibrationProgress(
-        setup_version="setup_v1",
-        status=BaselineStatus.ESTABLISHED,
-        eligible_windows=20,
-        excluded_windows=0,
-        reason="initial_setup",
-    )
+    calibration = _established_calibration()
 
     assert memory.status == "active"
     assert memory.context_kind == "expected_new_behavior"
     assert candidate.semantic_context_entry_id == memory.entry_id
 
-    for window_number, value in enumerate((20.0, 21.0, 22.0, 23.0), start=1):
+    for number, value in enumerate((20.0, 21.0, 22.0, 23.0), start=1):
         candidate, published = advance_new_normal(
             candidate,
             baseline=original,
             expected_behavior=memory,
-            window_evidence=(
-                _evidence(value, observation_id=f"clean_window_{window_number}"),
+            learning_guard=_guard(
+                (_evidence(value, observation_id=f"observation_{number}"),),
+                frame_id=f"clean_frame_{number}",
+                window_start=_WINDOW_START + timedelta(minutes=number),
             ),
-            learning_guard=clean,
             calibration_progress=calibration,
             new_baseline_id="baseline_2",
             policy=policy,
         )
-        assert candidate.clean_windows == window_number
+        assert candidate.clean_windows == number
         assert published is None
         assert original.feature("movement", "evening").median == 11.0
 
@@ -309,8 +427,11 @@ def test_expected_behavior_is_semantic_immediately_but_adopts_after_five_clean_w
         candidate,
         baseline=original,
         expected_behavior=memory,
-        window_evidence=(_evidence(24.0, observation_id="clean_window_5"),),
-        learning_guard=clean,
+        learning_guard=_guard(
+            (_evidence(24.0, observation_id="observation_5"),),
+            frame_id="clean_frame_5",
+            window_start=_WINDOW_START + timedelta(minutes=5),
+        ),
         calibration_progress=calibration,
         new_baseline_id="baseline_2",
         policy=policy,
@@ -320,32 +441,26 @@ def test_expected_behavior_is_semantic_immediately_but_adopts_after_five_clean_w
     assert candidate.adopted_baseline_id == "baseline_2"
     assert published is not None
     assert published is not original
-    assert published.baseline_id == "baseline_2"
     assert published.prior_baseline_id == "baseline_1"
     assert published.adoption_candidate_id == candidate.candidate_id
     assert published.adoption_context_entry_id == memory.entry_id
     assert published.feature("movement", "evening").median == 22.0
-    assert published.feature("movement", "evening").eligible_sample_count == 5
     assert original.feature("movement", "evening").median == 11.0
 
 
-def test_ineligible_window_does_not_advance_new_normal_candidate() -> None:
-    # Break caught: dirty windows count toward the five-window adoption threshold.
+def test_ineligible_bound_window_does_not_advance_new_normal_candidate() -> None:
+    # Break caught: a recovery-frozen window contributes its bound evidence anyway.
     candidate = _candidate(values=(20.0, 21.0))
-    blocked = window_is_learning_eligible(
-        (_evidence(22.0),),
-        monitoring_snapshot=_active_monitoring(),
-        purpose=FeaturePurpose.MOVEMENT,
-        recovery_freeze=True,
-    )
-
     updated, published = advance_new_normal(
         candidate,
         baseline=_baseline_snapshot(),
         expected_behavior=_expected_behavior(),
-        window_evidence=(_evidence(22.0),),
-        learning_guard=blocked,
-        calibration_progress=CalibrationProgress.new("setup_v1"),
+        learning_guard=_guard(
+            (_evidence(22.0),),
+            frame_id="blocked_frame",
+            recovery_freeze=True,
+        ),
+        calibration_progress=_established_calibration(),
         new_baseline_id="baseline_2",
         policy=BaselinePolicy(),
     )
@@ -355,27 +470,35 @@ def test_ineligible_window_does_not_advance_new_normal_candidate() -> None:
     assert published is None
 
 
-def test_replayed_window_does_not_count_as_a_separate_clean_window() -> None:
-    # Break caught: retrying one clean observation can satisfy the adoption threshold.
+def test_different_source_subsets_from_one_frame_count_once() -> None:
+    # Break caught: changing sensor subsets makes one aligned frame count repeatedly.
     candidate = _candidate()
-    evidence = (_evidence(20.0, observation_id="same_window"),)
-    clean = window_is_learning_eligible(
-        evidence,
-        monitoring_snapshot=_active_monitoring(),
-        purpose=FeaturePurpose.MOVEMENT,
+    first = _guard(
+        (_evidence(20.0, observation_id="radar_1", source="radar"),),
+        frame_id="shared_frame",
+    )
+    changed_subset = _guard(
+        (_evidence(21.0, observation_id="thermal_1", source="thermal"),),
+        frame_id="shared_frame",
     )
     arguments = {
         "baseline": _baseline_snapshot(),
         "expected_behavior": _expected_behavior(),
-        "window_evidence": evidence,
-        "learning_guard": clean,
-        "calibration_progress": CalibrationProgress.new("setup_v1"),
+        "calibration_progress": _established_calibration(),
         "new_baseline_id": "baseline_2",
         "policy": BaselinePolicy(),
     }
 
-    candidate, first_publish = advance_new_normal(candidate, **arguments)
-    replayed, second_publish = advance_new_normal(candidate, **arguments)
+    candidate, first_publish = advance_new_normal(
+        candidate,
+        learning_guard=first,
+        **arguments,
+    )
+    replayed, second_publish = advance_new_normal(
+        candidate,
+        learning_guard=changed_subset,
+        **arguments,
+    )
 
     assert candidate.clean_windows == 1
     assert first_publish is None
@@ -384,8 +507,36 @@ def test_replayed_window_does_not_count_as_a_separate_clean_window() -> None:
     assert second_publish is None
 
 
+def test_publication_rejects_reusing_current_baseline_id() -> None:
+    # Break caught: an immutable baseline snapshot becomes its own predecessor.
+    with pytest.raises(ValueError, match="new_baseline_id"):
+        advance_new_normal(
+            _candidate(values=(20.0, 21.0, 22.0, 23.0)),
+            baseline=_baseline_snapshot(),
+            expected_behavior=_expected_behavior(),
+            learning_guard=_guard((_evidence(24.0),), frame_id="clean_frame_5"),
+            calibration_progress=_established_calibration(),
+            new_baseline_id="baseline_1",
+            policy=BaselinePolicy(),
+        )
+
+
+def test_partial_adoption_rejects_policy_mismatch_with_retained_features() -> None:
+    # Break caught: one snapshot claims a new policy for untouched old-policy facts.
+    with pytest.raises(ValueError, match="policy_version"):
+        advance_new_normal(
+            _candidate(values=(20.0, 21.0, 22.0, 23.0)),
+            baseline=_baseline_snapshot(),
+            expected_behavior=_expected_behavior(),
+            learning_guard=_guard((_evidence(24.0),), frame_id="clean_frame_5"),
+            calibration_progress=_established_calibration(),
+            new_baseline_id="baseline_2",
+            policy=BaselinePolicy(policy_version="synthetic_baseline_v2"),
+        )
+
+
 def test_setup_change_starts_new_lineage_only_for_affected_feature_names() -> None:
-    # Break caught: a setup change either contaminates affected progress or resets every feature.
+    # Break caught: setup change contaminates an affected feature or resets all features.
     progress = CalibrationProgress.new(
         "setup_v1",
         dimensions=("movement", "respiratory_rate"),
@@ -395,33 +546,19 @@ def test_setup_change_starts_new_lineage_only_for_affected_feature_names() -> No
         new_setup_version="setup_v2",
         reason="device_moved",
         actor_id="operator_007",
-        changed_at=datetime(2026, 8, 28, 13, 0, tzinfo=timezone.utc),
+        changed_at=_WINDOW_START,
         affected_dimensions=("movement",),
-    )
-    clean_movement = window_is_learning_eligible(
-        (_evidence(24.0),),
-        monitoring_snapshot=_active_monitoring(),
-        purpose=FeaturePurpose.MOVEMENT,
-    )
-    clean_respiration = window_is_learning_eligible(
-        (
-            _evidence(
-                19.0,
-                name="respiratory_rate",
-                unit="breaths_per_min",
-                purpose=FeaturePurpose.RESPIRATION,
-            ),
-        ),
-        monitoring_snapshot=_active_monitoring(),
-        purpose=FeaturePurpose.RESPIRATION,
     )
 
     affected, affected_snapshot = advance_new_normal(
         _candidate(values=(20.0, 21.0, 22.0, 23.0)),
         baseline=_baseline_snapshot(),
         expected_behavior=_expected_behavior(),
-        window_evidence=(_evidence(24.0),),
-        learning_guard=clean_movement,
+        learning_guard=_guard(
+            (_evidence(24.0),),
+            frame_id="movement_setup_v2_frame",
+            setup_version="setup_v2",
+        ),
         calibration_progress=changed,
         new_baseline_id="baseline_2",
         policy=BaselinePolicy(),
@@ -436,15 +573,19 @@ def test_setup_change_starts_new_lineage_only_for_affected_feature_names() -> No
         ),
         baseline=_baseline_snapshot(),
         expected_behavior=_expected_behavior(),
-        window_evidence=(
-            _evidence(
-                19.0,
-                name="respiratory_rate",
-                unit="breaths_per_min",
-                purpose=FeaturePurpose.RESPIRATION,
+        learning_guard=_guard(
+            (
+                _evidence(
+                    19.0,
+                    name="respiratory_rate",
+                    unit="breaths_per_min",
+                    purpose=FeaturePurpose.RESPIRATION,
+                ),
             ),
+            frame_id="respiration_setup_v2_frame",
+            setup_version="setup_v2",
+            purpose=FeaturePurpose.RESPIRATION,
         ),
-        learning_guard=clean_respiration,
         calibration_progress=changed,
         new_baseline_id="baseline_2",
         policy=BaselinePolicy(),

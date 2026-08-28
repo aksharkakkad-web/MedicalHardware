@@ -1,6 +1,7 @@
 """Robust numerical baselines with explicit, contamination-resistant learning gates."""
 
 from dataclasses import dataclass, replace
+from datetime import datetime, timedelta
 from math import ceil, isfinite
 from numbers import Real
 from statistics import median
@@ -14,7 +15,7 @@ from backend.app.domain._validation import (
 from backend.app.domain.calibration import CalibrationProgress
 from backend.app.domain.feedback import MemoryEntry
 from backend.app.domain.monitoring import MonitoringSnapshot
-from backend.app.intelligence.fusion import FeatureEvidence
+from backend.app.intelligence.fusion import AlignedFrame, FeatureEvidence
 from backend.app.intelligence.observations import FeaturePurpose, QualityClass
 
 
@@ -91,6 +92,7 @@ class BaselinePolicy:
 @dataclass(frozen=True)
 class FeatureBaseline:
     feature_name: str
+    purpose: FeaturePurpose
     median: float
     mad: float
     iqr: float
@@ -107,6 +109,11 @@ class FeatureBaseline:
             self,
             "feature_name",
             require_nonblank_text(self.feature_name, "feature_name"),
+        )
+        object.__setattr__(
+            self,
+            "purpose",
+            coerce_enum(self.purpose, FeaturePurpose, "purpose"),
         )
         for field in (
             "median",
@@ -200,11 +207,46 @@ class BaselineSnapshot:
 
 @dataclass(frozen=True)
 class LearningGuard:
+    frame_id: str
+    window_start: datetime
+    window_end: datetime
+    resident_id: str
+    setup_version: str
+    purpose: FeaturePurpose
+    evidence: tuple[FeatureEvidence, ...]
     eligible: bool
     reasons: tuple[str, ...]
     schema_version: str = "1.0"
 
     def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "frame_id",
+            require_nonblank_text(self.frame_id, "frame_id"),
+        )
+        for field in ("window_start", "window_end"):
+            value = getattr(self, field)
+            if not isinstance(value, datetime) or value.tzinfo is None:
+                raise ValueError(f"{field} must be a timezone-aware datetime")
+            if value.utcoffset() != timedelta(0):
+                raise ValueError(f"{field} must use UTC")
+        if self.window_end <= self.window_start:
+            raise ValueError("window_end must be after window_start")
+        for field in ("resident_id", "setup_version"):
+            object.__setattr__(
+                self,
+                field,
+                require_nonblank_text(getattr(self, field), field),
+            )
+        object.__setattr__(
+            self,
+            "purpose",
+            coerce_enum(self.purpose, FeaturePurpose, "purpose"),
+        )
+        if not isinstance(self.evidence, tuple) or any(
+            not isinstance(item, FeatureEvidence) for item in self.evidence
+        ):
+            raise ValueError("evidence must be a tuple of FeatureEvidence records")
         eligible = require_strict_bool(self.eligible, "eligible")
         reasons = _normalize_reasons(self.reasons)
         if eligible == bool(reasons):
@@ -215,6 +257,16 @@ class LearningGuard:
             self,
             "schema_version",
             require_nonblank_text(self.schema_version, "schema_version"),
+        )
+
+    @property
+    def window_key(self) -> str:
+        return "|".join(
+            (
+                self.frame_id,
+                self.window_start.isoformat(),
+                self.window_end.isoformat(),
+            )
         )
 
 
@@ -302,6 +354,7 @@ def _baseline_from_values(
     values: tuple[float, ...],
     *,
     feature_name: str,
+    purpose: FeaturePurpose,
     unit: str,
     context_key: str,
     resolution_floor: float,
@@ -314,6 +367,7 @@ def _baseline_from_values(
     upper_quartile = _nearest_rank(ordered, 0.75)
     return FeatureBaseline(
         feature_name=feature_name,
+        purpose=purpose,
         median=center,
         mad=float(median(deviations)),
         iqr=upper_quartile - lower_quartile,
@@ -327,8 +381,10 @@ def _baseline_from_values(
 
 
 def build_feature_baseline(
-    evidence: tuple[FeatureEvidence, ...],
+    windows: tuple[LearningGuard, ...],
     *,
+    resident_id: str,
+    setup_version: str,
     feature_name: str,
     purpose: FeaturePurpose,
     context_key: str,
@@ -337,21 +393,39 @@ def build_feature_baseline(
 ) -> FeatureBaseline:
     """Build robust facts from explicitly good, numeric feature evidence."""
 
-    if not isinstance(evidence, tuple) or any(
-        not isinstance(item, FeatureEvidence) for item in evidence
+    if not isinstance(windows, tuple) or any(
+        not isinstance(window, LearningGuard) for window in windows
     ):
-        raise ValueError("evidence must be a tuple of FeatureEvidence records")
+        raise ValueError("windows must be a tuple of LearningGuard records")
     if not isinstance(policy, BaselinePolicy):
         raise ValueError("policy must be a BaselinePolicy")
     name = require_nonblank_text(feature_name, "feature_name")
+    resident = require_nonblank_text(resident_id, "resident_id")
+    setup = require_nonblank_text(setup_version, "setup_version")
     selected_purpose = coerce_enum(purpose, FeaturePurpose, "purpose")
     context = require_nonblank_text(context_key, "context_key")
     floor = _require_finite_real(resolution_floor, "resolution_floor")
     if floor <= 0.0:
         raise ValueError("resolution_floor must be positive")
+    if any(window.resident_id != resident for window in windows):
+        raise ValueError("learning-window resident must match baseline resident")
+    if any(window.setup_version != setup for window in windows):
+        raise ValueError("learning-window setup must match baseline setup")
+    if any(window.purpose != selected_purpose for window in windows):
+        raise ValueError("learning-window purpose must match baseline purpose")
+    eligible_windows: list[LearningGuard] = []
+    seen_windows: set[str] = set()
+    for window in windows:
+        if not window.eligible or window.window_key in seen_windows:
+            continue
+        seen_windows.add(window.window_key)
+        eligible_windows.append(window)
+    if not eligible_windows:
+        raise ValueError("baseline requires eligible learning windows")
     selected = tuple(
         item.feature
-        for item in evidence
+        for window in eligible_windows
+        for item in window.evidence
         if item.feature.name == name
         and selected_purpose in item.feature.purposes
         and item.feature.quality_class == QualityClass.GOOD
@@ -367,6 +441,7 @@ def build_feature_baseline(
     return _baseline_from_values(
         values,
         feature_name=name,
+        purpose=selected_purpose,
         unit=next(iter(units)),
         context_key=context,
         resolution_floor=floor,
@@ -389,9 +464,11 @@ def robust_deviation(value: float, baseline: FeatureBaseline) -> float:
 
 
 def window_is_learning_eligible(
-    evidence: tuple[FeatureEvidence, ...],
+    frame: AlignedFrame,
     *,
     monitoring_snapshot: MonitoringSnapshot,
+    resident_id: str,
+    setup_version: str,
     purpose: FeaturePurpose,
     active_candidate: bool = False,
     unresolved_anomaly: bool = False,
@@ -400,12 +477,12 @@ def window_is_learning_eligible(
 ) -> LearningGuard:
     """Explain every reason a resident-specific numerical window cannot teach."""
 
-    if not isinstance(evidence, tuple) or any(
-        not isinstance(item, FeatureEvidence) for item in evidence
-    ):
-        raise ValueError("evidence must be a tuple of FeatureEvidence records")
+    if not isinstance(frame, AlignedFrame):
+        raise ValueError("frame must be an AlignedFrame")
     if not isinstance(monitoring_snapshot, MonitoringSnapshot):
         raise ValueError("monitoring_snapshot must be a MonitoringSnapshot")
+    resident = require_nonblank_text(resident_id, "resident_id")
+    setup = require_nonblank_text(setup_version, "setup_version")
     selected_purpose = coerce_enum(purpose, FeaturePurpose, "purpose")
     flags = {
         "active_candidate": require_strict_bool(active_candidate, "active_candidate"),
@@ -423,7 +500,9 @@ def window_is_learning_eligible(
             reasons.append("monitoring_disallows_learning")
 
     relevant = tuple(
-        item.feature for item in evidence if selected_purpose in item.feature.purposes
+        item.feature
+        for item in frame.feature_evidence
+        if selected_purpose in item.feature.purposes
     )
     if not relevant:
         reasons.append("purpose_not_eligible")
@@ -440,7 +519,17 @@ def window_is_learning_eligible(
             reasons.append("non_numeric_value")
     reasons.extend(reason for reason, blocked in flags.items() if blocked)
     normalized = tuple(dict.fromkeys(reasons))
-    return LearningGuard(eligible=not normalized, reasons=normalized)
+    return LearningGuard(
+        frame_id=frame.frame_id,
+        window_start=frame.window_start,
+        window_end=frame.window_end,
+        resident_id=resident,
+        setup_version=setup,
+        purpose=selected_purpose,
+        evidence=frame.feature_evidence,
+        eligible=not normalized,
+        reasons=normalized,
+    )
 
 
 def _setup_change_affects_feature(
@@ -464,13 +553,13 @@ def _setup_change_affects_feature(
     return affected if found_transition and tracked_version == progress.setup_version else True
 
 
-def _window_value_and_key(
+def _window_value(
     candidate: NewNormalCandidate,
-    evidence: tuple[FeatureEvidence, ...],
-) -> tuple[float, str]:
+    window: LearningGuard,
+) -> float:
     matching = tuple(
         item
-        for item in evidence
+        for item in window.evidence
         if item.feature.name == candidate.feature_name
         and item.feature.unit == candidate.unit
         and candidate.purpose in item.feature.purposes
@@ -481,8 +570,7 @@ def _window_value_and_key(
     if not matching:
         raise ValueError("clean window has no matching good numeric candidate evidence")
     values = tuple(float(item.feature.value) for item in matching)
-    window_key = ";".join(sorted({item.observation_id for item in matching}))
-    return float(median(values)), window_key
+    return float(median(values))
 
 
 def advance_new_normal(
@@ -490,7 +578,6 @@ def advance_new_normal(
     *,
     baseline: BaselineSnapshot,
     expected_behavior: MemoryEntry,
-    window_evidence: tuple[FeatureEvidence, ...],
     learning_guard: LearningGuard,
     calibration_progress: CalibrationProgress,
     new_baseline_id: str,
@@ -511,18 +598,37 @@ def advance_new_normal(
     if not isinstance(policy, BaselinePolicy):
         raise ValueError("policy must be a BaselinePolicy")
     next_baseline_id = require_nonblank_text(new_baseline_id, "new_baseline_id")
-    if not isinstance(window_evidence, tuple) or any(
-        not isinstance(item, FeatureEvidence) for item in window_evidence
-    ):
-        raise ValueError("window_evidence must be a tuple of FeatureEvidence records")
+    if next_baseline_id == baseline.baseline_id:
+        raise ValueError("new_baseline_id must differ from the current baseline_id")
     if expected_behavior.status != "active" or expected_behavior.context_kind != "expected_new_behavior":
         raise ValueError("expected_behavior must be active expected-new-behavior context")
     if candidate.semantic_context_entry_id != expected_behavior.entry_id:
         raise ValueError("candidate must reference expected_behavior")
     if candidate.resident_id != baseline.resident_id:
         raise ValueError("candidate and baseline resident must match")
+    if learning_guard.resident_id != candidate.resident_id:
+        raise ValueError("learning-window resident must match candidate resident")
+    if learning_guard.purpose != candidate.purpose:
+        raise ValueError("learning-window purpose must match candidate purpose")
+    if candidate.setup_version != baseline.monitoring_setup_version:
+        raise ValueError("candidate setup must match the current baseline setup")
+    if learning_guard.setup_version != calibration_progress.setup_version:
+        raise ValueError("learning-window setup must match calibration setup")
     if candidate.adopted_baseline_id is not None:
         raise ValueError("candidate has already been adopted")
+
+    prior_feature = baseline.feature(candidate.feature_name, candidate.context_key)
+    if prior_feature.purpose != candidate.purpose:
+        raise ValueError("candidate purpose must match baseline feature purpose")
+    retained_features = any(
+        (feature.feature_name, feature.context_key)
+        != (candidate.feature_name, candidate.context_key)
+        for feature in baseline.features
+    )
+    if retained_features and policy.policy_version != baseline.policy_version:
+        raise ValueError(
+            "policy_version must match while untouched baseline features are retained"
+        )
 
     updated = candidate
     if candidate.setup_version != calibration_progress.setup_version:
@@ -534,6 +640,8 @@ def advance_new_normal(
             clean_window_keys=() if not values else candidate.clean_window_keys,
             last_ineligibility_reasons=(),
         )
+    if learning_guard.setup_version != updated.setup_version:
+        raise ValueError("learning-window setup must match candidate setup")
 
     if not learning_guard.eligible:
         return (
@@ -541,7 +649,8 @@ def advance_new_normal(
             None,
         )
 
-    value, window_key = _window_value_and_key(updated, window_evidence)
+    value = _window_value(updated, learning_guard)
+    window_key = learning_guard.window_key
     if window_key in updated.clean_window_keys:
         return replace(updated, last_ineligibility_reasons=("duplicate_window",)), None
     updated = replace(
@@ -553,10 +662,10 @@ def advance_new_normal(
     if updated.clean_windows < policy.new_normal_clean_windows:
         return updated, None
 
-    prior_feature = baseline.feature(updated.feature_name, updated.context_key)
     adopted_feature = _baseline_from_values(
         updated.clean_window_values,
         feature_name=updated.feature_name,
+        purpose=updated.purpose,
         unit=updated.unit,
         context_key=updated.context_key,
         resolution_floor=prior_feature.resolution_floor,
