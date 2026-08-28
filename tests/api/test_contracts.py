@@ -215,3 +215,21 @@ def test_every_read_operation_documents_versioned_method_not_allowed(
         assert responses["405"]["content"]["application/json"]["schema"] == {
             "$ref": "#/components/schemas/ErrorEnvelope"
         }
+
+
+def test_every_mutation_documents_versioned_method_not_allowed(
+    api_client: TestClient,
+) -> None:
+    paths = api_client.get("/openapi.json").json()["paths"]
+    mutation_operations = [
+        operation
+        for methods in paths.values()
+        for method, operation in methods.items()
+        if method in {"post", "put"}
+    ]
+
+    assert mutation_operations
+    for operation in mutation_operations:
+        assert operation["responses"]["405"]["content"]["application/json"][
+            "schema"
+        ] == {"$ref": "#/components/schemas/ErrorEnvelope"}

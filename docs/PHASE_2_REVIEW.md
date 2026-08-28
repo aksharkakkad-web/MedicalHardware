@@ -5,7 +5,8 @@
 > resident-status/calibration evidence and
 > `docs/PHASE_2_CHECKPOINT_B_REVIEW.md` for device assignment/health evidence,
 > and `docs/PHASE_2_CHECKPOINT_C_REVIEW.md` for resident preferences and memory
-> administration evidence.
+> administration evidence. The completed backend handoff is reviewed in
+> `docs/PHASE_2_CHECKPOINT_D_REVIEW.md`.
 
 ## What now works
 

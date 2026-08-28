@@ -14,19 +14,25 @@ from backend.app.services.errors import (
 )
 
 
-ERROR_RESPONSE = {"model": ErrorEnvelope}
-METHOD_NOT_ALLOWED_ERROR_RESPONSES = {405: ERROR_RESPONSE}
+def _documented_error(description: str) -> dict[str, object]:
+    return {"model": ErrorEnvelope, "description": description}
+
+
+METHOD_NOT_ALLOWED_ERROR_RESPONSES = {
+    405: _documented_error("Method Not Allowed")
+}
 READ_ERROR_RESPONSES = {
-    404: ERROR_RESPONSE,
+    404: _documented_error("Not Found"),
     **METHOD_NOT_ALLOWED_ERROR_RESPONSES,
-    422: ERROR_RESPONSE,
-    500: ERROR_RESPONSE,
+    422: _documented_error("Unprocessable Content"),
+    500: _documented_error("Internal Server Error"),
 }
 MUTATION_ERROR_RESPONSES = {
-    404: ERROR_RESPONSE,
-    409: ERROR_RESPONSE,
-    422: ERROR_RESPONSE,
-    500: ERROR_RESPONSE,
+    404: _documented_error("Not Found"),
+    **METHOD_NOT_ALLOWED_ERROR_RESPONSES,
+    409: _documented_error("Conflict"),
+    422: _documented_error("Unprocessable Content"),
+    500: _documented_error("Internal Server Error"),
 }
 
 
@@ -78,7 +84,10 @@ def register_error_handlers(app: FastAPI) -> None:
     ) -> JSONResponse:
         first_error = error.errors()[0] if error.errors() else {}
         location = first_error.get("loc", ())
-        field = str(location[-1]) if location else None
+        if len(location) > 1 and location[0] in {"query", "header", "path"}:
+            field = str(location[1])
+        else:
+            field = str(location[-1]) if location else None
         return error_response(
             422,
             code="invalid_input",

@@ -3,16 +3,17 @@
 **Updated:** August 27, 2026
 
 **Operating status:** Phase 1 product logic is complete. Phase 2 is **In
-progress**. The first durable event slice plus backend Checkpoints A (resident
-status/calibration), B (device assignment/health), and C (preferences/resident
-memory administration) are complete. Backend Checkpoint D—the final clinic API
-handoff—is next. Frontend and hardware work continue independently. See `docs/PHASE_GATES.md` for the
+progress**. The first durable event slice plus backend Checkpoints A through D
+are complete: resident status/calibration, device assignment/health,
+preferences/resident memory, and the clinic API handoff. Akshar's Phase 2
+backend runway is ready for Rishit's real-client connection. Frontend and
+hardware work continue independently. See `docs/PHASE_GATES.md` for the
 shared start → build → review → merge → next-checkpoint process.
 
 ## Where we are now
 
 We have finished the Phase 1 behavior milestone, the first durable Phase 2
-event slice, and Phase 2 backend Checkpoints A through C using synthetic data.
+event slice, and all four Phase 2 backend checkpoints using synthetic data.
 
 This is not the complete deployed product yet. The caregiver product backbone
 now has a file-backed database, versioned Product API, durable lifecycle and
@@ -20,7 +21,8 @@ feedback transactions, resident monitoring/awareness history, versioned
 calibration/setup history, device/location/room assignment history, append-only
 device health, notification/awareness preference history, correctable resident
 memory, tenant isolation, idempotency, audit history, and restart proofs. The
-frontend, final clinic handoff, and real hardware remain unfinished.
+frontend connection, the complete user-facing experiences, and real hardware
+remain unfinished.
 
 The tested journey is:
 
@@ -60,9 +62,18 @@ rewrite event history, numerical calibration, or safety policy. The resident
 controls verification command is
 `python3 -m backend.app.checkpoints.preferences_memory`.
 
+The Product API now exposes the clinic-wide event queue with active-work
+defaults, combined filters, caregiver-attention ordering, stable pagination,
+resolved history, and tenant masking. A committed generated OpenAPI document
+matches the running application, and the exact frontend composition is written
+in `docs/PHASE_2_FRONTEND_API_HANDOFF.md`. The complete clinic handoff command
+is `python3 -m backend.app.checkpoints.clinic_handoff`.
+
 ## What Rishit can build now
 
-Rishit does not need to wait for the database, API, or hardware.
+Rishit does not need to wait for the database, API, or hardware. He can
+continue the complete mock-backed product flow and begin the selected real API
+connection now.
 
 He can build the real clinic dashboard and separate home experience against contract-valid mock data, including:
 
@@ -75,17 +86,19 @@ He can build the real clinic dashboard and separate home experience against cont
 - settings for awareness items and notifications;
 - device assignment, health, last-seen, and honest per-source limitations.
 
-The frontend should place mock data behind a replaceable client/provider. Later, the real backend API replaces that mock provider without redesigning the screens.
+The frontend keeps mock data behind its replaceable client/provider. The
+published Product API can now replace selected clinic paths without redesigning
+the screens.
 
 The clinic caregiver experience is the first complete user journey. Rishit can build the full separate home experience on mocks now; Phase 7 later connects and validates that existing experience against mature monitoring data and family-safe permissions rather than rebuilding it.
 
 ## What Akshar builds next
 
-The first durable Product API slice and Checkpoints A–C are implemented.
-Akshar's only remaining Phase 2 backend checkpoint is:
-
-- **Checkpoint D:** clinic-wide event filters/pagination, complete OpenAPI
-  handoff, and a real-client connection boundary for Rishit.
+The first durable Product API slice and Checkpoints A–D are implemented.
+There is no hidden Phase 2 backend checkpoint left. Akshar's next product task
+is the shared toy-data convergence: support Rishit's `ApiMonitoringClient`
+connection against the published contract and fix genuine integration defects
+without redesigning Rishit's frontend lane.
 
 Simulated telemetry ingestion, fusion, baselines, anomaly/confidence logic,
 notifications, and selective AI interpretation remain later slices and phases.
@@ -123,3 +136,6 @@ Real hardware later replaces the simulator as the telemetry producer. It should 
 - Checkpoint A evidence: `docs/PHASE_2_CHECKPOINT_A_REVIEW.md`
 - Checkpoint B evidence: `docs/PHASE_2_CHECKPOINT_B_REVIEW.md`
 - Checkpoint C evidence: `docs/PHASE_2_CHECKPOINT_C_REVIEW.md`
+- Checkpoint D evidence: `docs/PHASE_2_CHECKPOINT_D_REVIEW.md`
+- Frontend API map: `docs/PHASE_2_FRONTEND_API_HANDOFF.md`
+- Generated Product API: `docs/openapi/product-api-v1.json`

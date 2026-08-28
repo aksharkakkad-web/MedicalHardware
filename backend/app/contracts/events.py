@@ -1,3 +1,7 @@
+from enum import StrEnum
+
+from pydantic import Field, field_validator, model_validator
+
 from backend.app.contracts.common import ContractModel, RequestContractModel, UTCDateTime
 from backend.app.domain.events import (
     EventActionType,
@@ -5,6 +9,13 @@ from backend.app.domain.events import (
     EventStatus,
     ResolutionOutcome,
 )
+
+
+class ClinicEventStatus(StrEnum):
+    OPEN = "open"
+    ACKNOWLEDGED = "acknowledged"
+    CHECKED = "checked"
+    RESOLVED = "resolved"
 
 
 class EventActionRequest(RequestContractModel):
@@ -57,3 +68,25 @@ class EventResponse(ContractModel):
 
 class EventListResponse(ContractModel):
     items: list[EventResponse]
+
+
+class ClinicEventQueueResponse(ContractModel):
+    items: list[EventResponse] = Field(default_factory=list)
+    total_items: int = Field(ge=0)
+    next_cursor: str | None
+
+    @field_validator("next_cursor")
+    @classmethod
+    def require_nonblank_cursor(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("next_cursor must not be blank")
+        return normalized
+
+    @model_validator(mode="after")
+    def require_total_to_cover_page(self) -> "ClinicEventQueueResponse":
+        if self.total_items < len(self.items):
+            raise ValueError("total_items cannot be smaller than the page")
+        return self

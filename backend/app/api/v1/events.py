@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
 from backend.app.api.dependencies import (
@@ -9,11 +9,14 @@ from backend.app.api.dependencies import (
     access_context,
     database_session,
     event_mutation_services,
+    event_queue_query_service,
     query_service,
     request_idempotency_key,
 )
 from backend.app.api.errors import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
 from backend.app.contracts.events import (
+    ClinicEventQueueResponse,
+    ClinicEventStatus,
     EventActionRequest,
     EventResponse,
     ResolveEventRequest,
@@ -28,8 +31,14 @@ from backend.app.contracts.feedback import (
 from backend.app.db.mappers import StoredEvent
 from backend.app.db.repositories import EventRepository, FeedbackRepository
 from backend.app.domain.feedback import LearningDecision
+from backend.app.domain.events import EventPriority
 from backend.app.services.feedback_commands import FeedbackCommandService
 from backend.app.services.idempotency import IdempotencyResult, IdempotencyService
+from backend.app.services.errors import InvalidInputError
+from backend.app.services.event_queue import (
+    EventQueueQuery,
+    ProductEventQueueQueryService,
+)
 from backend.app.services.queries import (
     AccessContext,
     ProductQueryService,
@@ -38,6 +47,42 @@ from backend.app.services.queries import (
 
 
 router = APIRouter(prefix="/events", tags=["events"])
+
+
+@router.get(
+    "",
+    response_model=ClinicEventQueueResponse,
+    responses=READ_ERROR_RESPONSES,
+    operation_id="listClinicEvents",
+)
+def list_clinic_events(
+    request: Request,
+    context: Annotated[AccessContext, Depends(access_context)],
+    service: Annotated[
+        ProductEventQueueQueryService,
+        Depends(event_queue_query_service),
+    ],
+    status: Annotated[list[ClinicEventStatus] | None, Query()] = None,
+    priority: Annotated[list[EventPriority] | None, Query()] = None,
+    resident_id: Annotated[str | None, Query()] = None,
+    room_id: Annotated[str | None, Query()] = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 25,
+    cursor: Annotated[str | None, Query()] = None,
+) -> ClinicEventQueueResponse:
+    for single_value_field in ("resident_id", "room_id", "limit", "cursor"):
+        if len(request.query_params.getlist(single_value_field)) > 1:
+            raise InvalidInputError(field=single_value_field)
+    return service.list_events(
+        context,
+        EventQueueQuery(
+            statuses=() if status is None else tuple(status),
+            priorities=() if priority is None else tuple(priority),
+            resident_id=resident_id,
+            room_id=room_id,
+            limit=limit,
+            cursor=cursor,
+        ),
+    )
 
 
 @router.get(
