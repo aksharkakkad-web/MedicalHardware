@@ -647,6 +647,88 @@ def test_same_candidate_streak_unions_each_crossing_feature() -> None:
     assert update.episode.initiating_features == ("movement", "respiratory_rate")
 
 
+def test_partial_initiating_feature_loss_is_missing_not_limited_quality() -> None:
+    # Break caught: one missing initiating feature is hidden behind the good feature that remains.
+    def two_feature_frame(
+        second: int,
+        *,
+        respiration_value: float | None,
+    ) -> AlignedFrame:
+        window_start = _START + timedelta(seconds=second)
+        evidence = [_feature_evidence(14.0 if second < 3 else 10.0)]
+        if respiration_value is not None:
+            evidence.append(
+                _feature_evidence(
+                    respiration_value,
+                    name="respiratory_rate",
+                    observation_id=f"respiration_partial_{second}",
+                    unit="breaths_per_min",
+                    purpose=FeaturePurpose.RESPIRATION,
+                )
+            )
+        return AlignedFrame(
+            frame_id=f"frame_partial_{second}",
+            window_start=window_start,
+            window_end=window_start + timedelta(seconds=1),
+            sources_present=("radar",),
+            sources_missing=(),
+            feature_evidence=tuple(evidence),
+            agreements=(),
+            contradictions=(),
+        )
+
+    update = None
+    for second in (0, 1, 2):
+        update = advance_episode(
+            None if update is None else update.episode,
+            frame=two_feature_frame(second, respiration_value=19.0),
+            baseline=_baseline_with_respiration(),
+            context_key="resident_global",
+            anomaly_id="anomaly_partial",
+            resident_id="resident_demo_a",
+            room_id="room_214",
+            config_version="synthetic_config_v4",
+            unknowns=("cause_of_behavior_change",),
+            policy=SyntheticAnomalyPolicy(),
+        )
+    assert update.episode.state == AnomalyState.ACTIVE
+    assert update.episode.initiating_features == ("movement", "respiratory_rate")
+
+    for expected_count, second in enumerate((3, 4, 5), start=1):
+        update = advance_episode(
+            update.episode,
+            frame=two_feature_frame(second, respiration_value=None),
+            baseline=_baseline_with_respiration(),
+            context_key="resident_global",
+            anomaly_id="anomaly_partial",
+            resident_id="resident_demo_a",
+            room_id="room_214",
+            config_version="synthetic_config_v4",
+            unknowns=("cause_of_behavior_change",),
+            policy=SyntheticAnomalyPolicy(),
+        )
+
+        assert update.episode.state == AnomalyState.ACTIVE
+        assert update.episode.recovery_count == 0
+        assert update.episode.consecutive_missing_frames == expected_count
+        assert update.missing_initiating_features == ("respiratory_rate",)
+        assert update.overall_strength is None
+        assert "missing_initiating_evidence" in update.limitations
+        assert "limited_quality" not in update.limitations
+        assert (
+            "missing_evidence_beyond_grace" in update.limitations
+        ) is (expected_count > 2)
+
+    packet = build_evidence_packet(update)
+    assert packet.missing_initiating_features == ("respiratory_rate",)
+    assert packet.overall_strength is None
+    assert packet.evidence_limited is True
+    assert packet.limitations == (
+        "missing_initiating_evidence",
+        "missing_evidence_beyond_grace",
+    )
+
+
 def test_acknowledgment_is_not_an_anomaly_input() -> None:
     # Break caught: caregiver workflow state begins controlling numerical recovery.
     parameters = signature(advance_episode).parameters

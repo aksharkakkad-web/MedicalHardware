@@ -278,6 +278,7 @@ class AnomalyUpdate:
     agreements: tuple[str, ...]
     contradictions: tuple[str, ...]
     missing_sources: tuple[str, ...]
+    missing_initiating_features: tuple[str, ...]
     feature_contract_version: str
     baseline_id: str
     baseline_policy_version: str
@@ -335,7 +336,12 @@ class AnomalyUpdate:
             raise ValueError("window_end must be after window_start")
         object.__setattr__(self, "window_start", window_start)
         object.__setattr__(self, "window_end", window_end)
-        for field in ("agreements", "contradictions", "missing_sources"):
+        for field in (
+            "agreements",
+            "contradictions",
+            "missing_sources",
+            "missing_initiating_features",
+        ):
             object.__setattr__(
                 self,
                 field,
@@ -358,6 +364,8 @@ class AnomalyUpdate:
 
     @property
     def overall_strength(self) -> float | None:
+        if self.missing_initiating_features:
+            return None
         strengths = tuple(abs(item.robust_z) for item in self.deviations)
         return max(strengths) if strengths else None
 
@@ -445,6 +453,7 @@ def _update_record(
     room_id: str,
     config_version: str,
     unknowns: tuple[str, ...],
+    missing_initiating_features: tuple[str, ...],
     policy: SyntheticAnomalyPolicy,
     evidence_limited: bool,
     limitations: tuple[str, ...],
@@ -463,6 +472,7 @@ def _update_record(
         agreements=frame.agreements,
         contradictions=frame.contradictions,
         missing_sources=frame.sources_missing,
+        missing_initiating_features=missing_initiating_features,
         feature_contract_version=frame.schema_version,
         baseline_id=baseline.baseline_id,
         baseline_policy_version=baseline.policy_version,
@@ -540,6 +550,7 @@ def advance_episode(
                 room_id=room,
                 config_version=config,
                 unknowns=explicit_unknowns,
+                missing_initiating_features=(),
                 policy=policy,
                 evidence_limited=False,
                 limitations=(),
@@ -574,6 +585,7 @@ def advance_episode(
             room_id=room,
             config_version=config,
             unknowns=explicit_unknowns,
+            missing_initiating_features=(),
             policy=policy,
             evidence_limited=False,
             limitations=(),
@@ -583,7 +595,13 @@ def advance_episode(
         item for item in deviations if item.feature_name in episode.initiating_features
     )
     related_names = {item.feature_name for item in related}
-    all_initiating_good = all(
+    missing_initiating_features = tuple(
+        sorted(set(episode.initiating_features) - related_names)
+    )
+    limited = any(
+        item.quality_class == QualityClass.LIMITED for item in related
+    )
+    all_initiating_good = not missing_initiating_features and not limited and all(
         any(
             item.feature_name == feature_name
             and item.quality_class == QualityClass.GOOD
@@ -591,8 +609,7 @@ def advance_episode(
         )
         for feature_name in episode.initiating_features
     )
-    missing = not related
-    limited = bool(related) and not all_initiating_good
+    missing = bool(missing_initiating_features)
     missing_count = episode.consecutive_missing_frames + 1 if missing else 0
     limitations: list[str] = []
     if missing:
@@ -621,15 +638,30 @@ def advance_episode(
         else:
             candidate_started_at = episode.candidate_started_at
         if crossing:
-            missing_count = 0
-            limitations = (
-                ["limited_quality"]
-                if any(
-                    item.quality_class == QualityClass.LIMITED
-                    for item in crossing
-                )
-                else []
+            candidate_related = tuple(
+                item
+                for item in deviations
+                if item.feature_name in initiating_features
             )
+            candidate_names = {item.feature_name for item in candidate_related}
+            missing_initiating_features = tuple(
+                sorted(set(initiating_features) - candidate_names)
+            )
+            missing_count = (
+                episode.consecutive_missing_frames + 1
+                if missing_initiating_features and not new_streak
+                else 0
+            )
+            limitations = []
+            if missing_initiating_features:
+                limitations.append("missing_initiating_evidence")
+            if any(
+                item.quality_class == QualityClass.LIMITED
+                for item in candidate_related
+            ):
+                limitations.append("limited_quality")
+            if missing_count > policy.missing_grace_frames:
+                limitations.append("missing_evidence_beyond_grace")
         next_episode = replace(
             episode,
             state=AnomalyState.ACTIVE if activated else AnomalyState.CANDIDATE,
@@ -715,6 +747,7 @@ def advance_episode(
         room_id=room,
         config_version=config,
         unknowns=explicit_unknowns,
+        missing_initiating_features=missing_initiating_features,
         policy=policy,
         evidence_limited=bool(limitations),
         limitations=tuple(limitations),

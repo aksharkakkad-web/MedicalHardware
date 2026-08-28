@@ -38,6 +38,7 @@ class EvidencePacket:
     agreements: tuple[str, ...]
     contradictions: tuple[str, ...]
     missing_modalities: tuple[str, ...]
+    missing_initiating_features: tuple[str, ...]
     evidence_limited: bool
     limitations: tuple[str, ...]
     baseline_id: str
@@ -106,7 +107,12 @@ class EvidencePacket:
             not isinstance(item, FeatureDeviation) for item in self.changed_features
         ):
             raise ValueError("changed_features must contain FeatureDeviation records")
-        for field in ("agreements", "contradictions", "missing_modalities"):
+        for field in (
+            "agreements",
+            "contradictions",
+            "missing_modalities",
+            "missing_initiating_features",
+        ):
             object.__setattr__(
                 self,
                 field,
@@ -173,6 +179,7 @@ def build_evidence_packet(update: AnomalyUpdate) -> EvidencePacket:
         agreements=update.agreements,
         contradictions=update.contradictions,
         missing_modalities=update.missing_sources,
+        missing_initiating_features=update.missing_initiating_features,
         evidence_limited=update.evidence_limited,
         limitations=update.limitations,
         baseline_id=update.baseline_id,
