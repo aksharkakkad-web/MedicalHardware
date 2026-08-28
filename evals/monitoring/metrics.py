@@ -29,10 +29,7 @@ def calculate_metrics(records: list[dict[str, Any]]) -> dict[str, Any]:
     captured = [
         record
         for record in meaningful
-        if (
-            not record["caregiver_event_expected"]
-            or record["caregiver_event_count"] > 0
-        )
+        if record["packet_count"] > 0 or record["urgent_triggered"]
     ]
     missed = sorted(
         record["scenario_id"]

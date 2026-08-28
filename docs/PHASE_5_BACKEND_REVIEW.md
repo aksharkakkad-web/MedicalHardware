@@ -118,9 +118,10 @@ scope.
 The canonical report measured:
 
 - 24 scenarios and 24 declared scenario exposure units;
-- meaningful downstream-event recall: 7/7 (`1.0`), meaning every declared
-  meaningful scenario produced its expected caregiver work, with no missed
-  declared meaningful scenario;
+- meaningful anomaly recall: 7/7 (`1.0`) at the internal packet-or-urgent
+  boundary;
+- missed meaningful downstream events: none; every declared meaningful
+  scenario produced its expected caregiver work;
 - false packets: 0 (`0.0` per declared exposure unit);
 - false caregiver events: 0 (`0.0` per declared exposure unit);
 - duplicate caregiver events: 0 across 10 event signal groups (`0.0`);
@@ -140,7 +141,7 @@ The canonical report measured:
   unsupported-conclusion declarations; these are not interpretation or claim
   counts; and
 - repository restart/hydration gates: 7/7 true;
-- exact two-run replay reproducibility: true; canonical JSON size: 40,481
+- exact two-run replay reproducibility: true; canonical JSON size: 40,571
   bytes.
 
 These are engineering-fixture measurements. The exposure units are declared

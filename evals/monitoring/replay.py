@@ -52,7 +52,8 @@ def _report(
         },
         "metric_definitions": {
             "declared_exposure_unit_denominator": "Each compact stable scenario declares one comparison unit. These units are scenario weights, not elapsed resident-days or operating-time rates.",
-            "meaningful_anomaly_recall": "Meaningful scenarios that produced their declared downstream caregiver work divided by declared meaningful scenarios; missed meaningful events are expected caregiver events that did not materialize.",
+            "meaningful_anomaly_recall": "Meaningful scenarios with an internal evidence packet or urgent deterministic trigger divided by declared meaningful scenarios.",
+            "missed_meaningful_events": "Meaningful scenarios whose declared downstream caregiver event did not materialize; this is independent of internal anomaly recall.",
             "false_packet_rate": "Packets in scenarios that do not expect a packet, including the urgent bypass, divided by declared scenario exposure units.",
             "false_event_rate": "All caregiver events in scenarios that do not expect caregiver work, divided by declared scenario exposure units.",
             "duplicate_event_rate": "Extra event IDs within one source-anomaly signal group divided by event signal groups.",

@@ -122,9 +122,9 @@ def test_expected_downstream_event_loss_is_a_miss_with_upstream_intact() -> None
 
         aggregate = calculate_metrics(report["scenarios"])
         assert aggregate["meaningful_anomaly_recall"] == {
-            "captured": 6,
+            "captured": 7,
             "expected": 7,
-            "rate": 0.857143,
+            "rate": 1.0,
         }
         assert aggregate["missed_meaningful_events"] == [scenario_id]
         assert (
