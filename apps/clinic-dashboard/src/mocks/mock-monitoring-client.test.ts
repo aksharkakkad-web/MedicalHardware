@@ -440,4 +440,76 @@ describe("MockMonitoringClient", () => {
       status: "active",
     });
   });
+
+  it("drives the resident-away and returned walkthroughs without creating warnings", async () => {
+    const client = new MockMonitoringClient(() => new Date("2026-08-28T18:00:00.000Z"));
+
+    await client.applyDemoScenario("resident_away");
+    const away = await client.getResident("res_7f3a1c");
+    expect(away.resident).toMatchObject({
+      monitoring: { state: "paused", reason: expect.stringMatching(/away/i) },
+      attention: { priority: "none", openEventCount: 0 },
+    });
+    expect((await client.getResidentMonitoringSetup("res_7f3a1c")).setup).toMatchObject({
+      status: "established",
+      learningState: "paused",
+    });
+    expect(away.events).toHaveLength(0);
+
+    await client.applyDemoScenario("resident_returned");
+    const returned = await client.getResident("res_7f3a1c");
+    expect(returned.resident).toMatchObject({
+      monitoring: { state: "active", reason: expect.stringMatching(/returned/i) },
+      attention: { priority: "none", openEventCount: 0 },
+    });
+    expect((await client.getResidentMonitoringSetup("res_7f3a1c")).setup.learningState).toBe("active");
+  });
+
+  it("creates honest multi-person and physiological walkthrough events", async () => {
+    const client = new MockMonitoringClient(() => new Date("2026-08-28T18:00:00.000Z"));
+
+    const multiState = await client.applyDemoScenario("possible_multi_person");
+    const multiResident = await client.getResident("res_7f3a1c");
+    const multiEvent = multiResident.events.find((event) => event.eventId === multiState.targetEventId);
+    expect(multiResident.resident).toMatchObject({
+      monitoring: { state: "limited", reason: expect.stringMatching(/another person|multiple-person/i) },
+      attention: { priority: "watch", openEventCount: 1 },
+    });
+    expect(multiEvent).toMatchObject({
+      objectiveFamily: "Unknown anomaly",
+      priority: "watch",
+      confidence: { dataQuality: "limited", limitation: expect.stringMatching(/cannot safely attribute/i) },
+    });
+
+    const physiologicalState = await client.applyDemoScenario("physiological_deviation");
+    const physiologicalEvent = (await client.listEvents()).items.find((event) => event.eventId === physiologicalState.targetEventId);
+    expect(physiologicalEvent).toMatchObject({
+      objectiveFamily: "Combined physiological deviation",
+      priority: "high",
+      confidence: { limitation: expect.stringMatching(/cannot identify a medical cause/i) },
+      interpretation: { uncertainty: expect.stringMatching(/not a diagnosis/i) },
+    });
+  });
+
+  it("persists, clones, validates, and resets the active demo scenario", async () => {
+    const savedValues = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => savedValues.get(key) ?? null,
+      setItem: (key: string, value: string) => savedValues.set(key, value),
+    };
+    const first = new MockMonitoringClient(() => new Date("2026-08-28T18:00:00.000Z"), storage);
+    const applied = await first.applyDemoScenario("possible_multi_person");
+    applied.activeScenarioId = null;
+
+    const recreated = new MockMonitoringClient(undefined, storage);
+    expect((await recreated.getActiveDemoScenario()).activeScenarioId).toBe("possible_multi_person");
+    expect((await recreated.getResident("res_7f3a1c")).resident.monitoring.state).toBe("limited");
+
+    await recreated.resetDemoScenario();
+    expect((await recreated.getActiveDemoScenario()).activeScenarioId).toBeNull();
+    expect((await recreated.getResident("res_7f3a1c")).resident.monitoring.state).toBe("active");
+
+    savedValues.set("adaptive-care:demo-scenario:v1", JSON.stringify({ schemaVersion: "1.0", activeScenarioId: "invented", appliedAt: null }));
+    expect((await new MockMonitoringClient(undefined, storage).getActiveDemoScenario()).activeScenarioId).toBeNull();
+  });
 });

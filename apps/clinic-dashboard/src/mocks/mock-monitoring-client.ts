@@ -1,4 +1,10 @@
 import type {
+  DemoScenarioController,
+  DemoScenarioDefinition,
+  DemoScenarioId,
+  DemoScenarioState,
+} from "@/lib/demo-scenarios";
+import type {
   AddMemoryEntryInput,
   ClinicDeviceDetailResponse,
   ClinicDeviceListResponse,
@@ -14,6 +20,7 @@ import type {
   ResidentMemoryEntry,
   ResidentMemoryResponse,
   ResidentNotificationPreferencesResponse,
+  ResidentOverviewItem,
   ResidentOverviewResponse,
   RetireMemoryEntryInput,
   SetupChangeInput,
@@ -23,6 +30,12 @@ import { createDeviceListFixture } from "./devices";
 import { createEventDetailFixtures } from "./events";
 import { createResidentOverviewFixture } from "./residents";
 import { createMemoryFixtures, createPreferenceFixtures } from "./resident-settings";
+import {
+  createScenarioEventFixture,
+  demoScenarioDefinitions,
+  SCENARIO_RESIDENT_ID,
+  scenarioEventIds,
+} from "./scenarios";
 import { createMonitoringSetupFixtures } from "./setups";
 
 export interface MonitoringStorage {
@@ -34,6 +47,9 @@ const EVENT_STORAGE_KEY = "adaptive-care:clinic-events:v1";
 const SETUP_STORAGE_KEY = "adaptive-care:clinic-setups:v2";
 const PREFERENCE_STORAGE_KEY = "adaptive-care:clinic-preferences:v1";
 const MEMORY_STORAGE_KEY = "adaptive-care:resident-memory:v1";
+const SCENARIO_STORAGE_KEY = "adaptive-care:demo-scenario:v1";
+
+const demoScenarioIds = new Set<DemoScenarioId>(demoScenarioDefinitions.map((scenario) => scenario.scenarioId));
 
 function isStoredEvent(candidate: unknown): candidate is MonitoringEventDetail {
   if (typeof candidate !== "object" || candidate === null) {
@@ -79,7 +95,15 @@ function isStoredMemory(candidate: unknown): candidate is ResidentMemoryResponse
   return memory.schemaVersion === "1.0" && typeof memory.residentId === "string" && typeof memory.version === "number" && Array.isArray(memory.entries);
 }
 
-export class MockMonitoringClient implements MonitoringClient {
+function isStoredScenario(candidate: unknown): candidate is Pick<DemoScenarioState, "schemaVersion" | "activeScenarioId" | "appliedAt"> {
+  if (typeof candidate !== "object" || candidate === null) return false;
+  const state = candidate as Partial<DemoScenarioState>;
+  return state.schemaVersion === "1.0"
+    && (state.activeScenarioId === null || (typeof state.activeScenarioId === "string" && demoScenarioIds.has(state.activeScenarioId as DemoScenarioId)))
+    && (state.appliedAt === null || typeof state.appliedAt === "string");
+}
+
+export class MockMonitoringClient implements MonitoringClient, DemoScenarioController {
   private readonly events = new Map<string, MonitoringEventDetail>();
   private readonly setups = new Map<string, ResidentMonitoringSetup>();
   private readonly preferences = new Map<string, ResidentNotificationPreferencesResponse>();
@@ -88,6 +112,8 @@ export class MockMonitoringClient implements MonitoringClient {
   private setupsLoaded = false;
   private preferencesLoaded = false;
   private memoriesLoaded = false;
+  private scenarioLoaded = false;
+  private scenarioState: DemoScenarioState | null = null;
 
   constructor(
     private readonly now: () => Date = () => new Date(),
@@ -113,8 +139,9 @@ export class MockMonitoringClient implements MonitoringClient {
 
   async listResidentOverview(): Promise<ResidentOverviewResponse> {
     const response = createResidentOverviewFixture(this.now());
+    const scenario = this.getScenarioState();
 
-    response.items = response.items.map((resident) => {
+    response.items = response.items.map((resident) => this.applyScenarioToResident(resident, scenario)).map((resident) => {
       const eventId = resident.attention.primaryEventId;
       if (!eventId) {
         return resident;
@@ -195,7 +222,7 @@ export class MockMonitoringClient implements MonitoringClient {
   async getResidentMonitoringSetup(
     residentId: string,
   ): Promise<ResidentMonitoringSetupResponse> {
-    const setup = this.getStoredSetup(residentId);
+    const setup = this.applyScenarioToSetup(this.getStoredSetup(residentId), this.getScenarioState());
     return structuredClone({
       schemaVersion: "1.0",
       generatedAt: this.now().toISOString(),
@@ -370,6 +397,39 @@ export class MockMonitoringClient implements MonitoringClient {
     });
   }
 
+  async listDemoScenarios(): Promise<DemoScenarioDefinition[]> {
+    return structuredClone(demoScenarioDefinitions);
+  }
+
+  async getActiveDemoScenario(): Promise<DemoScenarioState> {
+    return structuredClone(this.getScenarioState());
+  }
+
+  async applyDemoScenario(scenarioId: DemoScenarioId): Promise<DemoScenarioState> {
+    if (!demoScenarioIds.has(scenarioId)) throw new Error("The requested demo scenario is not available.");
+    const targetEventId = scenarioEventIds[scenarioId] ?? null;
+    this.scenarioState = {
+      schemaVersion: "1.0",
+      activeScenarioId: scenarioId,
+      appliedAt: this.now().toISOString(),
+      targetResidentId: SCENARIO_RESIDENT_ID,
+      targetEventId,
+      persistenceAvailable: Boolean(this.storage),
+    };
+    this.scenarioLoaded = true;
+    this.scenarioState.persistenceAvailable = this.persistScenarioState();
+    this.syncScenarioEvents();
+    return structuredClone(this.scenarioState);
+  }
+
+  async resetDemoScenario(): Promise<DemoScenarioState> {
+    this.scenarioState = this.createBaselineScenarioState();
+    this.scenarioLoaded = true;
+    this.scenarioState.persistenceAvailable = this.persistScenarioState();
+    this.syncScenarioEvents();
+    return structuredClone(this.scenarioState);
+  }
+
   async getEvent(eventId: string): Promise<MonitoringEventDetail> {
     const event = this.getStoredEvent(eventId);
     return structuredClone(event);
@@ -490,23 +550,20 @@ export class MockMonitoringClient implements MonitoringClient {
 
     try {
       const saved = this.storage?.getItem(EVENT_STORAGE_KEY);
-      if (!saved) {
-        return;
-      }
-
-      const parsed: unknown = JSON.parse(saved);
-      if (!Array.isArray(parsed)) {
-        return;
-      }
-
-      parsed.forEach((candidate) => {
-        if (isStoredEvent(candidate) && this.events.has(candidate.eventId)) {
-          this.events.set(candidate.eventId, candidate);
+      if (saved) {
+        const parsed: unknown = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((candidate) => {
+            if (isStoredEvent(candidate) && this.events.has(candidate.eventId)) {
+              this.events.set(candidate.eventId, candidate);
+            }
+          });
         }
-      });
+      }
     } catch {
       // Broken demo storage is ignored so the safe fixtures remain usable.
     }
+    this.syncScenarioEvents();
   }
 
   private persistEvents(): void {
@@ -515,6 +572,101 @@ export class MockMonitoringClient implements MonitoringClient {
     } catch {
       // The workflow still works for this visit if browser storage is unavailable.
     }
+  }
+
+  private createBaselineScenarioState(): DemoScenarioState {
+    return {
+      schemaVersion: "1.0",
+      activeScenarioId: null,
+      appliedAt: null,
+      targetResidentId: SCENARIO_RESIDENT_ID,
+      targetEventId: null,
+      persistenceAvailable: Boolean(this.storage),
+    };
+  }
+
+  private getScenarioState(): DemoScenarioState {
+    if (this.scenarioLoaded && this.scenarioState) return this.scenarioState;
+    this.scenarioLoaded = true;
+    const baseline = this.createBaselineScenarioState();
+    try {
+      const saved = this.storage?.getItem(SCENARIO_STORAGE_KEY);
+      if (!saved) {
+        this.scenarioState = baseline;
+        return baseline;
+      }
+      const parsed: unknown = JSON.parse(saved);
+      if (!isStoredScenario(parsed)) {
+        this.scenarioState = baseline;
+        return baseline;
+      }
+      this.scenarioState = {
+        ...baseline,
+        activeScenarioId: parsed.activeScenarioId,
+        appliedAt: parsed.appliedAt,
+        targetEventId: parsed.activeScenarioId ? scenarioEventIds[parsed.activeScenarioId] ?? null : null,
+      };
+      return this.scenarioState;
+    } catch {
+      this.scenarioState = { ...baseline, persistenceAvailable: false };
+      return this.scenarioState;
+    }
+  }
+
+  private persistScenarioState(): boolean {
+    if (!this.scenarioState || !this.storage) return false;
+    try {
+      this.storage.setItem(SCENARIO_STORAGE_KEY, JSON.stringify({
+        schemaVersion: this.scenarioState.schemaVersion,
+        activeScenarioId: this.scenarioState.activeScenarioId,
+        appliedAt: this.scenarioState.appliedAt,
+      }));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private syncScenarioEvents(): void {
+    if (!this.eventsLoaded) return;
+    Object.values(scenarioEventIds).forEach((eventId) => {
+      if (eventId) this.events.delete(eventId);
+    });
+    const scenarioId = this.getScenarioState().activeScenarioId;
+    if (scenarioId) {
+      const event = createScenarioEventFixture(scenarioId, this.now());
+      if (event) this.events.set(event.eventId, event);
+    }
+    this.persistEvents();
+  }
+
+  private applyScenarioToResident(
+    resident: ResidentOverviewItem,
+    scenario: DemoScenarioState,
+  ): ResidentOverviewItem {
+    if (resident.residentId !== SCENARIO_RESIDENT_ID || !scenario.activeScenarioId) return resident;
+    const lastUpdatedAt = scenario.appliedAt ?? resident.monitoring.lastUpdatedAt;
+    if (scenario.activeScenarioId === "resident_away") {
+      return { ...resident, monitoring: { state: "paused", reason: "Resident A is away, so resident-specific monitoring and new baseline learning are paused.", lastUpdatedAt }, attention: { priority: "none", headline: "No warning event — resident away", openEventCount: 0 } };
+    }
+    if (scenario.activeScenarioId === "resident_returned") {
+      return { ...resident, monitoring: { state: "active", reason: "Resident A returned. Resident-specific monitoring is active and eligible learning can continue.", lastUpdatedAt }, attention: { priority: "none", headline: "No open attention items", openEventCount: 0 } };
+    }
+    if (scenario.activeScenarioId === "possible_multi_person") {
+      return { ...resident, monitoring: { state: "limited", contextLabel: "Possible visitor or another person", reason: "Possible multiple-person presence limits resident-specific monitoring.", lastUpdatedAt }, attention: { priority: "watch", headline: "Confirm who is in Room 101", openEventCount: 1, primaryEventId: scenario.targetEventId ?? undefined } };
+    }
+    return { ...resident, monitoring: { ...resident.monitoring, reason: "Monitoring is active with a synthetic combined pattern change for staff review.", lastUpdatedAt }, attention: { priority: "high", headline: "Combined pattern change needs staff review", openEventCount: 1, primaryEventId: scenario.targetEventId ?? undefined } };
+  }
+
+  private applyScenarioToSetup(
+    setup: ResidentMonitoringSetup,
+    scenario: DemoScenarioState,
+  ): ResidentMonitoringSetup {
+    if (setup.residentId !== SCENARIO_RESIDENT_ID || !scenario.activeScenarioId) return setup;
+    if (scenario.activeScenarioId === "resident_away") return { ...setup, learningState: "paused", learningReason: "New learning is paused while Resident A is away. Established calibration history is preserved." };
+    if (scenario.activeScenarioId === "possible_multi_person") return { ...setup, learningState: "paused", learningReason: "New learning is paused while possible multiple-person presence makes resident attribution unclear." };
+    if (scenario.activeScenarioId === "resident_returned") return { ...setup, learningState: "active", learningReason: "Resident A returned. Eligible baseline learning can continue using the established setup." };
+    return setup;
   }
 
   private loadSetups(): void {
