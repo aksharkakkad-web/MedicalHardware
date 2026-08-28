@@ -31,8 +31,12 @@ the contactless-monitoring intelligence architecture.
 
 The preserved report text includes citation markers produced inside the
 original Deep Research session. Those internal markers may not resolve outside
-that session; use the direct primary-source links included in each report for
-independent verification.
+that session. The broad V1 report was exported without a durable bibliography,
+so its claims must be independently verified before they are treated as
+evidence. The later anomaly-filter/LLM report includes a direct primary-source
+link section that covers the main overlapping systems and should be the
+starting point for that verification; it is not a substitute for checking each
+original source and license.
 
 ## Immediate next artifact
 
