@@ -322,4 +322,5 @@ def test_queue_page_batch_hydrates_complete_event_histories(
     assert len(page.items) == 5
     assert all(len(stored.event.action_history) == 1 for stored in page.items)
     assert all(len(stored.event.priority_history) == 1 for stored in page.items)
-    assert select_count == 4
+    assert all(stored.event.bridge_records == () for stored in page.items)
+    assert select_count == 5

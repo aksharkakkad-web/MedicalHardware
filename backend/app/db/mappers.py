@@ -7,10 +7,15 @@ from typing import Iterable
 from backend.app.db.models import (
     EventActionRow,
     EventPriorityHistoryRow,
+    EventBridgeRecordRow,
     FeedbackRecordRow,
     MonitoringEventRow,
     ResidentMemoryEntryRow,
     ResidentMemorySnapshotRow,
+)
+from backend.app.db.intelligence_mappers import (
+    event_bridge_from_row,
+    event_bridge_to_row,
 )
 from backend.app.domain.events import (
     EventAction,
@@ -34,6 +39,7 @@ class EventRowBundle:
     event: MonitoringEventRow
     actions: tuple[EventActionRow, ...]
     priorities: tuple[EventPriorityHistoryRow, ...]
+    bridges: tuple[EventBridgeRecordRow, ...]
 
 
 @dataclass(frozen=True)
@@ -86,6 +92,15 @@ def event_to_rows(
         episode_policy_test_only=event.episode_policy_test_only,
         resident_memory_version=event.resident_memory_version,
         resident_memory_entry_ids=list(event.resident_memory_entry_ids),
+        source_anomaly_id=event.source_anomaly_id,
+        latest_evidence_revision=event.latest_evidence_revision,
+        latest_provisional_evidence_revision=(
+            event.latest_provisional_evidence_revision
+        ),
+        attention_suppressed_until=_utc(event.attention_suppressed_until),
+        provisional_urgent=event.provisional_urgent,
+        room_level_only=event.room_level_only,
+        bridge_idempotency_keys=list(event.bridge_idempotency_keys),
         version=version,
     )
     action_rows = tuple(
@@ -122,13 +137,18 @@ def event_to_rows(
         )
         for sequence, item in enumerate(event.priority_history, start=1)
     )
-    return EventRowBundle(event_row, action_rows, priority_rows)
+    bridge_rows = tuple(
+        event_bridge_to_row(tenant_id, event.event_id, record)
+        for record in event.bridge_records
+    )
+    return EventRowBundle(event_row, action_rows, priority_rows, bridge_rows)
 
 
 def event_from_rows(
     event_row: MonitoringEventRow,
     action_rows: Iterable[EventActionRow],
     priority_rows: Iterable[EventPriorityHistoryRow],
+    bridge_rows: Iterable[EventBridgeRecordRow] = (),
 ) -> StoredEvent:
     actions = tuple(
         EventAction(
@@ -184,6 +204,22 @@ def event_from_rows(
         episode_policy_test_only=event_row.episode_policy_test_only,
         resident_memory_version=event_row.resident_memory_version,
         resident_memory_entry_ids=tuple(event_row.resident_memory_entry_ids),
+        source_anomaly_id=event_row.source_anomaly_id,
+        latest_evidence_revision=event_row.latest_evidence_revision,
+        latest_provisional_evidence_revision=(
+            event_row.latest_provisional_evidence_revision
+        ),
+        attention_suppressed_until=_utc(event_row.attention_suppressed_until),
+        provisional_urgent=event_row.provisional_urgent,
+        room_level_only=event_row.room_level_only,
+        bridge_idempotency_keys=tuple(event_row.bridge_idempotency_keys),
+        bridge_records=tuple(
+            event_bridge_from_row(row).record
+            for row in sorted(
+                bridge_rows,
+                key=lambda item: item.event_bridge_record_id or 0,
+            )
+        ),
     )
     return StoredEvent(event, event_row.version)
 

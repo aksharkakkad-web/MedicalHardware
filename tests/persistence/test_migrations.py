@@ -31,6 +31,12 @@ EXPECTED_TABLES = {
     "devices",
     "device_room_assignments",
     "device_health_observations",
+    "baseline_snapshots",
+    "baseline_dimensions",
+    "anomaly_revisions",
+    "llm_interpretations",
+    "disposition_decisions",
+    "event_bridge_records",
 }
 
 EXPECTED_COLUMNS = {
@@ -67,6 +73,13 @@ EXPECTED_COLUMNS = {
         "episode_policy_test_only": False,
         "resident_memory_version": True,
         "resident_memory_entry_ids": False,
+        "source_anomaly_id": True,
+        "latest_evidence_revision": True,
+        "latest_provisional_evidence_revision": True,
+        "attention_suppressed_until": True,
+        "provisional_urgent": False,
+        "room_level_only": False,
+        "bridge_idempotency_keys": False,
         "version": False,
     },
     "event_actions": {
@@ -243,6 +256,88 @@ EXPECTED_COLUMNS = {
         "policy_version": False,
         "policy_test_only": False,
     },
+    "baseline_snapshots": {
+        "baseline_id": False,
+        "tenant_id": False,
+        "resident_id": False,
+        "recorded_at": False,
+        "monitoring_setup_version": False,
+        "policy_version": False,
+        "prior_baseline_id": True,
+        "adoption_candidate_id": True,
+        "adoption_context_entry_id": True,
+        "schema_version": False,
+        "payload_json": False,
+    },
+    "baseline_dimensions": {
+        "baseline_dimension_id": False,
+        "tenant_id": False,
+        "baseline_id": False,
+        "feature_name": False,
+        "purpose": False,
+        "context_key": False,
+        "unit": False,
+        "payload_json": False,
+    },
+    "anomaly_revisions": {
+        "anomaly_revision_id": False,
+        "tenant_id": False,
+        "anomaly_id": False,
+        "packet_revision": False,
+        "resident_id": False,
+        "room_id": False,
+        "baseline_id": False,
+        "lifecycle_state": False,
+        "recorded_at": False,
+        "update_json": False,
+        "packet_json": False,
+    },
+    "llm_interpretations": {
+        "interpretation_id": False,
+        "tenant_id": False,
+        "anomaly_id": False,
+        "packet_revision": False,
+        "status": False,
+        "created_at": False,
+        "model_id": False,
+        "model_version": False,
+        "prompt_version": False,
+        "skill_bundle_version": False,
+        "retrieval_contract_version": False,
+        "output_schema_version": False,
+        "relevant_context_version": False,
+        "request_fingerprint": False,
+        "request_json": False,
+        "result_json": False,
+    },
+    "disposition_decisions": {
+        "disposition_id": False,
+        "tenant_id": False,
+        "resident_id": False,
+        "room_id": False,
+        "anomaly_id": False,
+        "packet_revision": False,
+        "interpretation_id": True,
+        "event_id": True,
+        "status": False,
+        "decided_at": False,
+        "policy_version": False,
+        "payload_json": False,
+    },
+    "event_bridge_records": {
+        "event_bridge_record_id": False,
+        "tenant_id": False,
+        "idempotency_key": False,
+        "event_id": False,
+        "resident_id": False,
+        "room_id": False,
+        "source_anomaly_id": False,
+        "evidence_revision": False,
+        "evidence_kind": False,
+        "priority": False,
+        "observed_at": False,
+        "payload_json": False,
+    },
 }
 
 EXPECTED_PRIMARY_KEYS = {
@@ -266,6 +361,12 @@ EXPECTED_PRIMARY_KEYS = {
     "device_room_assignments": ("assignment_id",),
     "device_health_observations": ("device_health_observation_id",),
     "resident_notification_preference_versions": ("preference_version_id",),
+    "baseline_snapshots": ("baseline_id",),
+    "baseline_dimensions": ("baseline_dimension_id",),
+    "anomaly_revisions": ("anomaly_revision_id",),
+    "llm_interpretations": ("interpretation_id",),
+    "disposition_decisions": ("disposition_id",),
+    "event_bridge_records": ("event_bridge_record_id",),
 }
 
 EXPECTED_FOREIGN_KEYS = {
@@ -347,6 +448,45 @@ EXPECTED_FOREIGN_KEYS = {
         ("tenant_id", "devices", "tenant_id"),
         ("device_id", "devices", "device_id"),
     },
+    "baseline_snapshots": {
+        ("tenant_id", "tenants", "tenant_id"),
+        ("tenant_id", "residents", "tenant_id"),
+        ("resident_id", "residents", "resident_id"),
+    },
+    "baseline_dimensions": {
+        ("tenant_id", "tenants", "tenant_id"),
+        ("tenant_id", "baseline_snapshots", "tenant_id"),
+    },
+    "anomaly_revisions": {
+        ("tenant_id", "tenants", "tenant_id"),
+        ("tenant_id", "residents", "tenant_id"),
+        ("tenant_id", "rooms", "tenant_id"),
+        ("tenant_id", "baseline_snapshots", "tenant_id"),
+        ("resident_id", "residents", "resident_id"),
+        ("room_id", "rooms", "room_id"),
+    },
+    "llm_interpretations": {
+        ("tenant_id", "tenants", "tenant_id"),
+        ("tenant_id", "anomaly_revisions", "tenant_id"),
+    },
+    "disposition_decisions": {
+        ("tenant_id", "tenants", "tenant_id"),
+        ("tenant_id", "residents", "tenant_id"),
+        ("tenant_id", "rooms", "tenant_id"),
+        ("tenant_id", "anomaly_revisions", "tenant_id"),
+        ("tenant_id", "llm_interpretations", "tenant_id"),
+        ("tenant_id", "monitoring_events", "tenant_id"),
+        ("resident_id", "residents", "resident_id"),
+        ("room_id", "rooms", "room_id"),
+    },
+    "event_bridge_records": {
+        ("tenant_id", "tenants", "tenant_id"),
+        ("tenant_id", "monitoring_events", "tenant_id"),
+        ("tenant_id", "residents", "tenant_id"),
+        ("tenant_id", "rooms", "tenant_id"),
+        ("resident_id", "residents", "resident_id"),
+        ("room_id", "rooms", "room_id"),
+    },
 }
 
 EXPECTED_UNIQUES = {
@@ -370,6 +510,15 @@ EXPECTED_UNIQUES = {
     "resident_notification_preference_versions": {
         ("tenant_id", "resident_id", "version")
     },
+    "monitoring_events": {("tenant_id", "event_id")},
+    "baseline_snapshots": {("tenant_id", "baseline_id")},
+    "baseline_dimensions": {
+        ("tenant_id", "baseline_id", "feature_name", "context_key")
+    },
+    "anomaly_revisions": {("tenant_id", "anomaly_id", "packet_revision")},
+    "llm_interpretations": {("tenant_id", "interpretation_id")},
+    "disposition_decisions": {("tenant_id", "disposition_id")},
+    "event_bridge_records": {("tenant_id", "idempotency_key")},
 }
 
 EXPECTED_INDEXES = {
@@ -411,6 +560,32 @@ EXPECTED_INDEXES = {
     "resident_notification_preference_versions": {
         ("tenant_id",),
         ("resident_id",),
+    },
+    "baseline_snapshots": {("tenant_id",), ("resident_id",), ("recorded_at",)},
+    "baseline_dimensions": {("tenant_id",), ("baseline_id",)},
+    "anomaly_revisions": {
+        ("tenant_id",),
+        ("resident_id",),
+        ("room_id",),
+        ("baseline_id",),
+        ("anomaly_id", "packet_revision"),
+    },
+    "llm_interpretations": {
+        ("tenant_id",),
+        ("anomaly_id", "packet_revision"),
+        ("request_fingerprint",),
+    },
+    "disposition_decisions": {
+        ("tenant_id",),
+        ("resident_id",),
+        ("room_id",),
+        ("anomaly_id", "packet_revision"),
+        ("event_id",),
+    },
+    "event_bridge_records": {
+        ("tenant_id",),
+        ("event_id",),
+        ("source_anomaly_id", "evidence_revision"),
     },
 }
 
@@ -471,6 +646,38 @@ EXPECTED_COMPOSITE_OWNERSHIP_FOREIGN_KEYS = {
             "residents",
             ("tenant_id", "resident_id"),
         ),
+    },
+    "baseline_snapshots": {
+        (("tenant_id", "resident_id"), "residents", ("tenant_id", "resident_id")),
+    },
+    "baseline_dimensions": {
+        (("tenant_id", "baseline_id"), "baseline_snapshots", ("tenant_id", "baseline_id")),
+    },
+    "anomaly_revisions": {
+        (("tenant_id", "resident_id"), "residents", ("tenant_id", "resident_id")),
+        (("tenant_id", "room_id"), "rooms", ("tenant_id", "room_id")),
+        (("tenant_id", "baseline_id"), "baseline_snapshots", ("tenant_id", "baseline_id")),
+    },
+    "llm_interpretations": {
+        (
+            ("tenant_id", "anomaly_id", "packet_revision"),
+            "anomaly_revisions",
+            ("tenant_id", "anomaly_id", "packet_revision"),
+        ),
+    },
+    "disposition_decisions": {
+        (("tenant_id", "resident_id"), "residents", ("tenant_id", "resident_id")),
+        (("tenant_id", "room_id"), "rooms", ("tenant_id", "room_id")),
+        (
+            ("tenant_id", "anomaly_id", "packet_revision"),
+            "anomaly_revisions",
+            ("tenant_id", "anomaly_id", "packet_revision"),
+        ),
+    },
+    "event_bridge_records": {
+        (("tenant_id", "event_id"), "monitoring_events", ("tenant_id", "event_id")),
+        (("tenant_id", "resident_id"), "residents", ("tenant_id", "resident_id")),
+        (("tenant_id", "room_id"), "rooms", ("tenant_id", "room_id")),
     },
 }
 
@@ -604,7 +811,7 @@ def test_flexible_context_migration_defaults_old_memory_to_general_context(
         )
         revision = session.scalar(text("SELECT version_num FROM alembic_version"))
 
-    assert revision == "0005_flexible_resident_context"
+    assert revision == "0006_monitoring_intelligence"
     assert restored.entries[0].context_kind == "general_context"
     assert restored.entries[0].effective_from is None
     assert restored.entries[0].effective_until is None
@@ -647,6 +854,102 @@ def test_assignment_cannot_cross_tenant_boundaries(tmp_path: Path) -> None:
                 )
             )
 
+    engine.dispose()
+
+
+def test_intelligence_foreign_keys_reject_cross_tenant_ownership(
+    tmp_path: Path,
+) -> None:
+    database_url = f"sqlite+pysqlite:///{tmp_path / 'intelligence-tenant-integrity.db'}"
+    config = Config("alembic.ini")
+    config.set_main_option("sqlalchemy.url", database_url)
+    command.upgrade(config, "head")
+    engine = create_engine(database_url)
+    with engine.begin() as connection:
+        connection.execute(text("PRAGMA foreign_keys=ON"))
+        connection.execute(
+            text("INSERT INTO tenants (tenant_id) VALUES ('tenant_a'), ('tenant_b')")
+        )
+        connection.execute(
+            text(
+                "INSERT INTO rooms (room_id, tenant_id, label) VALUES "
+                "('room_a', 'tenant_a', 'Room A'), ('room_b', 'tenant_b', 'Room B')"
+            )
+        )
+        connection.execute(
+            text(
+                "INSERT INTO residents (resident_id, tenant_id, display_label) VALUES "
+                "('resident_a', 'tenant_a', 'Resident A'), "
+                "('resident_b', 'tenant_b', 'Resident B')"
+            )
+        )
+        connection.execute(
+            text(
+                "INSERT INTO baseline_snapshots "
+                "(baseline_id, tenant_id, resident_id, recorded_at, "
+                "monitoring_setup_version, policy_version, prior_baseline_id, "
+                "adoption_candidate_id, adoption_context_entry_id, schema_version, "
+                "payload_json) VALUES "
+                "('baseline_a', 'tenant_a', 'resident_a', '2026-08-28T16:00:00Z', "
+                "'setup_a', 'policy_a', NULL, NULL, NULL, '1.0', '{}')"
+            )
+        )
+        connection.execute(
+            text(
+                "INSERT INTO monitoring_events "
+                "(event_id, tenant_id, episode_id, resident_id, room_id, "
+                "objective_family, headline, priority, status, created_at, "
+                "last_signal_at, signal_count, related_event_ids, recurrence_count, "
+                "overdue_at, resolution_outcome, episode_policy_version, "
+                "episode_policy_test_only, resident_memory_version, "
+                "resident_memory_entry_ids, source_anomaly_id, latest_evidence_revision, "
+                "latest_provisional_evidence_revision, attention_suppressed_until, "
+                "provisional_urgent, room_level_only, bridge_idempotency_keys, version) "
+                "VALUES ('event_b', 'tenant_b', 'episode_b', 'resident_b', 'room_b', "
+                "'unknown_anomaly', 'Synthetic event', 'watch', 'open', "
+                "'2026-08-28T16:00:00Z', '2026-08-28T16:00:00Z', 1, '[]', 1, "
+                "NULL, NULL, 'event_policy_v1', 1, NULL, '[]', NULL, NULL, NULL, "
+                "NULL, 0, 0, '[]', 1)"
+            )
+        )
+
+    with engine.begin() as connection, pytest.raises(IntegrityError):
+        connection.execute(text("PRAGMA foreign_keys=ON"))
+        connection.execute(
+            text(
+                "INSERT INTO baseline_snapshots "
+                "(baseline_id, tenant_id, resident_id, recorded_at, "
+                "monitoring_setup_version, policy_version, schema_version, payload_json) "
+                "VALUES ('baseline_cross', 'tenant_a', 'resident_b', "
+                "'2026-08-28T16:00:00Z', 'setup_a', 'policy_a', '1.0', '{}')"
+            )
+        )
+
+    with engine.begin() as connection, pytest.raises(IntegrityError):
+        connection.execute(text("PRAGMA foreign_keys=ON"))
+        connection.execute(
+            text(
+                "INSERT INTO anomaly_revisions "
+                "(tenant_id, anomaly_id, packet_revision, resident_id, room_id, "
+                "baseline_id, lifecycle_state, recorded_at, update_json, packet_json) "
+                "VALUES ('tenant_a', 'anomaly_cross', 1, 'resident_a', 'room_b', "
+                "'baseline_a', 'active', '2026-08-28T16:00:00Z', '{}', '{}')"
+            )
+        )
+
+    with engine.begin() as connection, pytest.raises(IntegrityError):
+        connection.execute(text("PRAGMA foreign_keys=ON"))
+        connection.execute(
+            text(
+                "INSERT INTO event_bridge_records "
+                "(tenant_id, idempotency_key, event_id, resident_id, room_id, "
+                "source_anomaly_id, evidence_revision, evidence_kind, priority, "
+                "observed_at, payload_json) VALUES "
+                "('tenant_a', 'bridge_cross', 'event_b', 'resident_a', 'room_a', "
+                "'anomaly_a', 1, 'packet', 'watch', "
+                "'2026-08-28T16:00:00Z', '{}')"
+            )
+        )
     engine.dispose()
 
 

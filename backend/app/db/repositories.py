@@ -19,6 +19,7 @@ from backend.app.db.mappers import (
 )
 from backend.app.db.models import (
     EventActionRow,
+    EventBridgeRecordRow,
     EventPriorityHistoryRow,
     FeedbackRecordRow,
     MonitoringEventRow,
@@ -331,6 +332,20 @@ class EventRepository:
         self._session.add_all(
             row for row in bundle.priorities if row.sequence > priority_sequence
         )
+        for bridge in bundle.bridges:
+            existing_bridge = self._session.scalar(
+                select(EventBridgeRecordRow).where(
+                    EventBridgeRecordRow.tenant_id == tenant_id,
+                    EventBridgeRecordRow.idempotency_key == bridge.idempotency_key,
+                )
+            )
+            if existing_bridge is None:
+                self._session.add(bridge)
+            elif (
+                existing_bridge.event_id != bridge.event_id
+                or existing_bridge.payload_json != bridge.payload_json
+            ):
+                raise ConcurrentUpdateError()
         self._session.flush()
         return self.get(tenant_id, event.event_id)
 
@@ -355,7 +370,15 @@ class EventRepository:
             )
             .order_by(EventPriorityHistoryRow.sequence)
         ).all()
-        return event_from_rows(event_row, actions, priorities)
+        bridges = self._session.scalars(
+            select(EventBridgeRecordRow)
+            .where(
+                EventBridgeRecordRow.tenant_id == tenant_id,
+                EventBridgeRecordRow.event_id == event_row.event_id,
+            )
+            .order_by(EventBridgeRecordRow.event_bridge_record_id)
+        ).all()
+        return event_from_rows(event_row, actions, priorities, bridges)
 
     def _hydrate_many(
         self,
@@ -384,21 +407,38 @@ class EventRepository:
                 EventPriorityHistoryRow.sequence,
             )
         ).all()
+        bridges = self._session.scalars(
+            select(EventBridgeRecordRow)
+            .where(
+                EventBridgeRecordRow.tenant_id == tenant_id,
+                EventBridgeRecordRow.event_id.in_(event_ids),
+            )
+            .order_by(
+                EventBridgeRecordRow.event_id,
+                EventBridgeRecordRow.event_bridge_record_id,
+            )
+        ).all()
         actions_by_event: dict[str, list[EventActionRow]] = {
             event_id: [] for event_id in event_ids
         }
         priorities_by_event: dict[str, list[EventPriorityHistoryRow]] = {
             event_id: [] for event_id in event_ids
         }
+        bridges_by_event: dict[str, list[EventBridgeRecordRow]] = {
+            event_id: [] for event_id in event_ids
+        }
         for action in actions:
             actions_by_event[action.event_id].append(action)
         for priority in priorities:
             priorities_by_event[priority.event_id].append(priority)
+        for bridge in bridges:
+            bridges_by_event[bridge.event_id].append(bridge)
         return tuple(
             event_from_rows(
                 event_row,
                 actions_by_event[event_row.event_id],
                 priorities_by_event[event_row.event_id],
+                bridges_by_event[event_row.event_id],
             )
             for event_row in event_rows
         )

@@ -1,4 +1,5 @@
 from pathlib import Path
+from dataclasses import replace
 
 from alembic import command
 from alembic.config import Config
@@ -7,6 +8,7 @@ from httpx import Response
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import func, select
+from sqlalchemy.orm import Session
 
 from backend.app.config import Settings
 from backend.app.db.models import (
@@ -27,6 +29,10 @@ from backend.app.db.models import (
     RoomRow,
     TenantRow,
 )
+from backend.app.db.intelligence_mappers import DispositionRecord
+from backend.app.db.intelligence_repositories import IntelligenceRepository
+from backend.app.db.repositories import EventRepository
+from backend.app.db.session import create_engine_for_url
 from backend.app.db.device_repositories import (
     DeviceHealthRepository,
     DeviceRepository,
@@ -35,6 +41,19 @@ from backend.app.domain.device_health import (
     DeviceHealthObservation,
     DeviceHealthState,
     DeviceSourceHealth,
+)
+from backend.app.domain.events import (
+    BridgeEvidenceKind,
+    EventBridgeRecord,
+    EventPriority,
+    EventStore,
+)
+from backend.app.intelligence.policy import DispositionDecision, PolicyDisposition
+from tests.persistence.test_intelligence_repositories import (
+    AT as INTELLIGENCE_AT,
+    _anomaly_revision,
+    _baseline,
+    _interpretation,
 )
 from backend.app.db.seed import seed_synthetic_story
 from backend.app.main import create_app
@@ -45,6 +64,131 @@ ACCESS_HEADERS = {
     "X-Actor-Id": "operator_1",
 }
 EVENT_PATH = "/v1/events/evt_phase2_demo"
+
+
+def test_complete_intelligence_trail_survives_database_restart(
+    tmp_path: Path,
+) -> None:
+    database_url = f"sqlite+pysqlite:///{tmp_path / 'intelligence-restart.db'}"
+    config = Config("alembic.ini")
+    config.set_main_option("sqlalchemy.url", database_url)
+    command.upgrade(config, "head")
+    engine = create_engine_for_url(database_url)
+
+    baseline = _baseline()
+    update, packet = _anomaly_revision(baseline)
+    request, result = _interpretation(packet)
+    decision = DispositionDecision(
+        disposition=PolicyDisposition.CAREGIVER_EVENT,
+        priority=EventPriority.HIGH,
+        confidence="interpreted",
+        objective_family="unusual_movement",
+        headline="Unusual movement pattern",
+        reasons=("validated_interpretation",),
+        policy_version="synthetic_disposition_v1",
+        fallback_used=False,
+        room_level_only=False,
+        interpretation_id=result.interpretation_id,
+    )
+    disposition = DispositionRecord(
+        disposition_id="disposition_restart_1",
+        resident_id="resident_demo_a",
+        room_id="room_214",
+        anomaly_id=packet.anomaly_id,
+        packet_revision=packet.packet_revision,
+        decided_at=INTELLIGENCE_AT + timedelta(seconds=6),
+        decision=decision,
+        interpretation_id=result.interpretation_id,
+        event_id="evt_phase2_demo",
+    )
+    bridge = EventBridgeRecord(
+        idempotency_key="anomaly_intelligence_1:1:synthetic_disposition_v1",
+        resident_id="resident_demo_a",
+        room_id="room_214",
+        source_anomaly_id=packet.anomaly_id,
+        evidence_revision=packet.packet_revision,
+        evidence_kind=BridgeEvidenceKind.PACKET,
+        objective_family="unusual_movement",
+        headline="Unusual movement pattern",
+        priority=EventPriority.HIGH,
+        provisional_urgent=False,
+        room_level_only=False,
+        observed_at=INTELLIGENCE_AT + timedelta(seconds=6),
+        actor_id="system:monitoring_event",
+    )
+
+    with Session(engine) as session:
+        story = seed_synthetic_story(session)
+        intelligence = IntelligenceRepository(session)
+        intelligence.save_baseline(story.tenant_id, baseline, INTELLIGENCE_AT)
+        expected_anomaly = intelligence.save_anomaly_revision(
+            story.tenant_id, update, packet
+        )
+        expected_interpretation = intelligence.save_interpretation(
+            story.tenant_id,
+            request,
+            result,
+            INTELLIGENCE_AT + timedelta(seconds=5),
+        )
+        intelligence.save_disposition(story.tenant_id, disposition)
+        events = EventRepository(session)
+        stored_event = events.get(story.tenant_id, story.event_id)
+        events.save(
+            story.tenant_id,
+            replace(
+                stored_event.event,
+                source_anomaly_id=bridge.source_anomaly_id,
+                latest_evidence_revision=bridge.evidence_revision,
+                bridge_idempotency_keys=(bridge.idempotency_key,),
+                bridge_records=(bridge,),
+            ),
+            expected_version=stored_event.version,
+        )
+        session.commit()
+    engine.dispose()
+
+    restarted_engine = create_engine_for_url(database_url)
+    with Session(restarted_engine) as session:
+        intelligence = IntelligenceRepository(session)
+        assert intelligence.latest_baseline(
+            "tenant_demo", "resident_demo_a"
+        ) == baseline
+        assert intelligence.latest_anomaly(
+            "tenant_demo", packet.anomaly_id
+        ) == expected_anomaly
+        assert intelligence.find_interpretation(
+            "tenant_demo", result.interpretation_id
+        ) == expected_interpretation
+        assert intelligence.find_disposition(
+            "tenant_demo", disposition.disposition_id
+        ) == disposition
+        stored_bridge = intelligence.find_event_bridge(
+            "tenant_demo", bridge.idempotency_key
+        )
+        assert stored_bridge is not None
+        assert stored_bridge.event_id == "evt_phase2_demo"
+        assert stored_bridge.record == bridge
+
+        hydrated_event = EventRepository(session).get(
+            "tenant_demo", "evt_phase2_demo"
+        ).event
+        restarted_store = EventStore(initial_events=(hydrated_event,))
+        assert restarted_store.record_signal(
+            resident_id=bridge.resident_id,
+            room_id=bridge.room_id,
+            objective_family=bridge.objective_family,
+            headline=bridge.headline,
+            priority=bridge.priority,
+            observed_at=bridge.observed_at,
+            actor_id=bridge.actor_id,
+            source_anomaly_id=bridge.source_anomaly_id,
+            evidence_revision=bridge.evidence_revision,
+            bridge_idempotency_key=bridge.idempotency_key,
+            provisional_urgent=bridge.provisional_urgent,
+            evidence_kind=bridge.evidence_kind,
+            room_level_only=bridge.room_level_only,
+        ) == hydrated_event
+    restarted_engine.dispose()
 
 
 def _post(
