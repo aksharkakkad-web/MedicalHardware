@@ -1075,6 +1075,12 @@ version. Retire creates a new version with the selected entry retired. Old
 snapshots and entries are never deleted. These commands cannot change event
 history, numerical calibration, warning thresholds, or global behavior.
 
+Memory versions form one resident-wide ordered timeline. A command may target
+any active entry, including an older entry, but its `changed_at` cannot precede
+the latest existing memory change. This allows later correction of older
+context while preventing a new memory version from being inserted backward in
+the audit history.
+
 ---
 
 ## 19. Product API Concepts

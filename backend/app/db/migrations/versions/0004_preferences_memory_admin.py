@@ -87,9 +87,17 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute(
-        "DELETE FROM resident_memory_entries WHERE source_feedback_id IS NULL"
+    operator_entry_count = op.get_bind().scalar(
+        sa.text(
+            "SELECT COUNT(*) FROM resident_memory_entries "
+            "WHERE source_kind = 'operator'"
+        )
     )
+    if operator_entry_count:
+        raise RuntimeError(
+            "Cannot downgrade while operator-authored resident memory exists; "
+            "export or migrate that history before removing provenance support."
+        )
     with op.batch_alter_table("resident_memory_entries") as batch_op:
         batch_op.drop_constraint(
             "ck_resident_memory_entry_source",

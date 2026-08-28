@@ -147,3 +147,44 @@ def test_memory_provenance_allows_operator_entries_without_fake_feedback(
             )
         )
     engine.dispose()
+
+
+def test_checkpoint_c_downgrade_refuses_to_delete_operator_memory(
+    tmp_path: Path,
+) -> None:
+    config, engine = _database(tmp_path, "memory-safe-downgrade.db")
+    command.upgrade(config, "head")
+
+    with engine.begin() as connection:
+        connection.execute(text("PRAGMA foreign_keys=ON"))
+        _seed_residents(connection)
+        connection.execute(
+            text(
+                "INSERT INTO resident_memory_snapshots "
+                "(tenant_id, resident_id, version, created_at) VALUES "
+                "('tenant_a', 'resident_a', 1, '2026-08-25T15:00:00Z')"
+            )
+        )
+        connection.execute(
+            text(
+                "INSERT INTO resident_memory_entries "
+                "(entry_id, tenant_id, resident_id, memory_version, description, "
+                "source_kind, source_feedback_id, supersedes_entry_id, status, "
+                "created_by, created_at, retired_by, retired_at, retirement_reason) "
+                "VALUES ('memory_operator', 'tenant_a', 'resident_a', 1, "
+                "'Morning routine', 'operator', NULL, NULL, 'active', "
+                "'operator_1', '2026-08-25T15:00:00Z', NULL, NULL, NULL)"
+            )
+        )
+
+    with pytest.raises(RuntimeError, match="operator-authored resident memory"):
+        command.downgrade(config, "0003_device_health")
+
+    with engine.connect() as connection:
+        assert connection.scalar(
+            text(
+                "SELECT COUNT(*) FROM resident_memory_entries "
+                "WHERE entry_id = 'memory_operator'"
+            )
+        ) == 1
+    engine.dispose()

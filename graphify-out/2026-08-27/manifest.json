@@ -816,9 +816,9 @@
     "semantic_hash": ""
   },
   "backend/app/api/v1/events.py": {
-    "mtime": 1787862162.1248517,
-    "seen": 1787872525.195286,
-    "ast_hash": "4e5203f334c5f38098fb2478a66f0e5a",
+    "mtime": 1787877379.6336498,
+    "seen": 1787877483.153114,
+    "ast_hash": "6042782631cc8830939645417f7180d4",
     "semantic_hash": ""
   },
   "backend/app/api/v1/resident_status.py": {
@@ -930,9 +930,9 @@
     "semantic_hash": ""
   },
   "backend/app/db/models.py": {
-    "mtime": 1787876297.6268892,
-    "seen": 1787876361.142514,
-    "ast_hash": "394dd34309183d8b2af0a66bde2c1ee3",
+    "mtime": 1787877379.631633,
+    "seen": 1787877483.153127,
+    "ast_hash": "2115f5dd33fab73a0b3099a791ee0046",
     "semantic_hash": ""
   },
   "backend/app/db/repositories.py": {
@@ -990,9 +990,9 @@
     "semantic_hash": ""
   },
   "backend/app/domain/feedback.py": {
-    "mtime": 1787876446.2491045,
-    "seen": 1787876562.766268,
-    "ast_hash": "4e44d1ea3335dbaed27f77f4ad16afa8",
+    "mtime": 1787877379.6331286,
+    "seen": 1787877483.153132,
+    "ast_hash": "e8b687858e698ae1adf74d5cc439d9ff",
     "semantic_hash": ""
   },
   "backend/app/domain/monitoring.py": {
@@ -1092,9 +1092,9 @@
     "semantic_hash": ""
   },
   "tests/api/test_feedback_api.py": {
-    "mtime": 1787876164.4672472,
-    "seen": 1787876182.1302688,
-    "ast_hash": "9ea6121964cc1f863d3242ab6946af38",
+    "mtime": 1787877359.1334896,
+    "seen": 1787877483.153141,
+    "ast_hash": "012b53c700d43230636a69a25b744d30",
     "semantic_hash": ""
   },
   "tests/api/test_health.py": {
@@ -1176,9 +1176,9 @@
     "semantic_hash": ""
   },
   "tests/feedback_domain/test_feedback.py": {
-    "mtime": 1787862162.1354976,
-    "seen": 1787872525.195308,
-    "ast_hash": "7926aa10ac7df899429498f8d86f997e",
+    "mtime": 1787877341.5993843,
+    "seen": 1787877483.1531498,
+    "ast_hash": "22cdec9241eac5ce800421c713c599b6",
     "semantic_hash": ""
   },
   "tests/monitoring_domain/__init__.py": {
@@ -1620,21 +1620,21 @@
     "semantic_hash": ""
   },
   "docs/BUILD_PLAN.md": {
-    "mtime": 1787875845.9323545,
-    "seen": 1787876182.130312,
-    "ast_hash": "4e5ba134766a05f30c8e874e8492fc56",
+    "mtime": 1787877107.642556,
+    "seen": 1787877483.153188,
+    "ast_hash": "096925a5aec36f961c2681a124ec732d",
     "semantic_hash": ""
   },
   "docs/CURRENT_STAGE.md": {
-    "mtime": 1787875845.9325879,
-    "seen": 1787876182.130312,
-    "ast_hash": "9634c6f5d8c2cacc161a987b848c06d0",
+    "mtime": 1787877107.6415935,
+    "seen": 1787877483.153188,
+    "ast_hash": "224ce561c6ed992760d8349bcf78a563",
     "semantic_hash": ""
   },
   "docs/DATA_CONTRACT.md": {
-    "mtime": 1787876051.9287376,
-    "seen": 1787876182.130312,
-    "ast_hash": "466351292e097db2377e308c49b373b2",
+    "mtime": 1787877107.6433132,
+    "seen": 1787877483.1531892,
+    "ast_hash": "84d2e386a0048d646854c2a77326fe33",
     "semantic_hash": ""
   },
   "docs/PHASE_2_CHECKPOINT_A_REVIEW.md": {
@@ -1644,15 +1644,15 @@
     "semantic_hash": ""
   },
   "docs/PHASE_2_REVIEW.md": {
-    "mtime": 1787875845.9330006,
-    "seen": 1787876182.1303139,
-    "ast_hash": "76dcc6614e54ece98eab455e26de618b",
+    "mtime": 1787877107.6427968,
+    "seen": 1787877483.1531909,
+    "ast_hash": "91a3f2f5ae72b7b8bc3ec5074920ca3c",
     "semantic_hash": ""
   },
   "docs/PHASE_GATES.md": {
-    "mtime": 1787875845.9332378,
-    "seen": 1787876182.1303139,
-    "ast_hash": "87d57cc3a2bbdda724ed5792e9cfe5f9",
+    "mtime": 1787877107.641819,
+    "seen": 1787877483.1531909,
+    "ast_hash": "5698895163476a11c32305a75f460d7f",
     "semantic_hash": ""
   },
   "docs/PRD.md": {
@@ -2046,15 +2046,15 @@
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-08-27-phase2-checkpoint-c-preferences-memory-admin.md": {
-    "mtime": 1787875987.5567975,
-    "seen": 1787876182.1303182,
-    "ast_hash": "32d037a7477e5a30213348d2267a5e9c",
+    "mtime": 1787877469.5237818,
+    "seen": 1787877483.153195,
+    "ast_hash": "ff1747513d4f7983b9f9049d04c515b4",
     "semantic_hash": ""
   },
   "backend/app/db/migrations/versions/0004_preferences_memory_admin.py": {
-    "mtime": 1787876297.627419,
-    "seen": 1787876361.142514,
-    "ast_hash": "ebc5fa9f1246ead7104539b6fabd95ff",
+    "mtime": 1787877379.6320283,
+    "seen": 1787877483.153126,
+    "ast_hash": "35be689ad4906e0414eb5f07ed5b0133",
     "semantic_hash": ""
   },
   "tests/persistence/test_preference_memory_schema.py": {
@@ -2070,9 +2070,9 @@
     "semantic_hash": ""
   },
   "backend/app/db/preference_repositories.py": {
-    "mtime": 1787876522.723647,
-    "seen": 1787876562.766263,
-    "ast_hash": "d615f83036c7686d97686762b4da824c",
+    "mtime": 1787877379.6327415,
+    "seen": 1787877483.153127,
+    "ast_hash": "35e24f90c691bd71bb1c8b8167748f30",
     "semantic_hash": ""
   },
   "backend/app/domain/preferences.py": {
@@ -2088,9 +2088,9 @@
     "semantic_hash": ""
   },
   "tests/persistence/test_preference_repositories.py": {
-    "mtime": 1787876486.598952,
-    "seen": 1787876562.76629,
-    "ast_hash": "41ba85820e97cfd28bb2c193810427c1",
+    "mtime": 1787877327.871159,
+    "seen": 1787877483.153155,
+    "ast_hash": "ff9b2ca23222139ebce98c15355413f6",
     "semantic_hash": ""
   },
   "tests/preferences_domain/__init__.py": {
@@ -2139,6 +2139,12 @@
     "mtime": 1787876939.4187086,
     "seen": 1787877018.5612202,
     "ast_hash": "632e7311b3f1766d454853e60c74127e",
+    "semantic_hash": ""
+  },
+  "docs/PHASE_2_CHECKPOINT_C_REVIEW.md": {
+    "mtime": 1787877469.5235126,
+    "seen": 1787877483.15319,
+    "ast_hash": "4d5ff0d4467cfe8ab8106b1b7a85f174",
     "semantic_hash": ""
   }
 }
