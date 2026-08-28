@@ -1,15 +1,20 @@
 """Validation for untrusted structured monitoring interpretations."""
 
 from enum import StrEnum
-from math import isclose, isfinite
-import re
+from math import isfinite
 
 from backend.app.ai.client import (
+    ALLOWED_UNSUPPORTED_CONCLUSIONS,
+    INTERPRETATION_SCHEMA_VERSION,
+    ExplanationCategory,
     InterpretationAlternative,
     InterpretationRequest,
     InterpretationResult,
     InterpretationStatus,
     RecommendedDisposition,
+    UncertaintyCategory,
+    render_caregiver_wording,
+    render_plain_english_summary,
 )
 
 
@@ -19,27 +24,36 @@ class InterpretationValidationError(ValueError):
         super().__init__("; ".join(reasons))
 
 
-_CERTAINTY = re.compile(
-    r"diagnos|\bdefinite(?:ly)?\b|\bcertain(?:ly)?\b|\bconfirmed\b|\bconclusive\b",
-    re.IGNORECASE,
-)
-_MEDICAL_CONCLUSIONS = {
-    "stroke": re.compile(r"\bstroke\b", re.IGNORECASE),
-    "seizure": re.compile(r"\bseizure\b", re.IGNORECASE),
-    "heart_attack": re.compile(
-        r"\b(?:heart attack|myocardial infarction)\b",
-        re.IGNORECASE,
-    ),
+_ALLOWED_CATEGORIES_BY_SKILL = {
+    "fall_like": {
+        ExplanationCategory.UNKNOWN,
+        ExplanationCategory.FALL_LIKE,
+        ExplanationCategory.UNUSUAL_MOVEMENT,
+    },
+    "inactivity": {
+        ExplanationCategory.UNKNOWN,
+        ExplanationCategory.INACTIVITY,
+    },
+    "movement": {
+        ExplanationCategory.UNKNOWN,
+        ExplanationCategory.UNUSUAL_MOVEMENT,
+        ExplanationCategory.ROUTINE_MOVEMENT,
+    },
+    "respiration": {
+        ExplanationCategory.UNKNOWN,
+        ExplanationCategory.RESPIRATORY_CHANGE,
+    },
+    "routine_change": {
+        ExplanationCategory.UNKNOWN,
+        ExplanationCategory.ROUTINE_CHANGE,
+        ExplanationCategory.ROUTINE_MOVEMENT,
+    },
+    "monitoring_degraded": {
+        ExplanationCategory.UNKNOWN,
+        ExplanationCategory.MONITORING_DEGRADED,
+    },
+    "unknown_anomaly": {ExplanationCategory.UNKNOWN},
 }
-_MEASUREMENT_ALIASES = {
-    "heart_rate": r"\bheart[\s_-]*rate\b",
-    "respiratory_rate": r"\brespirat(?:ory|ion)[\s_-]*rate\b",
-    "oxygen_saturation": r"\b(?:oxygen[\s_-]*saturation|spo2)\b",
-    "blood_pressure": r"\bblood[\s_-]*pressure\b",
-    "temperature": r"\btemperature\b",
-    "movement": r"\bmovement\b",
-}
-_NUMBER = re.compile(r"(?<![A-Za-z0-9_.])-?\d+(?:\.\d+)?")
 
 
 def _value(value: object) -> str:
@@ -60,67 +74,50 @@ def _valid_confidence(value: object) -> bool:
     )
 
 
-def _text_surfaces(result: InterpretationResult) -> tuple[str, ...]:
-    return (
-        result.likely_explanation,
-        *(alternative.label for alternative in result.alternatives),
-        result.uncertainty,
-        result.plain_english_summary,
-        *result.missing_information,
-        *result.limitations,
-        *result.unsupported_conclusions,
-        result.caregiver_wording,
-    )
-
-
-def _measurement_patterns(
+def _category(
+    value: object,
+    *,
+    field: str,
     request: InterpretationRequest,
-) -> dict[str, re.Pattern[str]]:
-    names = {
-        *_MEASUREMENT_ALIASES,
-        *request.available_measurements,
-        *request.unavailable_measurements,
-    }
-    patterns: dict[str, re.Pattern[str]] = {}
-    for name in sorted(names):
-        expression = _MEASUREMENT_ALIASES.get(name)
-        if expression is None:
-            parts = tuple(filter(None, re.split(r"[_\s-]+", name)))
-            expression = r"\b" + r"[\s_-]*".join(map(re.escape, parts)) + r"\b"
-        patterns[name] = re.compile(expression, re.IGNORECASE)
-    return patterns
+    reasons: list[str],
+) -> ExplanationCategory | None:
+    raw = _value(value)
+    if not raw.strip():
+        _append(reasons, f"blank_{field}")
+        return None
+    try:
+        category = ExplanationCategory(raw)
+    except ValueError:
+        reason_field = "explanation" if field == "likely_explanation" else field
+        _append(reasons, f"invalid_{reason_field}_category:{raw}")
+        return None
+    primary_skill = request.skill_bundle[1]
+    allowed = set(_ALLOWED_CATEGORIES_BY_SKILL[primary_skill])
+    if "multi_person" in request.skill_bundle:
+        allowed.add(ExplanationCategory.MULTI_PERSON_AMBIGUITY)
+    if category not in allowed:
+        reason_field = "explanation" if field == "likely_explanation" else field
+        _append(reasons, f"{reason_field}_category_not_allowed_for_skill:{raw}")
+        return None
+    return category
 
 
-def _validate_text_measurements(
-    request: InterpretationRequest,
-    surfaces: tuple[str, ...],
+def _validate_exact_identifiers(
+    *,
+    actual: tuple[str, ...],
+    expected: tuple[str, ...],
+    singular: str,
+    omission_prefix: str,
     reasons: list[str],
 ) -> None:
-    available = dict(request.measurement_values)
-    unavailable = set(request.unavailable_measurements)
-    patterns = _measurement_patterns(request)
-    for surface in surfaces:
-        numbers = tuple(float(match.group()) for match in _NUMBER.finditer(surface))
-        if not numbers:
-            continue
-        for name, pattern in patterns.items():
-            if not pattern.search(surface):
-                continue
-            for number in numbers:
-                rendered = format(number, "g")
-                if name in unavailable:
-                    _append(
-                        reasons,
-                        f"unavailable_numeric_measurement_claim:{name}:{rendered}",
-                    )
-                elif name not in available or not any(
-                    isclose(number, allowed, rel_tol=0.0, abs_tol=1e-9)
-                    for allowed in available[name]
-                ):
-                    _append(
-                        reasons,
-                        f"unsupported_numeric_measurement_claim:{name}:{rendered}",
-                    )
+    actual_set = set(actual)
+    expected_set = set(expected)
+    for item in expected:
+        if item not in actual_set:
+            _append(reasons, f"{omission_prefix}:{item}")
+    for item in actual:
+        if item not in expected_set:
+            _append(reasons, f"undeclared_{singular}:{item}")
 
 
 def validate_interpretation(
@@ -131,11 +128,15 @@ def validate_interpretation(
 
     reasons: list[str] = []
     status = _value(result.status)
-    if status not in {item.value for item in InterpretationStatus}:
+    valid_status = status in {item.value for item in InterpretationStatus}
+    if not valid_status:
         _append(reasons, f"invalid_interpretation_status:{status}")
-    disposition = _value(result.recommended_disposition)
-    if disposition not in {item.value for item in RecommendedDisposition}:
-        _append(reasons, f"invalid_recommended_disposition:{disposition}")
+    disposition_value = _value(result.recommended_disposition)
+    valid_disposition = disposition_value in {
+        item.value for item in RecommendedDisposition
+    }
+    if not valid_disposition:
+        _append(reasons, f"invalid_recommended_disposition:{disposition_value}")
 
     provenance = (
         ("anomaly_id", result.anomaly_id, request.anomaly_id),
@@ -174,19 +175,65 @@ def validate_interpretation(
             result.request_fingerprint,
             request.request_fingerprint,
         ),
+        ("schema_version", result.schema_version, request.schema_version),
     )
     for field, actual, expected in provenance:
         if actual != expected:
             _append(reasons, f"provenance_mismatch:{field}")
+    if request.schema_version != INTERPRETATION_SCHEMA_VERSION:
+        _append(
+            reasons,
+            f"unsupported_request_schema_version:{request.schema_version}",
+        )
+    elif result.schema_version == request.schema_version and (
+        result.schema_version != INTERPRETATION_SCHEMA_VERSION
+    ):
+        _append(
+            reasons,
+            f"unsupported_result_schema_version:{result.schema_version}",
+        )
 
+    likely_category = _category(
+        result.likely_explanation,
+        field="likely_explanation",
+        request=request,
+        reasons=reasons,
+    )
+    valid_alternatives: list[InterpretationAlternative] = []
     for expected_rank, alternative in enumerate(result.alternatives, start=1):
         if not isinstance(alternative, InterpretationAlternative):
             _append(reasons, f"invalid_alternative_structure:{expected_rank}")
             continue
+        valid_alternatives.append(alternative)
         if alternative.rank != expected_rank:
             _append(reasons, f"invalid_alternative_rank:{alternative.rank}")
         if not _valid_confidence(alternative.confidence):
             _append(reasons, f"invalid_alternative_confidence:{alternative.rank}")
+        raw_label = _value(alternative.label)
+        if not raw_label.strip():
+            _append(reasons, f"blank_alternative_label:{expected_rank}")
+        else:
+            category_reasons: list[str] = []
+            alternative_category = _category(
+                alternative.label,
+                field="alternative",
+                request=request,
+                reasons=category_reasons,
+            )
+            for reason in category_reasons:
+                if reason.startswith("invalid_alternative_category:"):
+                    reason = (
+                        f"invalid_alternative_category:{expected_rank}:"
+                        f"{raw_label}"
+                    )
+                elif reason.startswith("alternative_category_not_allowed"):
+                    reason = (
+                        f"alternative_category_not_allowed_for_skill:"
+                        f"{expected_rank}:{raw_label}"
+                    )
+                _append(reasons, reason)
+            if alternative_category is None:
+                continue
 
     available_refs = set(request.available_evidence_refs)
     references = (
@@ -194,8 +241,7 @@ def validate_interpretation(
         *result.contradicting_evidence_refs,
         *(
             reference
-            for alternative in result.alternatives
-            if isinstance(alternative, InterpretationAlternative)
+            for alternative in valid_alternatives
             for reference in (
                 *alternative.supporting_evidence_refs,
                 *alternative.contradicting_evidence_refs,
@@ -218,39 +264,69 @@ def validate_interpretation(
         _append(reasons, "invalid_interpretation_confidence")
     if not isinstance(result.needs_more_observation, bool):
         _append(reasons, "invalid_needs_more_observation")
-    if not result.uncertainty.strip():
+
+    uncertainty_value = _value(result.uncertainty)
+    if not uncertainty_value.strip():
         _append(reasons, "blank_uncertainty")
+    elif uncertainty_value not in {item.value for item in UncertaintyCategory}:
+        _append(reasons, f"invalid_uncertainty_category:{uncertainty_value}")
+
+    if not result.plain_english_summary.strip():
+        _append(reasons, "blank_plain_english_summary")
+    elif likely_category is not None and (
+        result.plain_english_summary
+        != render_plain_english_summary(likely_category)
+    ):
+        _append(reasons, "plain_english_summary_mismatch")
+
     if not result.caregiver_wording.strip():
         _append(reasons, "blank_caregiver_wording")
+    elif likely_category is not None and valid_disposition and (
+        result.caregiver_wording
+        != render_caregiver_wording(
+            likely_category,
+            RecommendedDisposition(disposition_value),
+        )
+    ):
+        _append(reasons, "caregiver_wording_mismatch")
 
-    surfaces = _text_surfaces(result)
-    normalized_text = re.sub(r"[_-]+", " ", " ".join(surfaces))
-    if _CERTAINTY.search(normalized_text):
-        _append(reasons, "diagnostic_certainty_not_allowed")
-    else:
-        for label, pattern in _MEDICAL_CONCLUSIONS.items():
-            if pattern.search(normalized_text):
-                _append(reasons, f"direct_medical_conclusion:{label}")
-                break
-    _validate_text_measurements(request, surfaces, reasons)
+    _validate_exact_identifiers(
+        actual=result.addressed_contradictions,
+        expected=request.contradictions,
+        singular="contradiction",
+        omission_prefix="contradiction_omitted",
+        reasons=reasons,
+    )
+    _validate_exact_identifiers(
+        actual=result.missing_information,
+        expected=request.required_missing_information,
+        singular="missing_information",
+        omission_prefix="required_missing_information_omitted",
+        reasons=reasons,
+    )
+    _validate_exact_identifiers(
+        actual=result.limitations,
+        expected=request.required_limitations,
+        singular="limitation",
+        omission_prefix="required_limitation_omitted",
+        reasons=reasons,
+    )
 
-    addressed = set(result.addressed_contradictions)
-    for contradiction in request.contradictions:
-        if contradiction not in addressed:
-            _append(reasons, f"contradiction_omitted:{contradiction}")
-    stated_missing = set(result.missing_information)
-    for missing in request.required_missing_information:
-        if missing not in stated_missing:
-            _append(reasons, f"required_missing_information_omitted:{missing}")
-    stated_limitations = set(result.limitations)
-    for limitation in request.required_limitations:
-        if limitation not in stated_limitations:
-            _append(reasons, f"required_limitation_omitted:{limitation}")
+    unsupported_set = set(result.unsupported_conclusions)
+    required_unsupported = set(request.required_unsupported_conclusions)
+    for item in request.required_unsupported_conclusions:
+        if item not in unsupported_set:
+            _append(reasons, f"required_unsupported_conclusion_omitted:{item}")
+    for item in result.unsupported_conclusions:
+        if item not in ALLOWED_UNSUPPORTED_CONCLUSIONS:
+            _append(reasons, f"unsupported_conclusion_not_allowed:{item}")
+        elif item not in required_unsupported:
+            _append(reasons, f"undeclared_unsupported_conclusion:{item}")
 
     if (
         request.urgent_deterministic_event
-        and disposition != RecommendedDisposition.CAREGIVER_EVENT.value
-        and disposition in {item.value for item in RecommendedDisposition}
+        and disposition_value != RecommendedDisposition.CAREGIVER_EVENT.value
+        and valid_disposition
     ):
         _append(reasons, "urgent_deterministic_event_cannot_be_downgraded")
 

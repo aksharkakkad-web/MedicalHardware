@@ -149,13 +149,20 @@ def _memory() -> ResidentMemory:
     )
 
 
-def _request(*, urgent: bool = False, packet: EvidencePacket | None = None):
+def _request(
+    *,
+    urgent: bool = False,
+    packet: EvidencePacket | None = None,
+    memory: ResidentMemory | None = None,
+    relevant_context_entry_ids: tuple[str, ...] = (),
+):
     return build_interpretation_request(
         packet or _packet(),
-        _memory(),
+        memory or _memory(),
         model_id="fake-monitoring-model",
         model_version="fake-v1",
         urgent_deterministic_event=urgent,
+        relevant_context_entry_ids=relevant_context_entry_ids,
     )
 
 
@@ -165,28 +172,31 @@ def _valid_result(request) -> InterpretationResult:
         anomaly_id=request.anomaly_id,
         packet_revision=request.packet_revision,
         status=InterpretationStatus.COMPLETE,
-        likely_explanation="unusual_movement_pattern",
+        likely_explanation=ai_client.ExplanationCategory.UNUSUAL_MOVEMENT,
         confidence=0.4,
         alternatives=(
             ai_client.InterpretationAlternative(
                 rank=1,
-                label="routine_movement",
+                label=ai_client.ExplanationCategory.ROUTINE_MOVEMENT,
                 confidence=0.2,
                 supporting_evidence_refs=request.available_evidence_refs,
                 contradicting_evidence_refs=(),
             ),
         ),
-        uncertainty="The cause cannot be determined from the available evidence.",
-        plain_english_summary="The available evidence shows a change, but not its cause.",
+        uncertainty=ai_client.UncertaintyCategory.CAUSE_NOT_ESTABLISHED,
+        plain_english_summary="The evidence supports an unusual movement pattern.",
         supporting_evidence_refs=request.available_evidence_refs,
         contradicting_evidence_refs=(),
         described_measurements=request.available_measurements,
         addressed_contradictions=request.contradictions,
         missing_information=request.required_missing_information,
         limitations=request.required_limitations,
-        unsupported_conclusions=("medical_cause",),
+        unsupported_conclusions=request.required_unsupported_conclusions,
         needs_more_observation=True,
-        caregiver_wording="Review the objective evidence and its limitations.",
+        caregiver_wording=(
+            "For the unusual movement pattern, observe and review the objective "
+            "evidence and declared limitations."
+        ),
         recommended_disposition=(
             RecommendedDisposition.CAREGIVER_EVENT
             if request.urgent_deterministic_event
@@ -289,9 +299,16 @@ def test_unknown_interpretation_is_valid() -> None:
     request = _request()
     result = replace(
         _valid_result(request),
-        likely_explanation="unknown",
+        likely_explanation=ai_client.ExplanationCategory.UNKNOWN,
         confidence=0.0,
         alternatives=(),
+        plain_english_summary=(
+            "The evidence is unusual, but it does not support a specific explanation."
+        ),
+        caregiver_wording=(
+            "For the unclassified anomaly, observe and review the objective evidence "
+            "and declared limitations."
+        ),
     )
 
     assert validate_interpretation(request, result) == result
@@ -307,14 +324,6 @@ def test_unknown_interpretation_is_valid() -> None:
         (
             {"described_measurements": ("movement", "respiratory_rate")},
             "unavailable_measurement_described:respiratory_rate",
-        ),
-        (
-            {
-                "likely_explanation": "diagnosed_stroke",
-                "confidence": 1.0,
-                "plain_english_summary": "The resident definitely had a stroke.",
-            },
-            "diagnostic_certainty_not_allowed",
         ),
         (
             {"addressed_contradictions": ()},
@@ -372,7 +381,7 @@ def test_complete_result_exposes_ranked_evidence_bound_analysis() -> None:
     assert result.alternatives == (
         ai_client.InterpretationAlternative(
             rank=1,
-            label="routine_movement",
+            label=ai_client.ExplanationCategory.ROUTINE_MOVEMENT,
             confidence=0.2,
             supporting_evidence_refs=(
                 "evidence://anomaly_17/2/features/movement",
@@ -380,6 +389,8 @@ def test_complete_result_exposes_ranked_evidence_bound_analysis() -> None:
             contradicting_evidence_refs=(),
         ),
     )
+    assert result.likely_explanation == ai_client.ExplanationCategory.UNUSUAL_MOVEMENT
+    assert result.uncertainty == ai_client.UncertaintyCategory.CAUSE_NOT_ESTABLISHED
     assert result.supporting_evidence_refs == (
         "evidence://anomaly_17/2/features/movement",
     )
@@ -389,10 +400,15 @@ def test_complete_result_exposes_ranked_evidence_bound_analysis() -> None:
         "wifi_csi",
     )
     assert result.limitations == ()
-    assert result.unsupported_conclusions == ("medical_cause",)
+    assert result.unsupported_conclusions == (
+        "causal_explanation",
+        "medical_diagnosis",
+        "unobserved_measurement",
+    )
     assert result.needs_more_observation is True
     assert result.caregiver_wording == (
-        "Review the objective evidence and its limitations."
+        "For the unusual movement pattern, observe and review the objective evidence "
+        "and declared limitations."
     )
     assert validate_interpretation(request, result) == result
 
@@ -424,6 +440,7 @@ def test_context_retrieval_includes_relevant_typed_routine_and_denies_other_note
         memory,
         model_id="fake-monitoring-model",
         model_version="fake-v1",
+        relevant_context_entry_ids=("movement_routine",),
     )
     payload = json.loads(request.to_json())
 
@@ -446,12 +463,127 @@ def test_context_retrieval_includes_relevant_typed_routine_and_denies_other_note
     )
 
 
-def test_unknown_anomaly_retrieval_denies_context_without_an_explicit_match_rule() -> None:
-    # Break caught: unknown evidence becomes a pretext to forward arbitrary resident history.
+def test_context_retrieval_defaults_to_no_resident_entries() -> None:
+    # Break caught: evidence category guesses which private resident notes to forward.
     request = _request(packet=_packet("ambient_temperature"))
 
     assert json.loads(request.to_json())["resident_context"]["entries"] == []
     assert request.retrieved_context_refs == ()
+
+
+def test_retirement_account_balance_note_never_leaks_without_explicit_selection() -> None:
+    # Break caught: the word "balance" leaks an unrelated financial note into fall context.
+    memory = ResidentMemory(
+        resident_id="resident_42",
+        version=10,
+        entries=(
+            _entry(
+                "retirement_balance",
+                "Retirement account balance is 120 thousand dollars.",
+            ),
+        ),
+    )
+
+    request = _request(packet=_packet("height_drop"), memory=memory)
+
+    assert json.loads(request.to_json())["resident_context"]["entries"] == []
+    assert "retirement" not in request.to_json().casefold()
+
+
+def test_explicit_context_ids_are_deduplicated_stably_ordered_and_fingerprinted() -> None:
+    # Break caught: duplicate/order variance changes context or escapes the request fingerprint.
+    memory = ResidentMemory(
+        resident_id="resident_42",
+        version=11,
+        entries=(
+            _entry("routine_b", "Second explicitly selected routine."),
+            _entry("routine_a", "First explicitly selected routine."),
+        ),
+    )
+
+    selected = _request(
+        memory=memory,
+        relevant_context_entry_ids=("routine_b", "routine_a", "routine_b"),
+    )
+    no_context = _request(memory=memory)
+
+    assert tuple(
+        item["entry_id"]
+        for item in json.loads(selected.to_json())["resident_context"]["entries"]
+    ) == ("routine_a", "routine_b")
+    assert selected.retrieved_context_refs == (
+        "resident-memory://resident_42/11/entries/routine_a",
+        "resident-memory://resident_42/11/entries/routine_b",
+    )
+    assert selected.request_fingerprint != no_context.request_fingerprint
+
+
+@pytest.mark.parametrize(
+    ("entry_id", "expected_reason"),
+    (
+        ("missing", "requested context entry is unknown: missing"),
+        (
+            "memory_retired",
+            "requested context entry is not active/effective: memory_retired",
+        ),
+        (
+            "memory_expired",
+            "requested context entry is not active/effective: memory_expired",
+        ),
+        (
+            "memory_future",
+            "requested context entry is not active/effective: memory_future",
+        ),
+        (
+            "memory_general",
+            "requested context entry uses disallowed context kind: memory_general",
+        ),
+    ),
+)
+def test_explicit_context_rejects_invalid_entry_ids(
+    entry_id: str,
+    expected_reason: str,
+) -> None:
+    # Break caught: a caller mistake silently forwards or ignores an invalid private note.
+    base = _memory()
+    memory = replace(
+        base,
+        entries=(
+            *base.entries,
+            _entry(
+                "memory_general",
+                "Private general note.",
+                context_kind="general_context",
+            ),
+        ),
+    )
+
+    with pytest.raises(ValueError) as exc_info:
+        _request(memory=memory, relevant_context_entry_ids=(entry_id,))
+
+    assert str(exc_info.value) == expected_reason
+
+
+def test_explicit_context_selection_is_bounded() -> None:
+    # Break caught: a caller can turn explicit selection into an unbounded memory dump.
+    memory = ResidentMemory(
+        resident_id="resident_42",
+        version=12,
+        entries=tuple(
+            _entry(f"routine_{index:02d}", f"Selected routine {index}.")
+            for index in range(21)
+        ),
+    )
+
+    with pytest.raises(ValueError) as exc_info:
+        _request(
+            memory=memory,
+            relevant_context_entry_ids=tuple(
+                f"routine_{index:02d}" for index in range(21)
+            ),
+        )
+
+    assert str(exc_info.value) == "relevant_context_entry_ids exceeds 20 entries"
 
 
 @pytest.mark.parametrize(
@@ -493,6 +625,7 @@ def test_unknown_anomaly_retrieval_denies_context_without_an_explicit_match_rule
             "0" * 64,
             "provenance_mismatch:request_fingerprint",
         ),
+        ("schema_version", "999", "provenance_mismatch:schema_version"),
     ),
 )
 def test_validator_rejects_each_forged_provenance_field(
@@ -510,69 +643,21 @@ def test_validator_rejects_each_forged_provenance_field(
     assert exc_info.value.reasons == (expected_reason,)
 
 
-def test_empty_claim_declarations_cannot_hide_invented_numeric_prose() -> None:
-    # Break caught: empty reference/declaration lists are treated as proof prose is safe.
+def test_provider_cannot_override_deterministic_summary_with_pulse_claim() -> None:
+    # Break caught: arbitrary provider prose crosses into caregiver-facing output.
     request = _request()
     result = replace(
         _valid_result(request),
         supporting_evidence_refs=(),
         contradicting_evidence_refs=(),
         described_measurements=(),
-        plain_english_summary="Heart rate was 120 bpm.",
+        plain_english_summary="Pulse was 120 bpm.",
     )
 
     with pytest.raises(InterpretationValidationError) as exc_info:
         validate_interpretation(request, result)
 
-    assert exc_info.value.reasons == (
-        "unsupported_numeric_measurement_claim:heart_rate:120",
-    )
-
-
-@pytest.mark.parametrize(
-    "surface",
-    (
-        "likely_explanation",
-        "alternatives",
-        "uncertainty",
-        "plain_english_summary",
-        "missing_information",
-        "limitations",
-        "unsupported_conclusions",
-        "caregiver_wording",
-    ),
-)
-def test_medical_conclusions_are_rejected_on_every_text_surface(
-    surface: str,
-) -> None:
-    # Break caught: a medical conclusion bypasses checks through a secondary text field.
-    request = _request()
-    if surface == "alternatives":
-        mutation = {
-            "alternatives": (
-                ai_client.InterpretationAlternative(
-                    rank=1,
-                    label="resident_had_a_stroke",
-                    confidence=0.2,
-                    supporting_evidence_refs=request.available_evidence_refs,
-                    contradicting_evidence_refs=(),
-                ),
-            )
-        }
-    elif surface == "missing_information":
-        mutation = {
-            surface: (*request.required_missing_information, "The resident had a stroke.")
-        }
-    elif surface in ("limitations", "unsupported_conclusions"):
-        mutation = {surface: ("The resident had a stroke.",)}
-    else:
-        mutation = {surface: "The resident had a stroke."}
-    result = replace(_valid_result(request), **mutation)
-
-    with pytest.raises(InterpretationValidationError) as exc_info:
-        validate_interpretation(request, result)
-
-    assert exc_info.value.reasons == ("direct_medical_conclusion:stroke",)
+    assert exc_info.value.reasons == ("plain_english_summary_mismatch",)
 
 
 def test_blank_uncertainty_is_rejected() -> None:
@@ -619,7 +704,7 @@ def test_alternative_confidence_rank_and_references_are_validated() -> None:
         alternatives=(
             ai_client.InterpretationAlternative(
                 rank=2,
-                label="routine_movement",
+                label=ai_client.ExplanationCategory.ROUTINE_MOVEMENT,
                 confidence=1.5,
                 supporting_evidence_refs=("evidence://invented/alternative",),
                 contradicting_evidence_refs=(),
@@ -637,8 +722,8 @@ def test_alternative_confidence_rank_and_references_are_validated() -> None:
     )
 
 
-def test_caregiver_wording_cannot_describe_an_unavailable_measurement() -> None:
-    # Break caught: caregiver-facing prose bypasses unavailable-measurement declarations.
+def test_provider_cannot_override_deterministic_caregiver_wording() -> None:
+    # Break caught: arbitrary provider prose crosses into caregiver guidance.
     request = _request(
         packet=_packet(
             "movement",
@@ -648,12 +733,175 @@ def test_caregiver_wording_cannot_describe_an_unavailable_measurement() -> None:
     )
     result = replace(
         _valid_result(request),
-        caregiver_wording="Respiratory rate was 18 breaths per minute.",
+        caregiver_wording="Pulse was 120 bpm.",
+    )
+
+    with pytest.raises(InterpretationValidationError) as exc_info:
+        validate_interpretation(request, result)
+
+    assert exc_info.value.reasons == ("caregiver_wording_mismatch",)
+
+
+def test_malformed_alternative_is_rejected_without_dereferencing_it() -> None:
+    # Break caught: malformed untrusted alternatives crash validation with AttributeError.
+    request = _request()
+    result = replace(_valid_result(request), alternatives=("not-structured",))
+
+    with pytest.raises(InterpretationValidationError) as exc_info:
+        validate_interpretation(request, result)
+
+    assert exc_info.value.reasons == ("invalid_alternative_structure:1",)
+
+
+@pytest.mark.parametrize("surface", ("likely", "alternative"))
+def test_pneumonia_is_rejected_as_an_uncontrolled_category(surface: str) -> None:
+    # Break caught: arbitrary diagnostic prose enters through an open-ended category label.
+    request = _request()
+    if surface == "likely":
+        result = replace(_valid_result(request), likely_explanation="pneumonia")
+        expected = "invalid_explanation_category:pneumonia"
+    else:
+        result = replace(
+            _valid_result(request),
+            alternatives=(
+                ai_client.InterpretationAlternative(
+                    rank=1,
+                    label="pneumonia",
+                    confidence=0.2,
+                    supporting_evidence_refs=request.available_evidence_refs,
+                    contradicting_evidence_refs=(),
+                ),
+            ),
+        )
+        expected = "invalid_alternative_category:1:pneumonia"
+
+    with pytest.raises(InterpretationValidationError) as exc_info:
+        validate_interpretation(request, result)
+
+    assert exc_info.value.reasons == (expected,)
+
+
+def test_hidden_text_in_addressed_contradictions_is_rejected_as_undeclared() -> None:
+    # Break caught: an exact-reference field becomes an arbitrary hidden-text channel.
+    request = _request()
+    result = replace(
+        _valid_result(request),
+        addressed_contradictions=("resident_had_pneumonia",),
     )
 
     with pytest.raises(InterpretationValidationError) as exc_info:
         validate_interpretation(request, result)
 
     assert exc_info.value.reasons == (
-        "unavailable_numeric_measurement_claim:respiratory_rate:18",
+        "undeclared_contradiction:resident_had_pneumonia",
     )
+
+
+@pytest.mark.parametrize(
+    ("mutation", "expected_reason"),
+    (
+        ({"likely_explanation": ""}, "blank_likely_explanation"),
+        ({"plain_english_summary": "   "}, "blank_plain_english_summary"),
+        ({"caregiver_wording": ""}, "blank_caregiver_wording"),
+        ({"uncertainty": "free prose"}, "invalid_uncertainty_category:free prose"),
+    ),
+)
+def test_required_controlled_fields_reject_blank_or_free_prose(
+    mutation: dict[str, object],
+    expected_reason: str,
+) -> None:
+    # Break caught: a required semantic/template field is blank or arbitrary provider prose.
+    request = _request()
+    result = replace(_valid_result(request), **mutation)
+
+    with pytest.raises(InterpretationValidationError) as exc_info:
+        validate_interpretation(request, result)
+
+    assert exc_info.value.reasons == (expected_reason,)
+
+
+def test_blank_alternative_label_is_rejected() -> None:
+    # Break caught: a ranked alternative can exist without a controlled explanation.
+    request = _request()
+    result = replace(
+        _valid_result(request),
+        alternatives=(
+            ai_client.InterpretationAlternative(
+                rank=1,
+                label="   ",
+                confidence=0.2,
+                supporting_evidence_refs=request.available_evidence_refs,
+                contradicting_evidence_refs=(),
+            ),
+        ),
+    )
+
+    with pytest.raises(InterpretationValidationError) as exc_info:
+        validate_interpretation(request, result)
+
+    assert exc_info.value.reasons == ("blank_alternative_label:1",)
+
+
+@pytest.mark.parametrize(
+    ("field", "extra", "expected_reason"),
+    (
+        (
+            "missing_information",
+            "private_extra",
+            "undeclared_missing_information:private_extra",
+        ),
+        ("limitations", "private_extra", "undeclared_limitation:private_extra"),
+        (
+            "unsupported_conclusions",
+            "pneumonia",
+            "unsupported_conclusion_not_allowed:pneumonia",
+        ),
+        (
+            "unsupported_conclusions",
+            "person_identity",
+            "undeclared_unsupported_conclusion:person_identity",
+        ),
+    ),
+)
+def test_declared_identifier_fields_reject_extras(
+    field: str,
+    extra: str,
+    expected_reason: str,
+) -> None:
+    # Break caught: declared-identifier tuples become arbitrary provider text channels.
+    request = _request()
+    current = getattr(_valid_result(request), field)
+    result = replace(_valid_result(request), **{field: (*current, extra)})
+
+    with pytest.raises(InterpretationValidationError) as exc_info:
+        validate_interpretation(request, result)
+
+    assert exc_info.value.reasons == (expected_reason,)
+
+
+@pytest.mark.parametrize(
+    ("field", "expected_reason"),
+    (
+        (
+            "missing_information",
+            "required_missing_information_omitted:cause_of_behavior_change",
+        ),
+        (
+            "unsupported_conclusions",
+            "required_unsupported_conclusion_omitted:causal_explanation",
+        ),
+    ),
+)
+def test_declared_identifier_fields_reject_omissions(
+    field: str,
+    expected_reason: str,
+) -> None:
+    # Break caught: required unknown/unsupported declarations disappear from output.
+    request = _request()
+    current = getattr(_valid_result(request), field)
+    result = replace(_valid_result(request), **{field: current[1:]})
+
+    with pytest.raises(InterpretationValidationError) as exc_info:
+        validate_interpretation(request, result)
+
+    assert exc_info.value.reasons == (expected_reason,)

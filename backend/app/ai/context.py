@@ -2,7 +2,6 @@
 
 import json
 from hashlib import sha256
-import re
 
 from backend.app.ai.client import InterpretationRequest
 from backend.app.ai.skills import select_skill_bundle
@@ -12,13 +11,6 @@ from backend.app.intelligence.evidence import EvidencePacket
 
 
 _MAX_RELEVANT_MEMORY_ENTRIES = 20
-_CONTEXT_KEYWORDS = {
-    "fall_like": ("fall", "walk", "mobility", "transfer", "balance"),
-    "inactivity": ("inactive", "still", "sleep", "rest", "nap", "sedentary"),
-    "movement": ("move", "motion", "walk", "activity", "exercise", "transfer", "pace"),
-    "respiration": ("breath", "respirat"),
-    "routine_change": ("routine", "habit", "schedule", "change"),
-}
 
 
 def _feature_payload(packet: EvidencePacket) -> list[dict[str, object]]:
@@ -43,25 +35,6 @@ def _feature_payload(packet: EvidencePacket) -> list[dict[str, object]]:
         }
         for item in packet.changed_features
     ]
-
-
-def _context_text(entry: object) -> str:
-    values = (
-        entry.description,
-        entry.recurrence_note,
-        entry.flexibility_note,
-    )
-    return " ".join(value for value in values if value).casefold()
-
-
-def _is_relevant_context(entry: object, primary_skill: str) -> bool:
-    if entry.context_kind == "general_context":
-        return False
-    keywords = _CONTEXT_KEYWORDS.get(primary_skill, ())
-    if not keywords:
-        return False
-    text = _context_text(entry)
-    return any(re.search(rf"\b{re.escape(keyword)}\w*", text) for keyword in keywords)
 
 
 def _context_ref(resident_memory: ResidentMemory, entry_id: str) -> str:
@@ -90,6 +63,45 @@ def _request_fingerprint(
     return sha256(canonical.encode("utf-8")).hexdigest()
 
 
+def _select_context_entries(
+    resident_memory: ResidentMemory,
+    packet: EvidencePacket,
+    requested_ids: tuple[str, ...],
+) -> tuple[object, ...]:
+    if not isinstance(requested_ids, tuple):
+        raise ValueError("relevant_context_entry_ids must be a tuple")
+    normalized_ids = tuple(
+        sorted(
+            {
+                require_nonblank_text(entry_id, "relevant_context_entry_ids")
+                for entry_id in requested_ids
+            }
+        )
+    )
+    if len(normalized_ids) > _MAX_RELEVANT_MEMORY_ENTRIES:
+        raise ValueError("relevant_context_entry_ids exceeds 20 entries")
+    entries_by_id = {entry.entry_id: entry for entry in resident_memory.entries}
+    effective_ids = {
+        entry.entry_id
+        for entry in resident_memory.relevant_entries(packet.current_time)
+    }
+    selected = []
+    for entry_id in normalized_ids:
+        entry = entries_by_id.get(entry_id)
+        if entry is None:
+            raise ValueError(f"requested context entry is unknown: {entry_id}")
+        if entry.context_kind == "general_context":
+            raise ValueError(
+                f"requested context entry uses disallowed context kind: {entry_id}"
+            )
+        if entry_id not in effective_ids:
+            raise ValueError(
+                f"requested context entry is not active/effective: {entry_id}"
+            )
+        selected.append(entry)
+    return tuple(selected)
+
+
 def build_interpretation_request(
     packet: EvidencePacket,
     resident_memory: ResidentMemory,
@@ -97,6 +109,7 @@ def build_interpretation_request(
     model_id: str,
     model_version: str,
     urgent_deterministic_event: bool = False,
+    relevant_context_entry_ids: tuple[str, ...] = (),
 ) -> InterpretationRequest:
     """Build one replayable request without raw arrays or profile identifiers."""
 
@@ -113,17 +126,11 @@ def build_interpretation_request(
         "urgent_deterministic_event",
     )
     bundle = select_skill_bundle(packet)
-    primary_skill = bundle.skill_names[1]
-    relevant_entries = tuple(
-        sorted(
-            (
-                entry
-                for entry in resident_memory.relevant_entries(packet.current_time)
-                if _is_relevant_context(entry, primary_skill)
-            ),
-            key=lambda entry: entry.entry_id,
-        )
-    )[:_MAX_RELEVANT_MEMORY_ENTRIES]
+    relevant_entries = _select_context_entries(
+        resident_memory,
+        packet,
+        relevant_context_entry_ids,
+    )
     retrieved_context_refs = tuple(
         _context_ref(resident_memory, entry.entry_id) for entry in relevant_entries
     )
@@ -221,23 +228,12 @@ def build_interpretation_request(
             )
         )
     )
-    measurement_values = tuple(
-        sorted(
-            (
-                item.feature_name,
-                tuple(
-                    sorted(
-                        {
-                            float(item.value),
-                            float(item.robust_z),
-                            float(item.persistence_frames),
-                        }
-                    )
-                ),
-            )
-            for item in packet.changed_features
-        )
-    )
+    unsupported_conclusions = {"causal_explanation", "medical_diagnosis"}
+    if "multi_person" in bundle.skill_names:
+        unsupported_conclusions.add("person_identity")
+    if required_missing_information:
+        unsupported_conclusions.add("unobserved_measurement")
+    required_unsupported_conclusions = tuple(sorted(unsupported_conclusions))
     return InterpretationRequest(
         anomaly_id=packet.anomaly_id,
         packet_revision=packet.packet_revision,
@@ -264,10 +260,10 @@ def build_interpretation_request(
                 }
             )
         ),
-        measurement_values=measurement_values,
         contradictions=packet.contradictions,
         required_missing_information=required_missing_information,
         required_limitations=required_limitations,
+        required_unsupported_conclusions=required_unsupported_conclusions,
         retrieved_context_refs=retrieved_context_refs,
         request_fingerprint=request_fingerprint,
         urgent_deterministic_event=urgent,
