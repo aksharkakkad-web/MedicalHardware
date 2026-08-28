@@ -9,8 +9,6 @@ from backend.app.intelligence.anomaly import (
     AnomalyUpdate,
     FeatureDeviation,
 )
-from backend.app.intelligence.baseline import BaselineSnapshot
-from backend.app.intelligence.fusion import AlignedFrame
 from backend.app.intelligence.observations import _normalize_text_tuple, _require_utc
 
 
@@ -33,7 +31,7 @@ class EvidencePacket:
     candidate_started_at: datetime
     activated_at: datetime
     current_time: datetime
-    overall_strength: float
+    overall_strength: float | None
     strength_scale: str
     progression: str
     changed_features: tuple[FeatureDeviation, ...]
@@ -97,12 +95,13 @@ class EvidencePacket:
         object.__setattr__(self, "candidate_started_at", candidate_started_at)
         object.__setattr__(self, "activated_at", activated_at)
         object.__setattr__(self, "current_time", current_time)
-        if isinstance(self.overall_strength, bool) or not isinstance(
-            self.overall_strength,
-            (int, float),
-        ) or self.overall_strength < 0.0:
-            raise ValueError("overall_strength must be a nonnegative number")
-        object.__setattr__(self, "overall_strength", float(self.overall_strength))
+        if self.overall_strength is not None:
+            if isinstance(self.overall_strength, bool) or not isinstance(
+                self.overall_strength,
+                (int, float),
+            ) or self.overall_strength < 0.0:
+                raise ValueError("overall_strength must be a nonnegative number or None")
+            object.__setattr__(self, "overall_strength", float(self.overall_strength))
         if not isinstance(self.changed_features, tuple) or any(
             not isinstance(item, FeatureDeviation) for item in self.changed_features
         ):
@@ -141,52 +140,19 @@ def _progression(update: AnomalyUpdate) -> str:
     raise ValueError("candidate episodes do not produce evidence packets")
 
 
-def build_evidence_packet(
-    update: AnomalyUpdate,
-    *,
-    frame: AlignedFrame,
-    baseline: BaselineSnapshot,
-    resident_id: str,
-    room_id: str,
-    config_version: str,
-    unknowns: tuple[str, ...] = ("cause_of_behavior_change",),
-) -> EvidencePacket:
-    """Bind one anomaly revision to its exact frame, baseline, and unknowns."""
+def build_evidence_packet(update: AnomalyUpdate) -> EvidencePacket:
+    """Project one immutable anomaly update into its uniquely bound packet."""
 
     if not isinstance(update, AnomalyUpdate):
         raise ValueError("update must be an AnomalyUpdate")
-    if not isinstance(frame, AlignedFrame):
-        raise ValueError("frame must be an AlignedFrame")
-    if not isinstance(baseline, BaselineSnapshot):
-        raise ValueError("baseline must be a BaselineSnapshot")
     episode = update.episode
     if episode is None or episode.state == AnomalyState.CANDIDATE:
         raise ValueError("an evidence packet requires an activated anomaly")
-    resident = require_nonblank_text(resident_id, "resident_id")
-    room = require_nonblank_text(room_id, "room_id")
-    config = require_nonblank_text(config_version, "config_version")
-    explicit_unknowns = _normalize_ordered_texts(unknowns, "unknowns")
-    if not explicit_unknowns:
-        raise ValueError("unknowns must state at least one unresolved fact")
-    if baseline.resident_id != resident:
-        raise ValueError("baseline resident must match evidence resident")
-    if (
-        update.frame_id != frame.frame_id
-        or update.window_start != frame.window_start
-        or update.window_end != frame.window_end
-    ):
-        raise ValueError("frame must match the anomaly update's bound frame")
     if (
         episode.last_frame_id != update.frame_id
         or episode.current_time != update.window_end
     ):
         raise ValueError("episode revision is not bound to this anomaly update")
-    if (
-        update.baseline_id != baseline.baseline_id
-        or update.baseline_policy_version != baseline.policy_version
-        or update.monitoring_setup_version != baseline.monitoring_setup_version
-    ):
-        raise ValueError("baseline must match the anomaly update's bound baseline")
     evidence_refs = tuple(
         f"evidence://{episode.anomaly_id}/{episode.packet_revision}/features/{name}"
         for name in sorted({item.feature_name for item in update.deviations})
@@ -195,8 +161,8 @@ def build_evidence_packet(
         anomaly_id=episode.anomaly_id,
         packet_revision=episode.packet_revision,
         lifecycle_state=episode.state,
-        resident_id=resident,
-        room_id=room,
+        resident_id=update.resident_id,
+        room_id=update.room_id,
         candidate_started_at=episode.candidate_started_at,
         activated_at=episode.activated_at,
         current_time=episode.current_time,
@@ -204,19 +170,19 @@ def build_evidence_packet(
         strength_scale="max_abs_robust_z",
         progression=_progression(update),
         changed_features=update.deviations,
-        agreements=frame.agreements,
-        contradictions=frame.contradictions,
-        missing_modalities=frame.sources_missing,
+        agreements=update.agreements,
+        contradictions=update.contradictions,
+        missing_modalities=update.missing_sources,
         evidence_limited=update.evidence_limited,
         limitations=update.limitations,
-        baseline_id=baseline.baseline_id,
-        baseline_policy_version=baseline.policy_version,
-        monitoring_setup_version=baseline.monitoring_setup_version,
-        filter_version=update.policy_version,
-        config_version=config,
-        feature_contract_version=frame.schema_version,
-        frame_id=frame.frame_id,
-        unknowns=explicit_unknowns,
+        baseline_id=update.baseline_id,
+        baseline_policy_version=update.baseline_policy_version,
+        monitoring_setup_version=update.monitoring_setup_version,
+        filter_version=update.filter_version,
+        config_version=update.config_version,
+        feature_contract_version=update.feature_contract_version,
+        frame_id=update.frame_id,
+        unknowns=update.unknowns,
         evidence_refs=evidence_refs,
     )
 

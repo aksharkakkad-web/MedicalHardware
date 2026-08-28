@@ -99,6 +99,19 @@ class SyntheticAnomalyPolicy:
                 field,
                 require_nonblank_text(getattr(self, field), field),
             )
+        canonical_values = (3.0, 1.5, 3, 3, 2)
+        actual_values = (
+            self.start_abs_z,
+            self.end_abs_z,
+            self.activation_frames,
+            self.recovery_frames,
+            self.missing_grace_frames,
+        )
+        if (
+            self.policy_version == "synthetic_anomaly_v1"
+            and actual_values != canonical_values
+        ):
+            raise ValueError("custom policy values require a distinct policy_version")
 
     @property
     def test_only(self) -> bool:
@@ -257,14 +270,22 @@ class AnomalyEpisode:
 class AnomalyUpdate:
     episode: AnomalyEpisode | None
     deviations: tuple[FeatureDeviation, ...]
+    resident_id: str
+    room_id: str
     frame_id: str
     window_start: datetime
     window_end: datetime
+    agreements: tuple[str, ...]
+    contradictions: tuple[str, ...]
+    missing_sources: tuple[str, ...]
+    feature_contract_version: str
     baseline_id: str
     baseline_policy_version: str
     monitoring_setup_version: str
     context_key: str
-    policy_version: str
+    filter_version: str
+    config_version: str
+    unknowns: tuple[str, ...]
     evidence_limited: bool
     limitations: tuple[str, ...]
     schema_version: str = "1.0"
@@ -291,12 +312,16 @@ class AnomalyUpdate:
             ),
         )
         for field in (
+            "resident_id",
+            "room_id",
             "frame_id",
+            "feature_contract_version",
             "baseline_id",
             "baseline_policy_version",
             "monitoring_setup_version",
             "context_key",
-            "policy_version",
+            "filter_version",
+            "config_version",
             "schema_version",
         ):
             object.__setattr__(
@@ -310,6 +335,16 @@ class AnomalyUpdate:
             raise ValueError("window_end must be after window_start")
         object.__setattr__(self, "window_start", window_start)
         object.__setattr__(self, "window_end", window_end)
+        for field in ("agreements", "contradictions", "missing_sources"):
+            object.__setattr__(
+                self,
+                field,
+                tuple(sorted(_normalize_texts(getattr(self, field), field))),
+            )
+        unknowns = _normalize_texts(self.unknowns, "unknowns")
+        if not unknowns:
+            raise ValueError("unknowns must state at least one unresolved fact")
+        object.__setattr__(self, "unknowns", unknowns)
         object.__setattr__(
             self,
             "evidence_limited",
@@ -322,8 +357,9 @@ class AnomalyUpdate:
         )
 
     @property
-    def overall_strength(self) -> float:
-        return max((abs(item.robust_z) for item in self.deviations), default=0.0)
+    def overall_strength(self) -> float | None:
+        strengths = tuple(abs(item.robust_z) for item in self.deviations)
+        return max(strengths) if strengths else None
 
 
 def _baseline_for_evidence(
@@ -405,6 +441,10 @@ def _update_record(
     frame: AlignedFrame,
     baseline: BaselineSnapshot,
     context_key: str,
+    resident_id: str,
+    room_id: str,
+    config_version: str,
+    unknowns: tuple[str, ...],
     policy: SyntheticAnomalyPolicy,
     evidence_limited: bool,
     limitations: tuple[str, ...],
@@ -415,14 +455,22 @@ def _update_record(
         deviations=tuple(
             replace(item, persistence_frames=persistence) for item in deviations
         ),
+        resident_id=resident_id,
+        room_id=room_id,
         frame_id=frame.frame_id,
         window_start=frame.window_start,
         window_end=frame.window_end,
+        agreements=frame.agreements,
+        contradictions=frame.contradictions,
+        missing_sources=frame.sources_missing,
+        feature_contract_version=frame.schema_version,
         baseline_id=baseline.baseline_id,
         baseline_policy_version=baseline.policy_version,
         monitoring_setup_version=baseline.monitoring_setup_version,
         context_key=context_key,
-        policy_version=policy.policy_version,
+        filter_version=policy.policy_version,
+        config_version=config_version,
+        unknowns=unknowns,
         evidence_limited=evidence_limited,
         limitations=limitations,
     )
@@ -435,6 +483,10 @@ def advance_episode(
     baseline: BaselineSnapshot,
     context_key: str,
     anomaly_id: str,
+    resident_id: str,
+    room_id: str,
+    config_version: str,
+    unknowns: tuple[str, ...],
     policy: SyntheticAnomalyPolicy,
 ) -> AnomalyUpdate:
     """Advance one numerical frame; caregiver event state is intentionally absent."""
@@ -449,6 +501,14 @@ def advance_episode(
         raise ValueError("policy must be a SyntheticAnomalyPolicy")
     selected_id = require_nonblank_text(anomaly_id, "anomaly_id")
     context = require_nonblank_text(context_key, "context_key")
+    resident = require_nonblank_text(resident_id, "resident_id")
+    room = require_nonblank_text(room_id, "room_id")
+    config = require_nonblank_text(config_version, "config_version")
+    explicit_unknowns = _normalize_texts(unknowns, "unknowns")
+    if not explicit_unknowns:
+        raise ValueError("unknowns must state at least one unresolved fact")
+    if baseline.resident_id != resident:
+        raise ValueError("baseline resident must match resident_id")
     if episode is not None:
         if frame.window_start < episode.current_time:
             raise ValueError("frame must not precede the episode's current_time")
@@ -476,6 +536,10 @@ def advance_episode(
                 frame=frame,
                 baseline=baseline,
                 context_key=context,
+                resident_id=resident,
+                room_id=room,
+                config_version=config,
+                unknowns=explicit_unknowns,
                 policy=policy,
                 evidence_limited=False,
                 limitations=(),
@@ -506,6 +570,10 @@ def advance_episode(
             frame=frame,
             baseline=baseline,
             context_key=context,
+            resident_id=resident,
+            room_id=room,
+            config_version=config,
+            unknowns=explicit_unknowns,
             policy=policy,
             evidence_limited=False,
             limitations=(),
@@ -527,6 +595,8 @@ def advance_episode(
     limited = bool(related) and not all_initiating_good
     missing_count = episode.consecutive_missing_frames + 1 if missing else 0
     limitations: list[str] = []
+    if missing:
+        limitations.append("missing_initiating_evidence")
     if limited:
         limitations.append("limited_quality")
     if missing_count > policy.missing_grace_frames:
@@ -539,11 +609,31 @@ def advance_episode(
     next_episode: AnomalyEpisode
 
     if episode.state == AnomalyState.CANDIDATE:
+        new_streak = bool(crossing) and episode.activation_count == 0
         activation_count = episode.activation_count + 1 if crossing else 0
         activated = activation_count >= policy.activation_frames
+        if new_streak:
+            candidate_started_at = frame.window_start
+            related_frame_count = 1
+            initiating_features = tuple(
+                sorted({item.feature_name for item in crossing})
+            )
+        else:
+            candidate_started_at = episode.candidate_started_at
+        if crossing:
+            missing_count = 0
+            limitations = (
+                ["limited_quality"]
+                if any(
+                    item.quality_class == QualityClass.LIMITED
+                    for item in crossing
+                )
+                else []
+            )
         next_episode = replace(
             episode,
             state=AnomalyState.ACTIVE if activated else AnomalyState.CANDIDATE,
+            candidate_started_at=candidate_started_at,
             current_time=frame.window_end,
             activation_count=activation_count,
             consecutive_missing_frames=missing_count,
@@ -621,6 +711,10 @@ def advance_episode(
         frame=frame,
         baseline=baseline,
         context_key=context,
+        resident_id=resident,
+        room_id=room,
+        config_version=config,
+        unknowns=explicit_unknowns,
         policy=policy,
         evidence_limited=bool(limitations),
         limitations=tuple(limitations),

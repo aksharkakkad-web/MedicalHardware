@@ -135,6 +135,10 @@ def _advance(episode, second: int, value: float | None, *, anomaly_id="anomaly_1
         baseline=_baseline(),
         context_key="resident_global",
         anomaly_id=anomaly_id,
+        resident_id="resident_demo_a",
+        room_id="room_214",
+        config_version="synthetic_config_v4",
+        unknowns=("cause_of_behavior_change",),
         policy=SyntheticAnomalyPolicy(),
     )
 
@@ -156,6 +160,28 @@ def test_synthetic_policy_is_versioned_test_only_and_uses_fixture_values() -> No
     assert policy.missing_grace_frames == 2
     assert policy.test_only is True
     assert policy.policy_version == "synthetic_anomaly_v1"
+
+
+@pytest.mark.parametrize(
+    "override",
+    (
+        {"start_abs_z": 4.0},
+        {"end_abs_z": 1.0},
+        {"activation_frames": 4},
+        {"recovery_frames": 4},
+        {"missing_grace_frames": 3},
+    ),
+)
+def test_custom_policy_values_require_a_distinct_policy_version(override) -> None:
+    # Break caught: custom policy math masquerades as the canonical synthetic policy.
+    with pytest.raises(ValueError, match="distinct policy_version"):
+        SyntheticAnomalyPolicy(**override)
+
+    custom = SyntheticAnomalyPolicy(
+        **override,
+        policy_version="synthetic_anomaly_custom_v1",
+    )
+    assert custom.policy_version == "synthetic_anomaly_custom_v1"
 
 
 def test_third_consecutive_threshold_crossing_activates_one_episode() -> None:
@@ -206,8 +232,26 @@ def test_missing_beyond_grace_limits_evidence_but_does_not_close_episode() -> No
     assert update.episode.state == AnomalyState.ACTIVE
     assert update.episode.consecutive_missing_frames == 3
     assert update.episode.recovery_count == 0
+    assert update.overall_strength is None
     assert update.evidence_limited is True
-    assert update.limitations == ("missing_evidence_beyond_grace",)
+    assert update.limitations == (
+        "missing_initiating_evidence",
+        "missing_evidence_beyond_grace",
+    )
+
+
+def test_first_missing_frame_is_limited_and_never_imputes_zero_strength() -> None:
+    # Break caught: missing initiating evidence is hidden as a clean 0.0-strength frame.
+    update = _active_episode()
+    missing = _advance(update.episode, 3, None)
+
+    assert missing.overall_strength is None
+    assert missing.evidence_limited is True
+    assert missing.limitations == ("missing_initiating_evidence",)
+    packet = build_evidence_packet(missing)
+    assert packet.overall_strength is None
+    assert packet.evidence_limited is True
+    assert packet.limitations == ("missing_initiating_evidence",)
 
 
 def test_continuous_evidence_updates_revision_without_changing_id_or_prior_revision() -> None:
@@ -276,6 +320,10 @@ def test_new_extreme_feature_during_recovery_returns_episode_to_active() -> None
         baseline=_baseline_with_respiration(),
         context_key="resident_global",
         anomaly_id="anomaly_1",
+        resident_id="resident_demo_a",
+        room_id="room_214",
+        config_version="synthetic_config_v4",
+        unknowns=("cause_of_behavior_change",),
         policy=SyntheticAnomalyPolicy(),
     )
 
@@ -315,18 +363,14 @@ def test_evidence_packet_preserves_exact_facts_versions_missingness_and_unknowns
         baseline=_baseline(),
         context_key="resident_global",
         anomaly_id="anomaly_1",
-        policy=SyntheticAnomalyPolicy(),
-    )
-
-    packet = build_evidence_packet(
-        update,
-        frame=frame,
-        baseline=_baseline(),
         resident_id="resident_demo_a",
         room_id="room_214",
         config_version="synthetic_config_v4",
         unknowns=("cause_of_behavior_change", "wifi_csi_support"),
+        policy=SyntheticAnomalyPolicy(),
     )
+
+    packet = build_evidence_packet(update)
 
     assert packet.anomaly_id == "anomaly_1"
     assert packet.packet_revision == 2
@@ -416,18 +460,191 @@ def test_closed_episode_cannot_rebind_its_last_revision_to_a_later_frame() -> No
         baseline=_baseline(),
         context_key="resident_global",
         anomaly_id="anomaly_1",
+        resident_id="resident_demo_a",
+        room_id="room_214",
+        config_version="synthetic_config_v4",
+        unknowns=("cause_of_behavior_change",),
         policy=SyntheticAnomalyPolicy(),
     )
 
     with pytest.raises(ValueError, match="revision is not bound"):
-        build_evidence_packet(
-            unchanged,
-            frame=later_frame,
-            baseline=_baseline(),
+        build_evidence_packet(unchanged)
+
+
+def test_packet_builder_has_no_inputs_that_can_rebind_an_update() -> None:
+    # Break caught: one immutable anomaly revision can be packaged with different facts.
+    assert tuple(signature(build_evidence_packet).parameters) == ("update",)
+
+
+def test_update_immutably_binds_every_packet_forming_fact() -> None:
+    # Break caught: frame/context/version facts remain mutable builder-time choices.
+    active = _active_episode().episode
+    frame = _frame(
+        3,
+        14.0,
+        sources_missing=("wifi_csi",),
+        agreements=("presence_state:radar=thermal=present",),
+        contradictions=("position_state:radar=floor_like,thermal=upright_like",),
+    )
+    update = advance_episode(
+        active,
+        frame=frame,
+        baseline=_baseline(),
+        context_key="resident_global",
+        anomaly_id="anomaly_1",
+        resident_id="resident_demo_a",
+        room_id="room_214",
+        config_version="synthetic_config_v4",
+        unknowns=("cause_of_behavior_change", "wifi_csi_support"),
+        policy=SyntheticAnomalyPolicy(),
+    )
+
+    assert update.resident_id == "resident_demo_a"
+    assert update.room_id == "room_214"
+    assert update.agreements == ("presence_state:radar=thermal=present",)
+    assert update.contradictions == (
+        "position_state:radar=floor_like,thermal=upright_like",
+    )
+    assert update.missing_sources == ("wifi_csi",)
+    assert update.feature_contract_version == "1.0"
+    assert update.config_version == "synthetic_config_v4"
+    assert update.filter_version == "synthetic_anomaly_v1"
+    assert update.baseline_id == "baseline_7"
+    assert update.baseline_policy_version == "synthetic_baseline_v1"
+    assert update.monitoring_setup_version == "setup_room_214_v3"
+    assert update.unknowns == ("cause_of_behavior_change", "wifi_csi_support")
+    packet = build_evidence_packet(update)
+    assert packet.resident_id == update.resident_id
+    assert packet.room_id == update.room_id
+    assert packet.agreements == update.agreements
+    assert packet.contradictions == update.contradictions
+    assert packet.missing_modalities == update.missing_sources
+    assert packet.config_version == update.config_version
+    assert packet.unknowns == update.unknowns
+    with pytest.raises(FrozenInstanceError):
+        update.room_id = "room_rebound"
+
+
+@pytest.mark.parametrize(
+    ("override", "expected_field"),
+    (
+        ({"resident_id": " "}, "resident_id"),
+        ({"room_id": " "}, "room_id"),
+        ({"config_version": " "}, "config_version"),
+        ({"unknowns": ()}, "unknowns"),
+    ),
+)
+def test_packet_bound_identifiers_versions_and_unknowns_are_validated(
+    override,
+    expected_field,
+) -> None:
+    # Break caught: incomplete provenance enters an immutable packet revision.
+    arguments = {
+        "frame": _frame(0, 14.0),
+        "baseline": _baseline(),
+        "context_key": "resident_global",
+        "anomaly_id": "anomaly_1",
+        "resident_id": "resident_demo_a",
+        "room_id": "room_214",
+        "config_version": "synthetic_config_v4",
+        "unknowns": ("cause_of_behavior_change",),
+        "policy": SyntheticAnomalyPolicy(),
+    }
+    arguments.update(override)
+
+    with pytest.raises(ValueError, match=expected_field):
+        advance_episode(None, **arguments)
+
+
+def test_broken_candidate_streak_resets_start_and_stale_feature_provenance() -> None:
+    # Break caught: an old crossing contributes timing/features to a later activation streak.
+    first = _advance(None, 0, 14.0)
+    broken = _advance(first.episode, 1, 10.0)
+    assert broken.episode.activation_count == 0
+
+    def respiration_frame(second: int) -> AlignedFrame:
+        window_start = _START + timedelta(seconds=second)
+        return AlignedFrame(
+            frame_id=f"frame_respiration_{second}",
+            window_start=window_start,
+            window_end=window_start + timedelta(seconds=1),
+            sources_present=("radar",),
+            sources_missing=(),
+            feature_evidence=(
+                _feature_evidence(
+                    19.0,
+                    name="respiratory_rate",
+                    observation_id=f"respiration_{second}",
+                    unit="breaths_per_min",
+                    purpose=FeaturePurpose.RESPIRATION,
+                ),
+            ),
+            agreements=(),
+            contradictions=(),
+        )
+
+    update = broken
+    for second in (2, 3, 4):
+        update = advance_episode(
+            update.episode,
+            frame=respiration_frame(second),
+            baseline=_baseline_with_respiration(),
+            context_key="resident_global",
+            anomaly_id="anomaly_1",
             resident_id="resident_demo_a",
             room_id="room_214",
             config_version="synthetic_config_v4",
+            unknowns=("cause_of_behavior_change",),
+            policy=SyntheticAnomalyPolicy(),
         )
+
+    assert update.episode.state == AnomalyState.ACTIVE
+    assert update.episode.candidate_started_at == _START + timedelta(seconds=2)
+    assert update.episode.activated_at == _START + timedelta(seconds=5)
+    assert update.episode.initiating_features == ("respiratory_rate",)
+    assert update.episode.related_frame_count == 3
+    assert update.deviations[0].persistence_frames == 3
+
+
+def test_same_candidate_streak_unions_each_crossing_feature() -> None:
+    # Break caught: resetting stale provenance also drops features added in the current streak.
+    update = _advance(None, 0, 14.0)
+    for second in (1, 2):
+        window_start = _START + timedelta(seconds=second)
+        frame = AlignedFrame(
+            frame_id=f"frame_union_{second}",
+            window_start=window_start,
+            window_end=window_start + timedelta(seconds=1),
+            sources_present=("radar",),
+            sources_missing=(),
+            feature_evidence=(
+                _feature_evidence(
+                    19.0,
+                    name="respiratory_rate",
+                    observation_id=f"respiration_union_{second}",
+                    unit="breaths_per_min",
+                    purpose=FeaturePurpose.RESPIRATION,
+                ),
+            ),
+            agreements=(),
+            contradictions=(),
+        )
+        update = advance_episode(
+            update.episode,
+            frame=frame,
+            baseline=_baseline_with_respiration(),
+            context_key="resident_global",
+            anomaly_id="anomaly_1",
+            resident_id="resident_demo_a",
+            room_id="room_214",
+            config_version="synthetic_config_v4",
+            unknowns=("cause_of_behavior_change",),
+            policy=SyntheticAnomalyPolicy(),
+        )
+
+    assert update.episode.state == AnomalyState.ACTIVE
+    assert update.episode.candidate_started_at == _START
+    assert update.episode.initiating_features == ("movement", "respiratory_rate")
 
 
 def test_acknowledgment_is_not_an_anomaly_input() -> None:
