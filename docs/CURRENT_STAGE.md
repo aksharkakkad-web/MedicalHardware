@@ -2,24 +2,20 @@
 
 **Updated:** August 28, 2026
 
-**Operating status:** Phase 1 product logic is complete. Phase 2 is **In
-progress**. The first durable event slice plus backend Checkpoints A through D
-are complete: resident status/calibration, device assignment/health,
-preferences/resident memory, and the clinic API handoff. Akshar's Phase 2
-backend runway is ready for Rishit's real-client connection. Frontend and
-hardware work continue independently. See `docs/PHASE_GATES.md` for the
-shared start → build → review → merge → next-checkpoint process.
-
-Akshar is also moving ahead independently on Phase 5 monitoring intelligence.
-The research-backed design is locked around explicit quality states, flexible
-resident routines, controlled personal baselines, lean anomaly episodes, rich
-evidence packets, situation-specific AI interpretation, deterministic final
-disposition, and an urgent path that never waits for AI.
+**Operating status:** Phase 1 product logic is complete. Phase 2 remains **In
+progress**: its backend Checkpoints A through D are complete, while Rishit's
+frontend convergence and hardware work remain independent and open. Akshar's
+Phase 5 backend monitoring-intelligence lane is now **complete on deterministic
+synthetic normalized fixtures**. The shared Phase 5 product gate is not closed
+until its frontend and hardware exit work is reviewed. See
+`docs/PHASE_GATES.md` for the shared start → build → review → merge →
+next-checkpoint process.
 
 ## Where we are now
 
 We have finished the Phase 1 behavior milestone, the first durable Phase 2
-event slice, and all four Phase 2 backend checkpoints using synthetic data.
+event slice, all four Phase 2 backend checkpoints, and the Phase 5 backend
+monitoring-intelligence lane using synthetic data.
 
 This is not the complete deployed product yet. The caregiver product backbone
 now has a file-backed database, versioned Product API, durable lifecycle and
@@ -104,12 +100,13 @@ The first durable Product API slice and Checkpoints A–D are implemented.
 There is no hidden Phase 2 backend checkpoint left. Akshar can support Rishit's
 `ApiMonitoringClient` connection without pausing independent backend progress.
 
-The active independent backend work is Phase 5 on normalized simulated
-fixtures: quality and purpose gating, personal baselines that allow ordinary
-human variation, anomaly episodes, rich evidence, selective AI interpretation,
-deterministic event disposition, feedback/cooldown behavior, and replayable
-evaluation. Simulated edge transport remains Phase 6; real device data remains
-later hardware integration.
+The Phase 5 normalized-fixture backend is complete: quality and purpose gating,
+personal baselines, anomaly/evidence revisions, deterministic fake-AI
+interpretation and validation, disposition/event bridging, acknowledgment,
+recurrence, learning controls, and the 24-scenario replay now pass their
+backend gate. Akshar can support Rishit's frontend convergence and prepare the
+separate Phase 6 simulated edge-telemetry ingestion path. Phase 6, a real LLM
+provider, and real device data are not implemented by this milestone.
 
 ## What the hardware track builds in parallel
 
@@ -151,4 +148,5 @@ Real hardware later replaces the simulator as the telemetry producer. It should 
 - Checkpoint C evidence: `docs/PHASE_2_CHECKPOINT_C_REVIEW.md`
 - Checkpoint D evidence: `docs/PHASE_2_CHECKPOINT_D_REVIEW.md`
 - Frontend API map: `docs/PHASE_2_FRONTEND_API_HANDOFF.md`
+- Phase 5 backend intelligence evidence: `docs/PHASE_5_BACKEND_REVIEW.md`
 - Generated Product API: `docs/openapi/product-api-v1.json`
