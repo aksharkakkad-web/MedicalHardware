@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any
 
 from backend.app.ai.client import (
@@ -16,7 +18,13 @@ from backend.app.domain.calibration import (
     CalibrationProgress,
     start_recalibration,
 )
-from backend.app.domain.events import EventStatus
+from backend.app.db.base import Base
+from backend.app.db.intelligence_mappers import DispositionRecord
+from backend.app.db.intelligence_repositories import IntelligenceRepository
+from backend.app.db.repositories import EventRepository
+from backend.app.db.seed import seed_synthetic_story
+from backend.app.db.session import create_engine_for_url, create_session_factory
+from backend.app.domain.events import BridgeEvidenceKind, EventStatus, EventStore
 from backend.app.domain.feedback import MemoryEntry, ResidentMemory
 from backend.app.domain.monitoring import (
     MonitoringSnapshot,
@@ -48,9 +56,9 @@ from backend.app.intelligence.orchestration import (
 
 
 SUITE_START = datetime(2026, 8, 28, 12, 0, tzinfo=timezone.utc)
-TENANT_ID = "tenant_synthetic_phase5"
-RESIDENT_ID = "resident_synthetic_a"
-ROOM_ID = "room_synthetic_214"
+TENANT_ID = "tenant_demo"
+RESIDENT_ID = "resident_demo_a"
+ROOM_ID = "room_214"
 DEVICE_ID = "device_synthetic_combo"
 SETUP_VERSION = "setup_synthetic_v1"
 CONTEXT_KEY = "resident_global"
@@ -93,7 +101,7 @@ class ScenarioDefinition:
     packet_expected: bool = False
     caregiver_event_expected: bool = False
     quiet_resident_work_required: bool = False
-    resident_days: float = 1.0
+    declared_exposure_units: float = 1.0
     expected_event_duration_seconds: float | None = None
     fixture_shortcut: str | None = None
 
@@ -148,7 +156,11 @@ class ScenarioLLMClient:
                 ),
             )
         if self.mode == "invalid":
-            result = replace(result, anomaly_id="forged_synthetic_anomaly")
+            result = replace(
+                result,
+                anomaly_id="forged_synthetic_anomaly",
+                packet_revision=result.packet_revision + 1,
+            )
         elif self.mode == "unavailable":
             result = replace(result, status=InterpretationStatus.UNAVAILABLE)
         self.raw_results.append(result)
@@ -390,7 +402,11 @@ def _memory(
                 flexibility_note="Synthetic fixture; timing is intentionally flexible",
             ),
         )
-    return ResidentMemory(resident_id=RESIDENT_ID, version=1, entries=entries)
+    return ResidentMemory(
+        resident_id=RESIDENT_ID,
+        version=1 if entries else 0,
+        entries=entries,
+    )
 
 
 def _engine(mode: str | None) -> tuple[MonitoringIntelligenceEngine, ScenarioLLMClient | None]:
@@ -407,6 +423,7 @@ def _process(
     memory: ResidentMemory,
     resident_away: bool = False,
     possible_multiple_people: bool = False,
+    relevant_context_entry_ids: tuple[str, ...] = (),
 ) -> IntelligenceResult:
     return engine.process_frame(
         frame,
@@ -420,6 +437,7 @@ def _process(
         resident_memory=memory,
         resident_away=resident_away,
         possible_multiple_people=possible_multiple_people,
+        relevant_context_entry_ids=relevant_context_entry_ids,
     )
 
 
@@ -494,20 +512,35 @@ def _finalize(
     duplicate_events = sum(max(0, len(ids) - 1) for ids in event_groups.values())
     interpretations = [result.interpretation for result in results if result.interpretation]
     errors = [reason for result in results for reason in result.interpretation_error]
-    unavailable_errors = [
-        reason
-        for reason in errors
-        if "unavailable" in reason or "interpretation_status:unavailable" in reason
+    attempted_results = [
+        result
+        for result in results
+        if result.interpretation is not None or result.interpretation_error
     ]
-    rejected_errors = [reason for reason in errors if reason not in unavailable_errors]
-    raw_rejected_claims = 0
-    if rejected_errors and client is not None:
-        raw_rejected_claims = sum(
-            max(1, len(getattr(result, "supporting_evidence_refs", ())))
-            for result in client.raw_results
+    unavailable_results = [
+        result
+        for result in attempted_results
+        if result.interpretation is None
+        and any(
+            "unavailable" in reason
+            or "interpretation_status:unavailable" in reason
+            for reason in result.interpretation_error
         )
-    supported_claims = sum(len(item.supporting_evidence_refs) for item in interpretations)
-    unsupported_claims = sum(len(item.unsupported_conclusions) for item in interpretations)
+    ]
+    rejected_results = [
+        result
+        for result in attempted_results
+        if result.interpretation is None and result not in unavailable_results
+    ]
+    rejected_reference_count = sum(
+        len(getattr(raw_result, "supporting_evidence_refs", ()))
+        for attempted_result, raw_result in zip(
+            attempted_results,
+            (client.raw_results if client else ()),
+            strict=True,
+        )
+        if attempted_result in rejected_results
+    )
     event_values = tuple(events.values())
     resident_specific_events = tuple(event for event in event_values if not event.room_level_only)
     first_episode = min(
@@ -551,7 +584,7 @@ def _finalize(
         "packet_expected": definition.packet_expected,
         "caregiver_event_expected": definition.caregiver_event_expected,
         "quiet_resident_work_required": definition.quiet_resident_work_required,
-        "resident_days": definition.resident_days,
+        "declared_exposure_units": definition.declared_exposure_units,
         "component_trace": [
             "normalized_observation",
             "quality_learning_guard",
@@ -580,12 +613,18 @@ def _finalize(
         "interpretation": {
             "attempted": len(client.requests) if client else 0,
             "valid": len(interpretations),
-            "rejected": len(rejected_errors),
-            "unavailable": len(unavailable_errors),
+            "rejected": len(rejected_results),
+            "unavailable": len(unavailable_results),
         },
-        "claims": {
-            "supported": supported_claims,
-            "rejected_or_unsupported": unsupported_claims + raw_rejected_claims,
+        "ai_diagnostics": {
+            "validation_reason_count": len(errors),
+            "validated_evidence_reference_count": sum(
+                len(item.supporting_evidence_refs) for item in interpretations
+            ),
+            "rejected_result_evidence_reference_count": rejected_reference_count,
+            "explicit_unsupported_conclusion_count": sum(
+                len(item.unsupported_conclusions) for item in interpretations
+            ),
         },
         "fallback_used": any(result.decision.fallback_used for result in results),
         "urgent_triggered": any(result.fall_assessment.urgent_triggered for result in results),
@@ -641,6 +680,7 @@ def _run_frames(
     possible_multiple_people: bool = False,
     setup_change: bool = False,
     purpose: FeaturePurpose = FeaturePurpose.MOVEMENT,
+    relevant_context_entry_ids: tuple[str, ...] = (),
 ) -> tuple[MonitoringIntelligenceEngine, list[IntelligenceResult], list[tuple[object, bool]], ScenarioLLMClient | None]:
     engine, client = _engine(provider_mode)
     memory = memory or _memory(start=start)
@@ -657,6 +697,7 @@ def _run_frames(
             memory=memory,
             resident_away=resident_away,
             possible_multiple_people=possible_multiple_people,
+            relevant_context_entry_ids=relevant_context_entry_ids,
         )
         results.append(result)
         learning.append(
@@ -704,6 +745,11 @@ def _simple_scenario(definition: ScenarioDefinition, start: datetime) -> dict[st
     elif scenario_id == "sustained_movement_change":
         values = (0.5, 0.5, 0.5)
         provider_mode = "caregiver_event"
+        memory = _memory(
+            entry_id="sustained_movement_context",
+            context_kind="habit",
+            start=start,
+        )
     elif scenario_id == "repetitive_movement":
         feature_name = "repetitive_movement_score"
         values = (0.6, 0.6, 0.6)
@@ -778,6 +824,11 @@ def _simple_scenario(definition: ScenarioDefinition, start: datetime) -> dict[st
         possible_multiple_people=possible_multi,
         setup_change=setup_change,
         purpose=purpose,
+        relevant_context_entry_ids=(
+            ("sustained_movement_context",)
+            if scenario_id == "sustained_movement_change"
+            else ()
+        ),
     )
     extra_values: dict[str, Any] = {}
     if scenario_id in {"flexible_routine", "temporary_change"}:
@@ -804,6 +855,19 @@ def _simple_scenario(definition: ScenarioDefinition, start: datetime) -> dict[st
         )
         extra_values["setup_version_changed"] = recalibrated.setup_version != progress.setup_version
         extra_values["affected_dimensions"] = list(recalibrated.setup_change_history[-1].affected_dimensions)
+    if scenario_id == "sustained_movement_change":
+        if client is None or not client.requests or not client.raw_results:
+            raise RuntimeError("synthetic selected-context scenario did not invoke AI")
+        request = client.requests[-1]
+        raw_result = client.raw_results[-1]
+        extra_values["context_provenance"] = {
+            "explicit_selection": True,
+            "selected_entry_ids": ["sustained_movement_context"],
+            "retrieved_context_refs": list(request.retrieved_context_refs),
+            "result_request_fingerprint_matches": (
+                raw_result.request_fingerprint == request.request_fingerprint
+            ),
+        }
     return _finalize(definition, start, results, learning, client, monitoring.state, extras=extra_values)
 
 
@@ -981,6 +1045,158 @@ def _recurrence_scenario(definition: ScenarioDefinition, start: datetime) -> dic
     return _finalize(definition, start, results, learning, client, MonitoringState.ACTIVE)
 
 
+def run_repository_restart_story() -> dict[str, bool]:
+    """Persist and rehydrate one real anomaly-to-event chain across engine reopen."""
+
+    definition = next(
+        item for item in SCENARIOS if item.scenario_id == "repetitive_movement"
+    )
+    start = SUITE_START + timedelta(hours=4)
+    baseline = _baseline(
+        "repository_restart",
+        start,
+        feature_name="repetitive_movement_score",
+    )
+    frames = tuple(
+        _numeric_frame(
+            "repository_restart",
+            start,
+            second,
+            0.6,
+            feature_name="repetitive_movement_score",
+        )
+        for second in range(3)
+    )
+    _engine_value, results, _learning, client = _run_frames(
+        definition,
+        start,
+        frames,
+        baseline=baseline,
+        provider_mode="caregiver_event",
+        anomaly_ids=tuple("repository_restart_anomaly" for _ in frames),
+    )
+    final = results[-1]
+    if (
+        final.anomaly is None
+        or final.evidence is None
+        or final.interpretation is None
+        or final.event is None
+        or client is None
+        or not client.requests
+    ):
+        raise RuntimeError("repository restart fixture did not produce a full chain")
+    request = client.requests[-1]
+    packet = final.evidence
+    event = final.event
+    bridge = event.bridge_records[-1]
+    disposition = DispositionRecord(
+        disposition_id="repository_restart_disposition",
+        resident_id=RESIDENT_ID,
+        room_id=ROOM_ID,
+        anomaly_id=packet.anomaly_id,
+        evidence_kind=BridgeEvidenceKind.PACKET,
+        evidence_revision=packet.packet_revision,
+        packet_revision=packet.packet_revision,
+        decided_at=packet.current_time,
+        decision=final.decision,
+        interpretation_id=final.interpretation.interpretation_id,
+        event_id=event.event_id,
+    )
+
+    with TemporaryDirectory(prefix="phase5-restart-") as temporary_directory:
+        database_path = Path(temporary_directory) / "monitoring.sqlite3"
+        database_url = f"sqlite+pysqlite:///{database_path}"
+        first_engine = create_engine_for_url(database_url)
+        Base.metadata.create_all(first_engine)
+        first_session_factory = create_session_factory(first_engine)
+        with first_session_factory() as session:
+            seed_synthetic_story(session)
+            repository = IntelligenceRepository(session)
+            repository.save_baseline(TENANT_ID, baseline, start)
+            repository.save_anomaly_revision(TENANT_ID, final.anomaly, packet)
+            repository.save_interpretation(
+                TENANT_ID,
+                request,
+                final.interpretation,
+                packet.current_time,
+            )
+            EventRepository(session).save(TENANT_ID, event, expected_version=0)
+            repository.save_disposition(TENANT_ID, disposition)
+            session.commit()
+        first_engine.dispose()
+
+        second_engine = create_engine_for_url(database_url)
+        second_session_factory = create_session_factory(second_engine)
+        with second_session_factory() as session:
+            repository = IntelligenceRepository(session)
+            hydrated_anomaly = repository.latest_anomaly(
+                TENANT_ID,
+                packet.anomaly_id,
+            )
+            hydrated_interpretation = repository.find_interpretation(
+                TENANT_ID,
+                final.interpretation.interpretation_id,
+            )
+            hydrated_disposition = repository.find_disposition(
+                TENANT_ID,
+                disposition.disposition_id,
+            )
+            hydrated_event = EventRepository(session).get(
+                TENANT_ID,
+                event.event_id,
+            ).event
+            hydrated_bridge = repository.find_event_bridge(
+                TENANT_ID,
+                bridge.idempotency_key,
+            )
+            replayed_event = EventStore(
+                initial_events=(hydrated_event,)
+            ).record_signal(
+                resident_id=bridge.resident_id,
+                room_id=bridge.room_id,
+                objective_family=bridge.objective_family,
+                headline=bridge.headline,
+                priority=bridge.priority,
+                observed_at=bridge.observed_at,
+                actor_id=bridge.actor_id,
+                resident_memory=ResidentMemory(RESIDENT_ID, 0, ()),
+                source_anomaly_id=bridge.source_anomaly_id,
+                evidence_revision=bridge.evidence_revision,
+                bridge_idempotency_key=bridge.idempotency_key,
+                provisional_urgent=bridge.provisional_urgent,
+                evidence_kind=bridge.evidence_kind,
+                room_level_only=bridge.room_level_only,
+                related_event_ids=bridge.related_event_ids,
+            )
+        second_engine.dispose()
+
+    return {
+        "anomaly_revision_hydrated": (
+            hydrated_anomaly is not None
+            and hydrated_anomaly.update == final.anomaly
+            and hydrated_anomaly.packet == packet
+        ),
+        "interpretation_hydrated": (
+            hydrated_interpretation is not None
+            and hydrated_interpretation.request == request
+            and hydrated_interpretation.result == final.interpretation
+        ),
+        "disposition_hydrated": hydrated_disposition == disposition,
+        "bridge_hydrated": (
+            hydrated_bridge is not None
+            and hydrated_bridge.record == bridge
+            and hydrated_bridge.event_id == event.event_id
+        ),
+        "event_hydrated": hydrated_event == event,
+        "event_lineage_matches": (
+            hydrated_event.source_anomaly_id == packet.anomaly_id
+            and hydrated_event.latest_evidence_revision == packet.packet_revision
+            and bridge.idempotency_key in hydrated_event.bridge_idempotency_keys
+        ),
+        "exact_signal_replay_deduplicated": replayed_event == hydrated_event,
+    }
+
+
 def run_scenarios() -> list[dict[str, Any]]:
     """Run each stable fixture through actual Phase 5 components."""
 
@@ -1011,6 +1227,7 @@ __all__ = [
     "REQUIRED_SCENARIO_IDS",
     "SCENARIOS",
     "ScenarioDefinition",
+    "run_repository_restart_story",
     "run_scenarios",
     "scenario_definitions",
 ]

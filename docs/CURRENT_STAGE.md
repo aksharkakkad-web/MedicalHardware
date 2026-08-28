@@ -104,9 +104,12 @@ The Phase 5 normalized-fixture backend is complete: quality and purpose gating,
 personal baselines, anomaly/evidence revisions, deterministic fake-AI
 interpretation and validation, disposition/event bridging, acknowledgment,
 recurrence, learning controls, and the 24-scenario replay now pass their
-backend gate. Akshar can support Rishit's frontend convergence and prepare the
-separate Phase 6 simulated edge-telemetry ingestion path. Phase 6, a real LLM
-provider, and real device data are not implemented by this milestone.
+backend gate. The replay explicitly selects eligible resident context for a
+nonurgent AI request and proves anomaly, interpretation, disposition, bridge,
+and caregiver-event lineage across a repository restart. Akshar can support
+Rishit's frontend convergence and prepare the separate Phase 6 simulated
+edge-telemetry ingestion path. Phase 6, a real LLM provider, and real device
+data are not implemented by this milestone.
 
 ## What the hardware track builds in parallel
 

@@ -2,20 +2,35 @@
 
 from typing import Any
 
+from evals.monitoring.metrics import calculate_metrics, safety_gates
 from evals.monitoring.replay import run_replay
 
 
 def checkpoint_failures(report: dict[str, Any]) -> tuple[str, ...]:
+    records = report["scenarios"]
     aggregate = report["aggregate"]
-    gates = report["safety_gates"]
+    recomputed = calculate_metrics(records)
+    recomputed["replay_reproducible"] = aggregate.get(
+        "replay_reproducible",
+        False,
+    )
+    gates = safety_gates(
+        records,
+        recomputed,
+        report.get("repository_restart"),
+    )
     failures: list[str] = []
-    if aggregate["baseline_contamination"]["contaminated_learning_windows"] != 0:
+    if aggregate != recomputed:
+        failures.append("reported aggregate metrics do not match scenario records")
+    if report.get("safety_gates") != gates:
+        failures.append("reported safety gates do not match executable gates")
+    if recomputed["baseline_contamination"]["contaminated_learning_windows"] != 0:
         failures.append("baseline contamination is not zero")
-    if aggregate["duplicate_events"]["duplicate_event_count"] != 0:
+    if recomputed["duplicate_events"]["duplicate_event_count"] != 0:
         failures.append("duplicate caregiver events are not zero")
-    if aggregate["missed_meaningful_events"]:
+    if recomputed["missed_meaningful_events"]:
         failures.append("meaningful synthetic scenarios were missed")
-    if not aggregate["replay_reproducible"]:
+    if not recomputed["replay_reproducible"]:
         failures.append("fresh replay results are not byte-reproducible")
     failures.extend(
         f"safety gate failed: {name}"
@@ -40,6 +55,8 @@ def walkthrough_lines(report: dict[str, Any]) -> tuple[str, ...]:
         "degradation and multi-person ambiguity remained operationally honest",
         "acknowledgment quieted attention without closing the anomaly",
         "recovery closed the anomaly only; recurrence created linked caregiver history",
+        "five clean post-feedback windows adopted a new numerical normal",
+        "repository restart preserved anomaly, interpretation, disposition, bridge, and caregiver-event lineage",
         f"baseline contamination: {contamination}; duplicate caregiver events: {duplicates}",
         (
             "measured synthetic recall: "
@@ -53,13 +70,14 @@ def walkthrough_lines(report: dict[str, Any]) -> tuple[str, ...]:
 
 def main() -> int:
     report = run_replay()
-    for line in walkthrough_lines(report):
-        print(line)
     failures = checkpoint_failures(report)
     if failures:
+        print("Phase 5 synthetic normalized-fixture checkpoint")
         for failure in failures:
             print(f"FAILED: {failure}")
         return 1
+    for line in walkthrough_lines(report):
+        print(line)
     print("PHASE 5 BACKEND CHECKPOINT READY")
     return 0
 

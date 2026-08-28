@@ -13,7 +13,7 @@ from backend.app.intelligence.baseline import BaselinePolicy
 from backend.app.intelligence.fall_detection import SyntheticFallPolicy
 from backend.app.intelligence.policy import EventAttentionPolicy, SyntheticDispositionPolicy
 from evals.monitoring.metrics import calculate_metrics, safety_gates
-from evals.monitoring.scenarios import run_scenarios
+from evals.monitoring.scenarios import run_repository_restart_story, run_scenarios
 
 
 def canonical_json_bytes(value: object) -> bytes:
@@ -29,7 +29,10 @@ def canonical_json_bytes(value: object) -> bytes:
     ).encode("utf-8")
 
 
-def _report(records: list[dict[str, Any]]) -> dict[str, Any]:
+def _report(
+    records: list[dict[str, Any]],
+    repository_restart: dict[str, bool],
+) -> dict[str, Any]:
     aggregate = calculate_metrics(records)
     return {
         "schema_version": "1.0",
@@ -48,24 +51,25 @@ def _report(records: list[dict[str, Any]]) -> dict[str, Any]:
             "interpretation_output_schema": INTERPRETATION_SCHEMA_VERSION,
         },
         "metric_definitions": {
-            "resident_day_denominator": "Each compact stable scenario declares one synthetic resident-day; no wall-clock duration is extrapolated.",
+            "declared_exposure_unit_denominator": "Each compact stable scenario declares one comparison unit. These units are scenario weights, not elapsed resident-days or operating-time rates.",
             "meaningful_anomaly_recall": "Meaningful scenarios with an evidence packet or an urgent deterministic event divided by declared meaningful scenarios.",
-            "false_packet_rate": "Packets in scenarios that do not expect a packet, including the urgent bypass, divided by synthetic resident-days.",
-            "false_event_rate": "All caregiver events in scenarios that do not expect caregiver work, divided by synthetic resident-days.",
+            "false_packet_rate": "Packets in scenarios that do not expect a packet, including the urgent bypass, divided by declared scenario exposure units.",
+            "false_event_rate": "All caregiver events in scenarios that do not expect caregiver work, divided by declared scenario exposure units.",
             "duplicate_event_rate": "Extra event IDs within one source-anomaly signal group divided by event signal groups.",
             "baseline_contamination": "Learning guards that admitted an operationally unsafe, poor-quality, contradictory, candidate, anomaly, fall-transition, setup-change, or recovery window.",
             "latency": "Seconds from injected scenario start to the first actual candidate, packet, or caregiver event; unavailable is reported when the stage does not occur.",
             "event_duration_error": "Absolute error between an explicitly declared fixture event-signal interval and the actual first-to-latest event signal span.",
         },
         "aggregate": aggregate,
-        "safety_gates": safety_gates(records, aggregate),
+        "repository_restart": repository_restart,
+        "safety_gates": safety_gates(records, aggregate, repository_restart),
         "scenarios": records,
     }
 
 
 def run_replay() -> dict[str, Any]:
-    first = _report(run_scenarios())
-    second = _report(run_scenarios())
+    first = _report(run_scenarios(), run_repository_restart_story())
+    second = _report(run_scenarios(), run_repository_restart_story())
     reproducible = canonical_json_bytes(first) == canonical_json_bytes(second)
     completed = deepcopy(first)
     completed["aggregate"]["replay_reproducible"] = reproducible

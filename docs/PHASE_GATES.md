@@ -31,11 +31,14 @@ The backend now runs quality, robust baseline, anomaly/evidence, deterministic
 fake-AI validation, disposition, and caregiver-event components from synthetic
 normalized fixtures. The measured replay captured 7/7 declared meaningful
 scenarios, produced zero false packets and zero false caregiver events
-across 24 declared synthetic resident-days, admitted zero contaminated windows
+across 24 declared scenario exposure units, admitted zero contaminated windows
 across 57 evaluated learning windows, and produced zero duplicate events
 across 10 event signal groups. Invalid and unavailable AI both used objective
 fallback; urgent fall-like evidence created provisional work with zero AI
-attempts. Exact two-run canonical JSON reproduction passed. See
+attempts. One nonurgent AI request used explicitly selected resident context,
+and a repository-backed restart hydrated the complete anomaly-to-event chain.
+Exact two-run canonical JSON reproduction passed. Exposure units are fixture
+weights, not elapsed resident-days or operating-time rates. See
 `docs/PHASE_5_BACKEND_REVIEW.md`.
 
 This closes Akshar's Phase 5 backend lane only. Rishit's frontend work and the

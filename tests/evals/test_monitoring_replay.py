@@ -71,16 +71,17 @@ def test_synthetic_safety_gates_are_computed_from_scenario_records() -> None:
     assert duplicates["duplicate_event_count"] == 0
     assert duplicates["event_signal_groups"] > 0
     assert duplicates["rate"] == 0.0
-    assert aggregate["false_packets_per_resident_day"]["count"] == 0
-    assert aggregate["false_caregiver_events_per_resident_day"]["count"] == 0
+    assert aggregate["false_packets_per_declared_exposure_unit"]["count"] == 0
+    assert aggregate["false_caregiver_events_per_declared_exposure_unit"]["count"] == 0
+    assert aggregate["declared_exposure_units"] == 24.0
     assert aggregate["replay_reproducible"] is True
-    assert report["safety_gates"] == {
-        "baseline_contamination_zero": True,
-        "duplicate_events_zero": True,
-        "invalid_ai_rejected": True,
-        "ordinary_routine_degraded_resident_events_zero": True,
-        "urgent_fall_like_independent_of_ai": True,
-    }
+    assert all(report["safety_gates"].values())
+    assert {
+        "required_scenarios_complete",
+        "interpretation_terminal_accounting_balanced",
+        "monitoring_state_reporting_matches_records",
+        "repository_restart_lineage_hydrated",
+    } <= set(report["safety_gates"])
 
 
 def test_metrics_change_when_replay_records_contain_regressions() -> None:
@@ -95,8 +96,8 @@ def test_metrics_change_when_replay_records_contain_regressions() -> None:
 
     aggregate = calculate_metrics(records)
 
-    assert aggregate["false_packets_per_resident_day"]["count"] == 2
-    assert aggregate["false_caregiver_events_per_resident_day"]["count"] == 1
+    assert aggregate["false_packets_per_declared_exposure_unit"]["count"] == 2
+    assert aggregate["false_caregiver_events_per_declared_exposure_unit"]["count"] == 1
     assert aggregate["baseline_contamination"]["contaminated_learning_windows"] == 1
     assert aggregate["duplicate_events"]["duplicate_event_count"] == 1
 
@@ -144,13 +145,18 @@ def test_ai_failure_and_urgent_paths_preserve_deterministic_safety() -> None:
         "unavailable": 0,
         "valid": 0,
     }
-    assert invalid["claims"]["supported"] == 0
-    assert invalid["claims"]["rejected_or_unsupported"] >= 1
+    assert invalid["ai_diagnostics"]["validation_reason_count"] > 1
+    assert invalid["ai_diagnostics"][
+        "rejected_result_evidence_reference_count"
+    ] >= 1
     assert invalid["fallback_used"] is True
     assert invalid["caregiver_event_count"] == 1
 
     unavailable = scenarios["llm_unavailable"]
     assert unavailable["interpretation"]["unavailable"] == 1
+    assert unavailable["ai_diagnostics"][
+        "rejected_result_evidence_reference_count"
+    ] == 0
     assert unavailable["fallback_used"] is True
 
     urgent = scenarios["fall_like"]
@@ -159,6 +165,40 @@ def test_ai_failure_and_urgent_paths_preserve_deterministic_safety() -> None:
     assert urgent["interpretation"]["attempted"] == 0
     assert urgent["caregiver_event_count"] == 1
     assert urgent["provisional_urgent_event"] is True
+
+    for scenario in scenarios.values():
+        outcomes = scenario["interpretation"]
+        assert outcomes["attempted"] == (
+            outcomes["valid"] + outcomes["rejected"] + outcomes["unavailable"]
+        )
+
+
+def test_nonurgent_ai_request_uses_explicit_selected_resident_context() -> None:
+    # Break caught: resident context is looked up beside orchestration but never enters AI.
+    sustained = _by_id(run_replay())["sustained_movement_change"]
+    provenance = sustained["context_provenance"]
+
+    assert provenance["explicit_selection"] is True
+    assert provenance["selected_entry_ids"] == ["sustained_movement_context"]
+    assert provenance["retrieved_context_refs"] == [
+        "resident-memory://resident_demo_a/1/entries/sustained_movement_context"
+    ]
+    assert provenance["result_request_fingerprint_matches"] is True
+
+
+def test_repository_restart_hydrates_complete_intelligence_event_lineage() -> None:
+    # Break caught: replay proves in-memory behavior while Task 8 hydration is disconnected.
+    restart = run_replay()["repository_restart"]
+
+    assert restart == {
+        "anomaly_revision_hydrated": True,
+        "bridge_hydrated": True,
+        "disposition_hydrated": True,
+        "event_hydrated": True,
+        "event_lineage_matches": True,
+        "exact_signal_replay_deduplicated": True,
+        "interpretation_hydrated": True,
+    }
 
 
 def test_acknowledgment_recovery_recurrence_and_learning_remain_separate() -> None:
@@ -221,7 +261,9 @@ def test_checkpoint_reports_failures_and_cli_prints_founder_walkthrough() -> Non
     contaminated["aggregate"]["baseline_contamination"][
         "contaminated_learning_windows"
     ] = 1
-    assert "baseline contamination is not zero" in checkpoint_failures(contaminated)
+    assert "reported aggregate metrics do not match scenario records" in checkpoint_failures(
+        contaminated
+    )
 
     completed = subprocess.run(
         [sys.executable, "-m", "backend.app.checkpoints.monitoring_intelligence"],
@@ -236,3 +278,88 @@ def test_checkpoint_reports_failures_and_cli_prints_founder_walkthrough() -> Non
     assert "acknowledgment quieted attention without closing the anomaly" in completed.stdout
     assert "recovery closed the anomaly only; recurrence created linked caregiver history" in completed.stdout
     assert "baseline contamination: 0; duplicate caregiver events: 0" in completed.stdout
+
+
+def _assert_checkpoint_mutation_fails(mutator) -> None:
+    report = deepcopy(run_replay())
+    mutator(report)
+    assert checkpoint_failures(report)
+
+
+def test_checkpoint_rejects_a_missing_required_scenario() -> None:
+    _assert_checkpoint_mutation_fails(
+        lambda report: report["scenarios"].pop()
+    )
+
+
+def test_checkpoint_rejects_unearned_quiet_caregiver_event_claims() -> None:
+    def mutate(report) -> None:
+        normal = _by_id(report)["normal_variation"]
+        normal["caregiver_event_count"] = 1
+        normal["resident_specific_event_count"] = 1
+
+    _assert_checkpoint_mutation_fails(mutate)
+
+
+def test_checkpoint_rejects_acknowledgment_closing_the_anomaly() -> None:
+    def mutate(report) -> None:
+        _by_id(report)["continuing_acknowledged_anomaly"][
+            "anomaly_final_state"
+        ] = "closed"
+
+    _assert_checkpoint_mutation_fails(mutate)
+
+
+def test_checkpoint_rejects_broken_recovery_or_recurrence_lineage() -> None:
+    def mutate(report) -> None:
+        recurrence = _by_id(report)["recurrence_after_recovery"]
+        recurrence["closed_anomaly_count"] = 0
+        recurrence["recurrence_linked"] = False
+
+    _assert_checkpoint_mutation_fails(mutate)
+
+
+def test_checkpoint_rejects_unearned_new_normal_adoption() -> None:
+    def mutate(report) -> None:
+        _by_id(report)["preentered_new_behavior"][
+            "numerical_baseline_changed"
+        ] = True
+
+    _assert_checkpoint_mutation_fails(mutate)
+
+
+def test_checkpoint_rejects_ai_failure_without_objective_fallback() -> None:
+    def mutate(report) -> None:
+        _by_id(report)["llm_unavailable"]["fallback_used"] = False
+
+    _assert_checkpoint_mutation_fails(mutate)
+
+
+def test_checkpoint_rejects_unbalanced_ai_terminal_outcomes() -> None:
+    def mutate(report) -> None:
+        _by_id(report)["llm_invalid_output"]["interpretation"]["attempted"] = 2
+
+    _assert_checkpoint_mutation_fails(mutate)
+
+
+def test_checkpoint_rejects_false_packet_or_event_regression() -> None:
+    def mutate(report) -> None:
+        normal = _by_id(report)["normal_variation"]
+        normal["packet_count"] = 1
+        normal["caregiver_event_count"] = 1
+
+    _assert_checkpoint_mutation_fails(mutate)
+
+
+def test_checkpoint_rejects_monitoring_state_reporting_drift() -> None:
+    def mutate(report) -> None:
+        report["aggregate"]["monitoring_states"]["counts"]["active"] += 1
+
+    _assert_checkpoint_mutation_fails(mutate)
+
+
+def test_checkpoint_rejects_repository_restart_lineage_gap() -> None:
+    def mutate(report) -> None:
+        report["repository_restart"]["bridge_hydrated"] = False
+
+    _assert_checkpoint_mutation_fails(mutate)

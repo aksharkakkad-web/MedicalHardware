@@ -26,7 +26,9 @@ The replay begins with compact, visibly synthetic normalized observations. It
 does not use continuous raw sensor arrays, a network API, or a live LLM. IDs,
 UTC timestamps, ordering, policy versions, resident context, and fake-provider
 behavior are injected. Two fresh command runs emit byte-identical canonical
-JSON.
+JSON. The replay also persists one complete intelligence-to-event chain in a
+file-backed repository, closes the first database engine, reopens it, hydrates
+the chain, and proves exact bridge-signal replay remains idempotent.
 
 ## Exact implemented flow
 
@@ -38,7 +40,7 @@ synthetic normalized radar / thermal / CSI features
 → numerical anomaly candidate / active / recovering / closed episode
 → immutable revisioned evidence packet
 → one situation-specific deterministic fake-AI interpretation
-→ provenance and claim validation
+→ provenance and structured-output evidence validation
 → deterministic disposition and priority
 → idempotent caregiver event bridge
 → acknowledgment, recovery, recurrence, and controlled new-normal adoption
@@ -64,8 +66,12 @@ corroborated synthetic fall-like transition
 - Operational degradation and a synthetic/test-only fall-like fast path.
 - Versioned situation skills, bounded context, provider-neutral requests,
   deterministic fake provider, total validation, and objective fallback.
+- Explicit selection of one eligible resident-context entry in a real
+  nonurgent request, with request/result provenance checked by the replay.
 - Deterministic no-action/observe/awareness/caregiver-event policy and the
   existing durable event lifecycle bridge.
+- Repository-backed restart hydration for anomaly revision, interpretation,
+  disposition, event bridge, and caregiver-event lineage.
 - A canonical replay, computed metrics, and a founder checkpoint that exits
   nonzero on an invariant failure.
 
@@ -111,11 +117,11 @@ scope.
 
 The canonical report measured:
 
-- 24 scenarios and 24 declared synthetic resident-days;
+- 24 scenarios and 24 declared scenario exposure units;
 - meaningful anomaly recall: 7/7 (`1.0`), with no missed declared meaningful
   scenario;
-- false packets: 0 (`0.0` per synthetic resident-day);
-- false caregiver events: 0 (`0.0` per synthetic resident-day);
+- false packets: 0 (`0.0` per declared exposure unit);
+- false caregiver events: 0 (`0.0` per declared exposure unit);
 - duplicate caregiver events: 0 across 10 event signal groups (`0.0`);
 - baseline contamination: 0 across 57 evaluated learning windows (`0.0`), of
   which 14 were eligible;
@@ -128,15 +134,19 @@ The canonical report measured:
 - compact frame durations by state: 50 active seconds, 4 limited seconds,
   1 paused second, and 3 unavailable seconds;
 - interpretations: 12 attempted, 10 valid, 1 rejected, 1 unavailable;
-- claims: 10 validator-supported evidence claims and 31 rejected or explicitly
-  unsupported conclusions; and
-- exact two-run replay reproducibility: true; canonical JSON size: 36,055
+- AI diagnostics: 3 validation reasons, 10 validated evidence references, 1
+  evidence reference on the rejected provider result, and 30 explicitly
+  unsupported-conclusion declarations; these are not interpretation or claim
+  counts; and
+- repository restart/hydration gates: 7/7 true;
+- exact two-run replay reproducibility: true; canonical JSON size: 40,362
   bytes.
 
-These are engineering-fixture measurements. The synthetic resident-day
-denominator is declared by the scenarios; compact frame duration is not
-extrapolated into clinical performance. The values are not clinical targets,
-production thresholds, real-device accuracy, or a provider benchmark.
+These are engineering-fixture measurements. The exposure units are declared
+scenario weights, not elapsed resident-days or operating time; compact frame
+duration is not extrapolated into clinical performance. The values are not
+clinical targets, production thresholds, real-device accuracy, or a provider
+benchmark.
 
 ## What frontend can rely on
 
@@ -170,10 +180,12 @@ git diff --check
 ```
 
 The replay command must also be run twice with stdout captured and compared as
-exact bytes. The focused evaluation suite additionally mutates replay records
-to prove false-packet, false-event, contamination, and duplicate metrics are
-computed rather than copied constants. The checkpoint has a negative-path test
-that turns contamination nonzero and verifies the gate reports failure.
+exact bytes. The focused evaluation suite has executable negative-path tests
+for missing scenarios, unexpected caregiver work, acknowledgment/anomaly
+collapse, broken recovery/recurrence, premature new-normal adoption, missing
+AI fallback, false packets/events, monitoring-state drift, and restart-lineage
+loss. Every plain-language founder walkthrough assertion is backed by one of
+these record-derived gates.
 
 ## Explicit limitations and later work
 
