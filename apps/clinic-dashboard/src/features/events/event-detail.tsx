@@ -9,6 +9,7 @@ import type {
 } from "@/lib/monitoring";
 
 import styles from "./event-detail.module.css";
+import { EventResolutionForm } from "./event-resolution-form";
 import { useEventDetail } from "./use-event-detail";
 
 const statusPresentation: Record<
@@ -180,9 +181,21 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
                 </button>
               </>
             ) : event.status === "resolved" ? (
-              <p className={styles.completed}>This event is resolved. Its history remains available.</p>
+              <div className={styles.resolutionSummary}>
+                <p className={styles.completed}>This event is resolved. Its history remains available.</p>
+                {event.feedback && (
+                  <dl>
+                    <div><dt>Outcome</dt><dd>{event.resolutionOutcome?.replace("_", " ")}</dd></div>
+                    <div><dt>What happened</dt><dd>{event.feedback.actualEventLabel}</dd></div>
+                    <div><dt>Normal routine</dt><dd>{event.feedback.routine ? "Yes" : "No"}</dd></div>
+                  </dl>
+                )}
+              </div>
             ) : event.status === "checked" ? (
-              <p className={styles.completed}>The resident check is recorded. Resolution and feedback will be added in the next workflow step.</p>
+              <EventResolutionForm
+                isSaving={result.pendingAction === "resolve"}
+                onSubmit={result.resolveWithFeedback}
+              />
             ) : (
               <p className={styles.completed}>This event is still being prepared for staff review.</p>
             )}

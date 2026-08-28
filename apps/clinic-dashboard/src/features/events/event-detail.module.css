@@ -24,6 +24,26 @@
 .primaryButton, .error button { width: 100%; margin-top: 1rem; padding: 0.75rem 1rem; border: 0; border-radius: var(--radius-control); color: #fff; background: var(--color-accent-strong); font-weight: 700; cursor: pointer; }
 .primaryButton:disabled { opacity: 0.62; cursor: wait; }
 .actionError { margin-top: 0.75rem; color: var(--color-status-critical-text); font-size: 0.78rem; }
+.resolutionForm { display: grid; gap: 1rem; margin-top: 1rem; }
+.resolutionForm fieldset { border: 0; }
+.resolutionForm legend, .fieldLabel { color: var(--color-text); font-size: 0.8rem; font-weight: 700; }
+.outcomeOptions { display: grid; gap: 0.5rem; margin-top: 0.6rem; }
+.outcomeOptions label { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.6rem; padding: 0.7rem; border: 1px solid var(--color-border); border-radius: var(--radius-control); cursor: pointer; }
+.outcomeOptions label:has(input:checked) { border-color: var(--color-accent-strong); background: var(--color-accent-soft); }
+.outcomeOptions input { margin-top: 0.15rem; accent-color: var(--color-accent-strong); }
+.outcomeOptions strong, .outcomeOptions small { display: block; }
+.outcomeOptions small { margin-top: 0.2rem; color: var(--color-text-muted); font-size: 0.7rem; font-weight: 450; line-height: 1.4; }
+.fieldLabel { display: grid; gap: 0.5rem; }
+.fieldLabel input { width: 100%; padding: 0.7rem; border: 1px solid var(--color-border); border-radius: var(--radius-control); color: var(--color-text); background: var(--color-surface); }
+.inlineOptions { display: flex; flex-wrap: wrap; gap: 0.55rem; margin-top: 0.6rem; }
+.inlineOptions label { display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.7rem; border: 1px solid var(--color-border); border-radius: var(--radius-control); font-size: 0.76rem; cursor: pointer; }
+.inlineOptions label:has(input:checked) { border-color: var(--color-accent-strong); background: var(--color-accent-soft); }
+.inlineOptions input { accent-color: var(--color-accent-strong); }
+.validationMessage { color: var(--color-status-critical-text); font-size: 0.76rem; line-height: 1.4; }
+.resolutionSummary dl { display: grid; gap: 0.55rem; margin-top: 1rem; }
+.resolutionSummary dl div { display: grid; gap: 0.15rem; padding-top: 0.55rem; border-top: 1px solid var(--color-border); }
+.resolutionSummary dt { color: var(--color-text-muted); font-size: 0.7rem; }
+.resolutionSummary dd { font-size: 0.8rem; font-weight: 700; text-transform: capitalize; }
 .facts { display: grid; gap: 0.65rem; margin-top: 1rem; }
 .facts div { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.8rem; }
 .facts dt { color: var(--color-text-muted); }

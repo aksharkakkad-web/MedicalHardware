@@ -89,12 +89,22 @@ describe("MockMonitoringClient", () => {
       "acknowledge",
     );
     const checked = await client.performEventAction(opened.eventId, "check");
+    const resolved = await client.resolveEventWithFeedback(opened.eventId, {
+      outcome: "confirmed",
+      actualEventLabel: "Assisted movement",
+      routine: true,
+    });
 
     expect(opened.status).toBe("open");
     expect(opened.evidence).toHaveLength(3);
     expect(acknowledged.status).toBe("acknowledged");
     expect(checked.status).toBe("checked");
-    expect((await client.getEvent(opened.eventId)).status).toBe("checked");
+    expect(resolved.status).toBe("resolved");
+    expect(resolved.feedback).toMatchObject({
+      actualEventLabel: "Assisted movement",
+      routine: true,
+    });
+    expect((await client.getEvent(opened.eventId)).status).toBe("resolved");
   });
 
   it("rejects actions that do not match the current event state", async () => {

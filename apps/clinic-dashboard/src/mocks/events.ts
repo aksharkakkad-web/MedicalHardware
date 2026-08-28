@@ -68,5 +68,7 @@ export function createEventDetailFixture(now: Date): MonitoringEventDetail {
     },
     relatedEventIds: [],
     recurrenceCount: 1,
+    resolutionOutcome: null,
+    feedback: null,
   };
 }

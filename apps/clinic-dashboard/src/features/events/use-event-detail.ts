@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import type { EventAction, MonitoringEventDetail } from "@/lib/monitoring";
+import type {
+  EventAction,
+  EventFeedbackInput,
+  MonitoringEventDetail,
+} from "@/lib/monitoring";
 import { useMonitoringClient } from "@/lib/monitoring/provider";
 
 type EventDetailState =
@@ -11,7 +15,7 @@ type EventDetailState =
   | {
       status: "success";
       event: MonitoringEventDetail;
-      pendingAction: EventAction | null;
+      pendingAction: EventAction | "resolve" | null;
       actionError: string | null;
     };
 
@@ -96,5 +100,38 @@ export function useEventDetail(eventId: string) {
     [client, eventId],
   );
 
-  return { ...state, performAction, retry };
+  const resolveWithFeedback = useCallback(
+    async (feedback: EventFeedbackInput) => {
+      setState((current) =>
+        current.status === "success"
+          ? { ...current, pendingAction: "resolve", actionError: null }
+          : current,
+      );
+
+      try {
+        const event = await client.resolveEventWithFeedback(eventId, feedback);
+        setState({
+          status: "success",
+          event,
+          pendingAction: null,
+          actionError: null,
+        });
+        return true;
+      } catch {
+        setState((current) =>
+          current.status === "success"
+            ? {
+                ...current,
+                pendingAction: null,
+                actionError: "The resolution and feedback could not be saved. Try again.",
+              }
+            : current,
+        );
+        return false;
+      }
+    },
+    [client, eventId],
+  );
+
+  return { ...state, performAction, resolveWithFeedback, retry };
 }

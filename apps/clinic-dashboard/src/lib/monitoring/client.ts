@@ -1,5 +1,6 @@
 import type {
   EventAction,
+  EventFeedbackInput,
   MonitoringEventDetail,
   ResidentOverviewResponse,
 } from "./types";
@@ -10,5 +11,9 @@ export interface MonitoringClient {
   performEventAction(
     eventId: string,
     action: EventAction,
+  ): Promise<MonitoringEventDetail>;
+  resolveEventWithFeedback(
+    eventId: string,
+    feedback: EventFeedbackInput,
   ): Promise<MonitoringEventDetail>;
 }

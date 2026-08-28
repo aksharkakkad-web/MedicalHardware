@@ -30,6 +30,8 @@ function residentClient(
     getEvent: (eventId) => fallback.getEvent(eventId),
     performEventAction: (eventId, action) =>
       fallback.performEventAction(eventId, action),
+    resolveEventWithFeedback: (eventId, feedback) =>
+      fallback.resolveEventWithFeedback(eventId, feedback),
   };
 }
 

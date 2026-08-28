@@ -19,6 +19,14 @@ export type EventAction = "acknowledge" | "check";
 
 export type InterpretationStatus = "pending" | "complete" | "unavailable";
 
+export type ResolutionOutcome = "confirmed" | "false_positive" | "uncertain";
+
+export interface EventFeedbackInput {
+  outcome: ResolutionOutcome;
+  actualEventLabel: string;
+  routine: boolean;
+}
+
 export interface ResidentOverviewItem {
   schemaVersion: "1.0";
   residentId: string;
@@ -93,4 +101,10 @@ export interface MonitoringEventDetail {
   };
   relatedEventIds: string[];
   recurrenceCount: number;
+  resolutionOutcome: ResolutionOutcome | null;
+  feedback: {
+    actualEventLabel: string;
+    routine: boolean;
+    createdAt: string;
+  } | null;
 }

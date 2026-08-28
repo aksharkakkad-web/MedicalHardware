@@ -7,10 +7,12 @@ export type {
   AttentionPriority,
   DeviceStatus,
   EventAction,
+  EventFeedbackInput,
   EventStatus,
   InterpretationStatus,
   MonitoringEventDetail,
   MonitoringState,
   ResidentOverviewItem,
   ResidentOverviewResponse,
+  ResolutionOutcome,
 } from "./types";

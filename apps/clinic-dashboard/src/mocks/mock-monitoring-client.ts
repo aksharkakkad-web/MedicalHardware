@@ -1,5 +1,6 @@
 import type {
   EventAction,
+  EventFeedbackInput,
   MonitoringClient,
   MonitoringEventDetail,
   ResidentOverviewResponse,
@@ -40,6 +41,34 @@ export class MockMonitoringClient implements MonitoringClient {
     }
 
     const updated = { ...event, status: nextStatus[action] };
+    this.events.set(eventId, updated);
+    return structuredClone(updated);
+  }
+
+  async resolveEventWithFeedback(
+    eventId: string,
+    feedback: EventFeedbackInput,
+  ): Promise<MonitoringEventDetail> {
+    const event = this.getStoredEvent(eventId);
+    const actualEventLabel = feedback.actualEventLabel.trim();
+
+    if (event.status !== "checked") {
+      throw new Error("This event must be checked before it can be resolved.");
+    }
+    if (!actualEventLabel) {
+      throw new Error("Feedback must describe what happened.");
+    }
+
+    const updated: MonitoringEventDetail = {
+      ...event,
+      status: "resolved",
+      resolutionOutcome: feedback.outcome,
+      feedback: {
+        actualEventLabel,
+        routine: feedback.routine,
+        createdAt: this.now().toISOString(),
+      },
+    };
     this.events.set(eventId, updated);
     return structuredClone(updated);
   }

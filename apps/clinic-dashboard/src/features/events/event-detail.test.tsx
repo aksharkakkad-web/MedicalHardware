@@ -39,7 +39,7 @@ describe("EventDetail", () => {
     expect(screen.getByText(/possible explanation, not a diagnosis/i)).toBeVisible();
   });
 
-  it("moves through acknowledge and resident-check actions", async () => {
+  it("moves through acknowledge, check, resolution, and feedback", async () => {
     const user = userEvent.setup();
     renderEvent();
 
@@ -53,7 +53,31 @@ describe("EventDetail", () => {
     );
 
     expect(await screen.findByText("Checked")).toBeVisible();
-    expect(screen.getByText(/resolution and feedback will be added/i)).toBeVisible();
+    await user.click(screen.getByRole("radio", { name: /confirmed event/i }));
+    await user.type(
+      screen.getByRole("textbox", { name: /what actually happened/i }),
+      "Assisted movement",
+    );
+    await user.click(screen.getByRole("radio", { name: "Yes" }));
+    await user.click(
+      screen.getByRole("button", { name: /resolve and save feedback/i }),
+    );
+
+    expect(await screen.findByText("Resolved")).toBeVisible();
+    expect(screen.getByText("Assisted movement")).toBeVisible();
+    expect(screen.getByText(/history remains available/i)).toBeVisible();
+  });
+
+  it("requires every resolution answer before saving", async () => {
+    const user = userEvent.setup();
+    renderEvent();
+
+    await user.click(await screen.findByRole("button", { name: "Acknowledge event" }));
+    await user.click(screen.getByRole("button", { name: "Mark resident checked" }));
+    await user.click(screen.getByRole("button", { name: /resolve and save feedback/i }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent(/choose an outcome/i);
+    expect(screen.getByText("Checked")).toBeVisible();
   });
 
   it("uses a safe unavailable state for an unknown event", async () => {
