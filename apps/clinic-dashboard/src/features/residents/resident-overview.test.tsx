@@ -29,6 +29,8 @@ function residentClient(
   const fallback = new MockMonitoringClient();
   return {
     listResidentOverview,
+    listEvents: () => fallback.listEvents(),
+    getResident: (residentId) => fallback.getResident(residentId),
     getEvent: (eventId) => fallback.getEvent(eventId),
     performEventAction: (eventId, action) =>
       fallback.performEventAction(eventId, action),

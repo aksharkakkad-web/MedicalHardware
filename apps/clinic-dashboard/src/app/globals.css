@@ -1,14 +1,14 @@
 :root {
-  --color-canvas: #f4f3ef;
+  --color-canvas: #f5f5f7;
   --color-surface: #ffffff;
-  --color-text: #18231f;
-  --color-text-muted: #66736e;
-  --color-text-soft: #87918d;
-  --color-border: #dce2de;
-  --color-accent-strong: #0f6655;
-  --color-accent-soft: #e7f2ee;
-  --color-accent-soft-hover: #dcece6;
-  --color-accent-border: #c7ded5;
+  --color-text: #1d1d1f;
+  --color-text-muted: #636366;
+  --color-text-soft: #8e8e93;
+  --color-border: #dedee3;
+  --color-accent-strong: #075bd8;
+  --color-accent-soft: #edf4ff;
+  --color-accent-soft-hover: #e2edff;
+  --color-accent-border: #c9dcfb;
   --color-status-neutral-text: #52605b;
   --color-status-neutral-bg: #f2f4f3;
   --color-status-healthy-text: #12604d;
@@ -21,8 +21,8 @@
   --color-status-unavailable-bg: #ecefed;
   --radius-control: 0.75rem;
   --radius-card: 1rem;
-  --shadow-card: 0 1px 2px rgb(17 35 29 / 6%), 0 8px 24px rgb(17 35 29 / 5%);
-  --focus-ring: 0 0 0 3px rgb(15 102 85 / 24%);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 4%), 0 10px 32px rgb(0 0 0 / 5%);
+  --focus-ring: 0 0 0 3px rgb(7 91 216 / 22%);
 }
 
 html {
@@ -73,4 +73,13 @@ select {
 ::selection {
   color: var(--color-text);
   background: var(--color-accent-border);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
