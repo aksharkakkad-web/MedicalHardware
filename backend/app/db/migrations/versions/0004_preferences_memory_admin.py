@@ -44,7 +44,12 @@ def upgrade() -> None:
             ["residents.tenant_id", "residents.resident_id"],
         ),
         sa.PrimaryKeyConstraint("preference_version_id"),
-        sa.UniqueConstraint("tenant_id", "resident_id", "version"),
+        sa.UniqueConstraint(
+            "tenant_id",
+            "resident_id",
+            "version",
+            name="uq_resident_preference_version",
+        ),
     )
     op.create_index(
         "ix_resident_notification_preference_versions_tenant_id",

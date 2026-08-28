@@ -7,7 +7,7 @@ from backend.app.domain.events import (
     EventStore,
     ResolutionOutcome,
 )
-from backend.app.domain.feedback import FeedbackService
+from backend.app.domain.feedback import FeedbackService, ResidentMemoryService
 
 
 class FeedbackLearningTests(unittest.TestCase):
@@ -350,6 +350,28 @@ class FeedbackLearningTests(unittest.TestCase):
         self.assertFalse(retried.memory_updated)
         self.assertFalse(retried.baseline_window_eligible)
         self.assertFalse(retried.global_label_recorded)
+
+    def test_feedback_cannot_create_memory_before_newer_admin_history(self) -> None:
+        admin_memory = ResidentMemoryService().add_entry(
+            resident_id="resident_demo_a",
+            expected_version=0,
+            description="Newer staff-entered routine",
+            actor_id="operator_002",
+            changed_at=datetime(2026, 8, 26, 13, 0, tzinfo=timezone.utc),
+        )
+        service = FeedbackService(initial_memories=(admin_memory,))
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "created_at cannot precede memory history",
+        ):
+            service.submit_feedback(
+                event=self.event,
+                actor_id="operator_001",
+                actual_event_label="assisted_transfer",
+                routine=True,
+                created_at=datetime(2026, 8, 26, 12, 5, tzinfo=timezone.utc),
+            )
 
 
 if __name__ == "__main__":

@@ -300,10 +300,10 @@ Build:
 
 Implement durable domain APIs behind the exact contracts already exercised by the mock-backed frontends, then switch the frontend client from mock to API.
 
-**Progress:** The durable event slice, resident status/calibration checkpoint,
-and device assignment/health checkpoint are complete. Preferences/memory
-administration and the final clinic API handoff remain before the frontend
-connection gate.
+**Progress:** The durable event slice plus resident status/calibration,
+device assignment/health, and preferences/resident-memory administration
+checkpoints are complete. Only the final clinic API handoff remains before the
+frontend connection gate.
 
 ### Deliverables
 

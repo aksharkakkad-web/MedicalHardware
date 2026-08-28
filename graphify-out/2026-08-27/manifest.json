@@ -2128,5 +2128,17 @@
     "seen": 1787876921.54482,
     "ast_hash": "83f3e7a0460cabb60287c0c5fe9345e2",
     "semantic_hash": ""
+  },
+  "backend/app/checkpoints/preferences_memory.py": {
+    "mtime": 1787876987.321925,
+    "seen": 1787877018.5611908,
+    "ast_hash": "2efc4f80602b7c235530de0b11227800",
+    "semantic_hash": ""
+  },
+  "tests/api/test_resident_controls_story.py": {
+    "mtime": 1787876939.4187086,
+    "seen": 1787877018.5612202,
+    "ast_hash": "632e7311b3f1766d454853e60c74127e",
+    "semantic_hash": ""
   }
 }

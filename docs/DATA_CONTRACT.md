@@ -1133,6 +1133,8 @@ Implemented read paths:
 - `GET /v1/residents/{resident_id}/calibration`
 - `GET /v1/residents/{resident_id}/notification-preferences`
 - `GET /v1/events/{event_id}`
+- `GET /v1/devices`
+- `GET /v1/devices/{device_id}/health`
 
 Implemented caregiver action paths:
 
@@ -1304,11 +1306,11 @@ intentionally unversioned:
 }
 ```
 
-This first slice does not yet return event evidence, resident trends, device
-health, AI interpretation, production authentication, or home real-data
-views. Those capabilities remain deferred inside Phase 2 or to their later
-roadmap phases; existing telemetry, anomaly, AI, and hardware contracts remain
-the future implementation boundary.
+The Product API does not yet return event evidence, resident trends, AI
+interpretation, production authentication, notification delivery, or home
+real-data views. Those capabilities remain deferred inside Phase 2 or to their
+later roadmap phases; existing telemetry, anomaly, AI, and hardware contracts
+remain the future implementation boundary.
 
 ---
 

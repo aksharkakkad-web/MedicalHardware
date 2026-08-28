@@ -180,6 +180,17 @@ class FeedbackService:
                 "feedback already exists for this event; use explicit correction"
             )
 
+        memory = self._memories.get(
+            event.resident_id,
+            ResidentMemory(event.resident_id, 0, ()),
+        )
+        latest_memory_timestamp = _latest_memory_timestamp(memory)
+        if (
+            latest_memory_timestamp is not None
+            and created_at < latest_memory_timestamp
+        ):
+            raise ValueError("created_at cannot precede memory history")
+
         feedback = FeedbackRecord(
             feedback_id=f"fb_{uuid4().hex}",
             event_id=event.event_id,
@@ -192,7 +203,6 @@ class FeedbackService:
         )
         self._feedback[feedback.feedback_id] = feedback
 
-        memory = self._memories.get(event.resident_id, ResidentMemory(event.resident_id, 0, ()))
         memory_updated = routine and actual_event_label != "unknown"
         if memory_updated:
             entry = MemoryEntry(

@@ -402,7 +402,12 @@ class ResidentMemoryEntryRow(Base):
 class ResidentNotificationPreferenceVersionRow(Base):
     __tablename__ = "resident_notification_preference_versions"
     __table_args__ = (
-        UniqueConstraint("tenant_id", "resident_id", "version"),
+        UniqueConstraint(
+            "tenant_id",
+            "resident_id",
+            "version",
+            name="uq_resident_preference_version",
+        ),
         ForeignKeyConstraint(
             ("tenant_id", "resident_id"),
             ("residents.tenant_id", "residents.resident_id"),

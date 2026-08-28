@@ -19,10 +19,7 @@ def _is_version_conflict(error: IntegrityError) -> bool:
         "constraint_name",
         None,
     )
-    if constraint_name == (
-        "resident_notification_preference_versions_"
-        "tenant_id_resident_id_version_key"
-    ):
+    if constraint_name == "uq_resident_preference_version":
         return True
     return (
         "unique constraint failed: "

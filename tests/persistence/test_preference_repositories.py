@@ -2,11 +2,15 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 from sqlalchemy import create_engine
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.app.db.base import Base
 from backend.app.db.models import ResidentRow, TenantRow
-from backend.app.db.preference_repositories import NotificationPreferenceRepository
+from backend.app.db.preference_repositories import (
+    NotificationPreferenceRepository,
+    _is_version_conflict,
+)
 from backend.app.domain.preferences import (
     AwarenessDeliveryPreferences,
     EventDeliveryPreferences,
@@ -119,3 +123,19 @@ def test_repository_masks_cross_tenant_resident_as_not_found(
 
     assert repository.current("tenant_a", "resident_b") is None
     assert repository.timeline("tenant_a", "resident_b") == []
+
+
+def test_postgresql_named_preference_version_collision_is_translated() -> None:
+    class Diagnostic:
+        constraint_name = "uq_resident_preference_version"
+
+    class PostgreSQLCollision(Exception):
+        diag = Diagnostic()
+
+    error = IntegrityError(
+        "insert preference version",
+        {},
+        PostgreSQLCollision("duplicate version"),
+    )
+
+    assert _is_version_conflict(error) is True

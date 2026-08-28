@@ -1,6 +1,6 @@
 # Phase 2 Checkpoint C — Preferences and Resident-Memory Administration
 
-**Status:** In progress  
+**Status:** Complete
 **Owner:** Akshar — backend and intelligence  
 **Goal:** Give authorized clinic staff safe, resident-specific controls over notification noise and learned resident context, with complete version and audit history.
 
