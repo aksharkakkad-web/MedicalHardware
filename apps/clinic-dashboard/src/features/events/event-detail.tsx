@@ -57,6 +57,15 @@ const interpretationPresentation: Record<
   unavailable: { label: "Explanation unavailable", tone: "unavailable" },
 };
 
+const qualityTone: Record<
+  MonitoringEventDetail["confidence"]["dataQuality"],
+  StatusTone
+> = {
+  good: "healthy",
+  limited: "attention",
+  unavailable: "unavailable",
+};
+
 function formatTime(timestamp: string): string {
   return new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
@@ -113,6 +122,7 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
           <p className={styles.timestamp}>Detected {formatTime(event.createdAt)}</p>
         </div>
         <div className={styles.headerStatuses}>
+          {event.overdue && <StatusPill label="Response overdue" tone="critical" />}
           <StatusPill label={priority.label} tone={priority.tone} />
           <StatusPill label={status.label} tone={status.tone} />
         </div>
@@ -126,7 +136,10 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
                 <p className={styles.sectionLabel}>Objective evidence</p>
                 <h2 id="evidence-heading">What the sensors observed</h2>
               </div>
-              <StatusPill label={event.confidence.label} tone="healthy" />
+              <StatusPill
+                label={event.confidence.label}
+                tone={qualityTone[event.confidence.dataQuality]}
+              />
             </div>
             <p className={styles.safetyNote}>{event.confidence.limitation}</p>
             <ol className={styles.evidenceList}>
@@ -159,12 +172,33 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
             {event.interpretation.summary ? (
               <p className={styles.interpretation}>{event.interpretation.summary}</p>
             ) : (
-              <p className={styles.interpretation}>No AI explanation is available. The event remains visible for staff review.</p>
+              <p className={styles.interpretation}>
+                {event.interpretation.status === "pending"
+                  ? "The AI explanation is still being prepared. The event remains visible and staff can act now."
+                  : "No AI explanation is available. The event remains visible for staff review."}
+              </p>
             )}
             <p className={styles.uncertainty}>{event.interpretation.uncertainty}</p>
           </section>
 
           <EventHistory event={event} />
+
+          {(event.recurrenceCount > 1 || event.relatedEventIds.length > 0) && (
+            <section className={styles.panel} aria-labelledby="related-heading">
+              <p className={styles.sectionLabel}>Pattern history</p>
+              <h2 id="related-heading">Related events</h2>
+              <p className={styles.actionExplanation}>
+                This pattern has appeared {event.recurrenceCount} times. Each event keeps its own permanent record.
+              </p>
+              <ul className={styles.relatedEvents}>
+                {event.relatedEventIds.map((relatedEventId) => (
+                  <li key={relatedEventId}>
+                    <Link href={`/events/${relatedEventId}`}>View related event</Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </div>
 
         <aside className={styles.sideColumn}>
@@ -209,9 +243,11 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
             <p className={styles.sectionLabel}>Monitoring quality</p>
             <h2 id="quality-heading">Data and device status</h2>
             <dl className={styles.facts}>
+              <div><dt>Event type</dt><dd>{event.objectiveFamily}</dd></div>
               <div><dt>Confidence</dt><dd>{Math.round(event.confidence.value * 100)}%</dd></div>
               <div><dt>Data quality</dt><dd>{event.confidence.dataQuality}</dd></div>
               <div><dt>Device</dt><dd>{event.device.label}</dd></div>
+              {event.overdueAt && <div><dt>Response due</dt><dd>{formatTime(event.overdueAt)}</dd></div>}
             </dl>
             <ul className={styles.sources} aria-label="Sensor source availability">
               {event.device.sources.map((source) => (

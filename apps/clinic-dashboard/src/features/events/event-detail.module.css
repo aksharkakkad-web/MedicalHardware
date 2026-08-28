@@ -58,6 +58,10 @@
 .sources { display: grid; gap: 0.55rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--color-border); list-style: none; }
 .sources li { display: flex; justify-content: space-between; gap: 1rem; color: var(--color-text-muted); font-size: 0.76rem; }
 .sources [data-status="available"] { color: var(--color-status-healthy-text); font-weight: 700; text-transform: capitalize; }
+.sources [data-status="limited"] { color: var(--color-status-attention-text); font-weight: 700; text-transform: capitalize; }
+.sources [data-status="unavailable"] { color: var(--color-status-unavailable-text); font-weight: 700; text-transform: capitalize; }
+.relatedEvents { display: grid; gap: 0.5rem; margin-top: 0.85rem; padding-left: 1.1rem; }
+.relatedEvents a { color: var(--color-accent-strong); font-size: 0.82rem; font-weight: 700; }
 .error { max-width: 42rem; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); }
 .error p { margin-top: 0.65rem; color: var(--color-text-muted); line-height: 1.5; }
 .error button { width: auto; }

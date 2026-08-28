@@ -5,7 +5,7 @@ import type {
   MonitoringEventDetail,
   ResidentOverviewResponse,
 } from "@/lib/monitoring";
-import { createEventDetailFixture } from "./events";
+import { createEventDetailFixtures } from "./events";
 import { createResidentOverviewFixture } from "./residents";
 
 export class MockMonitoringClient implements MonitoringClient {
@@ -48,6 +48,7 @@ export class MockMonitoringClient implements MonitoringClient {
     const updated: MonitoringEventDetail = {
       ...event,
       status,
+      overdue: action === "acknowledge" ? false : event.overdue,
       actionHistory: [
         ...event.actionHistory,
         {
@@ -108,12 +109,12 @@ export class MockMonitoringClient implements MonitoringClient {
       return stored;
     }
 
-    const fixture = createEventDetailFixture(this.now());
-    if (fixture.eventId !== eventId) {
+    const fixtures = createEventDetailFixtures(this.now());
+    fixtures.forEach((fixture) => this.events.set(fixture.eventId, fixture));
+    const fixture = this.events.get(eventId);
+    if (!fixture) {
       throw new Error("The requested event could not be found.");
     }
-
-    this.events.set(eventId, fixture);
     return fixture;
   }
 }

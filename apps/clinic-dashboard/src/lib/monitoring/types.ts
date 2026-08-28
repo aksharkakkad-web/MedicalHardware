@@ -115,6 +115,8 @@ export interface MonitoringEventDetail {
   };
   relatedEventIds: string[];
   recurrenceCount: number;
+  overdue: boolean;
+  overdueAt: string | null;
   actionHistory: EventHistoryItem[];
   resolutionOutcome: ResolutionOutcome | null;
   feedback: {

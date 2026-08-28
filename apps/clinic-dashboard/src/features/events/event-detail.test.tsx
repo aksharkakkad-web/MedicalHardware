@@ -93,4 +93,33 @@ describe("EventDetail", () => {
     );
     expect(screen.getByText(/does not mean the resident is safe/i)).toBeVisible();
   });
+
+  it("shows low confidence and unavailable AI without guessing", async () => {
+    renderEvent("evt_unknown_pattern_104");
+
+    expect(await screen.findByText("Low confidence")).toBeVisible();
+    expect(screen.getByText("Unknown anomaly")).toBeVisible();
+    expect(screen.getByText("Explanation unavailable")).toBeVisible();
+    expect(screen.getByText(/cannot safely attribute/i)).toBeVisible();
+  });
+
+  it("keeps device warnings actionable while AI is pending", async () => {
+    renderEvent("evt_device_issue_105");
+
+    expect(await screen.findByText("Data unavailable")).toBeVisible();
+    expect(screen.getByText("Explanation pending")).toBeVisible();
+    expect(screen.getByText(/still being prepared/i)).toBeVisible();
+    expect(screen.getByText("Room sensor offline")).toBeVisible();
+  });
+
+  it("shows overdue and related-event history clearly", async () => {
+    renderEvent();
+
+    expect(await screen.findByText("Response overdue")).toBeVisible();
+    expect(screen.getByText(/appeared 2 times/i)).toBeVisible();
+    expect(screen.getByRole("link", { name: "View related event" })).toHaveAttribute(
+      "href",
+      "/events/evt_previous_movement_102",
+    );
+  });
 });

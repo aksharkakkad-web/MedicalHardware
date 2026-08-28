@@ -98,6 +98,7 @@ describe("MockMonitoringClient", () => {
     expect(opened.status).toBe("open");
     expect(opened.evidence).toHaveLength(3);
     expect(acknowledged.status).toBe("acknowledged");
+    expect(acknowledged.overdue).toBe(false);
     expect(checked.status).toBe("checked");
     expect(resolved.status).toBe("resolved");
     expect(resolved.feedback).toMatchObject({
@@ -119,5 +120,25 @@ describe("MockMonitoringClient", () => {
     await expect(
       client.performEventAction("evt_unusual_movement_102", "check"),
     ).rejects.toThrow(/not available/i);
+  });
+
+  it("provides contract-valid scenarios for uncertain and unavailable data", async () => {
+    const client = new MockMonitoringClient();
+    const unknownPattern = await client.getEvent("evt_unknown_pattern_104");
+    const deviceIssue = await client.getEvent("evt_device_issue_105");
+    const overdueEvent = await client.getEvent("evt_unusual_movement_102");
+
+    expect(unknownPattern).toMatchObject({
+      objectiveFamily: "Unknown anomaly",
+      confidence: { dataQuality: "limited" },
+      interpretation: { status: "unavailable" },
+    });
+    expect(deviceIssue).toMatchObject({
+      confidence: { dataQuality: "unavailable" },
+      interpretation: { status: "pending" },
+      device: { status: "offline" },
+    });
+    expect(overdueEvent.overdue).toBe(true);
+    expect(overdueEvent.relatedEventIds).toEqual(["evt_previous_movement_102"]);
   });
 });
