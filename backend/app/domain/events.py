@@ -13,6 +13,7 @@ from backend.app.domain._validation import (
     coerce_enum,
     require_aware_datetime,
     require_nonblank_text,
+    require_strict_bool,
 )
 from backend.app.domain.monitoring import MonitoringSnapshot, MonitoringState
 
@@ -121,6 +122,11 @@ class MonitoringEvent:
     episode_policy_test_only: bool = True
     resident_memory_version: int | None = None
     resident_memory_entry_ids: tuple[str, ...] = ()
+    source_anomaly_id: str | None = None
+    latest_evidence_revision: int | None = None
+    attention_suppressed_until: datetime | None = None
+    provisional_urgent: bool = False
+    bridge_idempotency_keys: tuple[str, ...] = ()
 
     @property
     def overdue(self) -> bool:
@@ -180,6 +186,10 @@ class EventStore:
         actor_id: str = SYSTEM_EVENT_ACTOR_ID,
         monitoring_snapshot: MonitoringSnapshot | None = None,
         resident_memory: ResidentMemory | None = None,
+        source_anomaly_id: str | None = None,
+        evidence_revision: int | None = None,
+        bridge_idempotency_key: str | None = None,
+        provisional_urgent: bool = False,
     ) -> MonitoringEvent:
         resident_id = require_nonblank_text(resident_id, "resident_id")
         room_id = require_nonblank_text(room_id, "room_id")
@@ -191,6 +201,29 @@ class EventStore:
         priority = coerce_enum(priority, EventPriority, "priority")
         observed_at = require_aware_datetime(observed_at, "observed_at")
         actor_id = require_nonblank_text(actor_id, "actor_id")
+        if source_anomaly_id is not None:
+            source_anomaly_id = require_nonblank_text(
+                source_anomaly_id,
+                "source_anomaly_id",
+            )
+        if evidence_revision is not None and (
+            isinstance(evidence_revision, bool)
+            or not isinstance(evidence_revision, int)
+            or evidence_revision < 0
+        ):
+            raise ValueError("evidence_revision must be a nonnegative integer")
+        if bridge_idempotency_key is not None:
+            bridge_idempotency_key = require_nonblank_text(
+                bridge_idempotency_key,
+                "bridge_idempotency_key",
+            )
+            for event in self._events.values():
+                if bridge_idempotency_key in event.bridge_idempotency_keys:
+                    return event
+        provisional_urgent = require_strict_bool(
+            provisional_urgent,
+            "provisional_urgent",
+        )
         if monitoring_snapshot is not None:
             if not isinstance(monitoring_snapshot, MonitoringSnapshot):
                 raise ValueError(
@@ -211,7 +244,27 @@ class EventStore:
             room_id,
             objective_family,
         )
-        active = related[-1] if related else None
+        if source_anomaly_id is not None:
+            source_related = sorted(
+                (
+                    event
+                    for event in self._events.values()
+                    if event.resident_id == resident_id
+                    and event.room_id == room_id
+                    and event.source_anomaly_id == source_anomaly_id
+                ),
+                key=lambda event: event.created_at,
+            )
+            if source_related:
+                related = sorted(
+                    {event.event_id: event for event in (*related, *source_related)}.values(),
+                    key=lambda event: event.created_at,
+                )
+                active = source_related[-1]
+            else:
+                active = related[-1] if related else None
+        else:
+            active = related[-1] if related else None
         if active is not None:
             elapsed = observed_at - active.last_signal_at
             latest_related_history_at = max(
@@ -224,8 +277,19 @@ class EventStore:
                 raise ValueError("observed_at cannot precede related event history")
         if (
             active is not None
+            and active.status == EventStatus.RESOLVED
+            and source_anomaly_id is not None
+            and active.source_anomaly_id == source_anomaly_id
+        ):
+            return active
+        if (
+            active is not None
             and active.status != EventStatus.RESOLVED
             and elapsed <= self.quiet_gap
+            and (
+                source_anomaly_id is None
+                or active.source_anomaly_id == source_anomaly_id
+            )
         ):
             priority_order = (
                 EventPriority.WATCH,
@@ -247,12 +311,36 @@ class EventStore:
                         changed_at=observed_at,
                     ),
                 )
+            if (
+                evidence_revision is not None
+                and active.latest_evidence_revision is not None
+                and evidence_revision < active.latest_evidence_revision
+            ):
+                raise ValueError("evidence_revision cannot move backward")
+            bridge_keys = active.bridge_idempotency_keys
+            if bridge_idempotency_key is not None:
+                bridge_keys += (bridge_idempotency_key,)
             updated = replace(
                 active,
                 last_signal_at=observed_at,
                 signal_count=active.signal_count + 1,
                 priority=effective_priority,
                 priority_history=priority_history,
+                source_anomaly_id=(source_anomaly_id or active.source_anomaly_id),
+                latest_evidence_revision=(
+                    evidence_revision
+                    if evidence_revision is not None
+                    else active.latest_evidence_revision
+                ),
+                attention_suppressed_until=(
+                    None
+                    if effective_priority != active.priority
+                    else active.attention_suppressed_until
+                ),
+                provisional_urgent=(
+                    active.provisional_urgent or provisional_urgent
+                ),
+                bridge_idempotency_keys=bridge_keys,
             )
             self._events[updated.event_id] = updated
             return updated
@@ -292,6 +380,14 @@ class EventStore:
             episode_policy_test_only=self.policy.test_only,
             resident_memory_version=resident_memory_version,
             resident_memory_entry_ids=resident_memory_entry_ids,
+            source_anomaly_id=source_anomaly_id,
+            latest_evidence_revision=evidence_revision,
+            provisional_urgent=provisional_urgent,
+            bridge_idempotency_keys=(
+                (bridge_idempotency_key,)
+                if bridge_idempotency_key is not None
+                else ()
+            ),
         )
         self._events[event_id] = event
         return event
@@ -309,15 +405,33 @@ class EventStore:
         *,
         actor_id: str,
         at: datetime,
+        attention_suppressed_until: datetime | None = None,
     ) -> MonitoringEvent:
-        return self._transition(
+        acknowledged_at = require_aware_datetime(at, "at")
+        suppressed_until = None
+        if attention_suppressed_until is not None:
+            suppressed_until = require_aware_datetime(
+                attention_suppressed_until,
+                "attention_suppressed_until",
+            )
+            if suppressed_until <= acknowledged_at:
+                raise ValueError("attention suppression must follow acknowledgment")
+        acknowledged = self._transition(
             event_id,
             EventStatus.OPEN,
             EventStatus.ACKNOWLEDGED,
             action=EventActionType.ACKNOWLEDGED,
             actor_id=actor_id,
-            at=at,
+            at=acknowledged_at,
         )
+        if suppressed_until is None:
+            return acknowledged
+        acknowledged = replace(
+            acknowledged,
+            attention_suppressed_until=suppressed_until,
+        )
+        self._events[acknowledged.event_id] = acknowledged
+        return acknowledged
 
     def check(
         self,
