@@ -1,6 +1,6 @@
 # Current Project Stage
 
-**Updated:** August 27, 2026
+**Updated:** August 28, 2026
 
 **Operating status:** Phase 1 product logic is complete. Phase 2 is **In
 progress**. The first durable event slice plus backend Checkpoints A through D
@@ -9,6 +9,12 @@ preferences/resident memory, and the clinic API handoff. Akshar's Phase 2
 backend runway is ready for Rishit's real-client connection. Frontend and
 hardware work continue independently. See `docs/PHASE_GATES.md` for the
 shared start → build → review → merge → next-checkpoint process.
+
+Akshar is also moving ahead independently on Phase 5 monitoring intelligence.
+The research-backed design is locked around explicit quality states, flexible
+resident routines, controlled personal baselines, lean anomaly episodes, rich
+evidence packets, situation-specific AI interpretation, deterministic final
+disposition, and an urgent path that never waits for AI.
 
 ## Where we are now
 
@@ -95,13 +101,15 @@ The clinic caregiver experience is the first complete user journey. Rishit can b
 ## What Akshar builds next
 
 The first durable Product API slice and Checkpoints A–D are implemented.
-There is no hidden Phase 2 backend checkpoint left. Akshar's next product task
-is the shared toy-data convergence: support Rishit's `ApiMonitoringClient`
-connection against the published contract and fix genuine integration defects
-without redesigning Rishit's frontend lane.
+There is no hidden Phase 2 backend checkpoint left. Akshar can support Rishit's
+`ApiMonitoringClient` connection without pausing independent backend progress.
 
-Simulated telemetry ingestion, fusion, baselines, anomaly/confidence logic,
-notifications, and selective AI interpretation remain later slices and phases.
+The active independent backend work is Phase 5 on normalized simulated
+fixtures: quality and purpose gating, personal baselines that allow ordinary
+human variation, anomaly episodes, rich evidence, selective AI interpretation,
+deterministic event disposition, feedback/cooldown behavior, and replayable
+evaluation. Simulated edge transport remains Phase 6; real device data remains
+later hardware integration.
 
 ## What the hardware track builds in parallel
 
@@ -124,6 +132,9 @@ Real hardware later replaces the simulator as the telemetry producer. It should 
 - Synthetic thresholds are test-only, not clinical or production policy.
 - Resolved events remain immutable; recurrences create new linked history.
 - Resident memory and the numerical baseline are separate.
+- Routine context can reduce avoidable non-urgent alerts, but never suppresses urgent physical evidence.
+- Acknowledgment quiets duplicate attention; it does not falsely end an active anomaly.
+- AI interprets meaningful evidence, while deterministic policy owns the final disposition.
 
 ## Source-of-truth handoff
 

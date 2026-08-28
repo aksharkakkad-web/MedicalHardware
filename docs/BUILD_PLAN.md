@@ -2,7 +2,7 @@
 
 **Status:** Execution plan
 **Strategy:** Contract-first, UI/UX-first, back-to-front, simulator-backed
-**Version:** 1.5
+**Version:** 1.6
 
 ---
 
@@ -105,7 +105,8 @@ Use parallel agents only when work has clear file/module ownership.
 
 **AI Agent (normally run by Akshar)**
 - owns LLM interfaces, structured outputs, context builder, feedback backend, and resident-memory updater;
-- does not control deterministic event creation.
+- interprets rich anomaly evidence for deterministic disposition policy;
+- cannot suppress urgent deterministic warnings or directly control event state.
 
 **Reviewer / Verifier Agent**
 - reviews against docs;
@@ -336,12 +337,13 @@ client connection against the published Product API.
 
 ### Goal
 
-Make an existing structured event understandable without giving the LLM authority over event creation.
+Interpret meaningful anomaly evidence without giving the LLM authority over
+sensor math, urgent warnings, or final event disposition.
 
 ### Deliverables
 
 - provider-neutral LLM interface;
-- `prompts/event_interpreter.md`;
+- situation-specific monitoring skill files plus shared core instructions;
 - context builder;
 - structured output schema validation;
 - retry/failure handling;
@@ -351,11 +353,11 @@ Make an existing structured event understandable without giving the LLM authorit
 
 ### Acceptance criteria
 
-- given a test event + resident context, returns valid structured interpretation;
+- given an anomaly evidence packet + resident context, returns valid structured interpretation;
 - no raw sensor arrays are sent to the LLM;
 - invalid LLM output is rejected/retried safely;
-- LLM outage leaves event visible;
-- deterministic event priority cannot be lowered/deleted by interpreter.
+- non-urgent LLM outage falls back to deterministic policy and honest wording;
+- urgent deterministic events remain visible and cannot be lowered/deleted by the interpreter.
 
 ---
 
@@ -387,19 +389,25 @@ Close the user feedback loop before real sensors exist.
 
 ---
 
-## 11. Milestone 6 — Anomaly/Event Engine on Normalized Simulated Data
+## 11. Milestone 6 — Monitoring Intelligence on Normalized Simulated Data
 
 ### Goal
 
-Build the numerical logic behind events without waiting for real edge firmware/preprocessors.
+Build the complete Phase 5 intelligence path without waiting for real edge
+firmware/preprocessors: quality, personal baselines, anomaly episodes, rich
+evidence, selective AI interpretation, deterministic disposition, and the
+existing durable event lifecycle.
 
 ### Deliverables
 
 - normalized fixture generator;
+- explicit `good` / `limited` / `unusable` quality and purpose eligibility;
 - baseline engine;
-- general anomaly engine;
-- configurable warning-policy engine;
-- event creation/deduplication;
+- general anomaly-episode engine with candidate, active, recovering, and closed states;
+- configurable urgent-warning and final-disposition policy;
+- rich revisioned anomaly evidence packets;
+- provider-neutral LLM interpreter with situation-specific skills;
+- event bridge into the existing creation/deduplication lifecycle;
 - confidence/data-quality inputs;
 - device issue event path.
 
@@ -419,14 +427,18 @@ Do not prematurely build a trained event classifier.
 ### Acceptance criteria
 
 - normal scenario produces low event rate;
-- scripted anomaly produces event;
-- clearly unusual but unclassified scenario can produce `unknown_anomaly`;
+- scripted anomaly produces an episode and evidence packet;
+- meaningful non-urgent evidence is interpreted before deterministic policy decides whether an event is warranted;
+- strong urgent deterministic evidence creates a provisional event immediately and may be enriched afterward;
+- clearly unusual but unclassified evidence can remain `unknown` without fabricated certainty;
 - low-quality data can suppress/qualify derived features without inventing values;
 - warning-policy demo rules are explicitly synthetic/test-only;
 - baseline versions are stored;
 - calibration behavior is exercised across `new`, `calibrating`, `partial`, and `established`;
 - away, possible-multi-person, poor-quality, and unresolved-event windows do not update the baseline;
 - setup changes return affected baseline dimensions to calibration while preserving resident memory;
+- flexible routines and expected changes reduce avoidable alerts but never suppress urgent physical evidence;
+- acknowledgment/cooldown reduces duplicate caregiver interruption without falsely closing the numerical anomaly;
 
 ---
 
