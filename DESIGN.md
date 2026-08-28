@@ -174,6 +174,8 @@ Spacing follows a 4px sub-grid with an 8px working rhythm. Panels typically sit 
 
 **The Collapse by Importance Rule.** Narrow layouts remove secondary columns before they compress primary labels, statuses, or the next staff action.
 
+**The Walkthrough Is a Sequence Rule.** Synthetic walkthroughs use one ordered scenario sheet beside one result rail. The rail stays visible on wide screens and stacks after the scenarios on narrow screens; scenarios are never split into an equal-weight card grid.
+
 ## Elevation & Depth
 
 Depth is a restrained hybrid of tonal layering, hairline borders, and one ambient card shadow. Translucent white navigation surfaces use blur to separate persistent chrome from the warm canvas. Primary event sheets add a shallow paper edge beneath the panel, reinforcing the folio metaphor without making the workspace decorative.
@@ -241,6 +243,10 @@ Versioned staff context stays in one continuous white sheet, with active entries
 
 Preference groups use full-width rows with a direct label, one-line consequence, and the switch aligned at the far edge. Group legends are compact uppercase scan labels. A nearby Cobalt Wash note names any invariant the switch cannot change, so the control's scope is understood before staff save it. On narrow screens, the settings rail stacks below the primary record and two-part boundary notes become one vertical sequence.
 
+### Scenario Walkthroughs
+
+Synthetic scenario controls live in one continuous numbered sheet. Each row keeps the situation name, expected product change, plain-language safety rule, and a single 44px-minimum action together; the active row adds a slim cobalt inset and a worded semantic pill without changing the row's geometry. A sticky result rail lists the expected visible outcomes, applied time, synthetic/local provenance, and the direct path into the generated resident or event. On narrow screens, the rail follows the scenario sheet, row actions become full width, and decorative step numbers may disappear before any safety copy or action is compressed.
+
 ### Event Workflow Sheet
 
 Evidence uses a vertical sequence of cobalt-ringed nodes, while the next-action panel remains adjacent and sticky on wide screens. Acknowledge, check, and resolve transitions briefly change border, surface, or position to confirm the saved state; resolved work becomes a permanent summary rather than an editable active event.
@@ -253,6 +259,7 @@ Evidence uses a vertical sequence of cobalt-ringed nodes, while the next-action 
 - **Do** keep synthetic-data labeling visible in persistent chrome.
 - **Do** pair every semantic color with words and preserve unavailable or limited states as explicit states.
 - **Do** place a control's immutable safety boundary beside the control in a quiet Cobalt Wash note; never leave staff to infer what a switch cannot change.
+- **Do** pair every synthetic scenario action with its immediate safety rule and show the resulting outcomes and data provenance in an adjacent result rail.
 - **Do** use the shared 0.75rem control radius, 1rem card radius, hairline borders, and ambient shadow for new operational surfaces.
 - **Do** preserve keyboard focus and reduced-motion behavior in every new control or transition.
 

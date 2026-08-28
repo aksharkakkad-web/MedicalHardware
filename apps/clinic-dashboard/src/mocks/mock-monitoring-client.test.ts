@@ -512,4 +512,48 @@ describe("MockMonitoringClient", () => {
     savedValues.set("adaptive-care:demo-scenario:v1", JSON.stringify({ schemaVersion: "1.0", activeScenarioId: "invented", appliedAt: null }));
     expect((await new MockMonitoringClient(undefined, storage).getActiveDemoScenario()).activeScenarioId).toBeNull();
   });
+
+  it("preserves generated-event workflow progress when the demo is reopened", async () => {
+    const savedValues = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => savedValues.get(key) ?? null,
+      setItem: (key: string, value: string) => savedValues.set(key, value),
+    };
+    const first = new MockMonitoringClient(undefined, storage);
+    const state = await first.applyDemoScenario("physiological_deviation");
+    await first.performEventAction(state.targetEventId!, "acknowledge");
+    await first.performEventAction(state.targetEventId!, "check");
+    await first.resolveEventWithFeedback(state.targetEventId!, {
+      outcome: "uncertain",
+      actualEventLabel: "Cause not confirmed",
+      routine: false,
+    });
+
+    const recreated = new MockMonitoringClient(undefined, storage);
+    expect(await recreated.getEvent(state.targetEventId!)).toMatchObject({
+      status: "resolved",
+      resolutionOutcome: "uncertain",
+      feedback: { actualEventLabel: "Cause not confirmed" },
+    });
+  });
+
+  it("reports when a scenario reset cannot be saved for the next visit", async () => {
+    let storageFails = false;
+    const savedValues = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => savedValues.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        if (storageFails) throw new Error("Storage unavailable");
+        savedValues.set(key, value);
+      },
+    };
+    const client = new MockMonitoringClient(undefined, storage);
+    await client.applyDemoScenario("resident_away");
+    storageFails = true;
+
+    const reset = await client.resetDemoScenario();
+
+    expect(reset).toMatchObject({ activeScenarioId: null, persistenceAvailable: false });
+    expect((await client.getResident("res_7f3a1c")).resident.monitoring.state).toBe("active");
+  });
 });

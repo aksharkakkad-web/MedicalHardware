@@ -41,7 +41,7 @@ export function ScenarioLab() {
   const controller = useDemoScenarioController();
   const [result, setResult] = useState<LoadState>(controller ? { status: "loading" } : { status: "unavailable" });
   const [running, setRunning] = useState<DemoScenarioId | "reset" | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ tone: "status" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     let current = true;
@@ -61,9 +61,9 @@ export function ScenarioLab() {
     try {
       const state = await controller.applyDemoScenario(scenarioId);
       setResult({ status: "success", data: { ...result.data, state } });
-      setMessage(state.persistenceAvailable ? "Scenario applied to the clinic demo." : "Scenario applied for this visit, but this browser could not save it for later.");
+      setMessage({ tone: "status", text: state.persistenceAvailable ? "Scenario applied to the clinic demo." : "Scenario applied for this visit, but this browser could not save it for later." });
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "The scenario could not be applied.");
+      setMessage({ tone: "error", text: error instanceof Error ? error.message : "The scenario could not be applied." });
     } finally {
       setRunning(null);
     }
@@ -76,9 +76,9 @@ export function ScenarioLab() {
     try {
       const state = await controller.resetDemoScenario();
       setResult({ status: "success", data: { ...result.data, state } });
-      setMessage("Baseline demo restored.");
+      setMessage({ tone: "status", text: state.persistenceAvailable ? "Baseline demo restored." : "Baseline restored for this visit, but this browser could not save the reset for later." });
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "The demo could not be reset.");
+      setMessage({ tone: "error", text: error instanceof Error ? error.message : "The demo could not be reset." });
     } finally {
       setRunning(null);
     }
@@ -130,7 +130,8 @@ export function ScenarioLab() {
           <div className={styles.resultHeader}><div><h2>{active ? `${active.label} active` : "Baseline demo"}</h2><p>{active ? "The shared clinic demo now reflects this situation." : "Resident A begins with active monitoring and no open attention items."}</p></div><span className={styles.liveDot} aria-hidden="true" /></div>
           {active ? <ol className={styles.outcomes}>{active.expectedOutcomes.map((outcome) => <li key={outcome}>{outcome}</li>)}</ol> : <div className={styles.baseline}><strong>Ready for a walkthrough</strong><p>Choose one situation. You can inspect the result, return here, and run another without changing real data.</p></div>}
           <dl className={styles.resultMeta}><div><dt>Applied</dt><dd>{formattedTime(state.appliedAt)}</dd></div><div><dt>Data</dt><dd>Synthetic and local</dd></div></dl>
-          {message && <p className={styles.feedback} role="status">{message}</p>}
+          {running && <p className={styles.runningStatus} role="status" aria-live="polite">{running === "reset" ? "Resetting the clinic demo…" : "Applying the selected scenario…"}</p>}
+          {message && <p className={styles.feedback} data-tone={message.tone} role={message.tone === "error" ? "alert" : "status"}>{message.text}</p>}
           {active && <Link className={styles.openLink} href={targetHref}>{targetLabel}<ArrowIcon /></Link>}
           <button className={styles.resetButton} type="button" disabled={running !== null || !active} onClick={() => void resetScenario()}>{running === "reset" ? "Resetting…" : "Reset demo"}</button>
         </aside>

@@ -547,6 +547,11 @@ export class MockMonitoringClient implements MonitoringClient, DemoScenarioContr
     createEventDetailFixtures(this.now()).forEach((fixture) => {
       this.events.set(fixture.eventId, fixture);
     });
+    const activeScenarioId = this.getScenarioState().activeScenarioId;
+    if (activeScenarioId) {
+      const scenarioEvent = createScenarioEventFixture(activeScenarioId, this.now());
+      if (scenarioEvent) this.events.set(scenarioEvent.eventId, scenarioEvent);
+    }
 
     try {
       const saved = this.storage?.getItem(EVENT_STORAGE_KEY);
@@ -563,7 +568,6 @@ export class MockMonitoringClient implements MonitoringClient, DemoScenarioContr
     } catch {
       // Broken demo storage is ignored so the safe fixtures remain usable.
     }
-    this.syncScenarioEvents();
   }
 
   private persistEvents(): void {

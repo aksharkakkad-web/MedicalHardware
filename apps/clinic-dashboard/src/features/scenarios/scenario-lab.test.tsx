@@ -6,11 +6,12 @@ import type { ReactNode } from "react";
 import { describe, expect, it } from "vitest";
 
 import { DemoScenarioProvider } from "@/lib/demo-scenarios";
+import type { DemoScenarioController } from "@/lib/demo-scenarios";
 import { MockMonitoringClient } from "@/mocks/mock-monitoring-client";
 
 import { ScenarioLab } from "./scenario-lab";
 
-function renderLab(client: MockMonitoringClient | null = new MockMonitoringClient(() => new Date("2026-08-28T18:00:00.000Z"))) {
+function renderLab(client: DemoScenarioController | null = new MockMonitoringClient(() => new Date("2026-08-28T18:00:00.000Z"))) {
   function Wrapper({ children }: Readonly<{ children: ReactNode }>) {
     return <DemoScenarioProvider controller={client}>{children}</DemoScenarioProvider>;
   }
@@ -50,5 +51,38 @@ describe("ScenarioLab", () => {
     renderLab(null);
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/only available with synthetic demo data/i);
+  });
+
+  it("announces loading and scenario action errors", async () => {
+    const pendingController: DemoScenarioController = {
+      listDemoScenarios: () => new Promise(() => undefined),
+      getActiveDemoScenario: () => new Promise(() => undefined),
+      applyDemoScenario: () => new Promise(() => undefined),
+      resetDemoScenario: () => new Promise(() => undefined),
+    };
+    const loading = renderLab(pendingController);
+    expect(screen.getByRole("status")).toHaveTextContent(/opening scenario lab/i);
+    loading.unmount();
+
+    const client = new MockMonitoringClient();
+    client.applyDemoScenario = async () => { throw new Error("Synthetic scenario failed safely."); };
+    const user = userEvent.setup();
+    renderLab(client);
+    await user.click(await screen.findByRole("button", { name: "Run resident leaves the room" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Synthetic scenario failed safely.");
+  });
+
+  it("states when reset only applies to the current visit", async () => {
+    const client = new MockMonitoringClient(undefined, {
+      getItem: () => null,
+      setItem: () => { throw new Error("Storage unavailable"); },
+    });
+    const user = userEvent.setup();
+    renderLab(client);
+
+    await user.click(await screen.findByRole("button", { name: "Run resident leaves the room" }));
+    await user.click(await screen.findByRole("button", { name: "Reset demo" }));
+
+    expect(await screen.findByText(/baseline restored for this visit/i)).toBeVisible();
   });
 });

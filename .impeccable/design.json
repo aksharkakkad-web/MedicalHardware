@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-28T22:07:18Z",
+  "generatedAt": "2026-08-28T22:47:31Z",
   "title": "Design System: Adaptive Care Clinic Console",
   "extensions": {
     "colorMeta": {
@@ -122,6 +122,13 @@
       "description": "A versioned history row that de-emphasizes retired context while preserving its reason and provenance.",
       "html": "<article class=\"ds-context-retired\"><div><span>Staff added</span><span class=\"ds-retired-pill\">retired</span><time>Aug 25, 2026</time></div><p>Assisted standing is common before breakfast.</p><small>Retired because: The routine time was entered incorrectly.</small></article>",
       "css": ".ds-context-retired { padding: 1.05rem 1.15rem; border-bottom: 1px solid var(--color-border, #dedee3); color: var(--color-text-muted, #636366); background: #fafafa; font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif; } .ds-context-retired > div { display: flex; align-items: center; gap: .55rem; font-size: .75rem; } .ds-context-retired time { margin-left: auto; font-variant-numeric: tabular-nums; } .ds-retired-pill { display: inline-flex; align-items: center; min-height: 1.75rem; padding: .25rem .65rem; border: 1px solid currentColor; border-radius: 999px; font-weight: 650; } .ds-context-retired p { max-width: 68ch; margin: .75rem 0 .55rem; font-size: .86rem; font-weight: 580; line-height: 1.5; text-decoration: line-through; text-decoration-color: var(--color-border, #dedee3); } .ds-context-retired small { font-size: .75rem; line-height: 1.45; }"
+    },
+    {
+      "name": "Scenario Walkthrough Row",
+      "kind": "custom",
+      "description": "An ordered synthetic-scenario row that keeps the expected product change, safety boundary, active state, and one action together.",
+      "html": "<article class=\"ds-scenario-row ds-scenario-active\"><span class=\"ds-scenario-step\">04</span><div class=\"ds-scenario-copy\"><div class=\"ds-scenario-title\"><strong>Physiological pattern changes</strong><span class=\"ds-scenario-pill\"><span aria-hidden=\"true\"></span>Active</span></div><p>Show a combined change from a personal baseline that needs staff review.</p><small><b>Safety rule</b>The synthetic pattern does not identify a diagnosis or medical cause.</small></div><button type=\"button\" disabled>Running now</button></article>",
+      "css": ".ds-scenario-row { display: grid; grid-template-columns: 2.1rem minmax(0, 1fr) 10.5rem; align-items: center; gap: 1rem; min-height: 9.1rem; padding: 1rem 1.15rem; border-bottom: 1px solid var(--color-border, #dedee3); color: var(--color-text, #1d1d1f); background: var(--color-surface, #fff); font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif; transition: background-color 150ms ease, box-shadow 150ms ease; } .ds-scenario-active { background: #fbfdff; box-shadow: inset 3px 0 var(--color-accent-strong, #075bd8); } .ds-scenario-step { display: grid; width: 2rem; height: 2rem; place-items: center; border: 1px solid var(--color-accent-border, #c9dcfb); border-radius: 50%; color: var(--color-accent-strong, #075bd8); background: var(--color-accent-soft, #edf4ff); font-size: .7rem; font-variant-numeric: tabular-nums; font-weight: 680; } .ds-scenario-copy { min-width: 0; } .ds-scenario-title { display: flex; align-items: center; flex-wrap: wrap; gap: .55rem; font-size: .92rem; } .ds-scenario-pill { display: inline-flex; min-height: 1.75rem; align-items: center; gap: .4rem; padding: .25rem .65rem; border: 1px solid currentColor; border-radius: 999px; color: var(--color-status-critical-text, #9f2d25); background: var(--color-status-critical-bg, #ffebe8); font-size: .72rem; font-weight: 650; } .ds-scenario-pill span { width: .42rem; height: .42rem; border-radius: 50%; background: currentColor; } .ds-scenario-copy p { margin: .38rem 0 0; color: var(--color-text-muted, #636366); font-size: .78rem; line-height: 1.45; } .ds-scenario-copy small { display: flex; flex-wrap: wrap; gap: .3rem .55rem; margin-top: .65rem; color: var(--color-text-muted, #636366); font-size: .74rem; line-height: 1.4; } .ds-scenario-copy b { color: var(--color-accent-strong, #075bd8); font-size: .72rem; } .ds-scenario-row button { min-height: 2.75rem; padding: .55rem .75rem; border: 1px solid var(--color-accent-border, #c9dcfb); border-radius: .68rem; color: var(--color-accent-strong, #075bd8); background: var(--color-accent-soft, #edf4ff); font-size: .75rem; font-weight: 680; cursor: pointer; } .ds-scenario-row button:hover:not(:disabled) { background: #e3efff; } .ds-scenario-row button:focus-visible { outline: 2px solid var(--color-accent-strong, #075bd8); outline-offset: 3px; box-shadow: 0 0 0 3px rgb(7 91 216 / 22%); } .ds-scenario-row button:disabled { cursor: default; opacity: .58; } @media (max-width: 720px) { .ds-scenario-row { grid-template-columns: 2rem minmax(0, 1fr); } .ds-scenario-row button { grid-column: 2; width: 100%; } } @media (max-width: 430px) { .ds-scenario-row { grid-template-columns: 1fr; } .ds-scenario-step { display: none; } .ds-scenario-row button { grid-column: 1; } }"
     }
   ],
   "narrative": {
@@ -142,6 +149,7 @@
       { "name": "The Plain Evidence Rule", "body": "Sensor evidence, limitations, and staff actions use sentence case and readable line spacing rather than display styling.", "section": "typography" },
       { "name": "The Attention-Then-Inventory Rule", "body": "A screen presents urgent work before the full resident or event inventory, then preserves a direct path into evidence and action.", "section": "layout" },
       { "name": "The Collapse by Importance Rule", "body": "Narrow layouts remove secondary columns before they compress primary labels, statuses, or the next staff action.", "section": "layout" },
+      { "name": "The Walkthrough Is a Sequence Rule", "body": "Synthetic walkthroughs use one ordered scenario sheet beside one result rail. The rail stays visible on wide screens and stacks after the scenarios on narrow screens; scenarios are never split into an equal-weight card grid.", "section": "layout" },
       { "name": "The Folio Layer Rule", "body": "Depth clarifies persistent chrome, a working sheet, or an active control; it never exists as ornamental floating-card scenery.", "section": "elevation" },
       { "name": "The Motion Explains State Rule", "body": "Short 150–160ms transitions support hover and selection; longer 360–520ms animations are reserved for acknowledged, checked, and resolved workflow changes and are removed under reduced motion.", "section": "elevation" },
       { "name": "The Soft Geometry Rule", "body": "Operational containers stay rectangular and aligned; rounded corners soften the console without turning it into a collection of bubbles.", "section": "shapes" }
@@ -151,6 +159,7 @@
       "Do keep synthetic-data labeling visible in persistent chrome.",
       "Do pair every semantic color with words and preserve unavailable or limited states as explicit states.",
       "Do place a control's immutable safety boundary beside the control in a quiet Cobalt Wash note; never leave staff to infer what a switch cannot change.",
+      "Do pair every synthetic scenario action with its immediate safety rule and show the resulting outcomes and data provenance in an adjacent result rail.",
       "Do use the shared 0.75rem control radius, 1rem card radius, hairline borders, and ambient shadow for new operational surfaces.",
       "Do preserve keyboard focus and reduced-motion behavior in every new control or transition."
     ],

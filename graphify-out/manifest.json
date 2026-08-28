@@ -1466,8 +1466,8 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/app/providers.tsx": {
-    "mtime": 1787950632.050976,
-    "ast_hash": "14af6dbc15c4a2fa27a2531908d0a3a8",
+    "mtime": 1787956401.532015,
+    "ast_hash": "ea35757e29f06768038e4bf968aa50da",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/components/app-shell/app-shell.test.tsx": {
@@ -1476,8 +1476,8 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/components/app-shell/app-shell.tsx": {
-    "mtime": 1787947000.085054,
-    "ast_hash": "4fa6cbbd4067192f82ca53a4c4952ced",
+    "mtime": 1787956401.5329604,
+    "ast_hash": "8f5c673bf33063d758d5991efd173b97",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/components/status-pill/status-pill.test.tsx": {
@@ -1541,13 +1541,13 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/mocks/mock-monitoring-client.test.ts": {
-    "mtime": 1787954469.1242592,
-    "ast_hash": "2aca3bbb17529100e746a823313e5a25",
+    "mtime": 1787957117.78655,
+    "ast_hash": "40ddfa2a687941b698489fff61e90cf4",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/mocks/mock-monitoring-client.ts": {
-    "mtime": 1787954469.1235273,
-    "ast_hash": "9dcdcd340cc5c7df2510d4f98e322d70",
+    "mtime": 1787957117.7861133,
+    "ast_hash": "ae6f5eff96143e7a57b8076c9dbeb611",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/mocks/residents.ts": {
@@ -1912,8 +1912,8 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/components/icons/icons.tsx": {
-    "mtime": 1787947000.084924,
-    "ast_hash": "b73b1a70cb0bce753da4e4d9ee476ccf",
+    "mtime": 1787956401.5327258,
+    "ast_hash": "b0b1d2452877997ca0177436cab02be3",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/events/event-list.test.tsx": {
@@ -1957,8 +1957,8 @@
     "semantic_hash": ""
   },
   "DESIGN.md": {
-    "mtime": 1787887301.7474248,
-    "ast_hash": "f4b74b65b41abd248ab2589db9e1c81f",
+    "mtime": 1787954874.971294,
+    "ast_hash": "ac99f2f3b0c373920de66fa675842971",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/app/devices/[deviceId]/page.tsx": {
@@ -2066,14 +2066,49 @@
     "ast_hash": "722330d85e1eef45543462cf3f6a932e",
     "semantic_hash": ""
   },
-  ".impeccable/review/desktop.png": {
-    "mtime": 1787954741.8030972,
-    "ast_hash": "5dc4e72fba6f4d1e803d50804e111cdd",
+  "apps/clinic-dashboard/src/app/scenarios/page.tsx": {
+    "mtime": 1787956401.5341954,
+    "ast_hash": "a916beeb02ac4089af4cfa8a8e7295e4",
     "semantic_hash": ""
   },
-  ".impeccable/review/mobile.png": {
-    "mtime": 1787954741.8053772,
-    "ast_hash": "06c415988d1f44c24b7d184bb3ce24ec",
+  "apps/clinic-dashboard/src/features/scenarios/scenario-lab.test.tsx": {
+    "mtime": 1787957142.07874,
+    "ast_hash": "512f7c2c361413df949afa267c889c81",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/features/scenarios/scenario-lab.tsx": {
+    "mtime": 1787957117.7870133,
+    "ast_hash": "48e6126505e7355ca4d94d144699380c",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/lib/demo-scenarios/index.ts": {
+    "mtime": 1787956182.7485595,
+    "ast_hash": "d5da74217ed875ac26ad2164b1a9e6f4",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/lib/demo-scenarios/provider.tsx": {
+    "mtime": 1787956182.7482471,
+    "ast_hash": "dd3ec2274d78166fd64771aafe806141",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/lib/demo-scenarios/types.ts": {
+    "mtime": 1787956182.747159,
+    "ast_hash": "f7d45f90353d2d4be993264dff8247ea",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/mocks/scenarios.ts": {
+    "mtime": 1787956182.7488325,
+    "ast_hash": "f99a944eb51f264bab25b3edb7f9c833",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-08-28-frontend-scenario-lab.md": {
+    "mtime": 1787956071.2155554,
+    "ast_hash": "c30f0785cc9209f1dea2f60e9a5074bc",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-08-28-frontend-scenario-lab-design.md": {
+    "mtime": 1787956000.9449453,
+    "ast_hash": "51db44c8d08b1e72959fd36769f31480",
     "semantic_hash": ""
   }
 }
