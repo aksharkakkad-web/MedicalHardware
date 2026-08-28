@@ -6,6 +6,8 @@ from backend.app.contracts.common import (
     UTCDateTime,
 )
 from backend.app.contracts.events import (
+    ClinicEventQueueResponse,
+    ClinicEventStatus,
     EventActionResponse,
     EventListResponse,
     EventPriorityHistoryResponse,
@@ -37,6 +39,8 @@ __all__ = [
     "CalibrationDimensionResponse",
     "CalibrationResponse",
     "ContractModel",
+    "ClinicEventQueueResponse",
+    "ClinicEventStatus",
     "DeviceAssignmentResponse",
     "DeviceAssignmentState",
     "DeviceHealthDataAvailability",

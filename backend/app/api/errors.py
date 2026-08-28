@@ -79,7 +79,10 @@ def register_error_handlers(app: FastAPI) -> None:
     ) -> JSONResponse:
         first_error = error.errors()[0] if error.errors() else {}
         location = first_error.get("loc", ())
-        field = str(location[-1]) if location else None
+        if len(location) > 1 and location[0] in {"query", "header", "path"}:
+            field = str(location[1])
+        else:
+            field = str(location[-1]) if location else None
         return error_response(
             422,
             code="invalid_input",

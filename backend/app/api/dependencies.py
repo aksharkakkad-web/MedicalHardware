@@ -20,6 +20,7 @@ from backend.app.db.status_repositories import (
 )
 from backend.app.domain._validation import require_nonblank_text
 from backend.app.services.event_commands import EventCommandService
+from backend.app.services.event_queue import ProductEventQueueQueryService
 from backend.app.services.device_queries import ProductDeviceQueryService
 from backend.app.services.errors import InvalidInputError
 from backend.app.services.idempotency import IdempotencyService
@@ -64,6 +65,12 @@ def query_service(
         EventRepository(session),
         FeedbackRepository(session),
     )
+
+
+def event_queue_query_service(
+    session: Annotated[Session, Depends(database_session)],
+) -> ProductEventQueueQueryService:
+    return ProductEventQueueQueryService(EventRepository(session))
 
 
 def device_query_service(
