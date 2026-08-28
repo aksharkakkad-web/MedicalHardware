@@ -18,6 +18,7 @@ EXPECTED_TABLES = {
     "feedback_records",
     "resident_memory_snapshots",
     "resident_memory_entries",
+    "resident_notification_preference_versions",
     "idempotency_records",
     "audit_log",
     "monitoring_status_snapshots",
@@ -115,7 +116,9 @@ EXPECTED_COLUMNS = {
         "resident_id": False,
         "memory_version": False,
         "description": False,
-        "source_feedback_id": False,
+        "source_kind": False,
+        "source_feedback_id": True,
+        "supersedes_entry_id": True,
         "status": False,
         "created_by": False,
         "created_at": False,
@@ -142,6 +145,21 @@ EXPECTED_COLUMNS = {
         "target_id": False,
         "occurred_at": False,
         "details": False,
+    },
+    "resident_notification_preference_versions": {
+        "preference_version_id": False,
+        "tenant_id": False,
+        "resident_id": False,
+        "version": False,
+        "watch_delivery_enabled": False,
+        "high_delivery_enabled": False,
+        "critical_delivery_enabled": False,
+        "away_awareness_enabled": False,
+        "return_awareness_enabled": False,
+        "limited_awareness_enabled": False,
+        "unavailable_awareness_enabled": False,
+        "changed_by": False,
+        "changed_at": False,
     },
     "monitoring_status_snapshots": {
         "monitoring_status_id": False,
@@ -237,6 +255,7 @@ EXPECTED_PRIMARY_KEYS = {
     "devices": ("device_id",),
     "device_room_assignments": ("assignment_id",),
     "device_health_observations": ("device_health_observation_id",),
+    "resident_notification_preference_versions": ("preference_version_id",),
 }
 
 EXPECTED_FOREIGN_KEYS = {
@@ -280,6 +299,11 @@ EXPECTED_FOREIGN_KEYS = {
     },
     "idempotency_records": {("tenant_id", "tenants", "tenant_id")},
     "audit_log": {("tenant_id", "tenants", "tenant_id")},
+    "resident_notification_preference_versions": {
+        ("tenant_id", "tenants", "tenant_id"),
+        ("resident_id", "residents", "resident_id"),
+        ("tenant_id", "residents", "tenant_id"),
+    },
     "monitoring_status_snapshots": {
         ("tenant_id", "tenants", "tenant_id"),
         ("tenant_id", "rooms", "tenant_id"),
@@ -333,6 +357,9 @@ EXPECTED_UNIQUES = {
     },
     "locations": {("tenant_id", "location_id")},
     "devices": {("tenant_id", "device_id")},
+    "resident_notification_preference_versions": {
+        ("tenant_id", "resident_id", "version")
+    },
 }
 
 EXPECTED_INDEXES = {
@@ -371,6 +398,10 @@ EXPECTED_INDEXES = {
         ("tenant_id", "room_id"),
     },
     "device_health_observations": {("tenant_id",), ("device_id",)},
+    "resident_notification_preference_versions": {
+        ("tenant_id",),
+        ("resident_id",),
+    },
 }
 
 EXPECTED_COMPOSITE_OWNERSHIP_FOREIGN_KEYS = {
@@ -423,6 +454,13 @@ EXPECTED_COMPOSITE_OWNERSHIP_FOREIGN_KEYS = {
     },
     "device_health_observations": {
         (("tenant_id", "device_id"), "devices", ("tenant_id", "device_id")),
+    },
+    "resident_notification_preference_versions": {
+        (
+            ("tenant_id", "resident_id"),
+            "residents",
+            ("tenant_id", "resident_id"),
+        ),
     },
 }
 
