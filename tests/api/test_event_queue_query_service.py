@@ -91,10 +91,10 @@ def test_cursor_round_trip_is_opaque_and_filter_bound() -> None:
         )
     )
 
-    cursor = encode_event_queue_cursor(query, _position())
+    cursor = encode_event_queue_cursor(query, _position(), tenant_id="tenant_a")
 
     assert "evt_cursor" not in cursor
-    assert decode_event_queue_cursor(cursor, query) == _position()
+    assert decode_event_queue_cursor(cursor, query, tenant_id="tenant_a") == _position()
 
     changed_filter = normalize_event_queue_query(
         EventQueueQuery(
@@ -105,8 +105,12 @@ def test_cursor_round_trip_is_opaque_and_filter_bound() -> None:
         )
     )
     with pytest.raises(InvalidInputError) as error:
-        decode_event_queue_cursor(cursor, changed_filter)
+        decode_event_queue_cursor(cursor, changed_filter, tenant_id="tenant_a")
     assert error.value.field == "cursor"
+
+    with pytest.raises(InvalidInputError) as cross_tenant_error:
+        decode_event_queue_cursor(cursor, query, tenant_id="tenant_b")
+    assert cross_tenant_error.value.field == "cursor"
 
 
 @pytest.mark.parametrize("cursor", ("", "not json", "%%%%", "e30"))
@@ -114,7 +118,6 @@ def test_cursor_rejects_malformed_values(cursor: str) -> None:
     query = normalize_event_queue_query(EventQueueQuery())
 
     with pytest.raises(InvalidInputError) as error:
-        decode_event_queue_cursor(cursor, query)
+        decode_event_queue_cursor(cursor, query, tenant_id="tenant_a")
 
     assert error.value.field == "cursor"
-

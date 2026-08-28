@@ -34,6 +34,7 @@ from backend.app.domain.feedback import LearningDecision
 from backend.app.domain.events import EventPriority
 from backend.app.services.feedback_commands import FeedbackCommandService
 from backend.app.services.idempotency import IdempotencyResult, IdempotencyService
+from backend.app.services.errors import InvalidInputError
 from backend.app.services.event_queue import (
     EventQueueQuery,
     ProductEventQueueQueryService,
@@ -55,6 +56,7 @@ router = APIRouter(prefix="/events", tags=["events"])
     operation_id="listClinicEvents",
 )
 def list_clinic_events(
+    request: Request,
     context: Annotated[AccessContext, Depends(access_context)],
     service: Annotated[
         ProductEventQueueQueryService,
@@ -67,6 +69,9 @@ def list_clinic_events(
     limit: Annotated[int, Query(ge=1, le=100)] = 25,
     cursor: Annotated[str | None, Query()] = None,
 ) -> ClinicEventQueueResponse:
+    for single_value_field in ("resident_id", "room_id", "limit", "cursor"):
+        if len(request.query_params.getlist(single_value_field)) > 1:
+            raise InvalidInputError(field=single_value_field)
     return service.list_events(
         context,
         EventQueueQuery(

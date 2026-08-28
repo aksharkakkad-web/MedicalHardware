@@ -16,9 +16,11 @@ Query parameters:
 - repeated `priority` values are OR filters for `watch`, `high`, and
   `critical`;
 - optional `resident_id` and `room_id` narrow the tenant-owned queue;
+- `resident_id`, `room_id`, `limit`, and `cursor` are single-valued; repeating
+  one is rejected as ambiguous;
 - filter categories combine with AND;
 - `limit` defaults to `25` and accepts `1` through `100`;
-- `cursor` is opaque, stable, and bound to the normalized filters.
+- `cursor` is opaque, stable, and bound to the tenant and normalized filters.
 
 With no `status`, the endpoint returns active caregiver work: `open`,
 `acknowledged`, and `checked`. Resolved history remains available by requesting
@@ -1193,6 +1195,7 @@ Implemented read paths:
 - `GET /v1/residents/{resident_id}/awareness`
 - `GET /v1/residents/{resident_id}/calibration`
 - `GET /v1/residents/{resident_id}/notification-preferences`
+- `GET /v1/events`
 - `GET /v1/events/{event_id}`
 - `GET /v1/devices`
 - `GET /v1/devices/{device_id}/health`

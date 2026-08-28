@@ -1,6 +1,6 @@
 # Phase 2 Checkpoint D — Clinic API Handoff Plan
 
-**Status:** In progress
+**Status:** Complete
 **Owner:** Akshar — backend and intelligence
 **Frontend handoff owner:** Rishit
 **Outcome:** The clinic dashboard can replace its selected mock-data paths with
@@ -14,8 +14,9 @@ the real Product API without database knowledge or a product-flow redesign.
   are optional single filters. Categories combine with AND.
 - The queue is ordered for caregiver attention: unresolved, priority,
   overdue, newest signal, newest creation, then event identity.
-- Pagination uses opaque keyset cursors bound to the active filters. Page size
-  defaults to 25 and is capped at 100.
+- Pagination uses opaque keyset cursors bound to the tenant and active filters.
+  Page size defaults to 25 and is capped at 100. Repeated single-value
+  parameters are rejected rather than silently choosing one.
 - Cross-tenant filter identifiers return an empty page and reveal nothing.
 - High and critical events remain in the dashboard queue regardless of
   delivery preferences.

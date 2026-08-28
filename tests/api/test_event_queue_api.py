@@ -221,6 +221,52 @@ def test_clinic_queue_rejects_internal_status_limits_and_blank_filters(
         assert response.json()["error"]["field"] == field
 
 
+def test_clinic_queue_rejects_repeated_single_value_parameters(
+    api_client: TestClient,
+) -> None:
+    cases = (
+        (
+            [("resident_id", "resident_demo_a"), ("resident_id", "resident_other")],
+            "resident_id",
+        ),
+        ([("room_id", "room_214"), ("room_id", "room_other")], "room_id"),
+        ([("limit", "10"), ("limit", "20")], "limit"),
+        ([("cursor", "first"), ("cursor", "second")], "cursor"),
+    )
+    for params, field in cases:
+        response = api_client.get(
+            "/v1/events",
+            params=params,
+            headers=ACCESS_HEADERS,
+        )
+
+        assert response.status_code == 422
+        assert response.json()["error"]["field"] == field
+
+
+def test_clinic_queue_rejects_cursor_reuse_under_another_tenant(
+    api_client: TestClient,
+) -> None:
+    _seed_queue_events(api_client)
+    first = api_client.get(
+        "/v1/events",
+        params={"limit": 1},
+        headers=ACCESS_HEADERS,
+    )
+
+    response = api_client.get(
+        "/v1/events",
+        params={"limit": 1, "cursor": first.json()["next_cursor"]},
+        headers={
+            "X-Tenant-Id": "tenant_other",
+            "X-Actor-Id": "operator_other",
+        },
+    )
+
+    assert response.status_code == 422
+    assert response.json()["error"]["field"] == "cursor"
+
+
 def test_resolving_event_removes_it_from_active_queue_but_preserves_history(
     api_client: TestClient,
 ) -> None:

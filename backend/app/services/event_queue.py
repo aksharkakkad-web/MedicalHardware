@@ -96,10 +96,12 @@ def normalize_event_queue_query(
 def encode_event_queue_cursor(
     query: NormalizedEventQueueQuery,
     position: EventQueuePosition,
+    *,
+    tenant_id: str,
 ) -> str:
     payload = {
         "v": _CURSOR_VERSION,
-        "f": _filter_digest(query),
+        "f": _filter_digest(query, tenant_id),
         "p": {
             "resolved": position.resolved,
             "priority": position.priority.value,
@@ -122,6 +124,8 @@ def encode_event_queue_cursor(
 def decode_event_queue_cursor(
     cursor: str,
     query: NormalizedEventQueueQuery,
+    *,
+    tenant_id: str,
 ) -> EventQueuePosition:
     try:
         if not cursor or len(cursor) > 4096 or not _CURSOR_PATTERN.fullmatch(cursor):
@@ -137,7 +141,7 @@ def decode_event_queue_cursor(
             raise ValueError("invalid cursor payload")
         if payload["v"] != _CURSOR_VERSION:
             raise ValueError("unsupported cursor version")
-        expected_digest = _filter_digest(query)
+        expected_digest = _filter_digest(query, tenant_id)
         if not isinstance(payload["f"], str) or not hmac.compare_digest(
             payload["f"],
             expected_digest,
@@ -185,7 +189,11 @@ class ProductEventQueueQueryService:
         after = (
             None
             if normalized.cursor is None
-            else decode_event_queue_cursor(normalized.cursor, normalized)
+            else decode_event_queue_cursor(
+                normalized.cursor,
+                normalized,
+                tenant_id=context.tenant_id,
+            )
         )
         page = self._events.list_for_tenant(
             context.tenant_id,
@@ -202,7 +210,11 @@ class ProductEventQueueQueryService:
             next_cursor=(
                 None
                 if page.next_position is None
-                else encode_event_queue_cursor(normalized, page.next_position)
+                else encode_event_queue_cursor(
+                    normalized,
+                    page.next_position,
+                    tenant_id=context.tenant_id,
+                )
             ),
         )
 
@@ -231,8 +243,12 @@ def _optional_nonblank(value: str | None, field: str) -> str | None:
     return normalized
 
 
-def _filter_digest(query: NormalizedEventQueueQuery) -> str:
+def _filter_digest(
+    query: NormalizedEventQueueQuery,
+    tenant_id: str,
+) -> str:
     filters = {
+        "tenant_id": tenant_id,
         "statuses": [status.value for status in query.statuses],
         "priorities": [priority.value for priority in query.priorities],
         "resident_id": query.resident_id,
