@@ -80,25 +80,32 @@ def _select_context_entries(
     )
     if len(normalized_ids) > _MAX_RELEVANT_MEMORY_ENTRIES:
         raise ValueError("relevant_context_entry_ids exceeds 20 entries")
-    entries_by_id = {entry.entry_id: entry for entry in resident_memory.entries}
-    effective_ids = {
-        entry.entry_id
+    all_entries_by_id = {}
+    for entry in resident_memory.entries:
+        if entry.entry_id in all_entries_by_id:
+            raise ValueError(
+                f"resident memory contains duplicate entry_id: {entry.entry_id}"
+            )
+        all_entries_by_id[entry.entry_id] = entry
+    authorized_entries_by_id = {
+        entry.entry_id: entry
         for entry in resident_memory.relevant_entries(packet.current_time)
+        if entry.context_kind != "general_context"
     }
     selected = []
     for entry_id in normalized_ids:
-        entry = entries_by_id.get(entry_id)
+        entry = all_entries_by_id.get(entry_id)
         if entry is None:
             raise ValueError(f"requested context entry is unknown: {entry_id}")
         if entry.context_kind == "general_context":
             raise ValueError(
                 f"requested context entry uses disallowed context kind: {entry_id}"
             )
-        if entry_id not in effective_ids:
+        if entry_id not in authorized_entries_by_id:
             raise ValueError(
                 f"requested context entry is not active/effective: {entry_id}"
             )
-        selected.append(entry)
+        selected.append(authorized_entries_by_id[entry_id])
     return tuple(selected)
 
 

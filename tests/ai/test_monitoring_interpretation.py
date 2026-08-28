@@ -905,3 +905,303 @@ def test_declared_identifier_fields_reject_omissions(
         validate_interpretation(request, result)
 
     assert exc_info.value.reasons == (expected_reason,)
+
+
+def test_context_snapshot_rejects_active_and_retired_duplicate_entry_ids() -> None:
+    # Break caught: a retired duplicate overwrites an active entry during authorization.
+    memory = ResidentMemory(
+        resident_id="resident_42",
+        version=13,
+        entries=(
+            _entry("duplicate_routine", "Active movement routine."),
+            _entry(
+                "duplicate_routine",
+                "Retired private replacement.",
+                status="retired",
+            ),
+        ),
+    )
+
+    with pytest.raises(ValueError) as exc_info:
+        _request(
+            memory=memory,
+            relevant_context_entry_ids=("duplicate_routine",),
+        )
+
+    assert str(exc_info.value) == (
+        "resident memory contains duplicate entry_id: duplicate_routine"
+    )
+
+
+@pytest.mark.parametrize(
+    ("field", "malformed", "expected_reason"),
+    (
+        ("alternatives", None, "invalid_alternatives_shape"),
+        (
+            "supporting_evidence_refs",
+            None,
+            "invalid_supporting_evidence_refs_shape",
+        ),
+        (
+            "contradicting_evidence_refs",
+            None,
+            "invalid_contradicting_evidence_refs_shape",
+        ),
+        (
+            "described_measurements",
+            None,
+            "invalid_described_measurements_shape",
+        ),
+        (
+            "addressed_contradictions",
+            None,
+            "invalid_addressed_contradictions_shape",
+        ),
+        (
+            "missing_information",
+            None,
+            "invalid_missing_information_shape",
+        ),
+        ("limitations", None, "invalid_limitations_shape"),
+        (
+            "unsupported_conclusions",
+            None,
+            "invalid_unsupported_conclusions_shape",
+        ),
+        ("skill_bundle", None, "invalid_skill_bundle_shape"),
+    ),
+)
+def test_untrusted_result_container_shapes_are_rejected_deterministically(
+    field: str,
+    malformed: object,
+    expected_reason: str,
+) -> None:
+    # Break caught: None or a non-tuple reaches iteration, unpacking, or set().
+    request = _request()
+    result = replace(_valid_result(request), **{field: malformed})
+
+    with pytest.raises(InterpretationValidationError) as exc_info:
+        validate_interpretation(request, result)
+
+    assert exc_info.value.reasons == (expected_reason,)
+
+
+@pytest.mark.parametrize(
+    ("field", "malformed", "expected_reason"),
+    (
+        ("interpretation_id", None, "invalid_interpretation_id_type"),
+        ("plain_english_summary", None, "invalid_plain_english_summary_type"),
+        ("caregiver_wording", None, "invalid_caregiver_wording_type"),
+        ("likely_explanation", None, "invalid_likely_explanation_type"),
+        ("uncertainty", None, "invalid_uncertainty_type"),
+        ("status", None, "invalid_interpretation_status_type"),
+        (
+            "recommended_disposition",
+            None,
+            "invalid_recommended_disposition_type",
+        ),
+        ("confidence", "high", "invalid_interpretation_confidence"),
+        ("needs_more_observation", None, "invalid_needs_more_observation"),
+        ("model_id", None, "invalid_model_id_type"),
+    ),
+)
+def test_untrusted_result_scalar_shapes_are_rejected_deterministically(
+    field: str,
+    malformed: object,
+    expected_reason: str,
+) -> None:
+    # Break caught: a malformed scalar reaches strip(), enum conversion, or provenance use.
+    request = _request()
+    result = replace(_valid_result(request), **{field: malformed})
+
+    with pytest.raises(InterpretationValidationError) as exc_info:
+        validate_interpretation(request, result)
+
+    assert exc_info.value.reasons == (expected_reason,)
+
+
+@pytest.mark.parametrize(
+    ("field", "expected_reason"),
+    (
+        (
+            "supporting_evidence_refs",
+            "invalid_alternative_supporting_evidence_refs_shape:1",
+        ),
+        (
+            "contradicting_evidence_refs",
+            "invalid_alternative_contradicting_evidence_refs_shape:1",
+        ),
+    ),
+)
+def test_nested_alternative_reference_shapes_are_rejected_deterministically(
+    field: str,
+    expected_reason: str,
+) -> None:
+    # Break caught: malformed nested references are unpacked after the outer type check.
+    request = _request()
+    alternative = replace(
+        _valid_result(request).alternatives[0],
+        **{field: None},
+    )
+    result = replace(_valid_result(request), alternatives=(alternative,))
+
+    with pytest.raises(InterpretationValidationError) as exc_info:
+        validate_interpretation(request, result)
+
+    assert exc_info.value.reasons == (expected_reason,)
+
+
+def test_blank_interpretation_id_is_rejected() -> None:
+    # Break caught: an accepted interpretation cannot be durably identified.
+    request = _request()
+
+    with pytest.raises(InterpretationValidationError) as exc_info:
+        validate_interpretation(
+            request,
+            replace(_valid_result(request), interpretation_id="   "),
+        )
+
+    assert exc_info.value.reasons == ("blank_interpretation_id",)
+
+
+@pytest.mark.parametrize(
+    ("field", "malformed", "expected_reason"),
+    (
+        (
+            "addressed_contradictions",
+            (None,),
+            "invalid_addressed_contradictions_item:1",
+        ),
+        (
+            "missing_information",
+            ("cause_of_behavior_change", "   "),
+            "blank_missing_information_item:2",
+        ),
+        (
+            "limitations",
+            (7,),
+            "invalid_limitations_item:1",
+        ),
+        (
+            "unsupported_conclusions",
+            ("causal_explanation", "medical_diagnosis", ""),
+            "blank_unsupported_conclusions_item:3",
+        ),
+        (
+            "supporting_evidence_refs",
+            (None,),
+            "invalid_supporting_evidence_refs_item:1",
+        ),
+        (
+            "described_measurements",
+            ("   ",),
+            "blank_described_measurements_item:1",
+        ),
+    ),
+)
+def test_declared_tuples_require_nonblank_string_items(
+    field: str,
+    malformed: tuple[object, ...],
+    expected_reason: str,
+) -> None:
+    # Break caught: an identifier tuple carries a non-string or hidden blank item.
+    request = _request()
+    result = replace(_valid_result(request), **{field: malformed})
+
+    with pytest.raises(InterpretationValidationError) as exc_info:
+        validate_interpretation(request, result)
+
+    assert exc_info.value.reasons == (expected_reason,)
+
+
+@pytest.mark.parametrize(
+    ("field", "request_kwargs", "expected_reason"),
+    (
+        (
+            "addressed_contradictions",
+            {"packet": _packet(contradictions=("sensor_conflict",))},
+            "duplicate_addressed_contradiction:sensor_conflict",
+        ),
+        (
+            "missing_information",
+            {},
+            "duplicate_missing_information:cause_of_behavior_change",
+        ),
+        (
+            "limitations",
+            {"packet": _packet(limitations=("calibration_incomplete",))},
+            "duplicate_limitation:calibration_incomplete",
+        ),
+        (
+            "unsupported_conclusions",
+            {},
+            "duplicate_unsupported_conclusion:causal_explanation",
+        ),
+        (
+            "supporting_evidence_refs",
+            {},
+            "duplicate_supporting_evidence_ref:evidence://anomaly_17/2/features/movement",
+        ),
+        (
+            "contradicting_evidence_refs",
+            {},
+            "duplicate_contradicting_evidence_ref:evidence://anomaly_17/2/features/movement",
+        ),
+        (
+            "described_measurements",
+            {},
+            "duplicate_described_measurement:movement",
+        ),
+    ),
+)
+def test_semantic_declaration_tuples_reject_duplicates(
+    field: str,
+    request_kwargs: dict[str, object],
+    expected_reason: str,
+) -> None:
+    # Break caught: set-based comparison silently normalizes duplicate declarations.
+    request = _request(**request_kwargs)
+    valid = _valid_result(request)
+    current = getattr(valid, field)
+    if not current:
+        current = request.available_evidence_refs
+    result = replace(valid, **{field: (*current, current[0])})
+
+    with pytest.raises(InterpretationValidationError) as exc_info:
+        validate_interpretation(request, result)
+
+    assert exc_info.value.reasons == (expected_reason,)
+
+
+@pytest.mark.parametrize(
+    ("field", "expected_reason"),
+    (
+        (
+            "supporting_evidence_refs",
+            "duplicate_alternative_supporting_evidence_ref:1:"
+            "evidence://anomaly_17/2/features/movement",
+        ),
+        (
+            "contradicting_evidence_refs",
+            "duplicate_alternative_contradicting_evidence_ref:1:"
+            "evidence://anomaly_17/2/features/movement",
+        ),
+    ),
+)
+def test_alternative_reference_tuples_reject_duplicates(
+    field: str,
+    expected_reason: str,
+) -> None:
+    # Break caught: duplicate evidence citations inflate a ranked alternative.
+    request = _request()
+    refs = (*request.available_evidence_refs, *request.available_evidence_refs)
+    alternative = replace(
+        _valid_result(request).alternatives[0],
+        **{field: refs},
+    )
+    result = replace(_valid_result(request), alternatives=(alternative,))
+
+    with pytest.raises(InterpretationValidationError) as exc_info:
+        validate_interpretation(request, result)
+
+    assert exc_info.value.reasons == (expected_reason,)
