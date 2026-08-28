@@ -122,6 +122,18 @@ describe("MockMonitoringClient", () => {
     ).rejects.toThrow(/not available/i);
   });
 
+  it("does not reset progress after an unknown event is requested", async () => {
+    const client = new MockMonitoringClient();
+    await client.performEventAction("evt_unusual_movement_102", "acknowledge");
+
+    await expect(client.getEvent("evt_missing")).rejects.toThrow(
+      /could not be found/i,
+    );
+    expect((await client.getEvent("evt_unusual_movement_102")).status).toBe(
+      "acknowledged",
+    );
+  });
+
   it("provides contract-valid scenarios for uncertain and unavailable data", async () => {
     const client = new MockMonitoringClient();
     const unknownPattern = await client.getEvent("evt_unknown_pattern_104");
@@ -140,5 +152,61 @@ describe("MockMonitoringClient", () => {
     });
     expect(overdueEvent.overdue).toBe(true);
     expect(overdueEvent.relatedEventIds).toEqual(["evt_previous_movement_102"]);
+  });
+
+  it("keeps event progress after the client is recreated", async () => {
+    const savedValues = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => savedValues.get(key) ?? null,
+      setItem: (key: string, value: string) => savedValues.set(key, value),
+    };
+    const firstClient = new MockMonitoringClient(undefined, storage);
+
+    await firstClient.performEventAction(
+      "evt_unusual_movement_102",
+      "acknowledge",
+    );
+
+    const recreatedClient = new MockMonitoringClient(undefined, storage);
+    expect(
+      (await recreatedClient.getEvent("evt_unusual_movement_102")).status,
+    ).toBe("acknowledged");
+  });
+
+  it("falls back to safe fixtures when saved demo data is broken", async () => {
+    const client = new MockMonitoringClient(undefined, {
+      getItem: () => '[{"eventId":"evt_unusual_movement_102"}]',
+      setItem: () => undefined,
+    });
+
+    expect((await client.getEvent("evt_unusual_movement_102")).status).toBe(
+      "open",
+    );
+  });
+
+  it("updates the resident dashboard as staff complete the event workflow", async () => {
+    const client = new MockMonitoringClient();
+    const eventId = "evt_unusual_movement_102";
+
+    await client.performEventAction(eventId, "acknowledge");
+    expect(
+      (await client.listResidentOverview()).items[1].attention.headline,
+    ).toMatch(/resident check needed/i);
+
+    await client.performEventAction(eventId, "check");
+    expect(
+      (await client.listResidentOverview()).items[1].attention.headline,
+    ).toMatch(/resolution feedback needed/i);
+
+    await client.resolveEventWithFeedback(eventId, {
+      outcome: "confirmed",
+      actualEventLabel: "Assisted movement",
+      routine: true,
+    });
+    const resolvedResident = (await client.listResidentOverview()).items[1];
+    expect(resolvedResident.attention).toMatchObject({
+      priority: "none",
+      openEventCount: 0,
+    });
   });
 });

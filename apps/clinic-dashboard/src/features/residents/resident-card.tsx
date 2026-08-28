@@ -45,6 +45,7 @@ export function ResidentCard({ resident }: Readonly<{ resident: ResidentOverview
   const monitoring = monitoringPresentation[resident.monitoring.state];
   const attention = attentionPresentation[resident.attention.priority];
   const hasAttention = resident.attention.priority !== "none";
+  const eventLinkLabel = hasAttention ? "Review event" : "View event history";
 
   return (
     <article className={styles.card} data-priority={resident.attention.priority}>
@@ -84,7 +85,7 @@ export function ResidentCard({ resident }: Readonly<{ resident: ResidentOverview
           className={styles.reviewLink}
           href={`/events/${resident.attention.primaryEventId}`}
         >
-          Review event <span aria-hidden="true">→</span>
+          {eventLinkLabel} <span aria-hidden="true">→</span>
         </Link>
       )}
 
