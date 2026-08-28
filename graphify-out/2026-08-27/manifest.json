@@ -930,9 +930,9 @@
     "semantic_hash": ""
   },
   "backend/app/db/models.py": {
-    "mtime": 1787875845.9316695,
-    "seen": 1787876182.1302552,
-    "ast_hash": "51bbdce76c77e4df3d909be4a4b1b8dc",
+    "mtime": 1787876297.6268892,
+    "seen": 1787876361.142514,
+    "ast_hash": "394dd34309183d8b2af0a66bde2c1ee3",
     "semantic_hash": ""
   },
   "backend/app/db/repositories.py": {
@@ -1206,9 +1206,9 @@
     "semantic_hash": ""
   },
   "tests/persistence/test_migrations.py": {
-    "mtime": 1787875845.9611988,
-    "seen": 1787876182.13028,
-    "ast_hash": "6016004876e9661d82f007d078760422",
+    "mtime": 1787876328.0405838,
+    "seen": 1787876361.14254,
+    "ast_hash": "91d14cac39435c6c00509abd566bdaee",
     "semantic_hash": ""
   },
   "tests/persistence/test_optimistic_concurrency.py": {
@@ -2049,6 +2049,18 @@
     "mtime": 1787875987.5567975,
     "seen": 1787876182.1303182,
     "ast_hash": "32d037a7477e5a30213348d2267a5e9c",
+    "semantic_hash": ""
+  },
+  "backend/app/db/migrations/versions/0004_preferences_memory_admin.py": {
+    "mtime": 1787876297.627419,
+    "seen": 1787876361.142514,
+    "ast_hash": "ebc5fa9f1246ead7104539b6fabd95ff",
+    "semantic_hash": ""
+  },
+  "tests/persistence/test_preference_memory_schema.py": {
+    "mtime": 1787876255.5135517,
+    "seen": 1787876361.1425412,
+    "ast_hash": "a966d9ba7591c2872480fc09e1aa78b5",
     "semantic_hash": ""
   }
 }
