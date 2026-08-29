@@ -116,7 +116,8 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
   { className, disabled = false, pending = false, type = "button", children, ...props },
   ref,
 ) {
-  if (!isValidElement(children) || props["aria-label"].trim().length === 0) {
+  const accessibleLabel = props["aria-label"];
+  if (!isValidElement(children) || typeof accessibleLabel !== "string" || accessibleLabel.trim().length === 0) {
     return null;
   }
 

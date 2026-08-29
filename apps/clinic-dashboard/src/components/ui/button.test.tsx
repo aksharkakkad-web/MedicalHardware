@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import type { ComponentProps } from "react";
 import { describe, expect, it } from "vitest";
 
 import { Button, IconButton, type ButtonProps, type IconButtonProps } from "./button";
@@ -120,6 +121,26 @@ describe("IconButton", () => {
   it("does not render a control with a blank accessible label", () => {
     render(<IconButton aria-label=" "><span aria-hidden="true">⋯</span></IconButton>);
 
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("fails safely when malformed runtime input provides a missing or non-string label", () => {
+    const malformedProps = {
+      "aria-label": undefined,
+      children: <span aria-hidden="true">⋯</span>,
+    } as unknown as ComponentProps<typeof IconButton>;
+
+    expect(() => render(<IconButton {...malformedProps} />)).not.toThrow();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("fails safely when malformed runtime input provides a non-string label", () => {
+    const malformedProps = {
+      "aria-label": 42,
+      children: <span aria-hidden="true">⋯</span>,
+    } as unknown as ComponentProps<typeof IconButton>;
+
+    expect(() => render(<IconButton {...malformedProps} />)).not.toThrow();
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 });
