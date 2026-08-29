@@ -132,6 +132,13 @@
   place-items: center;
 }
 
+.iconContent svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
 .iconLabel,
 .iconPending {
   grid-area: 1 / 1;

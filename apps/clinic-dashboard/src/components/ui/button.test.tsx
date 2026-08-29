@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { Button, IconButton, type ButtonProps, type IconButtonProps } from "./button";
@@ -110,6 +111,14 @@ describe("IconButton", () => {
     const button = screen.getByRole("button", { name: "More actions" });
     expect(button).toHaveAttribute("type", "button");
     expect(button.className).toContain("iconButton");
+  });
+
+  it("gives SVG icons a stable shared footprint", () => {
+    const css = readFileSync("src/components/ui/button.module.css", "utf8");
+
+    expect(css).toMatch(/\.iconContent svg\s*\{[^}]*display:\s*block/);
+    expect(css).toMatch(/\.iconContent svg\s*\{[^}]*width:\s*18px/);
+    expect(css).toMatch(/\.iconContent svg\s*\{[^}]*height:\s*18px/);
   });
 
   it("does not render a blank control when malformed runtime input omits the icon", () => {

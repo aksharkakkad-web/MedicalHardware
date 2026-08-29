@@ -84,6 +84,12 @@ describe("ResidentRecords", () => {
     expect(css).toMatch(/\.recordCard \.primaryAction[^}]*white-space:\s*normal/);
     expect(css).toMatch(/\.evidence \.indicator[^}]*overflow-wrap:\s*anywhere/);
     expect(css).toMatch(/\.deviceDetails summary[^}]*white-space:\s*normal/);
+    expect(css).toMatch(/@media \(min-width:\s*768px\) and \(max-width:\s*980px\)/);
+    expect(css).toMatch(/\.desktopTable th,\s*\.desktopTable td\s*\{[^}]*padding-inline:\s*var\(--ac-space-2\)/);
+    expect(css).toMatch(/\.desktopTable thead th[^}]*overflow-wrap:\s*normal/);
+    expect(css).toMatch(/\.desktopTable thead th[^}]*word-break:\s*normal/);
+    expect(css).toMatch(/\.actionColumn \.primaryAction[^}]*max-width:\s*100%/);
+    expect(css).toMatch(/\.actionColumn \.primaryAction[^}]*white-space:\s*normal/);
   });
 
   it("uses canonical StatusIndicator labels in compact table cells", () => {

@@ -46,6 +46,24 @@ function setNavMetrics({ clientWidth, scrollWidth, scrollLeft = 0 }: { clientWid
   return nav;
 }
 
+function setLinkMetrics(link: HTMLElement, { left, width, offsetLeft = left, offsetWidth = width }: { left: number; width: number; offsetLeft?: number; offsetWidth?: number }) {
+  vi.spyOn(link, "getBoundingClientRect").mockReturnValue({
+    bottom: 44,
+    height: 44,
+    left,
+    right: left + width,
+    top: 0,
+    width,
+    x: left,
+    y: 0,
+    toJSON: () => ({}),
+  });
+  Object.defineProperties(link, {
+    offsetLeft: { configurable: true, value: offsetLeft },
+    offsetWidth: { configurable: true, value: offsetWidth },
+  });
+}
+
 describe("DesignSystemShell", () => {
   beforeEach(() => {
     vi.stubGlobal("IntersectionObserver", IntersectionObserverStub);
@@ -137,6 +155,38 @@ describe("DesignSystemShell", () => {
 
     expect(screen.getByRole("link", { name: "Foundation" })).toHaveAttribute("aria-current", "true");
     expect(firstFocus).toHaveBeenCalledWith({ preventScroll: true });
+  });
+
+  it("reveals the active link for a deep hash without scrolling the page", () => {
+    const animationFrames: FrameRequestCallback[] = [];
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+      animationFrames.push(callback);
+      return animationFrames.length;
+    });
+    window.history.replaceState(null, "", "/design-system#section-02");
+    renderShell();
+    const nav = setNavMetrics({ clientWidth: 120, scrollWidth: 360 });
+    const navScrollTo = vi.fn();
+    Object.defineProperty(nav, "scrollTo", { configurable: true, value: navScrollTo });
+    setLinkMetrics(screen.getByRole("link", { name: "Color" }), { left: 150, width: 64 });
+    animationFrames.forEach((callback) => callback(0));
+
+    expect(screen.getByRole("link", { name: "Color" })).toHaveAttribute("aria-current", "true");
+    expect(navScrollTo).toHaveBeenCalledWith({ left: 94, behavior: "auto" });
+    expect(navScrollTo).not.toHaveBeenCalledWith(expect.objectContaining({ top: expect.anything() }));
+  });
+
+  it("reveals an active link from click and hash listeners while retaining the horizontal fallback", () => {
+    renderShell();
+    const nav = setNavMetrics({ clientWidth: 120, scrollWidth: 360 });
+    Object.defineProperty(nav, "scrollTo", { configurable: true, value: undefined });
+    const colorLink = screen.getByRole("link", { name: "Color" });
+    setLinkMetrics(colorLink, { left: 150, width: 64 });
+
+    fireEvent.click(colorLink);
+
+    expect(colorLink).toHaveAttribute("aria-current", "true");
+    expect(nav.scrollLeft).toBe(94);
   });
 
   it("restores the first section and root scroll when history returns to an empty hash", () => {

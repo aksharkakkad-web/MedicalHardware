@@ -329,6 +329,25 @@
   }
 }
 
+@media (min-width: 768px) and (max-width: 980px) {
+  .desktopTable th,
+  .desktopTable td {
+    padding-inline: var(--ac-space-2);
+  }
+
+  .desktopTable thead th {
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  .actionColumn .primaryAction {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+}
+
 @media (forced-colors: active) {
   .desktopTable,
   .recordCard {

@@ -57,6 +57,34 @@ export function DesignSystemShell({ children }: Readonly<{ children: ReactNode }
         if (active) link.setAttribute("aria-current", "true");
         else link.removeAttribute("aria-current");
       });
+
+      if (!sectionNav || !sectionId) return;
+      const activeLink = sectionLinks.find((link) => link.getAttribute("href") === `#${sectionId}`);
+      if (!activeLink) return;
+
+      const navRect = sectionNav.getBoundingClientRect();
+      const linkRect = activeLink.getBoundingClientRect();
+      const hasLayout = sectionNav.clientWidth > 0 && (linkRect.width > 0 || activeLink.offsetWidth > 0);
+      if (!hasLayout) return;
+
+      const linkLeft = sectionNav.scrollLeft + (linkRect.width > 0 ? linkRect.left - navRect.left : activeLink.offsetLeft);
+      const linkWidth = linkRect.width > 0 ? linkRect.width : activeLink.offsetWidth;
+      const linkRight = linkLeft + linkWidth;
+      const visibleLeft = sectionNav.scrollLeft;
+      const visibleRight = visibleLeft + sectionNav.clientWidth;
+      const maxScroll = Math.max(0, sectionNav.scrollWidth - sectionNav.clientWidth);
+      const targetLeft = linkLeft < visibleLeft
+        ? linkLeft
+        : linkRight > visibleRight
+          ? linkRight - sectionNav.clientWidth
+          : visibleLeft;
+      const nextScrollLeft = Math.min(Math.max(0, targetLeft), maxScroll);
+      if (Math.abs(nextScrollLeft - sectionNav.scrollLeft) < 1) return;
+      if (typeof sectionNav.scrollTo === "function") {
+        sectionNav.scrollTo({ left: nextScrollLeft, behavior: "auto" });
+      } else {
+        sectionNav.scrollLeft = nextScrollLeft;
+      }
     };
     const getStickyOffset = () => {
       const measuredHeight = index?.offsetHeight ?? 0;
