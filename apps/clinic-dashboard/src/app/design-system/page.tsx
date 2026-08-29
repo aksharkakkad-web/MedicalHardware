@@ -399,7 +399,7 @@ export default function DesignSystemPage() {
                 </div>
               </div>
               <div className={styles.evidenceGrid}>
-                <article><span>Resident status</span><h3>Monitoring active</h3><p>High confidence. Latest evidence arrived 38 seconds ago.</p><small>Keep risk, confidence, and freshness separate.</small></article>
+                <article><span>Resident status</span><h3>Monitoring current</h3><p>High confidence. Latest evidence arrived 38 seconds ago.</p><small>Keep risk, confidence, and freshness separate.</small></article>
                 <article><span>Device status</span><h3>Healthy device</h3><p>Radar, thermal, and Wi-Fi sources are reporting.</p><small>Device health is separate from resident attention and confidence.</small></article>
                 <article><span>Attention hierarchy</span><ol className={styles.alertHierarchy}><li><b>1</b> High attention priority</li><li><b>2</b> Review workflow state</li><li><b>3</b> Device and data limits</li></ol><small>This synthetic example does not identify a medical cause.</small></article>
               </div>

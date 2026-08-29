@@ -5,6 +5,13 @@ import type { StatusIndicatorProps } from "./status-indicator";
 import { StatusIndicator } from "./status-indicator";
 
 describe("StatusIndicator", () => {
+  it("uses current monitoring wording for the active value", () => {
+    render(<StatusIndicator axis="monitoring" value="active" />);
+
+    expect(screen.getByText("Monitoring current")).toBeVisible();
+    expect(screen.queryByText("Monitoring active")).not.toBeInTheDocument();
+  });
+
   it("explains that stale evidence is limited by the last current update", () => {
     render(
       <StatusIndicator
