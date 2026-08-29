@@ -510,6 +510,12 @@
 
   .section {
     break-inside: auto;
+    border-bottom: 0;
+    background: transparent;
+  }
+
+  .section:nth-of-type(odd) {
+    background: transparent;
   }
 
   .section + .section {
@@ -524,6 +530,10 @@
 
   .sectionBody {
     padding: 0 0 42px;
+  }
+
+  .section:last-of-type .sectionBody {
+    padding-bottom: 0;
   }
 
   .principles article,
@@ -604,7 +614,7 @@
   }
 
   .pageFooter {
-    break-inside: avoid;
+    display: none;
   }
 
   .content a::after {

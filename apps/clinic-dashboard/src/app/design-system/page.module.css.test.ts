@@ -15,7 +15,11 @@ describe("design-system print stylesheet", () => {
     expect(printRules).toMatch(/\.viewport\s*\{[\s\S]*scroll-snap-type:\s*none;/);
     expect(printRules).toMatch(/\.skipLink,[\s\S]*\.index,[\s\S]*display:\s*none\s*!important;/);
     expect(printRules).toMatch(/\.section\s*\{[\s\S]*break-inside:\s*auto;/);
+    expect(printRules).toMatch(/\.section\s*\{[\s\S]*border-bottom:\s*0;[\s\S]*background:\s*transparent;/);
     expect(printRules).toMatch(/\.section \+ \.section\s*\{[\s\S]*break-before:\s*page;/);
+    expect(printRules).toMatch(/\.section:nth-of-type\(odd\)\s*\{[\s\S]*background:\s*transparent;/);
+    expect(printRules).toMatch(/\.pageFooter\s*\{[\s\S]*display:\s*none;/);
+    expect(printRules).toMatch(/\.section:last-of-type \.sectionBody\s*\{[\s\S]*padding-bottom:\s*0;/);
   });
 
   it("protects specimen units and preserves the content surface for print", () => {
