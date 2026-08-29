@@ -158,8 +158,15 @@ describe("ResidentRecords", () => {
     expect(selectedCard).toHaveTextContent("Selected record");
 
     const evidence = cards[0].querySelector("[data-evidence]");
+    expect(evidence).toHaveTextContent("Monitoring");
     expect(evidence).toHaveTextContent("Confidence");
     expect(evidence).toHaveTextContent("Freshness");
+    expect(Array.from(evidence?.querySelectorAll("[data-axis]") ?? []).map((status) => status.getAttribute("data-axis"))).toEqual([
+      "monitoring",
+      "confidence",
+      "freshness",
+    ]);
+    expect(within(evidence as HTMLElement).getByLabelText(/monitoring:/i)).toBeInTheDocument();
     expect(within(evidence as HTMLElement).getByLabelText(/confidence:/i)).toBeInTheDocument();
     expect(within(evidence as HTMLElement).getByLabelText(/freshness:/i)).toBeInTheDocument();
   });

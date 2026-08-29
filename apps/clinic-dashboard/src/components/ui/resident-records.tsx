@@ -110,13 +110,13 @@ function RecordEvidence({ record }: Readonly<{ record: ResidentRecord }>) {
   return (
     <div className={styles.evidence} data-evidence>
       <div>
+        <StatusIndicator axis="monitoring" value={record.monitoring} />
+      </div>
+      <div>
         <StatusIndicator axis="confidence" value={record.confidence} />
       </div>
       <div>
         <FreshnessStatus record={record} />
-      </div>
-      <div>
-        <StatusIndicator axis="monitoring" value={record.monitoring} />
       </div>
     </div>
   );
