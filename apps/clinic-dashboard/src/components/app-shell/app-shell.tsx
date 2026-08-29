@@ -28,8 +28,16 @@ export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
           </span>
         </div>
 
+        <div className={styles.workspaceCard} aria-label="Current clinic workspace">
+          <span className={styles.workspaceMonogram} aria-hidden="true">N</span>
+          <span className={styles.workspaceDetails}>
+            <strong>Northstar Clinic</strong>
+            <span>Care operations</span>
+          </span>
+        </div>
+
         <nav className={styles.navigation} aria-label="Clinic navigation">
-          <p className={styles.navigationLabel}>Workspace</p>
+          <p className={styles.navigationLabel}>Care workspace</p>
           <ul className={styles.navigationList}>
             {destinations.map(({ label, href, icon: NavIcon }) => {
               const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
