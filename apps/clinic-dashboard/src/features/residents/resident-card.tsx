@@ -49,7 +49,7 @@ export function ResidentCard({ resident }: Readonly<{ resident: ResidentOverview
 
   return (
     <article className={styles.card} data-priority={resident.attention.priority}>
-      <Link className={styles.identity} href={`/residents/${resident.residentId}`}><span className={styles.room}>{resident.roomLabel}</span><strong className={styles.name}>{resident.displayLabel}</strong></Link>
+      <Link className={styles.identity} href={`/residents/${resident.residentId}`}><strong className={styles.name}>{resident.displayLabel}</strong><span className={styles.room}>{resident.roomLabel}</span></Link>
       <div className={styles.monitoring}><StatusPill label={monitoring.label} tone={monitoring.tone} /><small>{resident.monitoring.contextLabel ?? resident.monitoring.reason}</small></div>
       <div className={styles.attention}><StatusPill label={attention.label} tone={attention.tone} />{hasAttention && <small>{resident.attention.headline}</small>}</div>
       <div className={styles.device}><strong>{resident.device.status === "online" ? "Device online" : deviceHeadline[resident.device.status]}</strong><small>{resident.device.label}</small></div>

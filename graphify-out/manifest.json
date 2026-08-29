@@ -1471,13 +1471,13 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/components/app-shell/app-shell.test.tsx": {
-    "mtime": 1787887301.7500834,
-    "ast_hash": "59429a28632cf4b8f27529b09793e3d5",
+    "mtime": 1787962710.782646,
+    "ast_hash": "3f0beac5ef68b6e626d9ce0d5c88ede9",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/components/app-shell/app-shell.tsx": {
-    "mtime": 1787956401.5329604,
-    "ast_hash": "8f5c673bf33063d758d5991efd173b97",
+    "mtime": 1787962646.3050787,
+    "ast_hash": "3fc4ec15d7d44e91021f439421e2d0e7",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/components/status-pill/status-pill.test.tsx": {
@@ -1496,18 +1496,18 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/resident-card.tsx": {
-    "mtime": 1787887301.7532456,
-    "ast_hash": "2ca664ca31f08ba5a3387c5ea5ffcc2a",
+    "mtime": 1787962379.423118,
+    "ast_hash": "e8a670513d92ae9e048ab8944837fbf7",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/resident-overview.test.tsx": {
-    "mtime": 1787954052.904657,
-    "ast_hash": "486c15797f7cf7f2473da80ea476853a",
+    "mtime": 1787962835.0138896,
+    "ast_hash": "e5bb655bb757ab6f0f3a433cbf3328fd",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/resident-overview.tsx": {
-    "mtime": 1787887301.7546506,
-    "ast_hash": "319910bcb7c406eab00c5cddec0408cb",
+    "mtime": 1787963006.0696695,
+    "ast_hash": "37fdac6233affe12ef4d5578258d1be3",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/use-resident-overview.test.tsx": {
@@ -2274,6 +2274,21 @@
   "docs/superpowers/specs/2026-08-28-home-family-app-design.md": {
     "mtime": 1787957619.3881261,
     "ast_hash": "f3f6723e410bb9a583a038f0519c97c8",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-08-28-clinic-overview-golden-screen.md": {
+    "mtime": 1787962009.6661968,
+    "ast_hash": "b24b32040f30a8806250be521222a939",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-08-28-clinic-overview-golden-screen-design.md": {
+    "mtime": 1787962009.666079,
+    "ast_hash": "13d023384c026806916d6d72676bc740",
+    "semantic_hash": ""
+  },
+  "docs/design-references/clinic-overview-concept.png": {
+    "mtime": 1787962009.635977,
+    "ast_hash": "b586f9f5c92d227891d9a214ab973415",
     "semantic_hash": ""
   }
 }

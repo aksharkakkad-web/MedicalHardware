@@ -29,6 +29,7 @@ export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
         </div>
 
         <nav className={styles.navigation} aria-label="Clinic navigation">
+          <p className={styles.navigationLabel}>Workspace</p>
           <ul className={styles.navigationList}>
             {destinations.map(({ label, href, icon: NavIcon }) => {
               const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -46,7 +47,7 @@ export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
 
         <div className={styles.sidebarFooter}>
           <span className={styles.demoDot} aria-hidden="true" />
-          <div><p className={styles.footerLabel}>Synthetic demo</p><p className={styles.footerNote}>No real resident information</p></div>
+          <div><p className={styles.footerLabel}>Demo environment</p><p className={styles.footerNote}>Synthetic records only</p></div>
         </div>
       </header>
 
@@ -54,7 +55,7 @@ export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
         <div className={styles.topbar}>
           <div>
             <p className={styles.workspaceName}>Northstar Clinic</p>
-            <p className={styles.workspaceMeta}>Operations workspace</p>
+            <p className={styles.workspaceMeta}>Care operations workspace</p>
           </div>
           <span className={styles.demoBadge}>Synthetic demo data</span>
         </div>

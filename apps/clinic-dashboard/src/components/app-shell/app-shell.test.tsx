@@ -17,6 +17,8 @@ describe("AppShell", () => {
       screen.getByRole("navigation", { name: /clinic navigation/i }),
     ).toBeVisible();
     expect(screen.getByRole("main")).toHaveTextContent("Residents content");
+    expect(screen.getByText("Care operations workspace")).toBeVisible();
+    expect(screen.getByText("Synthetic records only")).toBeVisible();
     expect(screen.getByRole("link", { name: /overview/i })).toHaveAttribute(
       "aria-current",
       "page",

@@ -70,6 +70,13 @@ describe("ResidentOverview", () => {
     expect(screen.getByText(/possible visitor/i)).toBeVisible();
     expect(screen.getByText(/device offline/i)).toBeVisible();
     expect(screen.getByText(/^needs attention$/i)).toBeVisible();
+    expect(screen.getByRole("heading", { name: "4 residents need attention" })).toBeVisible();
+    expect(screen.getByText("2 of 6 active")).toBeVisible();
+    expect(screen.getByText(/based on the device state attached to each resident record/i)).toBeVisible();
+    expect(screen.getByRole("link", { name: /review highest-priority event/i })).toHaveAttribute(
+      "href",
+      "/events/evt_unusual_movement_102",
+    );
   });
 
   it("shows a neutral loading state", () => {
