@@ -26,9 +26,19 @@ function residentClient(
 ): MonitoringClient {
   const fallback = new MockMonitoringClient();
   return {
+    listDevices: () => fallback.listDevices(),
+    getDevice: (deviceId) => fallback.getDevice(deviceId),
     listResidentOverview,
     listEvents: () => fallback.listEvents(),
     getResident: (residentId) => fallback.getResident(residentId),
+    getResidentMonitoringSetup: (residentId) => fallback.getResidentMonitoringSetup(residentId),
+    recordSetupChange: (residentId, input) => fallback.recordSetupChange(residentId, input),
+    getNotificationPreferences: (residentId) => fallback.getNotificationPreferences(residentId),
+    updateNotificationPreferences: (residentId, input) => fallback.updateNotificationPreferences(residentId, input),
+    getResidentMemory: (residentId) => fallback.getResidentMemory(residentId),
+    addMemoryEntry: (residentId, input) => fallback.addMemoryEntry(residentId, input),
+    correctMemoryEntry: (residentId, entryId, input) => fallback.correctMemoryEntry(residentId, entryId, input),
+    retireMemoryEntry: (residentId, entryId, input) => fallback.retireMemoryEntry(residentId, entryId, input),
     getEvent: (eventId) => fallback.getEvent(eventId),
     performEventAction: (eventId, action) =>
       fallback.performEventAction(eventId, action),
@@ -68,7 +78,7 @@ describe("useResidentOverview", () => {
     await act(async () => request.resolve(await createCompleteResponse()));
 
     await waitFor(() => expect(result.current.status).toBe("success"));
-    expect(result.current.items).toHaveLength(5);
+    expect(result.current.items).toHaveLength(6);
   });
 
   it("shows a safe error and loads again when retry is used", async () => {
@@ -100,6 +110,6 @@ describe("useResidentOverview", () => {
 
     await waitFor(() => expect(result.current.status).toBe("success"));
     expect(requestCount).toBe(2);
-    expect(result.current.items).toHaveLength(5);
+    expect(result.current.items).toHaveLength(6);
   });
 });

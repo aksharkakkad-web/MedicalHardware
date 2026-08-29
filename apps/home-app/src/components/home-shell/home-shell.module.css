@@ -1,0 +1,31 @@
+.frame { min-height: 100vh; display: flex; flex-direction: column; }
+.header { height: 72px; border-bottom: 1px solid var(--border); background: color-mix(in srgb, var(--canvas) 94%, transparent); position: sticky; top: 0; z-index: 20; backdrop-filter: blur(12px); }
+.headerInner { max-width: 1152px; height: 100%; margin: 0 auto; padding: 0 28px; display: flex; align-items: center; gap: 36px; }
+.brand { display: inline-flex; align-items: center; gap: 11px; color: var(--text); text-decoration: none; min-height: 44px; }
+.brandMark { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 11px; background: var(--text); color: var(--surface); font-weight: 700; letter-spacing: -.04em; }
+.brand strong, .brand small { display: block; line-height: 1.05; }
+.brand strong { font-size: .94rem; letter-spacing: -.02em; }
+.brand small { margin-top: 4px; color: var(--muted); font-size: .72rem; }
+.desktopNav { display: flex; gap: 4px; margin-left: auto; }
+.desktopNav a { display: grid; place-items: center; min-height: 44px; padding: 0 16px; border-radius: 12px; color: var(--muted); text-decoration: none; font-size: .9rem; font-weight: 600; transition: background 150ms ease, color 150ms ease; }
+.desktopNav a:hover { background: rgba(36, 37, 34, .055); color: var(--text); }
+.desktopNav .activeLink { color: var(--action); background: var(--action-soft); }
+.demoBadge { color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 6px 10px; font-size: .72rem; font-weight: 650; white-space: nowrap; }
+.main { flex: 1; width: 100%; }
+.footer { max-width: 1152px; width: calc(100% - 56px); margin: 32px auto 0; padding: 22px 0 38px; border-top: 1px solid var(--border); color: var(--muted); font-size: .82rem; }
+.mobileNav { display: none; }
+@media (max-width: 700px) {
+  .header { height: 62px; }
+  .headerInner { padding: 0 18px; }
+  .brand strong { font-size: .88rem; }
+  .brand small { display: none; }
+  .brandMark { width: 31px; height: 31px; border-radius: 10px; }
+  .desktopNav { display: none; }
+  .demoBadge { margin-left: auto; font-size: .66rem; padding: 5px 8px; }
+  .footer { width: calc(100% - 36px); padding-bottom: 106px; }
+  .mobileNav { display: grid; position: fixed; z-index: 30; left: 0; right: 0; bottom: 0; grid-template-columns: repeat(3, 1fr); padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); background: rgba(255, 254, 250, .96); backdrop-filter: blur(16px); }
+  .mobileNav a { min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-radius: 12px; color: var(--muted); text-decoration: none; font-size: .75rem; font-weight: 650; }
+  .mobileNav svg { width: 21px; height: 21px; }
+  .mobileNav .mobileActive { color: var(--action); background: var(--action-soft); }
+}
+@media (prefers-reduced-motion: reduce) { .desktopNav a { transition: none; } }

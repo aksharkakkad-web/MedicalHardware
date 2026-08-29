@@ -2,13 +2,14 @@
 
 import type { ReactNode } from "react";
 
+import { DemoScenarioProvider } from "@/lib/demo-scenarios";
 import { MonitoringClientProvider } from "@/lib/monitoring/provider";
 import {
   MockMonitoringClient,
-  type MonitoringEventStorage,
+  type MonitoringStorage,
 } from "@/mocks/mock-monitoring-client";
 
-const browserStorage: MonitoringEventStorage = {
+const browserStorage: MonitoringStorage = {
   getItem(key) {
     return typeof window === "undefined" ? null : window.localStorage.getItem(key);
   },
@@ -24,7 +25,9 @@ const monitoringClient = new MockMonitoringClient(undefined, browserStorage);
 export function Providers({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <MonitoringClientProvider client={monitoringClient}>
-      {children}
+      <DemoScenarioProvider controller={monitoringClient}>
+        {children}
+      </DemoScenarioProvider>
     </MonitoringClientProvider>
   );
 }

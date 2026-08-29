@@ -1,0 +1,76 @@
+.page { display: grid; gap: 1.25rem; }
+.back { display: inline-flex; width: fit-content; align-items: center; gap: .3rem; color: var(--color-accent-strong); font-size: .78rem; font-weight: 650; }
+.back svg { width: 1rem; }
+.header { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; padding-bottom: 1.15rem; border-bottom: 1px solid var(--color-border); }
+.header h1 { margin: 0; font-size: clamp(2rem, 4vw, 2.8rem); letter-spacing: -.04em; }
+.header div > span { display: block; margin-top: .4rem; color: var(--color-text-muted); font-size: .82rem; }
+.boundaryNote { display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; border: 1px solid var(--color-accent-border); border-radius: var(--radius-control); background: var(--color-accent-soft); }
+.boundaryNote > div { padding: .85rem 1rem; }
+.boundaryNote > div + div { border-left: 1px solid var(--color-accent-border); }
+.boundaryNote strong { color: var(--color-accent-strong); font-size: .78rem; }
+.boundaryNote p { margin-top: .25rem; color: var(--color-text-muted); font-size: .76rem; line-height: 1.5; }
+.layout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(19rem, .72fr); align-items: start; gap: 1rem; }
+.mainColumn, .sidebar { min-width: 0; }
+.sidebar { position: sticky; top: 1rem; }
+.panel, .preferencePanel { overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-card); background: white; box-shadow: var(--shadow-card); }
+.panelHeader, .preferenceHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1.15rem; border-bottom: 1px solid var(--color-border); }
+.panelHeader h2, .preferenceHeader h2 { font-size: 1rem; letter-spacing: -.02em; }
+.panelHeader p, .preferenceHeader p { max-width: 42rem; margin-top: .3rem; color: var(--color-text-muted); font-size: .78rem; line-height: 1.5; }
+.panelHeader > span, .preferenceHeader > span { flex: 0 0 auto; color: var(--color-text-muted); font-size: .75rem; font-variant-numeric: tabular-nums; }
+.addForm { display: grid; gap: .55rem; padding: 1rem 1.15rem; border-bottom: 1px solid var(--color-border); background: #fbfbfa; }
+.addForm label, .actionForm label { color: var(--color-text); font-size: .78rem; font-weight: 650; }
+.addForm textarea, .actionForm textarea, .actionForm input { width: 100%; border: 1px solid var(--color-border); border-radius: .7rem; color: var(--color-text); background: white; font-size: .76rem; line-height: 1.5; }
+.addForm textarea, .actionForm textarea { min-height: 5.2rem; padding: .75rem; resize: vertical; }
+.actionForm input { min-height: 2.65rem; margin-top: .38rem; padding: .6rem .7rem; }
+.actionForm textarea { margin-top: .38rem; }
+.addForm > div { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+.addForm small, .changedAt { color: var(--color-text-muted); font-size: .75rem; font-variant-numeric: tabular-nums; }
+.addForm button, .actionForm button, .saveButton, .message button { min-height: 2.55rem; padding: .55rem .8rem; border: 0; border-radius: .68rem; color: white; background: var(--color-accent-strong); font-size: .76rem; font-weight: 680; cursor: pointer; }
+.addForm button:disabled, .actionForm button:disabled, .saveButton:disabled { cursor: wait; opacity: .58; }
+.entryList { display: grid; }
+.entry { padding: 1.05rem 1.15rem; border-bottom: 1px solid var(--color-border); }
+.entry:last-child { border-bottom: 0; }
+.entry[data-status="retired"] { background: #fafafa; }
+.entryTop { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.entryTop > div { display: flex; align-items: center; gap: .55rem; }
+.entryTop > div > span, .entryTop time, .entryMeta { color: var(--color-text-muted); font-size: .75rem; }
+.entryDescription { max-width: 68ch; margin-top: .75rem; font-size: .86rem; font-weight: 580; line-height: 1.5; }
+.entry[data-status="retired"] .entryDescription { color: var(--color-text-muted); text-decoration: line-through; text-decoration-color: var(--color-border); }
+.entryMeta { display: flex; flex-wrap: wrap; gap: .3rem .8rem; margin-top: .55rem; line-height: 1.45; }
+.entryActions { display: flex; gap: .5rem; margin-top: .8rem; }
+.entryActions button { min-height: 2.2rem; padding: .4rem .65rem; border: 1px solid var(--color-border); border-radius: .58rem; color: var(--color-accent-strong); background: white; font-size: .75rem; font-weight: 650; cursor: pointer; }
+.entryActions button:last-child { color: var(--color-status-critical-text); }
+.actionForm { display: grid; gap: .75rem; margin-top: .85rem; padding: .85rem; border: 1px solid var(--color-accent-border); border-radius: .75rem; background: var(--color-accent-soft); }
+.actionForm > div { display: flex; justify-content: flex-end; gap: .5rem; }
+.actionForm > div button:first-child { color: var(--color-text); background: white; border: 1px solid var(--color-border); }
+.empty { padding: 2.2rem 1.15rem; text-align: center; }
+.empty strong { font-size: .84rem; }
+.empty p { max-width: 34rem; margin: .4rem auto 0; color: var(--color-text-muted); font-size: .78rem; line-height: 1.5; }
+.feedback { margin: .8rem 1.15rem; padding: .7rem .75rem; border-radius: .65rem; font-size: .75rem; line-height: 1.45; }
+.feedback[data-tone="success"] { color: var(--color-status-healthy-text); background: var(--color-status-healthy-bg); }
+.feedback[data-tone="error"] { color: var(--color-status-critical-text); background: var(--color-status-critical-bg); }
+.preferencePanel { display: grid; }
+.firstSave, .alwaysVisible { margin: .9rem 1rem 0; padding: .75rem; border-radius: .7rem; }
+.firstSave { color: var(--color-status-attention-text); background: var(--color-status-attention-bg); }
+.alwaysVisible { color: var(--color-accent-strong); background: var(--color-accent-soft); }
+.firstSave strong, .alwaysVisible strong { font-size: .78rem; }
+.firstSave p, .alwaysVisible p { margin-top: .28rem; font-size: .75rem; line-height: 1.45; }
+.preferencePanel fieldset { border: 0; }
+.preferencePanel legend { width: 100%; padding: 1rem 1rem .45rem; color: var(--color-text-muted); font-size: .75rem; font-weight: 680; letter-spacing: .04em; text-transform: uppercase; }
+.switchRow { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .8rem; min-height: 4.2rem; padding: .7rem 1rem; border-top: 1px solid var(--color-border); cursor: pointer; }
+.switchRow strong, .switchRow small { display: block; }
+.switchRow strong { font-size: .75rem; }
+.switchRow small { margin-top: .23rem; color: var(--color-text-muted); font-size: .75rem; line-height: 1.4; }
+.switchRow input { width: 2.4rem; height: 1.42rem; appearance: none; border: 1px solid #b9b9be; border-radius: 999px; background: #d1d1d6; cursor: pointer; transition: background 150ms ease, border-color 150ms ease; }
+.switchRow input::before { display: block; width: 1.05rem; height: 1.05rem; margin: .12rem; border-radius: 50%; background: white; box-shadow: 0 1px 3px rgb(0 0 0 / 25%); content: ""; transition: transform 150ms ease; }
+.switchRow input:checked { border-color: var(--color-accent-strong); background: var(--color-accent-strong); }
+.switchRow input:checked::before { transform: translateX(.96rem); }
+.saveButton { margin: 1rem 1rem .6rem; min-height: 2.8rem; }
+.changedAt { padding: 0 1rem 1rem; text-align: center; }
+.message { display: grid; min-height: 18rem; place-content: center; justify-items: center; padding: 2rem; border: 1px solid var(--color-border); border-radius: var(--radius-card); text-align: center; background: white; }
+.message h1 { font-size: 1.25rem; }
+.message p { max-width: 34rem; margin-top: .5rem; color: var(--color-text-muted); font-size: .8rem; }
+.message button, .message a { margin-top: .8rem; }
+.message a { color: var(--color-accent-strong); font-size: .76rem; font-weight: 650; }
+@media (max-width: 1000px) { .layout { grid-template-columns: 1fr; } .sidebar { position: static; } }
+@media (max-width: 680px) { .header, .entryTop { align-items: flex-start; flex-direction: column; } .boundaryNote { grid-template-columns: 1fr; } .boundaryNote > div + div { border-top: 1px solid var(--color-accent-border); border-left: 0; } .panelHeader, .preferenceHeader { align-items: flex-start; flex-direction: column; } .entryTop { gap: .55rem; } .addForm > div { align-items: flex-end; } .addForm button { min-width: 8rem; } }

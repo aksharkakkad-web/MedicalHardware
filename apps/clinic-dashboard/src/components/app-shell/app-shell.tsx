@@ -4,13 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
-import { CareMark, EventIcon, OverviewIcon } from "@/components/icons/icons";
+import { CareMark, DeviceIcon, EventIcon, OverviewIcon, ScenarioIcon } from "@/components/icons/icons";
 
 import styles from "./app-shell.module.css";
 
 const destinations = [
   { label: "Overview", href: "/", icon: OverviewIcon },
   { label: "Events", href: "/events", icon: EventIcon },
+  { label: "Devices", href: "/devices", icon: DeviceIcon },
+  { label: "Scenario Lab", href: "/scenarios", icon: ScenarioIcon },
 ];
 
 export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
@@ -26,7 +28,16 @@ export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
           </span>
         </div>
 
+        <div className={styles.workspaceCard} aria-label="Current clinic workspace">
+          <span className={styles.workspaceMonogram} aria-hidden="true">N</span>
+          <span className={styles.workspaceDetails}>
+            <strong>Northstar Clinic</strong>
+            <span>Care operations</span>
+          </span>
+        </div>
+
         <nav className={styles.navigation} aria-label="Clinic navigation">
+          <p className={styles.navigationLabel}>Care workspace</p>
           <ul className={styles.navigationList}>
             {destinations.map(({ label, href, icon: NavIcon }) => {
               const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -44,7 +55,7 @@ export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
 
         <div className={styles.sidebarFooter}>
           <span className={styles.demoDot} aria-hidden="true" />
-          <div><p className={styles.footerLabel}>Synthetic demo</p><p className={styles.footerNote}>No real resident information</p></div>
+          <div><p className={styles.footerLabel}>Demo environment</p><p className={styles.footerNote}>Synthetic records only</p></div>
         </div>
       </header>
 
@@ -52,7 +63,7 @@ export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
         <div className={styles.topbar}>
           <div>
             <p className={styles.workspaceName}>Northstar Clinic</p>
-            <p className={styles.workspaceMeta}>Operations workspace</p>
+            <p className={styles.workspaceMeta}>Care operations workspace</p>
           </div>
           <span className={styles.demoBadge}>Synthetic demo data</span>
         </div>

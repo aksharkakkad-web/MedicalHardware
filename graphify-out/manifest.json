@@ -671,12 +671,12 @@
     "semantic_hash": ""
   },
   "backend/app/api/dependencies.py": {
-    "mtime": 1787881188.8329728,
+    "mtime": 1787887301.7567487,
     "ast_hash": "3dd80d16a6be50d675c956d5bb200b4d",
     "semantic_hash": ""
   },
   "backend/app/api/errors.py": {
-    "mtime": 1787881188.8331566,
+    "mtime": 1787887301.756848,
     "ast_hash": "397486b8ba12496adba154ba37073062",
     "semantic_hash": ""
   },
@@ -686,7 +686,7 @@
     "semantic_hash": ""
   },
   "backend/app/api/v1/events.py": {
-    "mtime": 1787881188.8334725,
+    "mtime": 1787887301.757052,
     "ast_hash": "1281ab064dfa91cdbde8faad9c93d1db",
     "semantic_hash": ""
   },
@@ -696,12 +696,12 @@
     "semantic_hash": ""
   },
   "backend/app/api/v1/residents.py": {
-    "mtime": 1787881188.8336172,
+    "mtime": 1787887301.7571764,
     "ast_hash": "4737587c9e8e0d4c8da3fd1491e5ceda",
     "semantic_hash": ""
   },
   "backend/app/api/v1/router.py": {
-    "mtime": 1787881188.8337004,
+    "mtime": 1787887301.7572856,
     "ast_hash": "a5d6c8c6877cae409cd1a546043fcbc1",
     "semantic_hash": ""
   },
@@ -721,7 +721,7 @@
     "semantic_hash": ""
   },
   "backend/app/contracts/__init__.py": {
-    "mtime": 1787881188.8341713,
+    "mtime": 1787887301.7576923,
     "ast_hash": "7978577613bae818e752255740781fd4",
     "semantic_hash": ""
   },
@@ -731,12 +731,12 @@
     "semantic_hash": ""
   },
   "backend/app/contracts/events.py": {
-    "mtime": 1787881188.8343472,
+    "mtime": 1787887301.7578874,
     "ast_hash": "8648e1bdd3772b77a68dd4794928f4c4",
     "semantic_hash": ""
   },
   "backend/app/contracts/feedback.py": {
-    "mtime": 1787881188.8344243,
+    "mtime": 1787887301.7579849,
     "ast_hash": "1d144b410f1338e377b0b47b2a727a89",
     "semantic_hash": ""
   },
@@ -746,7 +746,7 @@
     "semantic_hash": ""
   },
   "backend/app/contracts/status.py": {
-    "mtime": 1787881188.834656,
+    "mtime": 1787887301.7581837,
     "ast_hash": "7951abb59c931179804ac9780da97189",
     "semantic_hash": ""
   },
@@ -761,7 +761,7 @@
     "semantic_hash": ""
   },
   "backend/app/db/mappers.py": {
-    "mtime": 1787881188.8349593,
+    "mtime": 1787887301.7584639,
     "ast_hash": "fd177e85e221ad4738c6ad07b51ebb10",
     "semantic_hash": ""
   },
@@ -781,17 +781,17 @@
     "semantic_hash": ""
   },
   "backend/app/db/models.py": {
-    "mtime": 1787881188.8353748,
+    "mtime": 1787887301.758909,
     "ast_hash": "2115f5dd33fab73a0b3099a791ee0046",
     "semantic_hash": ""
   },
   "backend/app/db/repositories.py": {
-    "mtime": 1787881188.8357253,
+    "mtime": 1787887301.759269,
     "ast_hash": "9901e8394c1275e8b40ffefa2f66503f",
     "semantic_hash": ""
   },
   "backend/app/db/seed.py": {
-    "mtime": 1787881188.8359046,
+    "mtime": 1787887301.7594469,
     "ast_hash": "e79ba6c5e7b63e1bf8c29130512d9a76",
     "semantic_hash": ""
   },
@@ -831,12 +831,12 @@
     "semantic_hash": ""
   },
   "backend/app/domain/feedback.py": {
-    "mtime": 1787881188.8360996,
+    "mtime": 1787887301.7596748,
     "ast_hash": "e8b687858e698ae1adf74d5cc439d9ff",
     "semantic_hash": ""
   },
   "backend/app/domain/monitoring.py": {
-    "mtime": 1787881188.8365083,
+    "mtime": 1787887301.7597985,
     "ast_hash": "e80688a138d036e61a625547295dd411",
     "semantic_hash": ""
   },
@@ -876,7 +876,7 @@
     "semantic_hash": ""
   },
   "backend/app/services/queries.py": {
-    "mtime": 1787881188.8369648,
+    "mtime": 1787887301.7602618,
     "ast_hash": "eb3e5262f16c545d4f1caf1ef924812a",
     "semantic_hash": ""
   },
@@ -886,7 +886,7 @@
     "semantic_hash": ""
   },
   "backend/app/services/status_queries.py": {
-    "mtime": 1787881188.837277,
+    "mtime": 1787887301.7604725,
     "ast_hash": "284f3887cbd8bddbb99f6108aa44f351",
     "semantic_hash": ""
   },
@@ -906,7 +906,7 @@
     "semantic_hash": ""
   },
   "tests/api/test_contracts.py": {
-    "mtime": 1787881188.914397,
+    "mtime": 1787887301.8391128,
     "ast_hash": "cc65dde8126391cc29106f3136cd394b",
     "semantic_hash": ""
   },
@@ -916,7 +916,7 @@
     "semantic_hash": ""
   },
   "tests/api/test_feedback_api.py": {
-    "mtime": 1787881188.9151244,
+    "mtime": 1787887301.8397186,
     "ast_hash": "012b53c700d43230636a69a25b744d30",
     "semantic_hash": ""
   },
@@ -931,7 +931,7 @@
     "semantic_hash": ""
   },
   "tests/api/test_read_api.py": {
-    "mtime": 1787881188.9154325,
+    "mtime": 1787887301.8400347,
     "ast_hash": "fee33d6a8736e6c413cab2894aaa4a62",
     "semantic_hash": ""
   },
@@ -946,12 +946,12 @@
     "semantic_hash": ""
   },
   "tests/api/test_status_contracts.py": {
-    "mtime": 1787881188.9157991,
+    "mtime": 1787887301.840364,
     "ast_hash": "12af639e7b56e1b528beabdfccf4dd0b",
     "semantic_hash": ""
   },
   "tests/api/test_status_read_api.py": {
-    "mtime": 1787881188.9159229,
+    "mtime": 1787887301.8404949,
     "ast_hash": "35f73d3ea4f9f948918ec15789560221",
     "semantic_hash": ""
   },
@@ -986,7 +986,7 @@
     "semantic_hash": ""
   },
   "tests/feedback_domain/test_feedback.py": {
-    "mtime": 1787881188.916331,
+    "mtime": 1787887301.842146,
     "ast_hash": "56b2c6d00630d084f447e0cd6f38147d",
     "semantic_hash": ""
   },
@@ -1011,7 +1011,7 @@
     "semantic_hash": ""
   },
   "tests/persistence/test_migrations.py": {
-    "mtime": 1787881188.9170854,
+    "mtime": 1787887301.8432891,
     "ast_hash": "91d14cac39435c6c00509abd566bdaee",
     "semantic_hash": ""
   },
@@ -1026,12 +1026,12 @@
     "semantic_hash": ""
   },
   "tests/persistence/test_restart_durability.py": {
-    "mtime": 1787881188.9174788,
+    "mtime": 1787887301.8436549,
     "ast_hash": "8654c0e161c9dc8dc2b5c19826f59e0b",
     "semantic_hash": ""
   },
   "tests/persistence/test_seed.py": {
-    "mtime": 1787881188.917573,
+    "mtime": 1787887301.8437607,
     "ast_hash": "971779291b18b6a68d3707bdba54f8a0",
     "semantic_hash": ""
   },
@@ -1056,7 +1056,7 @@
     "semantic_hash": ""
   },
   "tests/test_domain_schema_versions.py": {
-    "mtime": 1787881188.917843,
+    "mtime": 1787887301.8440192,
     "ast_hash": "de80f9eaab8c12fff70f31255cb06f37",
     "semantic_hash": ""
   },
@@ -1336,8 +1336,8 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1787873979.0945935,
-    "ast_hash": "23849366440977b04cbdd3304f4d956c",
+    "mtime": 1787965795.4716744,
+    "ast_hash": "04c1872f77ae87187813aa6eff115a27",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -1356,17 +1356,17 @@
     "semantic_hash": ""
   },
   "docs/BUILD_PLAN.md": {
-    "mtime": 1787881188.8375485,
+    "mtime": 1787887301.7606065,
     "ast_hash": "414eb1431c761a5df170c727a769c98e",
     "semantic_hash": ""
   },
   "docs/CURRENT_STAGE.md": {
-    "mtime": 1787883752.2486668,
+    "mtime": 1787887301.7610934,
     "ast_hash": "f2df077e3b8d154babbded86e4eefae9",
     "semantic_hash": ""
   },
   "docs/DATA_CONTRACT.md": {
-    "mtime": 1787881188.8379548,
+    "mtime": 1787887301.761494,
     "ast_hash": "8afbd78e5a4010e9f2562d349efeb7e5",
     "semantic_hash": ""
   },
@@ -1376,12 +1376,12 @@
     "semantic_hash": ""
   },
   "docs/PHASE_2_REVIEW.md": {
-    "mtime": 1787881188.8384514,
+    "mtime": 1787887301.7623796,
     "ast_hash": "a9d480cfe6c917b8863ee982691b161c",
     "semantic_hash": ""
   },
   "docs/PHASE_GATES.md": {
-    "mtime": 1787881188.838595,
+    "mtime": 1787887301.762512,
     "ast_hash": "4310fd0713651f095a98970df12f802e",
     "semantic_hash": ""
   },
@@ -1446,8 +1446,8 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/next.config.ts": {
-    "mtime": 1787873979.0973043,
-    "ast_hash": "9b77af189a21a7a64e4bd7a426f64176",
+    "mtime": 1787954615.1489494,
+    "ast_hash": "1cf426a4742119cb70565236ed18995a",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/package.json": {
@@ -1466,18 +1466,18 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/app/providers.tsx": {
-    "mtime": 1787883752.8538945,
-    "ast_hash": "59b8f33b88d614cbf4c03a78535486f7",
+    "mtime": 1787956401.532015,
+    "ast_hash": "ea35757e29f06768038e4bf968aa50da",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/components/app-shell/app-shell.test.tsx": {
-    "mtime": 1787884845.4124966,
-    "ast_hash": "59429a28632cf4b8f27529b09793e3d5",
+    "mtime": 1787964831.6174212,
+    "ast_hash": "91aa2b6b91260a7afb084980828befa5",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/components/app-shell/app-shell.tsx": {
-    "mtime": 1787884770.4895277,
-    "ast_hash": "b42b008c55000c2bc7cffa57d750ba46",
+    "mtime": 1787964882.465731,
+    "ast_hash": "ad13639dc0e5c2b7d99c54ec2cd76677",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/components/status-pill/status-pill.test.tsx": {
@@ -1491,28 +1491,28 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/resident-card.test.tsx": {
-    "mtime": 1787883752.4414237,
+    "mtime": 1787887301.7530057,
     "ast_hash": "04bcd3785489b3b5e97fdca0f4cd28e6",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/resident-card.tsx": {
-    "mtime": 1787885165.6808126,
-    "ast_hash": "2ca664ca31f08ba5a3387c5ea5ffcc2a",
+    "mtime": 1787962379.423118,
+    "ast_hash": "e8a670513d92ae9e048ab8944837fbf7",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/resident-overview.test.tsx": {
-    "mtime": 1787885346.4114046,
-    "ast_hash": "92898afcb831e1024d5154532083b006",
+    "mtime": 1787966272.9548838,
+    "ast_hash": "7cc406fe0f74ea5b67cb3ab490ae9026",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/resident-overview.tsx": {
-    "mtime": 1787886260.34489,
-    "ast_hash": "319910bcb7c406eab00c5cddec0408cb",
+    "mtime": 1787966272.9534876,
+    "ast_hash": "2a26b906c43f150215b0eb3d8d724a5a",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/use-resident-overview.test.tsx": {
-    "mtime": 1787884883.8495646,
-    "ast_hash": "4200bf56923fdac714b35a18032b0ff7",
+    "mtime": 1787954052.9051013,
+    "ast_hash": "947f04d51df20ec09a9b89c048ff12d7",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/use-resident-overview.ts": {
@@ -1521,13 +1521,13 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/lib/monitoring/client.ts": {
-    "mtime": 1787884509.247987,
-    "ast_hash": "d2d2c80948b6fa7e9acb872083bda62a",
+    "mtime": 1787953808.0142925,
+    "ast_hash": "3deda82b8adc4bee995fb0a5f78fcf76",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/lib/monitoring/index.ts": {
-    "mtime": 1787884509.2482204,
-    "ast_hash": "d73ae65ed948a2918832d47786a02daa",
+    "mtime": 1787953808.0145197,
+    "ast_hash": "c73cfae31847f0ad8ad38e17503b1074",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/lib/monitoring/provider.tsx": {
@@ -1536,23 +1536,23 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/lib/monitoring/types.ts": {
-    "mtime": 1787884509.2476919,
-    "ast_hash": "8f580c14e0c982b2d8cbe4c7faa138b9",
+    "mtime": 1787953808.0137186,
+    "ast_hash": "eeff972c82c6a2adad56c62ff38da22b",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/mocks/mock-monitoring-client.test.ts": {
-    "mtime": 1787884534.7475991,
-    "ast_hash": "e05f9e443d496ee0fe97b54c10aa23b4",
+    "mtime": 1787957117.78655,
+    "ast_hash": "40ddfa2a687941b698489fff61e90cf4",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/mocks/mock-monitoring-client.ts": {
-    "mtime": 1787884509.2487338,
-    "ast_hash": "c64a55963b9e9529bd78176e6700418c",
+    "mtime": 1787957117.7861133,
+    "ast_hash": "ae6f5eff96143e7a57b8076c9dbeb611",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/mocks/residents.ts": {
-    "mtime": 1787883752.7543793,
-    "ast_hash": "bafe7eb4fbf45d0b5117e40b45ed3f30",
+    "mtime": 1787949897.4167051,
+    "ast_hash": "2a9ff532c3255f54adc2893624fac5c3",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/test/setup.ts": {
@@ -1611,202 +1611,202 @@
     "semantic_hash": ""
   },
   "backend/app/contracts/devices.py": {
-    "mtime": 1787881188.8342636,
+    "mtime": 1787887301.7577763,
     "ast_hash": "002a7122ef75acb8a9b0fedd043ef862",
     "semantic_hash": ""
   },
   "backend/app/domain/device_health.py": {
-    "mtime": 1787881188.8360057,
+    "mtime": 1787887301.759562,
     "ast_hash": "2973d7f67c03533dbb5d225bbbbb1454",
     "semantic_hash": ""
   },
   "tests/api/test_device_contracts.py": {
-    "mtime": 1787881188.9144678,
+    "mtime": 1787887301.8391805,
     "ast_hash": "65f6a3b824959b57e706b59e26ddf973",
     "semantic_hash": ""
   },
   "tests/device_health_domain/__init__.py": {
-    "mtime": 1787881188.9159935,
+    "mtime": 1787887301.8405254,
     "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
     "semantic_hash": ""
   },
   "tests/device_health_domain/test_device_health.py": {
-    "mtime": 1787881188.9162004,
+    "mtime": 1787887301.8419216,
     "ast_hash": "5b966248daa5099e312036ec26924f8e",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-08-27-phase2-checkpoint-b-device-health.md": {
-    "mtime": 1787881188.839029,
+    "mtime": 1787887301.764054,
     "ast_hash": "d7eb0142ccdc88babd7e9f87c035327a",
     "semantic_hash": ""
   },
   "backend/app/db/device_mappers.py": {
-    "mtime": 1787881188.834729,
+    "mtime": 1787887301.7582533,
     "ast_hash": "026bdae05744b2651e44e6d7abb95969",
     "semantic_hash": ""
   },
   "backend/app/db/device_repositories.py": {
-    "mtime": 1787881188.8348207,
+    "mtime": 1787887301.7583416,
     "ast_hash": "70afefdd8bbc36c5054d70931cdf4a45",
     "semantic_hash": ""
   },
   "backend/app/db/migrations/versions/0003_device_health.py": {
-    "mtime": 1787881188.8350825,
+    "mtime": 1787887301.7586472,
     "ast_hash": "c75848da8b768cf1650daba4d22c7a9a",
     "semantic_hash": ""
   },
   "tests/persistence/test_device_repositories.py": {
-    "mtime": 1787881188.9165561,
+    "mtime": 1787887301.842871,
     "ast_hash": "a58c500a3a9aad08431bc4c6e1629cae",
     "semantic_hash": ""
   },
   "tests/persistence/test_device_schema.py": {
-    "mtime": 1787881188.9166572,
+    "mtime": 1787887301.8429947,
     "ast_hash": "dd9edc69964f4a7991c0a2a586b7e9d3",
     "semantic_hash": ""
   },
   "backend/app/api/v1/devices.py": {
-    "mtime": 1787881188.8332317,
+    "mtime": 1787887301.7569149,
     "ast_hash": "7999d2afdd6de18b1896c3b40472f1b9",
     "semantic_hash": ""
   },
   "backend/app/services/device_queries.py": {
-    "mtime": 1787881188.836739,
+    "mtime": 1787887301.7600558,
     "ast_hash": "ba64c6b741bbe4962123045165a696b6",
     "semantic_hash": ""
   },
   "tests/api/test_device_read_api.py": {
-    "mtime": 1787881188.9146464,
+    "mtime": 1787887301.8393385,
     "ast_hash": "ba88b578b97b67f1247407d4bc7a1125",
     "semantic_hash": ""
   },
   "tests/api/test_resident_device_composition.py": {
-    "mtime": 1787881188.915663,
+    "mtime": 1787887301.8402507,
     "ast_hash": "b521c644c67d02d148882dbaa0e33c78",
     "semantic_hash": ""
   },
   "backend/app/checkpoints/device_health.py": {
-    "mtime": 1787881188.8339767,
+    "mtime": 1787887301.7574947,
     "ast_hash": "6d4ea68f3654387e7e36914f5bdcdccf",
     "semantic_hash": ""
   },
   "tests/api/test_device_health_story.py": {
-    "mtime": 1787881188.9145355,
+    "mtime": 1787887301.8392434,
     "ast_hash": "103dceeee2e39aaa15279b282ba9be0a",
     "semantic_hash": ""
   },
   "docs/PHASE_2_CHECKPOINT_B_REVIEW.md": {
-    "mtime": 1787881188.8380413,
+    "mtime": 1787887301.7616963,
     "ast_hash": "4a11aee6e9f845ac646d7ef28289a3fc",
     "semantic_hash": ""
   },
   "backend/app/contracts/preferences.py": {
-    "mtime": 1787881188.8344805,
+    "mtime": 1787887301.7580569,
     "ast_hash": "925b0d04325f02b34bb7b2ec1ad2b5af",
     "semantic_hash": ""
   },
   "tests/api/test_preference_memory_contracts.py": {
-    "mtime": 1787881188.9152837,
+    "mtime": 1787887301.8398986,
     "ast_hash": "4d6ff60a50d06f6cc7df15fc455d93e5",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-08-27-phase2-checkpoint-c-preferences-memory-admin.md": {
-    "mtime": 1787881188.8391483,
+    "mtime": 1787887301.764344,
     "ast_hash": "ff1747513d4f7983b9f9049d04c515b4",
     "semantic_hash": ""
   },
   "backend/app/db/migrations/versions/0004_preferences_memory_admin.py": {
-    "mtime": 1787881188.8351824,
+    "mtime": 1787887301.758758,
     "ast_hash": "0d8abdabd0ca1cf5b402361015b122f3",
     "semantic_hash": ""
   },
   "tests/persistence/test_preference_memory_schema.py": {
-    "mtime": 1787881188.9171846,
+    "mtime": 1787887301.8433902,
     "ast_hash": "85bbc32c24ce7ad7189327dc954658f0",
     "semantic_hash": ""
   },
   "backend/app/db/preference_mappers.py": {
-    "mtime": 1787881188.8354607,
+    "mtime": 1787887301.759015,
     "ast_hash": "69791170b262e698d06b05d4a9c983e4",
     "semantic_hash": ""
   },
   "backend/app/db/preference_repositories.py": {
-    "mtime": 1787881188.8356018,
+    "mtime": 1787887301.7591016,
     "ast_hash": "35e24f90c691bd71bb1c8b8167748f30",
     "semantic_hash": ""
   },
   "backend/app/domain/preferences.py": {
-    "mtime": 1787881188.8366058,
+    "mtime": 1787887301.759894,
     "ast_hash": "35b7e805a4e5a89997e1e89d241b1be8",
     "semantic_hash": ""
   },
   "tests/feedback_domain/test_memory_admin.py": {
-    "mtime": 1787881188.91645,
+    "mtime": 1787887301.8422673,
     "ast_hash": "91f742968b2e3b5cbcbf85040590506a",
     "semantic_hash": ""
   },
   "tests/persistence/test_preference_repositories.py": {
-    "mtime": 1787881188.9172783,
+    "mtime": 1787887301.8434741,
     "ast_hash": "ff9b2ca23222139ebce98c15355413f6",
     "semantic_hash": ""
   },
   "tests/preferences_domain/__init__.py": {
-    "mtime": 1787881188.9176676,
+    "mtime": 1787887301.843824,
     "ast_hash": "68b329da9893e34099c7d8ad5cb9c940",
     "semantic_hash": ""
   },
   "tests/preferences_domain/test_preferences.py": {
-    "mtime": 1787881188.9177623,
+    "mtime": 1787887301.8439057,
     "ast_hash": "b8caa41027af70ef0b0a04dc1b22756f",
     "semantic_hash": ""
   },
   "tests/persistence/test_memory_admin_repositories.py": {
-    "mtime": 1787881188.9169593,
+    "mtime": 1787887301.84316,
     "ast_hash": "a4e65887a271a018ae373de4ab7fbbbe",
     "semantic_hash": ""
   },
   "backend/app/services/resident_controls.py": {
-    "mtime": 1787881188.8371348,
+    "mtime": 1787887301.7603593,
     "ast_hash": "b9baaa1dfcd92d3945d01fd8fa26ba1f",
     "semantic_hash": ""
   },
   "tests/api/test_resident_controls_api.py": {
-    "mtime": 1787881188.9155252,
+    "mtime": 1787887301.8401215,
     "ast_hash": "fd59ef317f9bacee290151502406a778",
     "semantic_hash": ""
   },
   "tests/persistence/test_resident_controls_rollback.py": {
-    "mtime": 1787881188.917339,
+    "mtime": 1787887301.8435364,
     "ast_hash": "83f3e7a0460cabb60287c0c5fe9345e2",
     "semantic_hash": ""
   },
   "backend/app/checkpoints/preferences_memory.py": {
-    "mtime": 1787881188.8340724,
+    "mtime": 1787887301.757576,
     "ast_hash": "2efc4f80602b7c235530de0b11227800",
     "semantic_hash": ""
   },
   "tests/api/test_resident_controls_story.py": {
-    "mtime": 1787881188.9155748,
+    "mtime": 1787887301.8401706,
     "ast_hash": "632e7311b3f1766d454853e60c74127e",
     "semantic_hash": ""
   },
   "docs/PHASE_2_CHECKPOINT_C_REVIEW.md": {
-    "mtime": 1787881188.8381174,
+    "mtime": 1787887301.7618291,
     "ast_hash": "4d5ff0d4467cfe8ab8106b1b7a85f174",
     "semantic_hash": ""
   },
   "backend/app/checkpoints/clinic_handoff.py": {
-    "mtime": 1787881188.8338816,
+    "mtime": 1787887301.7574086,
     "ast_hash": "46d8c3a5d4a022f6fc8836e4638deb6d",
     "semantic_hash": ""
   },
   "backend/app/openapi.py": {
-    "mtime": 1787881188.8366773,
+    "mtime": 1787887301.759971,
     "ast_hash": "dd9f6b754aa3cf12091ed4cb1127cc29",
     "semantic_hash": ""
   },
   "backend/app/services/event_queue.py": {
-    "mtime": 1787881188.8368433,
+    "mtime": 1787887301.7601454,
     "ast_hash": "b4a952d0c933135d335cce5032b612ad",
     "semantic_hash": ""
   },
@@ -1817,148 +1817,483 @@
     "semantic_hash": ""
   },
   "tests/api/test_clinic_handoff_story.py": {
-    "mtime": 1787881188.9141095,
+    "mtime": 1787887301.8389533,
     "ast_hash": "c2e7cf939bae05554989a401657738ff",
     "semantic_hash": ""
   },
   "tests/api/test_event_queue_api.py": {
-    "mtime": 1787881188.9147642,
+    "mtime": 1787887301.8394363,
     "ast_hash": "8647672caaf9a69120172114a617b26e",
     "semantic_hash": ""
   },
   "tests/api/test_event_queue_contracts.py": {
-    "mtime": 1787881188.9148223,
+    "mtime": 1787887301.8394961,
     "ast_hash": "24c9a3038935a00f321622ef4d2c3a8c",
     "semantic_hash": ""
   },
   "tests/api/test_event_queue_query_service.py": {
-    "mtime": 1787881188.9148834,
+    "mtime": 1787887301.8395507,
     "ast_hash": "1bf88f13ddbfd06d549abe631f59c6dc",
     "semantic_hash": ""
   },
   "tests/api/test_openapi_artifact.py": {
-    "mtime": 1787881188.9151886,
+    "mtime": 1787887301.8398094,
     "ast_hash": "8c9978a413f6ee314ec6537467019f24",
     "semantic_hash": ""
   },
   "tests/persistence/test_event_queue_repository.py": {
-    "mtime": 1787881188.9167628,
+    "mtime": 1787887301.8430774,
     "ast_hash": "d7e8155094f6357a3d7bee7e286e5da0",
     "semantic_hash": ""
   },
   "docs/PHASE_2_CHECKPOINT_D_REVIEW.md": {
-    "mtime": 1787883752.2489192,
+    "mtime": 1787887301.7621665,
     "ast_hash": "7cee3c49ffec9c7e621aaa599793f9e1",
     "semantic_hash": ""
   },
   "docs/PHASE_2_FRONTEND_API_HANDOFF.md": {
-    "mtime": 1787881188.8383086,
+    "mtime": 1787887301.762265,
     "ast_hash": "c80dccf6c055ac308c0f6f2aa75f5802",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-08-27-phase2-checkpoint-d-clinic-api-handoff.md": {
-    "mtime": 1787881188.839351,
+    "mtime": 1787887301.7652595,
     "ast_hash": "6fb7f59e4e3a07092bc4fab7a2a87bc4",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/app/events/[eventId]/loading.tsx": {
-    "mtime": 1787883752.4398959,
+    "mtime": 1787887301.7479987,
     "ast_hash": "ee62335b2cfc42409b573b1466ab019c",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/app/events/[eventId]/page.tsx": {
-    "mtime": 1787883752.4400473,
+    "mtime": 1787887301.74819,
     "ast_hash": "35eb18444dbc6e661f84b2248aa50979",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/events/event-detail.test.tsx": {
-    "mtime": 1787883752.7526457,
+    "mtime": 1787887301.7510223,
     "ast_hash": "d2fee0ce7f04c36aeb46266ce55f8682",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/events/event-detail.tsx": {
-    "mtime": 1787886285.7713323,
+    "mtime": 1787887301.7513084,
     "ast_hash": "6a323a01741890d5cfc29c73bbaf8b5a",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/events/event-history.tsx": {
-    "mtime": 1787886285.7719064,
+    "mtime": 1787887301.7515383,
     "ast_hash": "19a9c91a9ddfdcb40ed7095ddf16de43",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/events/event-resolution-form.tsx": {
-    "mtime": 1787883752.5527875,
+    "mtime": 1787887301.7523022,
     "ast_hash": "cc343dfd3819720f75b5e4d9890205b4",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/events/use-event-detail.ts": {
-    "mtime": 1787883752.553147,
+    "mtime": 1787887301.752502,
     "ast_hash": "a81e6769e52c9cd331f07d280514e3de",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/mocks/events.ts": {
-    "mtime": 1787883752.753479,
+    "mtime": 1787887301.7558436,
     "ast_hash": "a69768f1e4cbb9b9b46b4d6c2b3758db",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/app/events/page.tsx": {
-    "mtime": 1787884998.2917254,
+    "mtime": 1787887301.7484143,
     "ast_hash": "c899dcdfd70a7b8f183fe1bbe198de93",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/app/residents/[residentId]/page.tsx": {
-    "mtime": 1787884998.2929308,
+    "mtime": 1787887301.7495506,
     "ast_hash": "23676dd6c8cf30d51442c21f65e897b4",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/components/icons/icons.tsx": {
-    "mtime": 1787886260.3439817,
-    "ast_hash": "5b23684d2daa782a9e4b406d3ec7ed90",
+    "mtime": 1787956401.5327258,
+    "ast_hash": "b0b1d2452877997ca0177436cab02be3",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/events/event-list.test.tsx": {
-    "mtime": 1787885054.6192985,
+    "mtime": 1787887301.7518985,
     "ast_hash": "f189ad6b0b2f7b7c4c2bd9a3167938c6",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/events/event-list.tsx": {
-    "mtime": 1787884998.2919948,
+    "mtime": 1787887301.7520883,
     "ast_hash": "ce1aff473e41aada6039e37c05e787db",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/resident-detail.test.tsx": {
-    "mtime": 1787885123.0990956,
-    "ast_hash": "cc7926b9c05d75d9416edeb79dce46c3",
+    "mtime": 1787954257.9141695,
+    "ast_hash": "4d22dfca9fc290d66c1b42041a8c9bb9",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/resident-detail.tsx": {
-    "mtime": 1787884998.2932386,
-    "ast_hash": "32ed3101a104ce88565d1949d98bfac5",
+    "mtime": 1787954224.6341784,
+    "ast_hash": "1ed474f7bc6ac16c5c8df4d4edc64333",
     "semantic_hash": ""
   },
   "PRODUCT.md": {
-    "mtime": 1787883906.2845526,
+    "mtime": 1787887301.7476664,
     "ast_hash": "c61b9bb1e27b16a6c3782384818ae5f9",
     "semantic_hash": ""
   },
   "docs/COFOUNDER_BACKEND_REVIEW.md": {
-    "mtime": 1787883752.2484012,
+    "mtime": 1787887301.7608669,
     "ast_hash": "ddba96aba1410dc41e3ee9a1aed6cba0",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-08-27-clinic-dashboard-redesign.md": {
-    "mtime": 1787884358.526061,
+    "mtime": 1787887301.7639363,
     "ast_hash": "f8b2b922b732257d4c697d3460a015bb",
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-08-27-clinic-dashboard-redesign-design.md": {
-    "mtime": 1787886260.3398786,
+    "mtime": 1787887301.7659338,
     "ast_hash": "c9f2932ca485615ac242b10a3d0fb098",
     "semantic_hash": ""
   },
   "DESIGN.md": {
-    "mtime": 1787886892.918746,
-    "ast_hash": "f4b74b65b41abd248ab2589db9e1c81f",
+    "mtime": 1787957294.2134497,
+    "ast_hash": "2498f11ed54382691f69890b0822de1f",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/app/devices/[deviceId]/page.tsx": {
+    "mtime": 1787947000.08559,
+    "ast_hash": "8482b59154fb5a3df7b34715f1bd50cf",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/app/devices/page.tsx": {
+    "mtime": 1787947000.085439,
+    "ast_hash": "e5dfd8e153fd132457b1d8f52675cf1a",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/features/devices/device-detail.test.tsx": {
+    "mtime": 1787947181.4422195,
+    "ast_hash": "707e53f4a79289dbc4ca41b3de5070ea",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/features/devices/device-detail.tsx": {
+    "mtime": 1787950078.0488865,
+    "ast_hash": "35f7ef52071656c6f1729ebdb7e93ba0",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/features/devices/device-format.ts": {
+    "mtime": 1787947371.130722,
+    "ast_hash": "24a6b70f882304bf57acd3e4d21f16bc",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/features/devices/device-list.test.tsx": {
+    "mtime": 1787947671.1291983,
+    "ast_hash": "1a89f52435d653c71e72227dca08f4a0",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/features/devices/device-list.tsx": {
+    "mtime": 1787947635.8414073,
+    "ast_hash": "fd2f2ca17da3fbfdc0038517b0ba4a46",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/mocks/devices.ts": {
+    "mtime": 1787947635.8405988,
+    "ast_hash": "6f2ec3b75e69b1c2ad56fa79ea03e3e2",
+    "semantic_hash": ""
+  },
+  "docs/research/2026-08-28-anomaly-filter-llm-replication-research.md": {
+    "mtime": 1787946891.2790685,
+    "ast_hash": "7245867444fc373c2170c8fb9ca9ff33",
+    "semantic_hash": ""
+  },
+  "docs/research/2026-08-28-contactless-monitoring-v1-research.md": {
+    "mtime": 1787946891.2793312,
+    "ast_hash": "3611ba13e8c5cf66c465dcc0054b1821",
+    "semantic_hash": ""
+  },
+  "docs/research/README.md": {
+    "mtime": 1787946891.2794905,
+    "ast_hash": "58f8346a5ce10f46c9017ef032413641",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/app/residents/[residentId]/setup/page.tsx": {
+    "mtime": 1787950022.3752604,
+    "ast_hash": "84f0594046faaa30b5d78834ea613c24",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/features/setup/monitoring-setup.test.tsx": {
+    "mtime": 1787950537.8524096,
+    "ast_hash": "28d2a0f7eef2608c44374d727d3ac224",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/features/setup/monitoring-setup.tsx": {
+    "mtime": 1787950601.4794528,
+    "ast_hash": "d3a2930d1bef32f321ea03da1badcbe7",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/mocks/setups.ts": {
+    "mtime": 1787950511.8169985,
+    "ast_hash": "5e193ec43b5b139c5c4e847501cafcf8",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/app/residents/[residentId]/settings/page.tsx": {
+    "mtime": 1787954159.5836046,
+    "ast_hash": "90de863038161b372fdf761462108508",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/features/resident-settings/resident-settings.test.tsx": {
+    "mtime": 1787954257.9139006,
+    "ast_hash": "407a376b0f71158c9a5a8c1c1fa09d64",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/features/resident-settings/resident-settings.tsx": {
+    "mtime": 1787954615.148171,
+    "ast_hash": "4a0deac4e5f183dbe48f5b304741d3f3",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/mocks/resident-settings.ts": {
+    "mtime": 1787953808.014977,
+    "ast_hash": "216314006028bcb36e3d14c1de33f86e",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-08-28-resident-context-preferences.md": {
+    "mtime": 1787953739.2031734,
+    "ast_hash": "8bc0da4daed3d3971e99f3904673c8ea",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-08-28-resident-context-preferences-design.md": {
+    "mtime": 1787953739.2027383,
+    "ast_hash": "722330d85e1eef45543462cf3f6a932e",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/app/scenarios/page.tsx": {
+    "mtime": 1787956401.5341954,
+    "ast_hash": "a916beeb02ac4089af4cfa8a8e7295e4",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/features/scenarios/scenario-lab.test.tsx": {
+    "mtime": 1787957142.07874,
+    "ast_hash": "512f7c2c361413df949afa267c889c81",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/features/scenarios/scenario-lab.tsx": {
+    "mtime": 1787957117.7870133,
+    "ast_hash": "48e6126505e7355ca4d94d144699380c",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/lib/demo-scenarios/index.ts": {
+    "mtime": 1787956182.7485595,
+    "ast_hash": "d5da74217ed875ac26ad2164b1a9e6f4",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/lib/demo-scenarios/provider.tsx": {
+    "mtime": 1787956182.7482471,
+    "ast_hash": "dd3ec2274d78166fd64771aafe806141",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/lib/demo-scenarios/types.ts": {
+    "mtime": 1787956182.747159,
+    "ast_hash": "f7d45f90353d2d4be993264dff8247ea",
+    "semantic_hash": ""
+  },
+  "apps/clinic-dashboard/src/mocks/scenarios.ts": {
+    "mtime": 1787956182.7488325,
+    "ast_hash": "f99a944eb51f264bab25b3edb7f9c833",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-08-28-frontend-scenario-lab.md": {
+    "mtime": 1787956071.2155554,
+    "ast_hash": "c30f0785cc9209f1dea2f60e9a5074bc",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-08-28-frontend-scenario-lab-design.md": {
+    "mtime": 1787956000.9449453,
+    "ast_hash": "51db44c8d08b1e72959fd36769f31480",
+    "semantic_hash": ""
+  },
+  "apps/home-app/eslint.config.mjs": {
+    "mtime": 1787957789.550382,
+    "ast_hash": "b5d7df09a0c46f49dc0840132dfff1ed",
+    "semantic_hash": ""
+  },
+  "apps/home-app/next.config.ts": {
+    "mtime": 1787957789.550264,
+    "ast_hash": "ed6715516cff2a8ba4b29c9542934064",
+    "semantic_hash": ""
+  },
+  "apps/home-app/package.json": {
+    "mtime": 1787957789.5499346,
+    "ast_hash": "1eccf16d10f98f870fe732b4c5151799",
+    "semantic_hash": ""
+  },
+  "apps/home-app/src/app/layout.tsx": {
+    "mtime": 1787957978.8827274,
+    "ast_hash": "994b98c2294f6c822951a896b32e7ca9",
+    "semantic_hash": ""
+  },
+  "apps/home-app/src/app/page.tsx": {
+    "mtime": 1787957978.8829212,
+    "ast_hash": "39693a2f66802f72106e89ae6fd14a8e",
+    "semantic_hash": ""
+  },
+  "apps/home-app/src/app/providers.tsx": {
+    "mtime": 1787957978.882628,
+    "ast_hash": "edfabc2557949575d61ec039b3f90b1a",
+    "semantic_hash": ""
+  },
+  "apps/home-app/src/app/routines/page.tsx": {
+    "mtime": 1787958264.3783152,
+    "ast_hash": "c28315cf20f89e123bc74683e80d2d44",
+    "semantic_hash": ""
+  },
+  "apps/home-app/src/app/updates/[eventId]/page.tsx": {
+    "mtime": 1787958143.1419744,
+    "ast_hash": "174557a639d30799d0c037bad4009700",
+    "semantic_hash": ""
+  },
+  "apps/home-app/src/components/home-shell/home-shell.tsx": {
+    "mtime": 1787957978.8823037,
+    "ast_hash": "25ab54bc60ec1f8279c6489ba17c07a4",
+    "semantic_hash": ""
+  },
+  "apps/home-app/src/components/icons.tsx": {
+    "mtime": 1787957978.8821177,
+    "ast_hash": "570d78f7f59e1f2bccf8963f33c31019",
+    "semantic_hash": ""
+  },
+  "apps/home-app/src/features/routines/routines.test.tsx": {
+    "mtime": 1787958401.590768,
+    "ast_hash": "29605ef1f8d37a234b277e57da0c4fcb",
+    "semantic_hash": ""
+  },
+  "apps/home-app/src/features/routines/routines.tsx": {
+    "mtime": 1787958401.5904734,
+    "ast_hash": "b49c33e2902dac52d4294f6f9426fa55",
+    "semantic_hash": ""
+  },
+  "apps/home-app/src/features/today/today.test.tsx": {
+    "mtime": 1787959473.8160474,
+    "ast_hash": "7ab168ab1b02e7178ccc1cf1bf8aac81",
+    "semantic_hash": ""
+  },
+  "apps/home-app/src/features/today/today.tsx": {
+    "mtime": 1787959473.813465,
+    "ast_hash": "99d7c20b9e8ff1fe6fa5d46d4b7186e2",
+    "semantic_hash": ""
+  },
+  "apps/home-app/src/features/updates/update-detail.test.tsx": {
+    "mtime": 1787958143.142301,
+    "ast_hash": "e063aebfd0393876551ad6fe0b2abcfc",
+    "semantic_hash": ""
+  },
+  "apps/home-app/src/features/updates/update-detail.tsx": {
+    "mtime": 1787958228.3333795,
+    "ast_hash": "0b6dd48708a63f518d621d9fbc6b601d",
+    "semantic_hash": ""
+  },
+  "apps/home-app/src/lib/home-monitoring/client.ts": {
+    "mtime": 1787957789.551498,
+    "ast_hash": "78c011ee17e564d7273933a6abbbcc64",
+    "semantic_hash": ""
+  },
+  "apps/home-app/src/lib/home-monitoring/index.ts": {
+    "mtime": 1787957789.5517106,
+    "ast_hash": "0bfbcb7c7815326755a6811163bb5408",
+    "semantic_hash": ""
+  },
+  "apps/home-app/src/lib/home-monitoring/provider.tsx": {
+    "mtime": 1787957789.551607,
+    "ast_hash": "eee17b7ceeeb84582bf7f3a191b7d264",
+    "semantic_hash": ""
+  },
+  "apps/home-app/src/lib/home-monitoring/types.ts": {
+    "mtime": 1787959025.5522542,
+    "ast_hash": "7a93e00f88c818ef006107bea4f17924",
+    "semantic_hash": ""
+  },
+  "apps/home-app/src/mocks/home-fixtures.ts": {
+    "mtime": 1787957893.083874,
+    "ast_hash": "cb4dd21a36d78aa5173f67da86fd96f0",
+    "semantic_hash": ""
+  },
+  "apps/home-app/src/mocks/mock-home-monitoring-client.test.ts": {
+    "mtime": 1787959473.8181255,
+    "ast_hash": "afb277304ce668bf4bd19594b1e96c2f",
+    "semantic_hash": ""
+  },
+  "apps/home-app/src/mocks/mock-home-monitoring-client.ts": {
+    "mtime": 1787959473.8175437,
+    "ast_hash": "d6ab859cfce213c78156f8aacba9caeb",
+    "semantic_hash": ""
+  },
+  "apps/home-app/src/test/setup.ts": {
+    "mtime": 1787957789.5510585,
+    "ast_hash": "ac5fcb59a06df5ed3cc5c0f45010c7e4",
+    "semantic_hash": ""
+  },
+  "apps/home-app/tsconfig.json": {
+    "mtime": 1787957789.5501015,
+    "ast_hash": "3df05da31c809dd4566b09aa53b6fbc5",
+    "semantic_hash": ""
+  },
+  "apps/home-app/vitest.config.ts": {
+    "mtime": 1787957789.5505013,
+    "ast_hash": "be6dac5334632091395055a9d4db4227",
+    "semantic_hash": ""
+  },
+  "apps/home-app/AGENTS.md": {
+    "mtime": 1787958495.5131922,
+    "ast_hash": "01e8142356e15c3404e0d84c48187cd0",
+    "semantic_hash": ""
+  },
+  "apps/home-app/CLAUDE.md": {
+    "mtime": 1787958495.5132666,
+    "ast_hash": "5c27369b226fcf2be8a6cfe52224e767",
+    "semantic_hash": ""
+  },
+  "apps/home-app/DESIGN.md": {
+    "mtime": 1787959193.4588976,
+    "ast_hash": "977c59618a370d2f534c4ca190706b2a",
+    "semantic_hash": ""
+  },
+  "apps/home-app/PRODUCT.md": {
+    "mtime": 1787959193.4584277,
+    "ast_hash": "d8f7185168d328c5174a0eafe4925e0d",
+    "semantic_hash": ""
+  },
+  "apps/home-app/pnpm-workspace.yaml": {
+    "mtime": 1787957789.5506127,
+    "ast_hash": "a800062e52322b626879a0760092d845",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-08-28-home-family-app.md": {
+    "mtime": 1787957660.2518737,
+    "ast_hash": "2b9ba352a9af7d551e79628debd91ad2",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-08-28-home-family-app-design.md": {
+    "mtime": 1787957619.3881261,
+    "ast_hash": "f3f6723e410bb9a583a038f0519c97c8",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-08-28-clinic-overview-golden-screen.md": {
+    "mtime": 1787962009.6661968,
+    "ast_hash": "b24b32040f30a8806250be521222a939",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-08-28-clinic-overview-golden-screen-design.md": {
+    "mtime": 1787962009.666079,
+    "ast_hash": "13d023384c026806916d6d72676bc740",
+    "semantic_hash": ""
+  },
+  "docs/design-references/clinic-overview-concept.png": {
+    "mtime": 1787962009.635977,
+    "ast_hash": "b586f9f5c92d227891d9a214ab973415",
+    "semantic_hash": ""
+  },
+  "docs/design-system.md": {
+    "mtime": 1787965795.4712,
+    "ast_hash": "86f0d5edd56ae14d87bc27d2f2e36c6a",
     "semantic_hash": ""
   }
 }

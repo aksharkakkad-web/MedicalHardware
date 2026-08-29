@@ -28,9 +28,19 @@ function residentClient(
 ): MonitoringClient {
   const fallback = new MockMonitoringClient();
   return {
+    listDevices: () => fallback.listDevices(),
+    getDevice: (deviceId) => fallback.getDevice(deviceId),
     listResidentOverview,
     listEvents: () => fallback.listEvents(),
     getResident: (residentId) => fallback.getResident(residentId),
+    getResidentMonitoringSetup: (residentId) => fallback.getResidentMonitoringSetup(residentId),
+    recordSetupChange: (residentId, input) => fallback.recordSetupChange(residentId, input),
+    getNotificationPreferences: (residentId) => fallback.getNotificationPreferences(residentId),
+    updateNotificationPreferences: (residentId, input) => fallback.updateNotificationPreferences(residentId, input),
+    getResidentMemory: (residentId) => fallback.getResidentMemory(residentId),
+    addMemoryEntry: (residentId, input) => fallback.addMemoryEntry(residentId, input),
+    correctMemoryEntry: (residentId, entryId, input) => fallback.correctMemoryEntry(residentId, entryId, input),
+    retireMemoryEntry: (residentId, entryId, input) => fallback.retireMemoryEntry(residentId, entryId, input),
     getEvent: (eventId) => fallback.getEvent(eventId),
     performEventAction: (eventId, action) =>
       fallback.performEventAction(eventId, action),
@@ -48,7 +58,7 @@ function deferred<T>() {
 }
 
 describe("ResidentOverview", () => {
-  it("shows the five honest monitoring situations", async () => {
+  it("shows the honest monitoring situations", async () => {
     renderOverview(
       new MockMonitoringClient(() => new Date("2026-08-27T18:00:00.000Z")),
     );
@@ -59,7 +69,15 @@ describe("ResidentOverview", () => {
     expect(screen.getByText("Resident A")).toBeVisible();
     expect(screen.getByText(/possible visitor/i)).toBeVisible();
     expect(screen.getByText(/device offline/i)).toBeVisible();
-    expect(screen.getByText(/^needs attention$/i)).toBeVisible();
+    expect(screen.getAllByText(/^needs attention$/i)).toHaveLength(2);
+    expect(screen.getByRole("heading", { name: "Residents needing review" })).toBeVisible();
+    expect(screen.getByText("4 open")).toBeVisible();
+    expect(screen.getByText("2 of 6")).toBeVisible();
+    expect(screen.getByText("rooms actively monitoring")).toBeVisible();
+    expect(screen.getAllByRole("link", { name: "Review event" })[0]).toHaveAttribute(
+      "href",
+      "/events/evt_unusual_movement_102",
+    );
   });
 
   it("shows a neutral loading state", () => {

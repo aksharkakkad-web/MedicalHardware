@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AlertIcon } from "@/components/icons/icons";
+import { StatusPill, type StatusTone } from "@/components/status-pill/status-pill";
 import type { ResidentOverviewItem } from "@/lib/monitoring";
 
 import { ResidentCard } from "./resident-card";
@@ -19,28 +19,107 @@ function OverviewHeader() {
   return (
     <div className={styles.headingRow}>
       <div>
+        <p className={styles.eyebrow}>Care operations</p>
         <h1>Clinic overview</h1>
         <p className={styles.intro}>
-          See what needs attention, then move through each room with clear monitoring context.
+          Start with residents who need review, then scan monitoring across every room.
         </p>
       </div>
-      <p className={styles.updatedLabel}>Live synthetic workspace</p>
     </div>
   );
 }
 
 function LoadingOverview() {
   return (
-    <div className={styles.skeletonGrid} role="status" aria-label="Loading resident information">
-      {[0, 1, 2].map((item) => (
-        <div className={styles.skeletonCard} key={item} aria-hidden="true">
-          <span className={styles.skeletonShort} />
-          <span className={styles.skeletonTitle} />
-          <span className={styles.skeletonLine} />
-          <span className={styles.skeletonLine} />
+    <div className={styles.loadingLayout} role="status" aria-label="Loading resident information">
+      <div className={styles.loadingMain} aria-hidden="true">
+        <div className={styles.skeletonBanner}>
+          <span className={styles.skeletonMark} />
+          <span className={styles.skeletonCopy} />
         </div>
-      ))}
+        <div className={styles.skeletonSheet}>
+          {[0, 1, 2, 3].map((item) => (
+            <div className={styles.skeletonRow} key={item}>
+              <span className={styles.skeletonTitle} />
+              <span className={styles.skeletonLine} />
+              <span className={styles.skeletonLine} />
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className={styles.skeletonRail} aria-hidden="true">
+        <span className={styles.skeletonTitle} />
+        <span className={styles.skeletonLine} />
+        <span className={styles.skeletonLine} />
+      </div>
     </div>
+  );
+}
+
+function SummaryRow({ label, value, tone = "neutral" }: Readonly<{ label: string; value: number; tone?: "healthy" | "attention" | "unavailable" | "neutral" }>) {
+  return <li><span><i className={styles.summaryDot} data-tone={tone} aria-hidden="true" />{label}</span><strong>{value}</strong></li>;
+}
+
+const attentionLabels: Record<ResidentOverviewItem["attention"]["priority"], string> = {
+  critical: "Critical attention",
+  high: "Needs attention",
+  watch: "Watch item",
+  none: "No open attention items",
+};
+
+function AttentionQueue({ residents }: Readonly<{ residents: ResidentOverviewItem[] }>) {
+  const attentionResidents = residents.filter((resident) => resident.attention.priority !== "none");
+
+  if (attentionResidents.length === 0) {
+    return (
+      <section className={styles.quietQueue} aria-labelledby="attention-heading">
+        <div>
+          <p className={styles.sectionEyebrow}>Attention queue</p>
+          <h2 id="attention-heading">No residents need attention</h2>
+          <p>Current resident records do not contain an open attention item.</p>
+        </div>
+        <Link href="/events">View event history <span aria-hidden="true">→</span></Link>
+      </section>
+    );
+  }
+
+  return (
+    <section className={styles.attentionQueue} aria-labelledby="attention-heading">
+      <div className={styles.queueHeader}>
+        <div>
+          <p className={styles.sectionEyebrow}>Attention queue</p>
+          <h2 id="attention-heading">Residents needing review</h2>
+          <p>Open items are ordered by urgency.</p>
+        </div>
+        <span className={styles.queueCount}>{attentionResidents.length} open</span>
+      </div>
+
+      <ol className={styles.queueList}>
+        {attentionResidents.map((resident) => {
+          const eventHref = resident.attention.primaryEventId
+            ? `/events/${resident.attention.primaryEventId}`
+            : `/residents/${resident.residentId}`;
+          const actionLabel = resident.attention.primaryEventId ? "Review event" : "Review resident";
+          const tone: StatusTone = resident.attention.priority === "watch" ? "attention" : "critical";
+
+          return (
+            <li key={resident.residentId}>
+              <Link className={styles.queueResident} href={`/residents/${resident.residentId}`}>
+                <strong>{resident.displayLabel}</strong>
+                <span>{resident.roomLabel}</span>
+              </Link>
+              <div className={styles.queueFinding}>
+                <StatusPill label={attentionLabels[resident.attention.priority]} tone={tone} />
+                <p>{resident.attention.headline}</p>
+              </div>
+              <Link className={styles.queueAction} href={eventHref}>
+                {actionLabel} <span aria-hidden="true">→</span>
+              </Link>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
   );
 }
 
@@ -81,29 +160,66 @@ export function ResidentOverview() {
     return priorityDifference || left.roomLabel.localeCompare(right.roomLabel);
   });
   const activeCount = residents.filter((resident) => resident.monitoring.state === "active").length;
-  const limitedCount = residents.length - activeCount;
-  const highPriorityCount = residents.filter((resident) => ["high", "critical"].includes(resident.attention.priority)).length;
-  const primaryAttention = residents.find((resident) => ["high", "critical"].includes(resident.attention.priority) && resident.attention.primaryEventId);
+  const limitedCount = residents.filter((resident) => ["limited", "paused"].includes(resident.monitoring.state)).length;
+  const unavailableCount = residents.filter((resident) => resident.monitoring.state === "unavailable").length;
+  const onlineDeviceCount = residents.filter((resident) => resident.device.status === "online").length;
+  const limitedDeviceCount = residents.filter((resident) => resident.device.status === "degraded").length;
+  const unavailableDeviceCount = residents.filter((resident) => ["offline", "unknown"].includes(resident.device.status)).length;
 
   return (
     <section className={styles.page}>
       <OverviewHeader />
 
-      {primaryAttention && <Link className={styles.attentionBanner} href={`/events/${primaryAttention.attention.primaryEventId}`}><span className={styles.alertMark}><AlertIcon /></span><span><strong>{primaryAttention.attention.headline}</strong><small>{primaryAttention.displayLabel} · {primaryAttention.roomLabel} · Staff review is required</small></span><span>Review now →</span></Link>}
-
-      <div className={styles.summary} aria-label="Resident monitoring summary"><div><strong>{highPriorityCount}</strong><span>High priority</span></div><div><strong>{activeCount}</strong><span>Active monitoring</span></div><div><strong>{limitedCount}</strong><span>Limited, paused, or offline</span></div><Link href="/events">View all events →</Link></div>
-
-      <div className={styles.sectionHeading}>
-        <div>
-          <h2>Residents and rooms</h2>
-          <p>Ordered by urgency. Select a resident for their complete room record.</p>
+      <div className={styles.overviewLayout}>
+        <div className={styles.primaryColumn}>
+          <AttentionQueue residents={residents} />
         </div>
-        <span>{residents.length} monitored rooms</span>
+
+        <aside className={styles.contextRail} aria-label="Current clinic context">
+          <section className={styles.contextCard}>
+            <div className={styles.contextBlock}>
+              <p className={styles.contextEyebrow}>Monitoring coverage</p>
+              <div className={styles.coverageSummary}>
+                <strong>{activeCount} of {residents.length}</strong>
+                <span>rooms actively monitoring</span>
+              </div>
+              <ul className={styles.summaryList}>
+                <SummaryRow label="Active" value={activeCount} tone="healthy" />
+                <SummaryRow label="Limited or paused" value={limitedCount} tone="attention" />
+                <SummaryRow label="Unavailable" value={unavailableCount} tone="unavailable" />
+              </ul>
+            </div>
+
+            <div className={styles.contextDivider} />
+
+            <div className={styles.contextBlock}>
+              <p className={styles.contextEyebrow}>Device health</p>
+              <ul className={styles.summaryList}>
+                <SummaryRow label="Online" value={onlineDeviceCount} tone="healthy" />
+                <SummaryRow label="Limited" value={limitedDeviceCount} tone="attention" />
+                <SummaryRow label="Unavailable" value={unavailableDeviceCount} tone="unavailable" />
+              </ul>
+            </div>
+          </section>
+        </aside>
       </div>
 
-      <div className={styles.grid}><div className={styles.columnLabels} aria-hidden="true"><span>Room and resident</span><span>Monitoring</span><span>Attention</span><span>Device</span><span>Updated</span><span /></div>
-        {residents.map((resident) => <ResidentCard key={resident.residentId} resident={resident} />)}
-      </div>
+      <section className={styles.residentSection} aria-labelledby="resident-sheet-heading">
+        <div className={styles.sectionHeading}>
+          <div>
+            <p className={styles.sectionEyebrow}>Resident inventory</p>
+            <h2 id="resident-sheet-heading">All residents</h2>
+            <p>Ordered by urgency. Open a resident for the complete room record.</p>
+          </div>
+          <span>{residents.length} monitored rooms</span>
+        </div>
+
+        <div className={styles.grid}>
+          <div className={styles.columnLabels} aria-hidden="true"><span>Resident and room</span><span>Monitoring</span><span>Attention</span><span>Device</span><span>Updated</span><span /></div>
+          {residents.map((resident) => <ResidentCard key={resident.residentId} resident={resident} />)}
+          <Link className={styles.sheetFooter} href="/events">View all events <span aria-hidden="true">→</span></Link>
+        </div>
+      </section>
     </section>
   );
 }
