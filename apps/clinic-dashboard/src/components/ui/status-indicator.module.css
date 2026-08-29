@@ -29,7 +29,7 @@
 .axis {
   color: var(--ac-text-secondary);
   font-family: var(--ac-font-mono);
-  font-size: 0.6875rem;
+  font-size: var(--ac-font-size-metadata);
   line-height: 1rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -66,7 +66,6 @@
   background: var(--ac-watch-bg);
 }
 
-.indicator[data-axis="attention"][data-value="none"],
 .indicator[data-axis="monitoring"][data-value="active"],
 .indicator[data-axis="confidence"][data-value="high"],
 .indicator[data-axis="freshness"][data-value="current"],
@@ -99,6 +98,12 @@
 .indicator[data-axis="freshness"][data-value="stale"],
 .indicator[data-axis="freshness"][data-value="unknown"],
 .indicator[data-axis="device"][data-value="offline"] {
+  border-color: var(--ac-unavailable-border);
+  color: var(--ac-unavailable-text);
+  background: var(--ac-unavailable-bg);
+}
+
+.indicator[data-axis="attention"][data-value="none"] {
   border-color: var(--ac-unavailable-border);
   color: var(--ac-unavailable-text);
   background: var(--ac-unavailable-bg);

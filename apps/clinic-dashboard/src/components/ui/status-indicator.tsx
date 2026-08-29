@@ -14,16 +14,35 @@ export const statusValues = {
 export type StatusAxis = keyof typeof statusValues;
 export type StatusValue<Axis extends StatusAxis> = (typeof statusValues)[Axis][number];
 
-type SharedStatusIndicatorProps = Readonly<{ className?: string }>;
+type SharedStatusIndicatorProps = Readonly<{
+  announce?: boolean;
+  className?: string;
+}>;
 
-export type StatusIndicatorProps = {
-  [Axis in StatusAxis]: Readonly<{
+type NonFreshnessStatusIndicatorProps = {
+  [Axis in Exclude<StatusAxis, "freshness">]: Readonly<{
     axis: Axis;
     value: StatusValue<Axis>;
   }> &
-    (Axis extends "freshness" ? Readonly<{ lastCurrentUpdate?: string }> : Readonly<unknown>) &
     SharedStatusIndicatorProps;
-}[StatusAxis];
+}[Exclude<StatusAxis, "freshness">];
+
+type FreshnessStatusIndicatorProps =
+  | (Readonly<{
+      axis: "freshness";
+      value: "stale";
+      lastCurrentUpdate?: string;
+    }> &
+      SharedStatusIndicatorProps)
+  | (Readonly<{
+      axis: "freshness";
+      value: Exclude<StatusValue<"freshness">, "stale">;
+    }> &
+      SharedStatusIndicatorProps);
+
+export type StatusIndicatorProps =
+  | NonFreshnessStatusIndicatorProps
+  | FreshnessStatusIndicatorProps;
 
 const axisLabels: Record<StatusAxis, string> = {
   attention: "Attention",
@@ -42,7 +61,7 @@ const valueLabels: { [Axis in StatusAxis]: Record<StatusValue<Axis>, string> } =
     none: "No attention priority",
   },
   monitoring: {
-    active: "Monitoring current",
+    active: "Monitoring active",
     away: "Monitoring away",
     possible_multi_person: "Monitoring possible multi-person",
     paused: "Monitoring paused",
@@ -80,10 +99,10 @@ const descriptions: { [Axis in StatusAxis]: Record<StatusValue<Axis>, string> } 
     critical: "Highest priority for caregiver review; review the evidence before acting.",
     high: "High priority for caregiver review; review the evidence before acting.",
     watch: "Review when practical; this is an attention priority, not a diagnosis.",
-    none: "No attention priority is indicated by this synthetic example.",
+    none: "No attention priority is indicated.",
   },
   monitoring: {
-    active: "Resident attribution is usable for this synthetic example.",
+    active: "Resident attribution is usable.",
     away: "Resident is away; resident-specific baseline learning is paused.",
     possible_multi_person:
       "Resident-specific attribution is unavailable; do not guess which person caused a signal.",
@@ -158,26 +177,27 @@ function getLabel(props: StatusIndicatorProps): string {
 }
 
 export function StatusIndicator(props: StatusIndicatorProps) {
-  const { axis, value, className } = props;
+  const { announce = false, axis, value, className } = props;
   const id = useId();
-  const labelId = `${id}-label`;
   const descriptionId = `${id}-description`;
   const label = getLabel(props);
   const description = getDescription(props);
+  const semanticTreatment = axis === "attention" && value === "none" ? "neutral" : undefined;
 
   return (
     <span
       className={[styles.indicator, className].filter(Boolean).join(" ")}
       data-axis={axis}
       data-value={value}
-      role="status"
-      aria-labelledby={labelId}
+      data-semantic={semanticTreatment}
+      role={announce ? "status" : undefined}
+      aria-label={`${axisLabels[axis]}: ${label}`}
       aria-describedby={descriptionId}
     >
       <span className={styles.marker} aria-hidden="true" />
       <span className={styles.content}>
         <span className={styles.axis}>{axisLabels[axis]}</span>
-        <span className={styles.label} id={labelId}>
+        <span className={styles.label}>
           {label}
         </span>
         <span className={styles.description} id={descriptionId}>

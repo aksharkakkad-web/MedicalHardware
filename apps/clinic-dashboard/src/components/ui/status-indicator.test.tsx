@@ -5,11 +5,22 @@ import type { StatusIndicatorProps } from "./status-indicator";
 import { StatusIndicator } from "./status-indicator";
 
 describe("StatusIndicator", () => {
-  it("uses current monitoring wording for the active value", () => {
+  it("uses active monitoring wording for the active value", () => {
     render(<StatusIndicator axis="monitoring" value="active" />);
 
-    expect(screen.getByText("Monitoring current")).toBeVisible();
-    expect(screen.queryByText("Monitoring active")).not.toBeInTheDocument();
+    expect(screen.getByText("Monitoring active")).toBeVisible();
+    expect(screen.queryByText("Monitoring current")).not.toBeInTheDocument();
+  });
+
+  it("is presentational by default and announces only when opted in", () => {
+    const { rerender } = render(
+      <StatusIndicator axis="monitoring" value="active" />,
+    );
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+
+    rerender(<StatusIndicator axis="monitoring" value="active" announce />);
+    expect(screen.getByRole("status")).toBeVisible();
   });
 
   it("explains that stale evidence is limited by the last current update", () => {
@@ -18,10 +29,11 @@ describe("StatusIndicator", () => {
         axis="freshness"
         value="stale"
         lastCurrentUpdate="08:42:18"
+        announce
       />,
     );
 
-    expect(screen.getByRole("status")).toHaveAccessibleName(/stale/i);
+    expect(screen.getByRole("status")).toHaveAccessibleName(/freshness.*stale/i);
     expect(screen.getByText("Stale")).toBeVisible();
     expect(screen.getByText(/last current update: 08:42:18/i)).toBeVisible();
   });
@@ -46,11 +58,31 @@ describe("StatusIndicator", () => {
   });
 
   it("provides an accessible label and description", () => {
-    render(<StatusIndicator axis="attention" value="high" />);
+    render(<StatusIndicator axis="attention" value="high" announce />);
 
     const status = screen.getByRole("status");
-    expect(status).toHaveAccessibleName(/high attention priority/i);
+    expect(status).toHaveAccessibleName(/attention.*high attention priority/i);
     expect(status).toHaveAccessibleDescription(/priority for caregiver review/i);
+  });
+
+  it("uses a neutral treatment when there is no attention priority", () => {
+    render(<StatusIndicator axis="attention" value="none" />);
+
+    const indicator = screen
+      .getByText("No attention priority")
+      .closest("[data-axis=attention]");
+    expect(indicator).toHaveAttribute("data-semantic", "neutral");
+  });
+
+  it("keeps reusable descriptions free of specimen-only wording", () => {
+    render(
+      <>
+        <StatusIndicator axis="attention" value="none" />
+        <StatusIndicator axis="monitoring" value="active" />
+      </>,
+    );
+
+    expect(document.body.textContent).not.toMatch(/synthetic example/i);
   });
 
   it("exposes an axis-specific value without a generic tone escape hatch", () => {
@@ -67,5 +99,29 @@ describe("StatusIndicator", () => {
       tone: "critical",
     };
     expect(invalidGenericTone).toBeDefined();
+
+    const invalidCurrentUpdate: StatusIndicatorProps = {
+      axis: "freshness",
+      value: "current",
+      // @ts-expect-error Only stale freshness accepts the last current update.
+      lastCurrentUpdate: "08:42:18",
+    };
+    expect(invalidCurrentUpdate).toBeDefined();
+
+    const invalidDelayedUpdate: StatusIndicatorProps = {
+      axis: "freshness",
+      value: "delayed",
+      // @ts-expect-error Only stale freshness accepts the last current update.
+      lastCurrentUpdate: "08:42:18",
+    };
+    expect(invalidDelayedUpdate).toBeDefined();
+
+    const invalidUnknownUpdate: StatusIndicatorProps = {
+      axis: "freshness",
+      value: "unknown",
+      // @ts-expect-error Only stale freshness accepts the last current update.
+      lastCurrentUpdate: "08:42:18",
+    };
+    expect(invalidUnknownUpdate).toBeDefined();
   });
 });
