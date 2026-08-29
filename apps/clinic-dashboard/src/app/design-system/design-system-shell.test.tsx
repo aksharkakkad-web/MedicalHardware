@@ -208,6 +208,8 @@ describe("DesignSystemShell", () => {
     expect(screen.getAllByText("Selected record")).toHaveLength(2);
     expect(within(residentTable).getAllByText("Selected record")).toHaveLength(1);
     const residentRows = within(residentTable).getAllByRole("row").slice(1);
+    const roomLabels = residentRows.map((row) => row.querySelector("[data-record-identity] span")?.textContent?.trim()).filter(Boolean);
+    expect(new Set(roomLabels).size).toBe(roomLabels.length);
     expect(residentRows[1]).toHaveAttribute("data-interaction", "hover");
     expect(residentRows[2]).toHaveAttribute("data-interaction", "selected");
     expect(residentRows[3]).not.toHaveAttribute("data-interaction");

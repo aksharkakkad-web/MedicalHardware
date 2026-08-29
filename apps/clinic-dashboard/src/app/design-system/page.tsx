@@ -128,7 +128,7 @@ const residentRecords: ResidentRecord[] = [
   {
     id: "mateo-brooks",
     residentName: "Mateo Brooks",
-    room: "Room 302",
+    room: "Room 305",
     attentionReason: "Unexpected movement needs review",
     attention: "critical",
     monitoring: "active",
