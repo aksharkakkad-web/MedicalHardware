@@ -91,11 +91,65 @@ describe("SystemState catalog", () => {
     render(
       <SystemState
         state="save_failure"
-        action={{ label: "Retry save", href: "/retry" }}
+        action={{ kind: "retry_save", onClick: () => undefined }}
       />,
     );
 
-    expect(screen.getByRole("link", { name: "Retry save" })).toHaveAttribute("href", "/retry");
+    expect(screen.getByText(SYSTEM_STATE_CATALOG.save_failure.nextAction)).toBeVisible();
+    expect(screen.getByRole("button", { name: "Retry save" })).toBeVisible();
+  });
+
+  it("rejects action props for loading and immutable resolved history at compile time", () => {
+    // @ts-expect-error Loading is guidance-only and cannot receive an action.
+    const invalidLoadingProps: import("./system-state").SystemStateProps = {
+      state: "loading",
+      action: { kind: "retry_save" as const, onClick: () => undefined },
+    };
+    // @ts-expect-error Resolved history is immutable and cannot receive an action.
+    const invalidResolvedProps: import("./system-state").SystemStateProps = {
+      state: "resolved_read_only",
+      action: { kind: "retry_save" as const, onClick: () => undefined },
+    };
+
+    expect(invalidLoadingProps.state).toBe("loading");
+    expect(invalidResolvedProps.state).toBe("resolved_read_only");
+  });
+
+  it("keeps guidance and ignores runtime action overrides for loading and resolved history", () => {
+    const unsafeAction = {
+      kind: "reopen_event",
+      label: "Reopen event",
+      onClick: () => undefined,
+    };
+
+    render(
+      <>
+        <SystemState {...({ state: "loading", action: unsafeAction } as unknown as import("./system-state").SystemStateProps)} />
+        <SystemState {...({ state: "resolved_read_only", action: unsafeAction } as unknown as import("./system-state").SystemStateProps)} />
+      </>,
+    );
+
+    expect(screen.getByText(SYSTEM_STATE_CATALOG.loading.nextAction)).toBeVisible();
+    expect(screen.getByText(SYSTEM_STATE_CATALOG.resolved_read_only.nextAction)).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Reopen event" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Reopen event")).not.toBeInTheDocument();
+  });
+
+  it("uses a unique stable heading id for each identical state instance", () => {
+    render(
+      <>
+        <SystemState state="loading" />
+        <SystemState state="loading" />
+      </>,
+    );
+
+    const headings = screen.getAllByRole("heading", { name: "Loading" });
+    expect(headings).toHaveLength(2);
+    expect(headings[0]).toHaveAttribute("id");
+    expect(headings[1]).toHaveAttribute("id");
+    expect(headings[0].id).not.toBe(headings[1].id);
+    expect(headings[0].closest("article")).toHaveAttribute("aria-labelledby", headings[0].id);
+    expect(headings[1].closest("article")).toHaveAttribute("aria-labelledby", headings[1].id);
   });
 
   it("renders lifecycle immutability and recurrence as separate work", () => {
@@ -130,6 +184,9 @@ describe("SystemState catalog", () => {
     expect(stateStyles).toMatch(/font-size:\s*(?:var\(--ac-font-size-(?:body|metadata|label)\)|(?:12|13|14)px)/);
     expect(stateStyles).toContain("@media (forced-colors: active)");
     expect(stateStyles).toMatch(/overflow-wrap:\s*anywhere/);
+    expect(stateStyles).toMatch(/\.nextAction button\s*\{[\s\S]*display:\s*inline-flex/);
+    expect(stateStyles).toMatch(/\.nextAction button\s*\{[\s\S]*min-height:\s*44px/);
+    expect(stateStyles).toMatch(/\.nextAction button\s*\{[\s\S]*padding:\s*var\(--ac-space-2\) var\(--ac-space-3\)/);
     render(<SystemState state="possible_multi_person" />);
     expect(screen.getByRole("heading", { name: /possible multi-person/i })).toBeVisible();
   });

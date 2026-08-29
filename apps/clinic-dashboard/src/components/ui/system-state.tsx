@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 
 import styles from "./system-state.module.css";
 
@@ -286,15 +286,27 @@ export const SYSTEM_STATE_CATALOG = {
 } satisfies CompleteSystemStateCatalog;
 
 export type SystemStateAction =
-  | Readonly<{ label: string; href: string }>
-  | Readonly<{ label: string; onClick: () => void }>;
+  | Readonly<{ kind: "retry_save"; onClick: () => void }>
+  | Readonly<{ kind: "reload_record"; onClick: () => void }>
+  | Readonly<{ kind: "check_device"; onClick: () => void }>;
 
-export type SystemStateProps = Readonly<{
-  state: SystemStateKey;
-  action?: SystemStateAction;
+type SharedSystemStateProps = Readonly<{
   className?: string;
   idPrefix?: string;
 }>;
+
+type NonActionableSystemStateProps = SharedSystemStateProps & Readonly<{
+  state: Exclude<SystemStateKey, "save_failure" | "conflicting_update" | "device_offline">;
+  action?: never;
+}>;
+
+type ActionableSystemStateProps = SharedSystemStateProps & (
+  | Readonly<{ state: "save_failure"; action?: Extract<SystemStateAction, { kind: "retry_save" }> }>
+  | Readonly<{ state: "conflicting_update"; action?: Extract<SystemStateAction, { kind: "reload_record" }> }>
+  | Readonly<{ state: "device_offline"; action?: Extract<SystemStateAction, { kind: "check_device" }> }>
+);
+
+export type SystemStateProps = NonActionableSystemStateProps | ActionableSystemStateProps;
 
 function Fact({ label, children }: Readonly<{ label: string; children: ReactNode }>) {
   return (
@@ -307,8 +319,27 @@ function Fact({ label, children }: Readonly<{ label: string; children: ReactNode
 
 export function SystemState({ state, action, className, idPrefix = "system-state" }: SystemStateProps) {
   const definition = SYSTEM_STATE_CATALOG[state];
-  const headingId = `${idPrefix}-${state}`;
+  const instanceId = useId();
+  const headingId = `${idPrefix}-${state}-${instanceId.replaceAll(":", "")}`;
   const classes = [styles.state, className].filter(Boolean).join(" ");
+
+  const safeAction = (() => {
+    if (!action) return null;
+
+    if (state === "save_failure" && action.kind === "retry_save" && typeof action.onClick === "function") {
+      return { label: "Retry save", onClick: action.onClick };
+    }
+    if (state === "conflicting_update" && action.kind === "reload_record" && typeof action.onClick === "function") {
+      return { label: "Reload record", onClick: action.onClick };
+    }
+    if (state === "device_offline" && action.kind === "check_device" && typeof action.onClick === "function") {
+      return { label: "Check device connection", onClick: action.onClick };
+    }
+
+    // Runtime callers can still bypass TypeScript, so never render an action
+    // that is not explicitly allowed for this state.
+    return null;
+  })();
 
   return (
     <article
@@ -334,15 +365,10 @@ export function SystemState({ state, action, className, idPrefix = "system-state
       </dl>
       <div className={styles.nextAction}>
         <span>Allowed next action</span>
-        {action ? (
-          "href" in action ? (
-            <a href={action.href}>{action.label}</a>
-          ) : (
-            <button type="button" onClick={action.onClick}>{action.label}</button>
-          )
-        ) : (
-          <p>{definition.nextAction}</p>
-        )}
+        <p>{definition.nextAction}</p>
+        {safeAction ? (
+          <button type="button" onClick={safeAction.onClick}>{safeAction.label}</button>
+        ) : null}
       </div>
       {state === "loading" ? (
         <div className={styles.skeleton} data-testid="system-state-loading-skeleton" aria-hidden="true">

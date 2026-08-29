@@ -94,7 +94,6 @@
 
 .fact dd,
 .nextAction p,
-.nextAction a,
 .nextAction button {
   margin: 0;
   color: var(--ac-text-primary);
@@ -113,10 +112,14 @@
 
 .nextAction a,
 .nextAction button {
+  display: inline-flex;
+  align-items: center;
   width: fit-content;
   max-width: 100%;
-  padding: 0;
+  min-height: 44px;
+  padding: var(--ac-space-2) var(--ac-space-3);
   border: 0;
+  border-radius: var(--ac-radius-sm);
   color: var(--ac-action-hover);
   background: transparent;
   cursor: pointer;
@@ -124,9 +127,9 @@
   text-align: left;
   text-decoration: underline;
   text-underline-offset: 2px;
+  white-space: normal;
 }
 
-.nextAction a:focus-visible,
 .nextAction button:focus-visible {
   outline: 2px solid var(--ac-focus);
   outline-offset: 3px;
