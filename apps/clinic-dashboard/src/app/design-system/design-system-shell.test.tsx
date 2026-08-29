@@ -189,6 +189,49 @@ describe("DesignSystemShell", () => {
     expect(nav.scrollLeft).toBe(94);
   });
 
+  it("keeps the active link inside the usable nav area beside the More sections cue", () => {
+    renderShell();
+    const nav = setNavMetrics({ clientWidth: 390, scrollWidth: 780 });
+    nav.style.paddingRight = "128px";
+    vi.spyOn(nav, "getBoundingClientRect").mockReturnValue({
+      bottom: 44,
+      height: 44,
+      left: 0,
+      right: 390,
+      top: 0,
+      width: 390,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    const more = document.querySelector<HTMLButtonElement>("[data-design-system-more]");
+    if (!more) throw new Error("more sections cue is missing");
+    vi.spyOn(more, "getBoundingClientRect").mockReturnValue({
+      bottom: 44,
+      height: 44,
+      left: 262,
+      right: 390,
+      top: 0,
+      width: 128,
+      x: 262,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    fireEvent(window, new Event("resize"));
+    const navScrollTo = vi.fn();
+    Object.defineProperty(nav, "scrollTo", { configurable: true, value: navScrollTo });
+    const colorLink = screen.getByRole("link", { name: "Color" });
+    setLinkMetrics(colorLink, { left: 320, width: 96 });
+
+    fireEvent.click(colorLink);
+
+    const nextScrollLeft = navScrollTo.mock.calls[0]?.[0].left as number;
+    const usableWidth = nav.clientWidth - 128;
+    expect(nextScrollLeft).toBe(154);
+    expect(nextScrollLeft).toBeLessThanOrEqual(320);
+    expect(nextScrollLeft + usableWidth).toBeGreaterThanOrEqual(416);
+  });
+
   it("restores the first section and root scroll when history returns to an empty hash", () => {
     renderShell();
     const viewport = screen.getByRole("main").parentElement;

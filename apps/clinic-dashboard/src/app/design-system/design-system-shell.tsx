@@ -71,12 +71,20 @@ export function DesignSystemShell({ children }: Readonly<{ children: ReactNode }
       const linkWidth = linkRect.width > 0 ? linkRect.width : activeLink.offsetWidth;
       const linkRight = linkLeft + linkWidth;
       const visibleLeft = sectionNav.scrollLeft;
-      const visibleRight = visibleLeft + sectionNav.clientWidth;
+      const configuredPadding = typeof window.getComputedStyle === "function"
+        ? Number.parseFloat(window.getComputedStyle(sectionNav).paddingRight)
+        : 0;
+      const overlayWidth = moreSections && !moreSections.hidden
+        ? Math.max(0, navRect.right - moreSections.getBoundingClientRect().left)
+        : 0;
+      const reservedWidth = Math.max(configuredPadding || 0, overlayWidth);
+      const visibleWidth = Math.max(0, sectionNav.clientWidth - reservedWidth);
+      const visibleRight = visibleLeft + visibleWidth;
       const maxScroll = Math.max(0, sectionNav.scrollWidth - sectionNav.clientWidth);
       const targetLeft = linkLeft < visibleLeft
         ? linkLeft
         : linkRight > visibleRight
-          ? linkRight - sectionNav.clientWidth
+          ? linkRight - visibleWidth
           : visibleLeft;
       const nextScrollLeft = Math.min(Math.max(0, targetLeft), maxScroll);
       if (Math.abs(nextScrollLeft - sectionNav.scrollLeft) < 1) return;
