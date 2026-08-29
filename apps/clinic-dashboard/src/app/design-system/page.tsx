@@ -15,31 +15,31 @@ const sections = [
   ["09", "Care patterns"],
 ] as const;
 
-const paperColors = [
-  ["White", "Primary canvas", "paper0", "#FFFFFF"],
-  ["Mist 25", "Lifted surface", "paper50", "#FBFCFF"],
-  ["Mist 50", "Quiet canvas", "paper100", "#F4F7FC"],
-  ["Mist 200", "Light border", "paper200", "#DDE4EF"],
-  ["Ink 600", "Secondary copy", "ink600", "#536174"],
-  ["Ink 950", "Confident type", "ink950", "#111827"],
+const foundationColors = [
+  ["Canvas", "Page background", "App shell and section canvas", "canvasToken", "#FBFAF8"],
+  ["White", "Working surface", "Cards, forms, and tables", "paper0", "#FFFFFF"],
+  ["Mist 25", "Lifted surface", "Hover and quiet modules", "paper50", "#FBFCFF"],
+  ["Mist 50", "Cool support", "Informational section canvas", "paper100", "#F4F7FC"],
+  ["Mist 200", "Light border", "Card and table boundaries", "paper200", "#DDE4EF"],
+  ["Ink 600", "Secondary text", "Helper copy and metadata", "ink600", "#536174"],
+  ["Ink 950", "Primary text", "Headings and decisions", "ink950", "#111827"],
 ] as const;
 
 const brandColors = [
-  ["Cobalt 50", "Selected wash", "cobalt50", "#EEF4FF"],
-  ["Cobalt 100", "Quiet highlight", "cobalt100", "#DCE9FF"],
-  ["Sky 200", "Supporting signal", "sky200", "#A9D5FF"],
-  ["Sky 400", "Bright accent", "sky400", "#55ACFF"],
-  ["Cobalt 600", "Primary action", "cobalt600", "#175CD3"],
-  ["Cobalt 800", "Pressed action", "cobalt800", "#123E9A"],
+  ["Blue 50", "Selection wash", "Selected rows and active navigation", "cobalt50", "#EEF4FF"],
+  ["Blue 100", "Strong selection", "Focused information groups", "cobalt100", "#DCE9FF"],
+  ["Blue 600", "Brand and interaction", "Primary actions and focus", "cobalt600", "#175CD3"],
+  ["Blue 800", "Pressed interaction", "Pressed primary actions", "cobalt800", "#123E9A"],
+  ["Sky 400", "Informational accent", "Device and data information", "sky400", "#55ACFF"],
+  ["Violet 500", "Brand accent only", "Charts and brand moments, never severity", "violet500", "#7357D8"],
+  ["Mint 400", "Positive accent", "Positive highlights, not the healthy status", "mint400", "#76D6B1"],
 ] as const;
 
-const semanticColors = [
-  ["Mint", "Routine monitoring", "positive"],
-  ["Amber", "Review needed", "watch"],
-  ["Coral", "Resident escalation", "risk"],
-  ["Sky", "Device or data limitation", "device"],
-  ["Violet", "Visualization accent", "violet"],
-  ["Cool gray", "No current evidence", "unavailable"],
+const statusColors = [
+  ["Healthy green", "Operational healthy", "Online and current monitoring", "positive", "#147D5A"],
+  ["Warning amber", "Operational warning", "Limited coverage and review", "watch", "#A15C00"],
+  ["Critical red", "Resident risk", "High and critical resident attention", "risk", "#C53B30"],
+  ["Unavailable gray", "Operational unavailable", "Missing, stale, or unavailable data", "unavailable", "#526172"],
 ] as const;
 
 const spacing = [
@@ -132,7 +132,7 @@ export default function DesignSystemPage() {
             <span aria-hidden="true">AC</span>
             <strong>Adaptive Care</strong>
           </a>
-          <p>Clear Signal · Working system 02</p>
+          <p>Adaptive Care · Design System 02</p>
         </header>
 
         <div className={styles.pageGrid} id="top">
@@ -159,11 +159,16 @@ export default function DesignSystemPage() {
               <h1 id="page-title">Calm enough to scan.<br /><em>Precise enough to trust.</em></h1>
               <div className={styles.heroSignal} aria-hidden="true"><span /><span /><span /><span /></div>
               <div className={styles.heroFoot}>
-                <p>Adaptive Care helps staff separate resident attention, device health, data confidence, freshness, and workflow without turning a care floor into an alarm console.</p>
+                <div className={styles.heroCopy}>
+                  <p className={styles.heroCopyLabel}>Product rule</p>
+                  <p>Adaptive Care separates resident attention, device health, confidence, freshness, and workflow so staff can decide what to do next.</p>
+                  <p className={styles.heroTypeNote}>The brand can speak boldly here. Product UI typography stays compact and restrained.</p>
+                </div>
                 <dl>
-                  <div><dt>Mode</dt><dd>Clinic operations</dd></div>
-                  <div><dt>Direction</dt><dd>Clear Signal</dd></div>
-                  <div><dt>Access</dt><dd>WCAG 2.2 AA</dd></div>
+                  <div><dt>Product mode</dt><dd>Clinic operations</dd></div>
+                  <div><dt>Visual direction</dt><dd>Clear Signal</dd></div>
+                  <div><dt>Product type</dt><dd>Restrained Geist Sans</dd></div>
+                  <div><dt>Access floor</dt><dd>WCAG 2.2 AA</dd></div>
                 </dl>
               </div>
             </section>
@@ -179,34 +184,39 @@ export default function DesignSystemPage() {
 
             <Section number="02" title="Color" intro="Cobalt guides action. Supporting color stays explicit and useful.">
               <div className={styles.colorGroup}>
-                <SpecimenLabel>Canvas & ink</SpecimenLabel>
+                <SpecimenLabel>Foundation tokens</SpecimenLabel>
                 <div className={styles.swatchStrip}>
-                  {paperColors.map(([name, label, className, value]) => <div className={styles[className]} key={name}><strong>{name}</strong><span>{label}</span><code>{value}</code></div>)}
+                  {foundationColors.map(([name, role, use, className, value]) => <div className={styles[className]} key={name}><strong>{name}</strong><span>{role}</span><small>{use}</small><code>{value}</code></div>)}
                 </div>
               </div>
               <div className={styles.colorGroup}>
-                <SpecimenLabel>Cobalt & sky</SpecimenLabel>
+                <SpecimenLabel>Brand and supporting tokens</SpecimenLabel>
                 <div className={styles.swatchStrip}>
-                  {brandColors.map(([name, label, className, value]) => <div className={styles[className]} key={name}><strong>{name}</strong><span>{label}</span><code>{value}</code></div>)}
+                  {brandColors.map(([name, role, use, className, value]) => <div className={styles[className]} key={name}><strong>{name}</strong><span>{role}</span><small>{use}</small><code>{value}</code></div>)}
                 </div>
               </div>
               <div className={styles.colorGroup}>
-                <SpecimenLabel>Semantic families</SpecimenLabel>
+                <SpecimenLabel>Operational status tokens</SpecimenLabel>
                 <div className={styles.semanticStrip}>
-                  {semanticColors.map(([name, use, className]) => <div className={styles[className]} key={name}><strong>{name}</strong><span>{use}</span></div>)}
+                  {statusColors.map(([name, role, use, className, value]) => <div className={styles[className]} key={name}><strong>{name}</strong><span>{role}</span><small>{use}</small><code>{value}</code></div>)}
                 </div>
               </div>
-              <p className={styles.ruleNote}><strong>Color rule</strong> Coral means resident-risk escalation—not device failure, low confidence, or decoration.</p>
+              <p className={styles.ruleNote}><strong>Color rule</strong> Blue means brand or interaction. Sky means information. Violet is a brand accent and never severity. Green, amber, red, and gray carry operational status.</p>
             </Section>
 
             <Section number="03" title="Typography" intro="Compact, direct language built for repeated scanning.">
               <div className={styles.typeSpecimens}>
-                <div><p>Geist Sans · Display 32 / 38</p><strong className={styles.displayType}>Care, without the noise.</strong></div>
-                <div><p>Geist Sans · Page title 28 / 34</p><strong className={styles.pageTitleType}>Residents needing attention</strong></div>
-                <div><p>Geist Sans · Major heading 22 / 28</p><strong className={styles.majorType}>Morning care review</strong></div>
-                <div><p>Geist Sans · Record 15 / 21</p><strong className={styles.recordType}>Resident B · Room 214</strong></div>
-                <div><p>Geist Sans · Body 14 / 20</p><span className={styles.bodyType}>Monitoring is active. Latest room evidence was received 38 seconds ago.</span></div>
-                <div><p>Geist Mono · Reading 12 / 17</p><span className={styles.metaType}>AC-R214-B&nbsp;&nbsp; 08:42:18&nbsp;&nbsp; +00:38</span></div>
+                <div><p>Display · 32 / 38 · 650</p><strong className={styles.displayType}>Care, without the noise.</strong></div>
+                <div><p>Page title · 28 / 34 · 650</p><strong className={styles.pageTitleType}>Residents needing attention</strong></div>
+                <div><p>Major heading · 22 / 28 · 650</p><strong className={styles.majorType}>Morning care review</strong></div>
+                <div><p>Section heading · 18 / 24 · 650</p><strong className={styles.productSectionType}>Monitoring coverage</strong></div>
+                <div><p>Record title · 15 / 21 · 600</p><strong className={styles.recordType}>Resident B · Room 214</strong></div>
+                <div><p>Body · 14 / 20 · 400</p><span className={styles.bodyType}>Monitoring is active. Latest room evidence arrived 38 seconds ago.</span></div>
+                <div><p>Body strong · 14 / 20 · 550</p><strong className={styles.bodyStrongType}>Review the current evidence before resolving.</strong></div>
+                <div><p>Label · 13 / 18 · 550</p><span className={styles.labelType}>Assign care owner</span></div>
+                <div><p>Metadata · 12 / 17 · 450</p><span className={styles.metadataType}>Updated 08:42 · Synthetic record</span></div>
+                <div><p>Overline · 11 / 16 · 650</p><span className={styles.overlineType}>Resident attention</span></div>
+                <div><p>Mono reading · 12 / 17 · 500</p><span className={styles.metaType}>AC-R214-B&nbsp;&nbsp; 08:42:18&nbsp;&nbsp; +00:38</span></div>
               </div>
               <div className={styles.numericSpecimen}><span>Geist Mono · Operational readings</span><strong>08:42:18&nbsp;&nbsp; 12 MIN&nbsp;&nbsp; 04 / 06</strong><code>DEVICE AC-214-A<br />FRAME 00018472</code></div>
             </Section>
@@ -218,6 +228,12 @@ export default function DesignSystemPage() {
               <div className={styles.geometryGrid}>
                 <div><SpecimenLabel>Corner radius</SpecimenLabel><div className={styles.radiusRow}>{radii.map(([label, value, className]) => <div key={label}><span className={styles[className]} /><strong>{label}</strong><small>{value}</small></div>)}</div></div>
                 <div><SpecimenLabel>Depth</SpecimenLabel><div className={styles.depthRow}><div className={styles.borderSurface}>Base surface<span>Hairline border</span></div><div className={styles.overlaySurface}>Popover<span>Overlap shadow</span></div></div></div>
+              </div>
+              <div className={styles.layoutSpacing}>
+                <article><strong>24px</strong><span>Default card padding</span><small>Use 16px on narrow screens.</small></article>
+                <article><strong>16px</strong><span>Related component gap</span><small>Use 24px between major modules.</small></article>
+                <article><strong>32px</strong><span>Desktop page gutter</span><small>Reduce to 16px below 768px.</small></article>
+                <article><strong>96px</strong><span>Section spacing</span><small>Keep reference groups distinct.</small></article>
               </div>
             </Section>
 
@@ -236,6 +252,20 @@ export default function DesignSystemPage() {
                   <button className={styles.successButton} type="button"><CheckIcon />Saved</button>
                   <button className={styles.primaryButton} type="button" disabled>Resolve event</button>
                 </div>
+                <SpecimenLabel>Primary action states</SpecimenLabel>
+                <div className={styles.actionStates}>
+                  <div><span>Resting</span><button className={styles.primaryButton} type="button">Review resident</button></div>
+                  <div><span>Hover</span><button className={`${styles.primaryButton} ${styles.simulatedHover}`} type="button">Review resident</button></div>
+                  <div><span>Focus</span><button className={`${styles.primaryButton} ${styles.simulatedFocus}`} type="button">Review resident</button></div>
+                  <div><span>Disabled</span><button className={styles.primaryButton} type="button" disabled>Review resident</button></div>
+                </div>
+                <SpecimenLabel>Icon action states</SpecimenLabel>
+                <div className={styles.iconStates}>
+                  <div><span>Resting</span><button className={styles.iconButton} type="button" aria-label="More actions, resting"><MoreIcon /></button></div>
+                  <div><span>Hover</span><button className={`${styles.iconButton} ${styles.simulatedIconHover}`} type="button" aria-label="More actions, hover"><MoreIcon /></button></div>
+                  <div><span>Focus</span><button className={`${styles.iconButton} ${styles.simulatedFocus}`} type="button" aria-label="More actions, focus"><MoreIcon /></button></div>
+                  <div><span>Disabled</span><button className={styles.iconButton} type="button" aria-label="More actions, disabled" disabled><MoreIcon /></button></div>
+                </div>
               </div>
               <p className={styles.ruleNote}><strong>Action rule</strong> Disabled actions keep their label and explain the reason nearby. Loading never changes a button’s width.</p>
             </Section>
@@ -245,7 +275,12 @@ export default function DesignSystemPage() {
                 <div className={styles.fieldGroup}>
                   <label htmlFor="resident-search">Search residents</label>
                   <p id="resident-search-hint">Search by resident label or room.</p>
-                  <input id="resident-search" aria-describedby="resident-search-hint" placeholder="Example: Room 214" />
+                  <input id="resident-search" type="search" aria-describedby="resident-search-hint" placeholder="Example: Room 214" />
+                </div>
+                <div className={`${styles.fieldGroup} ${styles.focusField}`}>
+                  <label htmlFor="room-search-focus">Search focus state</label>
+                  <p id="room-search-focus-hint">Visible focus uses the blue interaction ring.</p>
+                  <input id="room-search-focus" aria-describedby="room-search-focus-hint" defaultValue="Room 214" />
                 </div>
                 <div className={styles.fieldGroup}>
                   <label htmlFor="owner">Assign care owner</label>
@@ -267,6 +302,13 @@ export default function DesignSystemPage() {
             </Section>
 
             <Section number="07" title="Status" intro="Five independent axes describe what is actually known.">
+              <div className={styles.operationalStates}>
+                <article className={styles.healthyState}><CheckIcon /><div><strong>Healthy</strong><p>Monitoring is online and current.</p></div></article>
+                <article className={styles.warningState}><span aria-hidden="true">!</span><div><strong>Warning</strong><p>Coverage is limited and needs review.</p></div></article>
+                <article className={styles.criticalState}><AlertIcon /><div><strong>Critical</strong><p>Resident attention leads the hierarchy.</p></div></article>
+                <article className={styles.unavailableState}><span aria-hidden="true">×</span><div><strong>Unavailable</strong><p>No current evidence can be shown.</p></div></article>
+              </div>
+              <p className={styles.ruleNote}><strong>Status rule</strong> Healthy, warning, critical, and unavailable are operational states. Resident risk, device health, confidence, freshness, and workflow remain separate facts.</p>
               <div className={styles.statusMatrix}>
                 <div className={styles.statusHeading}><span>Axis</span><span>Example</span><span>Meaning</span></div>
                 <div><strong>Resident risk</strong><span className={`${styles.statusTag} ${styles.riskTag}`}><AlertIcon /> High</span><p>Resident attention leads.</p></div>
@@ -278,21 +320,23 @@ export default function DesignSystemPage() {
               <div className={styles.inlineMessages}>
                 <p className={styles.positiveMessage}><CheckIcon /><span><strong>Monitoring active</strong>Current room evidence is available.</span></p>
                 <p className={styles.deviceMessage}><SignalIcon /><span><strong>Evidence delayed</strong>Last contact was 4 minutes ago.</span></p>
-                <p className={styles.unavailableMessage}><span aria-hidden="true">—</span><span><strong>Monitoring unavailable</strong>No current evidence can be shown.</span></p>
+                <p className={styles.unavailableMessage}><span aria-hidden="true">×</span><span><strong>Monitoring unavailable</strong>No current evidence can be shown.</span></p>
               </div>
             </Section>
 
             <Section number="08" title="Data" intro="Repeated records use tables. Missing values say what they mean.">
               <div className={styles.tableFrame}>
-                <div className={styles.tableToolbar}><div><h3>Resident inventory</h3><p>3 synthetic records</p></div><button className={styles.secondaryButton} type="button">Filter residents</button></div>
+                <div className={styles.tableToolbar}><div><h3>Resident inventory</h3><p>5 synthetic state specimens</p></div><button className={styles.secondaryButton} type="button">Filter residents</button></div>
                 <div className={styles.tableScroll}>
                   <table>
                     <caption>Example resident monitoring inventory</caption>
-                    <thead><tr><th scope="col">Resident</th><th scope="col">Monitoring</th><th scope="col">Confidence</th><th scope="col">Freshness</th><th scope="col" aria-label="Action" /></tr></thead>
+                    <thead><tr><th scope="col">Resident</th><th scope="col">Monitoring</th><th scope="col">Confidence</th><th scope="col">Freshness</th><th scope="col">Row state</th><th scope="col" aria-label="Action" /></tr></thead>
                     <tbody>
-                      <tr><th scope="row"><strong>Resident B</strong><span>Room 214</span></th><td><span className={`${styles.miniStatus} ${styles.positiveMini}`}>Active</span></td><td>High</td><td className={styles.numeric}>38 sec ago</td><td><button className={styles.textButton} type="button">Open</button></td></tr>
-                      <tr><th scope="row"><strong>Resident D</strong><span>Room 108</span></th><td><span className={`${styles.miniStatus} ${styles.watchMini}`}>Limited</span></td><td>Low</td><td className={styles.numeric}>4 min ago</td><td><button className={styles.textButton} type="button">Review</button></td></tr>
-                      <tr><th scope="row"><strong>Resident F</strong><span>Room 302</span></th><td><span className={`${styles.miniStatus} ${styles.unavailableMini}`}>Unavailable</span></td><td>Unavailable</td><td>Unknown</td><td><button className={styles.textButton} type="button">Inspect</button></td></tr>
+                      <tr className={styles.normalRow}><th scope="row"><strong>Resident A</strong><span>Room 102</span></th><td><span className={`${styles.miniStatus} ${styles.positiveMini}`}>Active</span></td><td>High</td><td className={styles.numeric}>22 sec ago</td><td><span className={styles.rowStateLabel}>Normal</span></td><td><button className={styles.textButton} type="button">Open</button></td></tr>
+                      <tr className={styles.hoverRow}><th scope="row"><strong>Resident B</strong><span>Room 214</span></th><td><span className={`${styles.miniStatus} ${styles.positiveMini}`}>Active</span></td><td>High</td><td className={styles.numeric}>38 sec ago</td><td><span className={styles.rowStateLabel}>Hover</span></td><td><button className={styles.textButton} type="button">Open</button></td></tr>
+                      <tr className={styles.selectedRow}><th scope="row"><strong>Resident C</strong><span>Room 220</span></th><td><span className={`${styles.miniStatus} ${styles.positiveMini}`}>Active</span></td><td>Medium</td><td className={styles.numeric}>51 sec ago</td><td><span className={styles.rowStateLabel}>Selected</span></td><td><button className={styles.textButton} type="button">Open</button></td></tr>
+                      <tr className={styles.warningRow}><th scope="row"><strong>Resident D</strong><span>Room 108</span></th><td><span className={`${styles.miniStatus} ${styles.watchMini}`}>Limited</span></td><td>Low</td><td className={styles.numeric}>4 min ago</td><td><span className={styles.rowStateLabel}>Warning</span></td><td><button className={styles.textButton} type="button">Review</button></td></tr>
+                      <tr className={styles.criticalRow}><th scope="row"><strong>Resident F</strong><span>Room 302</span></th><td><span className={`${styles.miniStatus} ${styles.riskMini}`}>Attention</span></td><td>Medium</td><td className={styles.numeric}>1 min ago</td><td><span className={styles.rowStateLabel}>Critical</span></td><td><button className={styles.textButton} type="button">Review</button></td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -301,6 +345,7 @@ export default function DesignSystemPage() {
             </Section>
 
             <Section number="09" title="Care patterns" intro="Operational components keep priority, truth, ownership, and action together.">
+              <SpecimenLabel>Attention queue item</SpecimenLabel>
               <div className={styles.attentionFrame}>
                 <div className={styles.attentionTop}><span className={`${styles.statusTag} ${styles.riskTag}`}><AlertIcon /> High resident risk</span><span className={styles.elapsed}>12 min open</span></div>
                 <div className={styles.attentionIdentity}><div><p>Resident B</p><h3>Unexpected movement needs review</h3><span>Room 214 · Synthetic scenario</span></div><button className={styles.primaryButton} type="button">Review resident</button></div>
@@ -312,9 +357,9 @@ export default function DesignSystemPage() {
                 </div>
               </div>
               <div className={styles.evidenceGrid}>
-                <article><span>01 · Deterministic warning</span><h3>Movement pattern changed from recent routine.</h3><p>This example is test-only and does not identify a medical cause.</p></article>
-                <article><span>02 · AI interpretation</span><h3>Possible room activity worth staff review.</h3><p>Interpretation is visually separate from sensor evidence and can be unavailable.</p></article>
-                <article><span>03 · Staff observation</span><h3>Resident was awake and asked for water.</h3><p>Recorded by Maya Chen at 08:47. Staff notes remain distinct and attributable.</p></article>
+                <article><span>Resident status</span><h3>Monitoring active</h3><p>High confidence. Latest evidence arrived 38 seconds ago.</p><small>Keep risk, confidence, and freshness separate.</small></article>
+                <article><span>Device status</span><h3>Room unit online</h3><p>Radar, thermal, and Wi-Fi sources are reporting.</p><small>Device health uses information or operational status, never resident-risk red.</small></article>
+                <article><span>Alert hierarchy</span><ol className={styles.alertHierarchy}><li><b>1</b> Critical resident risk</li><li><b>2</b> Warning or overdue work</li><li><b>3</b> Device and data limits</li></ol><small>This synthetic example does not identify a medical cause.</small></article>
               </div>
               <footer className={styles.pageFooter}><span>Adaptive Care · Clear Signal working system 02</span><a href="#top">Back to top ↑</a></footer>
             </Section>

@@ -39,11 +39,38 @@ export function DesignSystemShell({ children }: Readonly<{ children: ReactNode }
       scrollToHash(hash, "auto");
     };
 
+    const sectionLinks = Array.from(
+      pageRoot?.querySelectorAll<HTMLAnchorElement>('aside nav a[href^="#section-"]') ?? [],
+    );
+    const setActiveSection = (sectionId: string) => {
+      sectionLinks.forEach((link) => {
+        const active = link.getAttribute("href") === `#${sectionId}`;
+        if (active) link.setAttribute("aria-current", "true");
+        else link.removeAttribute("aria-current");
+      });
+    };
+    setActiveSection("section-01");
+
+    const sectionObserver = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        const current = visible[0]?.target as HTMLElement | undefined;
+        if (current) setActiveSection(current.id);
+      },
+      { root: pageRoot, rootMargin: "-18% 0px -72% 0px", threshold: 0 },
+    );
+    pageRoot?.querySelectorAll<HTMLElement>("section[id^='section-']").forEach((section) => {
+      sectionObserver.observe(section);
+    });
+
     pageRoot?.addEventListener("click", handleAnchorClick);
     if (window.location.hash) requestAnimationFrame(() => scrollToHash(window.location.hash, "auto"));
 
     return () => {
       pageRoot?.removeEventListener("click", handleAnchorClick);
+      sectionObserver.disconnect();
       hiddenElements.forEach((element) => {
         element.inert = false;
         element.removeAttribute("aria-hidden");
