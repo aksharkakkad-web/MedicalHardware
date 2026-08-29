@@ -449,3 +449,165 @@
   .statusAxisCard,
   .statusComposite { border: 1px solid CanvasText; }
 }
+
+@media print {
+  @page {
+    margin: 0.55in;
+    size: letter;
+  }
+
+  .viewport {
+    position: static;
+    inset: auto;
+    z-index: auto;
+    width: auto;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    overflow-x: visible;
+    overflow-y: visible;
+    scroll-behavior: auto;
+    scroll-snap-type: none;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .viewport,
+  .viewport * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .canvas,
+  .pageGrid,
+  .content {
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .skipLink,
+  .index,
+  .moreSections,
+  .indexFade {
+    display: none !important;
+  }
+
+  .masthead {
+    min-height: 0;
+    padding: 14px 0 12px;
+    break-after: avoid;
+  }
+
+  .hero {
+    min-height: 0;
+    padding: 42px 0 44px;
+    break-inside: avoid;
+  }
+
+  .hero h1 {
+    font-size: 72px;
+  }
+
+  .section {
+    break-inside: auto;
+  }
+
+  .section + .section {
+    break-before: page;
+  }
+
+  .sectionHeader {
+    padding: 32px 0 18px;
+    break-after: avoid;
+    break-inside: avoid;
+  }
+
+  .sectionBody {
+    padding: 0 0 42px;
+  }
+
+  .principles article,
+  .swatchStrip > div,
+  .semanticStrip > div,
+  .typeSpecimens > div,
+  .spacingGrid > div,
+  .radiusRow > div,
+  .depthRow > div,
+  .layoutSpacing article,
+  .controlStage,
+  .formStage,
+  .statusAxisCard,
+  .statusComposite,
+  .evidenceStack article,
+  .evidenceGrid article,
+  .content [data-attention-item],
+  .content [data-system-state],
+  .content [data-lifecycle-state],
+  .content [data-testid="resident-records-mobile"] > *,
+  .content table tr,
+  .content button,
+  .content a,
+  .content input,
+  .content select,
+  .content textarea,
+  .content details {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .statusAxisValues > *,
+  .statusCompositeValues > *,
+  .content [data-attention-item] [data-axis] {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* The records component defaults to cards until its desktop media query;
+     keep the compact table as the print representation at any page width. */
+  .content [data-testid="resident-records-mobile"] {
+    display: none !important;
+  }
+
+  .content div:has(> table) {
+    display: block !important;
+  }
+
+  .content :focus,
+  .content :focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  .content * {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .content [data-button-progress="visible"] {
+    visibility: hidden !important;
+  }
+
+  .simulatedHover {
+    color: var(--signal-text-inverse) !important;
+    background: var(--signal-action) !important;
+  }
+
+  .simulatedIconHover {
+    border-color: var(--signal-border-subtle) !important;
+    color: var(--signal-text-secondary) !important;
+    background: var(--signal-surface) !important;
+  }
+
+  .simulatedFocus {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  .pageFooter {
+    break-inside: avoid;
+  }
+
+  .content a::after {
+    content: none !important;
+  }
+}
