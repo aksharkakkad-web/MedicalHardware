@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode, SVGProps } from "react";
 
+import { StatusIndicator } from "../../components/ui/status-indicator";
 import { DesignSystemShell } from "./design-system-shell";
 import styles from "./page.module.css";
 
@@ -32,14 +33,14 @@ const brandColors = [
   ["Blue 800", "Pressed interaction", "Pressed primary actions", "cobalt800", "#123E9A"],
   ["Sky 400", "Informational accent", "Device and data information", "sky400", "#55ACFF"],
   ["Violet 500", "Brand accent only", "Charts and brand moments, never severity", "violet500", "#7357D8"],
-  ["Mint 400", "Positive accent", "Positive highlights, not the healthy status", "mint400", "#76D6B1"],
+  ["Mint 400", "Positive accent", "Positive highlights, not device health", "mint400", "#76D6B1"],
 ] as const;
 
 const statusColors = [
-  ["Healthy green", "Operational healthy", "Online and current monitoring", "positive", "#147D5A"],
-  ["Warning amber", "Operational warning", "Limited coverage and review", "watch", "#A15C00"],
-  ["Critical red", "Resident risk", "High and critical resident attention", "risk", "#C53B30"],
-  ["Unavailable gray", "Operational unavailable", "Missing, stale, or unavailable data", "unavailable", "#526172"],
+  ["Positive green", "Operationally positive", "Current monitoring and resolved workflow", "positive", "#147D5A"],
+  ["Watch amber", "Review support", "Limited coverage or investigation", "watch", "#A15C00"],
+  ["Risk red", "Resident attention", "Critical or high attention priority", "risk", "#C53B30"],
+  ["Unavailable gray", "Evidence limitation", "Missing, stale, or unavailable evidence", "unavailable", "#526172"],
 ] as const;
 
 const spacing = [
@@ -93,23 +94,6 @@ function CheckIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
       <path d="m5 10.4 3.1 3.1L15.4 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function AlertIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
-      <path d="M10 3.2 17 16H3L10 3.2Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-      <path d="M10 7.5v3.8M10 14.1v.1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function SignalIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
-      <path d="M4 14.5v1.2M8 11v4.7M12 7.5v8.2M16 4v11.7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
 }
@@ -213,7 +197,7 @@ export default function DesignSystemPage() {
                 <div><p>Record title · 15 / 21 · 600</p><strong className={styles.recordType}>Resident B · Room 214</strong></div>
                 <div><p>Body · 14 / 20 · 400</p><span className={styles.bodyType}>Monitoring is active. Latest room evidence arrived 38 seconds ago.</span></div>
                 <div><p>Body strong · 14 / 20 · 550</p><strong className={styles.bodyStrongType}>Review the current evidence before resolving.</strong></div>
-                <div><p>Label · 13 / 18 · 550</p><span className={styles.labelType}>Assign care owner</span></div>
+                <div><p>Label · 13 / 18 · 550</p><span className={styles.labelType}>Workflow state</span></div>
                 <div><p>Metadata · 12 / 17 · 450</p><span className={styles.metadataType}>Updated 08:42 · Synthetic record</span></div>
                 <div><p>Overline · 11 / 16 · 650</p><span className={styles.overlineType}>Resident attention</span></div>
                 <div><p>Mono reading · 12 / 17 · 500</p><span className={styles.metaType}>AC-R214-B&nbsp;&nbsp; 08:42:18&nbsp;&nbsp; +00:38</span></div>
@@ -242,7 +226,7 @@ export default function DesignSystemPage() {
                 <SpecimenLabel>Button hierarchy</SpecimenLabel>
                 <div className={styles.buttonRow}>
                   <button className={styles.primaryButton} type="button">Review resident</button>
-                  <button className={styles.secondaryButton} type="button">Assign to me</button>
+                  <button className={styles.secondaryButton} type="button">Acknowledge</button>
                   <button className={styles.ghostButton} type="button">View history</button>
                   <button className={styles.destructiveButton} type="button">Remove device</button>
                   <button className={styles.iconButton} type="button" aria-label="More actions"><MoreIcon /></button>
@@ -283,15 +267,15 @@ export default function DesignSystemPage() {
                   <input id="room-search-focus" aria-describedby="room-search-focus-hint" defaultValue="Room 214" />
                 </div>
                 <div className={styles.fieldGroup}>
-                  <label htmlFor="owner">Assign care owner</label>
-                  <select id="owner" defaultValue="maya"><option value="maya">Maya Chen</option><option value="jon">Jon Bell</option></select>
+                  <label htmlFor="workflow-state">Workflow state</label>
+                  <select id="workflow-state" defaultValue="acknowledged"><option value="new">New</option><option value="acknowledged">Acknowledged</option><option value="investigating">Investigating</option><option value="resolved">Resolved</option></select>
                 </div>
                 <fieldset className={styles.fieldset}>
                   <legend>Follow-up timing</legend>
                   <label><input type="radio" name="follow-up" defaultChecked /> This round</label>
                   <label><input type="radio" name="follow-up" /> Next round</label>
                 </fieldset>
-                <label className={styles.checkbox}><input type="checkbox" defaultChecked /><span>Notify the assigned staff member</span></label>
+                <label className={styles.checkbox}><input type="checkbox" defaultChecked /><span>Record staff observation pending review</span></label>
                 <div className={`${styles.fieldGroup} ${styles.errorField}`}>
                   <label htmlFor="care-note">Care note <span>Required</span></label>
                   <textarea id="care-note" aria-invalid="true" aria-describedby="care-note-error" defaultValue="Resident checked." />
@@ -301,26 +285,84 @@ export default function DesignSystemPage() {
               </form>
             </Section>
 
-            <Section number="07" title="Status" intro="Five independent axes describe what is actually known.">
-              <div className={styles.operationalStates}>
-                <article className={styles.healthyState}><CheckIcon /><div><strong>Healthy</strong><p>Monitoring is online and current.</p></div></article>
-                <article className={styles.warningState}><span aria-hidden="true">!</span><div><strong>Warning</strong><p>Coverage is limited and needs review.</p></div></article>
-                <article className={styles.criticalState}><AlertIcon /><div><strong>Critical</strong><p>Resident attention leads the hierarchy.</p></div></article>
-                <article className={styles.unavailableState}><span aria-hidden="true">×</span><div><strong>Unavailable</strong><p>No current evidence can be shown.</p></div></article>
+            <Section number="07" title="Status" intro="Six independent axes describe what is known, what is limited, and what staff should do next.">
+              <p className={styles.ruleNote}><strong>Status rule</strong> Attention, monitoring, confidence, freshness, device, and workflow are separate facts. Their colors support the written meaning; they never replace it.</p>
+              <div className={styles.statusAxisCatalog}>
+                <article className={styles.statusAxisCard}>
+                  <div className={styles.statusAxisHeader}><h3>Attention</h3><p>Resident-facing priority and caregiver urgency.</p></div>
+                  <div className={styles.statusAxisValues}>
+                    <StatusIndicator axis="attention" value="critical" />
+                    <StatusIndicator axis="attention" value="high" />
+                    <StatusIndicator axis="attention" value="watch" />
+                    <StatusIndicator axis="attention" value="none" />
+                  </div>
+                </article>
+                <article className={styles.statusAxisCard}>
+                  <div className={styles.statusAxisHeader}><h3>Monitoring</h3><p>Whether resident attribution is usable.</p></div>
+                  <div className={styles.statusAxisValues}>
+                    <StatusIndicator axis="monitoring" value="active" />
+                    <StatusIndicator axis="monitoring" value="away" />
+                    <StatusIndicator axis="monitoring" value="possible_multi_person" />
+                    <StatusIndicator axis="monitoring" value="paused" />
+                    <StatusIndicator axis="monitoring" value="calibrating" />
+                    <StatusIndicator axis="monitoring" value="unavailable" />
+                  </div>
+                </article>
+                <article className={styles.statusAxisCard}>
+                  <div className={styles.statusAxisHeader}><h3>Confidence</h3><p>Evidence quality and attribution certainty.</p></div>
+                  <div className={styles.statusAxisValues}>
+                    <StatusIndicator axis="confidence" value="high" />
+                    <StatusIndicator axis="confidence" value="medium" />
+                    <StatusIndicator axis="confidence" value="low" />
+                    <StatusIndicator axis="confidence" value="unavailable" />
+                  </div>
+                </article>
+                <article className={styles.statusAxisCard}>
+                  <div className={styles.statusAxisHeader}><h3>Freshness</h3><p>When evidence was last current; last-known values are not live.</p></div>
+                  <div className={styles.statusAxisValues}>
+                    <StatusIndicator axis="freshness" value="current" />
+                    <StatusIndicator axis="freshness" value="delayed" />
+                    <StatusIndicator axis="freshness" value="stale" lastCurrentUpdate="08:42:18" />
+                    <StatusIndicator axis="freshness" value="unknown" />
+                  </div>
+                </article>
+                <article className={styles.statusAxisCard}>
+                  <div className={styles.statusAxisHeader}><h3>Device</h3><p>Room-unit and source health, not resident status.</p></div>
+                  <div className={styles.statusAxisValues}>
+                    <StatusIndicator axis="device" value="healthy" />
+                    <StatusIndicator axis="device" value="degraded" />
+                    <StatusIndicator axis="device" value="offline" />
+                    <StatusIndicator axis="device" value="maintenance" />
+                  </div>
+                </article>
+                <article className={styles.statusAxisCard}>
+                  <div className={styles.statusAxisHeader}><h3>Workflow</h3><p>Work lifecycle; resolved history remains immutable.</p></div>
+                  <div className={styles.statusAxisValues}>
+                    <StatusIndicator axis="workflow" value="new" />
+                    <StatusIndicator axis="workflow" value="acknowledged" />
+                    <StatusIndicator axis="workflow" value="investigating" />
+                    <StatusIndicator axis="workflow" value="resolved" />
+                  </div>
+                </article>
               </div>
-              <p className={styles.ruleNote}><strong>Status rule</strong> Healthy, warning, critical, and unavailable are operational states. Resident risk, device health, confidence, freshness, and workflow remain separate facts.</p>
-              <div className={styles.statusMatrix}>
-                <div className={styles.statusHeading}><span>Axis</span><span>Example</span><span>Meaning</span></div>
-                <div><strong>Resident risk</strong><span className={`${styles.statusTag} ${styles.riskTag}`}><AlertIcon /> High</span><p>Resident attention leads.</p></div>
-                <div><strong>Monitoring</strong><span className={`${styles.statusTag} ${styles.watchTag}`}>◐ Limited</span><p>Coverage is reduced.</p></div>
-                <div><strong>Data confidence</strong><span className={`${styles.statusTag} ${styles.deviceTag}`}>? Low</span><p>Occupancy is unclear.</p></div>
-                <div><strong>Device health</strong><span className={`${styles.statusTag} ${styles.unavailableTag}`}><SignalIcon /> Offline</span><p>Room unit has no contact.</p></div>
-                <div><strong>Workflow</strong><span className={`${styles.statusTag} ${styles.actionTag}`}>● Assigned</span><p>Maya Chen owns the check.</p></div>
+              <div className={styles.statusComposite}>
+                <div className={styles.statusCompositeHeader}><div><SpecimenLabel>Composite example · synthetic/test-only</SpecimenLabel><h3>Independent facts can coexist</h3></div><span className={styles.statusCompositeCode}>NO SINGLE SCORE</span></div>
+                <div className={styles.statusCompositeValues}>
+                  <StatusIndicator axis="attention" value="high" />
+                  <StatusIndicator axis="monitoring" value="active" />
+                  <StatusIndicator axis="confidence" value="low" />
+                  <StatusIndicator axis="freshness" value="stale" lastCurrentUpdate="08:42:18" />
+                  <StatusIndicator axis="device" value="offline" />
+                  <StatusIndicator axis="workflow" value="investigating" />
+                </div>
+                <p className={styles.statusCompositeExplanation}><strong>Next action:</strong> Review the event and device connection. These statuses are separate facts; do not treat a stale, offline signal as resident-specific without current supporting evidence.</p>
               </div>
-              <div className={styles.inlineMessages}>
-                <p className={styles.positiveMessage}><CheckIcon /><span><strong>Monitoring active</strong>Current room evidence is available.</span></p>
-                <p className={styles.deviceMessage}><SignalIcon /><span><strong>Evidence delayed</strong>Last contact was 4 minutes ago.</span></p>
-                <p className={styles.unavailableMessage}><span aria-hidden="true">×</span><span><strong>Monitoring unavailable</strong>No current evidence can be shown.</span></p>
+              <div className={styles.evidenceStack}>
+                <div className={styles.evidenceStackHeader}><SpecimenLabel>Evidence truth stack · synthetic/test-only</SpecimenLabel><p>Each layer has a different source and responsibility.</p></div>
+                <article><span>01 · Sensor evidence</span><h3>Observed input and data quality</h3><p>Synthetic/test-only example: room telemetry, source contact, and timestamps are observed inputs. They are not a medical conclusion.</p></article>
+                <article><span>02 · Deterministic warning</span><h3>Rule-based warning</h3><p>Synthetic/test-only rule output stays visible and cannot be suppressed by AI. Staff review the evidence and policy context.</p></article>
+                <article><span>03 · AI interpretation</span><h3>Possible interpretation</h3><p>Plain-language interpretation of structured evidence only; it is never a diagnosis and cannot invent facts.</p></article>
+                <article><span>04 · Staff observation</span><h3>Human-entered context</h3><p>Record what staff observed or checked. This context supports workflow and does not rewrite immutable history.</p></article>
               </div>
             </Section>
 
@@ -332,11 +374,11 @@ export default function DesignSystemPage() {
                     <caption>Example resident monitoring inventory</caption>
                     <thead><tr><th scope="col">Resident</th><th scope="col">Monitoring</th><th scope="col">Confidence</th><th scope="col">Freshness</th><th scope="col">Row state</th><th scope="col" aria-label="Action" /></tr></thead>
                     <tbody>
-                      <tr className={styles.normalRow}><th scope="row"><strong>Resident A</strong><span>Room 102</span></th><td><span className={`${styles.miniStatus} ${styles.positiveMini}`}>Active</span></td><td>High</td><td className={styles.numeric}>22 sec ago</td><td><span className={styles.rowStateLabel}>Normal</span></td><td><button className={styles.textButton} type="button">Open</button></td></tr>
-                      <tr className={styles.hoverRow}><th scope="row"><strong>Resident B</strong><span>Room 214</span></th><td><span className={`${styles.miniStatus} ${styles.positiveMini}`}>Active</span></td><td>High</td><td className={styles.numeric}>38 sec ago</td><td><span className={styles.rowStateLabel}>Hover</span></td><td><button className={styles.textButton} type="button">Open</button></td></tr>
-                      <tr className={styles.selectedRow}><th scope="row"><strong>Resident C</strong><span>Room 220</span></th><td><span className={`${styles.miniStatus} ${styles.positiveMini}`}>Active</span></td><td>Medium</td><td className={styles.numeric}>51 sec ago</td><td><span className={styles.rowStateLabel}>Selected</span></td><td><button className={styles.textButton} type="button">Open</button></td></tr>
-                      <tr className={styles.warningRow}><th scope="row"><strong>Resident D</strong><span>Room 108</span></th><td><span className={`${styles.miniStatus} ${styles.watchMini}`}>Limited</span></td><td>Low</td><td className={styles.numeric}>4 min ago</td><td><span className={styles.rowStateLabel}>Warning</span></td><td><button className={styles.textButton} type="button">Review</button></td></tr>
-                      <tr className={styles.criticalRow}><th scope="row"><strong>Resident F</strong><span>Room 302</span></th><td><span className={`${styles.miniStatus} ${styles.riskMini}`}>Attention</span></td><td>Medium</td><td className={styles.numeric}>1 min ago</td><td><span className={styles.rowStateLabel}>Critical</span></td><td><button className={styles.textButton} type="button">Review</button></td></tr>
+                      <tr className={styles.normalRow}><th scope="row"><strong>Resident A</strong><span>Room 102</span></th><td><span className={`${styles.miniStatus} ${styles.positiveMini}`}>Monitoring current</span></td><td>High</td><td className={styles.numeric}>22 sec ago</td><td><span className={styles.rowStateLabel}>Current</span></td><td><button className={styles.textButton} type="button">Open</button></td></tr>
+                      <tr className={styles.hoverRow}><th scope="row"><strong>Resident B</strong><span>Room 214</span></th><td><span className={`${styles.miniStatus} ${styles.positiveMini}`}>Monitoring current</span></td><td>High</td><td className={styles.numeric}>38 sec ago</td><td><span className={styles.rowStateLabel}>Hover</span></td><td><button className={styles.textButton} type="button">Open</button></td></tr>
+                      <tr className={styles.selectedRow}><th scope="row"><strong>Resident C</strong><span>Room 220</span></th><td><span className={`${styles.miniStatus} ${styles.positiveMini}`}>Monitoring current</span></td><td>Medium</td><td className={styles.numeric}>51 sec ago</td><td><span className={styles.rowStateLabel}>Selected</span></td><td><button className={styles.textButton} type="button">Open</button></td></tr>
+                      <tr className={styles.warningRow}><th scope="row"><strong>Resident D</strong><span>Room 108</span></th><td><span className={`${styles.miniStatus} ${styles.watchMini}`}>Monitoring away</span></td><td>Low</td><td className={styles.numeric}>4 min ago</td><td><span className={styles.rowStateLabel}>Review</span></td><td><button className={styles.textButton} type="button">Review</button></td></tr>
+                      <tr className={styles.criticalRow}><th scope="row"><strong>Resident F</strong><span>Room 302</span></th><td><span className={`${styles.miniStatus} ${styles.riskMini}`}>High attention priority</span></td><td>Medium</td><td className={styles.numeric}>1 min ago</td><td><span className={styles.rowStateLabel}>High priority</span></td><td><button className={styles.textButton} type="button">Review</button></td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -344,22 +386,22 @@ export default function DesignSystemPage() {
               <div className={styles.stateRow}><div><strong>No active events</strong><p>The queue is clear. Monitoring continues.</p></div><div><strong>No filtered results</strong><p>Try removing a filter.</p><button className={styles.textButton} type="button">Clear filters</button></div><div><strong>Couldn’t refresh</strong><p>Showing data from 08:38.</p><button className={styles.textButton} type="button">Retry</button></div></div>
             </Section>
 
-            <Section number="09" title="Care patterns" intro="Operational components keep priority, truth, ownership, and action together.">
+            <Section number="09" title="Care patterns" intro="Operational components keep priority, truth, workflow, and action together.">
               <SpecimenLabel>Attention queue item</SpecimenLabel>
               <div className={styles.attentionFrame}>
-                <div className={styles.attentionTop}><span className={`${styles.statusTag} ${styles.riskTag}`}><AlertIcon /> High resident risk</span><span className={styles.elapsed}>12 min open</span></div>
+                <div className={styles.attentionTop}><StatusIndicator axis="attention" value="high" /><span className={styles.elapsed}>12 min open</span></div>
                 <div className={styles.attentionIdentity}><div><p>Resident B</p><h3>Unexpected movement needs review</h3><span>Room 214 · Synthetic scenario</span></div><button className={styles.primaryButton} type="button">Review resident</button></div>
                 <div className={styles.truthGrid}>
                   <dl><dt>Confidence</dt><dd><strong>Low</strong><span>Occupancy is unclear</span></dd></dl>
                   <dl><dt>Freshness</dt><dd><strong>Current</strong><span>38 seconds ago</span></dd></dl>
                   <dl><dt>Device</dt><dd><strong>Online</strong><span>3 sources reporting</span></dd></dl>
-                  <dl><dt>Workflow</dt><dd><strong>Assigned</strong><span>Maya Chen</span></dd></dl>
+                  <dl><dt>Workflow</dt><dd><strong>Investigating</strong><span>Review is in progress</span></dd></dl>
                 </div>
               </div>
               <div className={styles.evidenceGrid}>
                 <article><span>Resident status</span><h3>Monitoring active</h3><p>High confidence. Latest evidence arrived 38 seconds ago.</p><small>Keep risk, confidence, and freshness separate.</small></article>
-                <article><span>Device status</span><h3>Room unit online</h3><p>Radar, thermal, and Wi-Fi sources are reporting.</p><small>Device health uses information or operational status, never resident-risk red.</small></article>
-                <article><span>Alert hierarchy</span><ol className={styles.alertHierarchy}><li><b>1</b> Critical resident risk</li><li><b>2</b> Warning or overdue work</li><li><b>3</b> Device and data limits</li></ol><small>This synthetic example does not identify a medical cause.</small></article>
+                <article><span>Device status</span><h3>Healthy device</h3><p>Radar, thermal, and Wi-Fi sources are reporting.</p><small>Device health is separate from resident attention and confidence.</small></article>
+                <article><span>Attention hierarchy</span><ol className={styles.alertHierarchy}><li><b>1</b> High attention priority</li><li><b>2</b> Review workflow state</li><li><b>3</b> Device and data limits</li></ol><small>This synthetic example does not identify a medical cause.</small></article>
               </div>
               <footer className={styles.pageFooter}><span>Adaptive Care · Clear Signal V3.0</span><a href="#top">Back to top ↑</a></footer>
             </Section>
