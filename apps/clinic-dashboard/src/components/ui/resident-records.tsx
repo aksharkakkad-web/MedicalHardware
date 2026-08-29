@@ -1,10 +1,12 @@
-import { StatusIndicator, type StatusValue } from "./status-indicator";
+import { getStatusAxisLabel, getStatusLabel, StatusIndicator, type StatusValue } from "./status-indicator";
 
 import styles from "./resident-records.module.css";
 
+export type ResidentInteraction = "hover" | "selected";
+
 export type ResidentRecord = Readonly<{
   id: string;
-  selected?: boolean;
+  interaction?: ResidentInteraction;
   residentName: string;
   room: string;
   attentionReason: string;
@@ -55,7 +57,7 @@ function ResidentAction({ record }: Readonly<{ record: ResidentRecord }>) {
 function DeviceDetails({ record }: Readonly<{ record: ResidentRecord }>) {
   return (
     <details className={styles.deviceDetails}>
-      <summary>Device details</summary>
+      <summary>Device details for {record.residentName}</summary>
       <div>
         <StatusIndicator axis="device" value={record.device} />
         <p>{record.deviceDetails}</p>
@@ -76,23 +78,32 @@ function ResidentIdentity({ record }: Readonly<{ record: ResidentRecord }>) {
   );
 }
 
-function compactValueLabel(value: string) {
-  if (value === "none") return "No attention priority";
-  if (value === "possible_multi_person") return "Possible multi-person";
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
+type CompactStatusProps =
+  | Readonly<{ axis: "attention"; value: StatusValue<"attention">; detail?: string }>
+  | Readonly<{ axis: "monitoring"; value: StatusValue<"monitoring">; detail?: string }>
+  | Readonly<{ axis: "confidence"; value: StatusValue<"confidence">; detail?: string }>
+  | Readonly<{ axis: "freshness"; value: StatusValue<"freshness">; detail?: string }>
+  | Readonly<{ axis: "device"; value: StatusValue<"device">; detail?: string }>
+  | Readonly<{ axis: "workflow"; value: StatusValue<"workflow">; detail?: string }>;
 
-function CompactStatus({ axis, value, detail }: Readonly<{ axis: string; value: string; detail?: string }>) {
-  const label = compactValueLabel(value);
-  const accessibleLabel = detail ? `${axis}: ${label}; ${detail}` : `${axis}: ${label}`;
+function CompactStatus(props: CompactStatusProps) {
+  const label = getStatusLabel(props);
+  const { axis, value, detail } = props;
+  const axisLabel = getStatusAxisLabel(axis);
+  const accessibleLabel = detail ? `${axisLabel}: ${label}; ${detail}` : `${axisLabel}: ${label}`;
 
   return (
-    <span className={styles.compactStatus} data-axis={axis.toLowerCase()} data-value={value} aria-label={accessibleLabel}>
-      <span>{axis}</span>
+    <span className={styles.compactStatus} data-axis={axis} data-value={value} aria-label={accessibleLabel}>
+      <span>{axisLabel}</span>
       <strong>{label}</strong>
       {detail ? <small>{detail}</small> : null}
     </span>
   );
+}
+
+function InteractionCue({ interaction }: Readonly<{ interaction?: ResidentInteraction }>) {
+  if (!interaction) return null;
+  return <span className={styles.selectedCue}>{interaction === "hover" ? "Hover example" : "Selected record"}</span>;
 }
 
 function RecordEvidence({ record }: Readonly<{ record: ResidentRecord }>) {
@@ -113,9 +124,9 @@ function RecordEvidence({ record }: Readonly<{ record: ResidentRecord }>) {
 
 function MobileRecord({ record }: Readonly<{ record: ResidentRecord }>) {
   return (
-    <article className={styles.recordCard} data-interaction={record.selected ? "selected" : undefined}>
+    <article className={styles.recordCard} data-interaction={record.interaction} aria-label={`${record.residentName}, ${record.room}`}>
       <ResidentIdentity record={record} />
-      {record.selected ? <span className={styles.selectedCue}>Selected record</span> : null}
+      <InteractionCue interaction={record.interaction} />
       <div className={styles.attentionReason} data-attention-reason>
         <span>Attention reason</span>
         <p>{record.attentionReason}</p>
@@ -149,31 +160,31 @@ function DesktopTable({ records }: ResidentRecordsProps) {
         </thead>
         <tbody>
           {records.map((record) => (
-            <tr key={record.id} data-interaction={record.selected ? "selected" : undefined} aria-selected={record.selected || undefined}>
+            <tr key={record.id} data-interaction={record.interaction}>
               <th className={styles.residentColumn} scope="row">
                 <ResidentIdentity record={record} />
                 <div className={styles.tableResidentReason}>
                   <span>Attention reason</span>
                   <p>{record.attentionReason}</p>
                 </div>
-                {record.selected ? <span className={styles.selectedCue}>Selected record</span> : null}
+                <InteractionCue interaction={record.interaction} />
               </th>
-              <td className={styles.attentionColumn}><CompactStatus axis="Attention" value={record.attention} /></td>
+              <td className={styles.attentionColumn}><CompactStatus axis="attention" value={record.attention} /></td>
               <td className={styles.evidenceColumn}>
                 <div className={styles.compactGroup}>
-                  <CompactStatus axis="Confidence" value={record.confidence} />
-                  <CompactStatus axis="Freshness" value={record.freshness.value} detail={record.freshness.value === "stale" && record.freshness.lastCurrentUpdate ? `last current update ${record.freshness.lastCurrentUpdate}` : undefined} />
+                  <CompactStatus axis="confidence" value={record.confidence} />
+                  <CompactStatus axis="freshness" value={record.freshness.value} detail={record.freshness.value === "stale" && record.freshness.lastCurrentUpdate ? `last current update ${record.freshness.lastCurrentUpdate}` : undefined} />
                 </div>
               </td>
               <td className={styles.operationsColumn}>
                 <div className={styles.compactGroup}>
                   <CompactStatus
-                    axis="Monitoring"
+                    axis="monitoring"
                     value={record.monitoring}
                     detail={record.monitoring === "possible_multi_person" ? "Resident attribution unavailable; do not guess which resident caused this signal." : undefined}
                   />
-                  <CompactStatus axis="Device" value={record.device} />
-                  <CompactStatus axis="Workflow" value={record.workflow} />
+                  <CompactStatus axis="device" value={record.device} />
+                  <CompactStatus axis="workflow" value={record.workflow} />
                 </div>
               </td>
               <td className={styles.actionColumn}><ResidentAction record={record} /></td>

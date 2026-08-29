@@ -44,7 +44,7 @@ export type StatusIndicatorProps =
   | NonFreshnessStatusIndicatorProps
   | FreshnessStatusIndicatorProps;
 
-const axisLabels: Record<StatusAxis, string> = {
+export const statusAxisLabels: Record<StatusAxis, string> = {
   attention: "Attention",
   monitoring: "Monitoring",
   confidence: "Confidence",
@@ -53,7 +53,11 @@ const axisLabels: Record<StatusAxis, string> = {
   workflow: "Workflow",
 };
 
-const valueLabels: { [Axis in StatusAxis]: Record<StatusValue<Axis>, string> } = {
+export function getStatusAxisLabel(axis: StatusAxis): string {
+  return statusAxisLabels[axis];
+}
+
+export const statusValueLabels: { [Axis in StatusAxis]: Record<StatusValue<Axis>, string> } = {
   attention: {
     critical: "Critical attention priority",
     high: "High attention priority",
@@ -159,20 +163,14 @@ function getDescription(props: StatusIndicatorProps): string {
   }
 }
 
-function getLabel(props: StatusIndicatorProps): string {
+export function getStatusLabel(props: StatusIndicatorProps): string {
   switch (props.axis) {
-    case "attention":
-      return valueLabels.attention[props.value];
-    case "monitoring":
-      return valueLabels.monitoring[props.value];
-    case "confidence":
-      return valueLabels.confidence[props.value];
-    case "freshness":
-      return valueLabels.freshness[props.value];
-    case "device":
-      return valueLabels.device[props.value];
-    case "workflow":
-      return valueLabels.workflow[props.value];
+    case "attention": return statusValueLabels.attention[props.value];
+    case "monitoring": return statusValueLabels.monitoring[props.value];
+    case "confidence": return statusValueLabels.confidence[props.value];
+    case "freshness": return statusValueLabels.freshness[props.value];
+    case "device": return statusValueLabels.device[props.value];
+    case "workflow": return statusValueLabels.workflow[props.value];
   }
 }
 
@@ -180,7 +178,7 @@ export function StatusIndicator(props: StatusIndicatorProps) {
   const { announce = false, axis, value, className } = props;
   const id = useId();
   const descriptionId = `${id}-description`;
-  const label = getLabel(props);
+  const label = getStatusLabel(props);
   const description = getDescription(props);
   const semanticTreatment = axis === "attention" && value === "none" ? "neutral" : undefined;
 
@@ -191,12 +189,12 @@ export function StatusIndicator(props: StatusIndicatorProps) {
       data-value={value}
       data-semantic={semanticTreatment}
       role={announce ? "status" : undefined}
-      aria-label={`${axisLabels[axis]}: ${label}`}
+      aria-label={`${getStatusAxisLabel(axis)}: ${label}`}
       aria-describedby={descriptionId}
     >
       <span className={styles.marker} aria-hidden="true" />
       <span className={styles.content}>
-        <span className={styles.axis}>{axisLabels[axis]}</span>
+        <span className={styles.axis}>{getStatusAxisLabel(axis)}</span>
         <span className={styles.label}>
           {label}
         </span>

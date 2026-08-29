@@ -53,6 +53,10 @@
   background: var(--ac-surface-hover);
 }
 
+.desktopTable tbody tr[data-interaction="hover"] {
+  background: var(--ac-surface-hover);
+}
+
 .recordIdentity {
   display: grid;
   gap: var(--ac-space-0-5);
@@ -197,11 +201,19 @@
   box-shadow: inset 3px 0 0 var(--ac-action), var(--ac-shadow-card);
 }
 
+.recordCard[data-interaction="hover"] {
+  background: var(--ac-surface-hover);
+}
+
 .recordCard .selectedCue {
+  min-width: 0;
+  overflow-wrap: anywhere;
   color: var(--ac-action-hover);
 }
 
 .recordCard .recordIdentity {
+  min-width: 0;
+  overflow-wrap: anywhere;
   padding-bottom: var(--ac-space-3);
   border-bottom: 1px solid var(--ac-border-subtle);
 }
@@ -213,6 +225,8 @@
 .attentionReason {
   display: grid;
   gap: var(--ac-space-1);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .attentionReason > span {
@@ -232,33 +246,43 @@
 .attentionPriority,
 .workflow {
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .attentionPriority .indicator,
 .workflow .indicator,
-.evidence .indicator {
+.evidence .indicator,
+.deviceDetails .indicator {
   width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .evidence {
   display: grid;
   gap: var(--ac-space-2);
   min-width: 0;
+  overflow-wrap: anywhere;
   padding: var(--ac-space-3) 0;
   border-block: 1px solid var(--ac-border-subtle);
 }
 
 .deviceDetails {
+  min-width: 0;
+  overflow-wrap: anywhere;
   color: var(--ac-text-secondary);
   font-size: var(--ac-font-size-metadata);
 }
 
 .deviceDetails summary {
+  min-width: 0;
   min-height: 44px;
   align-content: center;
   color: var(--ac-action-hover);
   cursor: pointer;
   font-weight: 650;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .deviceDetails > div {
@@ -266,6 +290,7 @@
   gap: var(--ac-space-1);
   padding: var(--ac-space-2) 0 var(--ac-space-1);
   line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .deviceDetails .indicator {
@@ -274,6 +299,13 @@
 
 .deviceDetails time {
   font-family: var(--ac-font-mono);
+}
+
+.recordCard .primaryAction {
+  width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .visuallyHidden {

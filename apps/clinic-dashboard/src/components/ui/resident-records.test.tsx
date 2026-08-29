@@ -3,11 +3,12 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { ResidentRecords, type ResidentRecord } from "./resident-records";
+import { getStatusAxisLabel, getStatusLabel } from "./status-indicator";
 
 const records: ResidentRecord[] = [
   {
     id: "avery-chen",
-    selected: true,
+    interaction: "selected",
     residentName: "Avery Chen",
     room: "Room 214",
     attentionReason: "Unexpected movement needs review",
@@ -66,7 +67,7 @@ describe("ResidentRecords", () => {
     expect(within(table).getAllByRole("columnheader")).toHaveLength(5);
     expect(within(table).getAllByRole("link", { name: /for Avery Chen/i })).toHaveLength(1);
     const selectedRow = within(table).getAllByRole("row")[1];
-    expect(selectedRow).toHaveAttribute("aria-selected", "true");
+    expect(selectedRow).not.toHaveAttribute("aria-selected");
     expect(selectedRow).toHaveTextContent("Selected record");
     expect(within(selectedRow).getByRole("link", { name: /for Avery Chen/i })).toBeInTheDocument();
   });
@@ -79,6 +80,33 @@ describe("ResidentRecords", () => {
     expect(css).not.toMatch(/\.desktopTable\s*\{[^}]*overflow-x\s*:\s*auto/);
     expect(css).not.toMatch(/\.desktopTable\s+table\s*\{[^}]*min-width\s*:\s*980px/);
     expect(css).toMatch(/\.actionColumn/);
+    expect(css).toMatch(/\.recordCard \.recordIdentity[^}]*min-width:\s*0/);
+    expect(css).toMatch(/\.recordCard \.primaryAction[^}]*white-space:\s*normal/);
+    expect(css).toMatch(/\.evidence \.indicator[^}]*overflow-wrap:\s*anywhere/);
+    expect(css).toMatch(/\.deviceDetails summary[^}]*white-space:\s*normal/);
+  });
+
+  it("uses canonical StatusIndicator labels in compact table cells", () => {
+    expect(getStatusLabel({ axis: "attention", value: "high" })).toBe("High attention priority");
+    expect(getStatusLabel({ axis: "monitoring", value: "active" })).toBe("Monitoring active");
+    expect(getStatusLabel({ axis: "confidence", value: "unavailable" })).toBe("Confidence unavailable");
+
+    render(<ResidentRecords records={records} />);
+    const table = screen.getByRole("table", { name: /synthetic resident monitoring records/i });
+    expect(table).toHaveTextContent("High");
+    expect(table).toHaveTextContent("Monitoring");
+    expect(table).toHaveTextContent("Confidence");
+    expect(within(table).getByLabelText(`${getStatusAxisLabel("attention")}: ${getStatusLabel({ axis: "attention", value: "high" })}`)).toBeInTheDocument();
+  });
+
+  it("names each mobile disclosure for its resident", () => {
+    render(<ResidentRecords records={records} />);
+
+    const summaries = within(screen.getByTestId("resident-records-mobile")).getAllByText(/Device details for/i);
+    expect(summaries).toHaveLength(records.length);
+    records.forEach((record) => {
+      expect(screen.getByText(`Device details for ${record.residentName}`)).toBeInTheDocument();
+    });
   });
 
   it("shows the attribution limitation in the desktop Operations cell", () => {
@@ -89,7 +117,7 @@ describe("ResidentRecords", () => {
     expect(samRow).toBeDefined();
     expect(samRow).toHaveTextContent("Resident attribution unavailable");
     expect(samRow).toHaveTextContent(/do not guess/i);
-    expect(within(samRow as HTMLElement).getByLabelText(/monitoring: possible multi-person; resident attribution unavailable/i)).toBeInTheDocument();
+    expect(within(samRow as HTMLElement).getByLabelText(/monitoring: monitoring possible multi-person; resident attribution unavailable/i)).toBeInTheDocument();
   });
 
   it("keeps mobile record facts in the required reading order and discloses device details last", () => {
@@ -98,6 +126,9 @@ describe("ResidentRecords", () => {
     const mobileList = screen.getByTestId("resident-records-mobile");
     const cards = within(mobileList).getAllByRole("article");
     expect(cards).toHaveLength(records.length);
+    records.forEach((record) => {
+      expect(within(mobileList).getByRole("article", { name: `${record.residentName}, ${record.room}` })).toBeInTheDocument();
+    });
 
     cards.forEach((card) => {
       const orderedParts = [

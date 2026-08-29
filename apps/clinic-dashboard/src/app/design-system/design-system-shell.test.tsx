@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DesignSystemShell } from "./design-system-shell";
@@ -202,7 +202,18 @@ describe("DesignSystemShell", () => {
 
     expect(screen.getByRole("button", { name: /saving change/i })).toBeDisabled();
     expect(screen.getByText("Saved")).not.toHaveAttribute("role", "status");
+    const residentTable = screen.getByRole("table", { name: /synthetic resident monitoring records/i });
+    expect(within(residentTable).getAllByRole("row")).toHaveLength(6);
+    expect(screen.getAllByText("Hover example")).toHaveLength(2);
     expect(screen.getAllByText("Selected record")).toHaveLength(2);
+    expect(within(residentTable).getAllByText("Selected record")).toHaveLength(1);
+    const residentRows = within(residentTable).getAllByRole("row").slice(1);
+    expect(residentRows[1]).toHaveAttribute("data-interaction", "hover");
+    expect(residentRows[2]).toHaveAttribute("data-interaction", "selected");
+    expect(residentRows[3]).not.toHaveAttribute("data-interaction");
+    expect(residentRows[3]).toHaveTextContent("Watch attention priority");
+    expect(residentRows[4]).not.toHaveAttribute("data-interaction");
+    expect(residentRows[4]).toHaveTextContent("Critical attention priority");
     expect(Array.from(document.querySelectorAll("button")).every((button) => button.type === "button")).toBe(true);
   });
 });
