@@ -10,7 +10,8 @@
   top: 0;
   z-index: 20;
   display: flex;
-  height: 100svh;
+  height: 100%;
+  min-height: 100svh;
   flex-direction: column;
   padding: 1.5rem 1rem 1.15rem;
   border-right: 1px solid #e2e0dc;
@@ -207,6 +208,7 @@
     z-index: 50;
     width: 100%;
     height: auto;
+    min-height: 0;
     padding: 0.45rem max(0.8rem, env(safe-area-inset-right)) 0.45rem max(0.8rem, env(safe-area-inset-left));
     border: 1px solid var(--color-border);
     border-width: 0 0 1px;
