@@ -306,7 +306,6 @@
 .controlStage,
 .formStage { padding: var(--signal-space-10); border: 1px solid var(--signal-border-subtle); border-radius: var(--signal-radius-popover); background: var(--signal-surface); box-shadow: var(--signal-shadow-card); }
 .buttonRow { display: flex; flex-wrap: wrap; gap: var(--signal-space-3); margin-top: var(--signal-space-4); }
-.successButton,
 .successButton { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: var(--signal-space-2); padding: var(--signal-space-2) var(--signal-space-4); border: 1px solid var(--signal-positive-border); border-radius: var(--signal-radius-control); color: var(--signal-positive-text); background: var(--signal-positive-bg); cursor: default; font-size: 13px; font-weight: 600; }
 .successButton svg { width: 18px; }
 .controlStage > .specimenLabel { margin-top: var(--signal-space-10); }
@@ -319,7 +318,6 @@
 .simulatedHover { background: var(--signal-action-hover); }
 .simulatedIconHover { border-color: var(--signal-action-border); color: var(--signal-action); background: var(--signal-action-soft); }
 .simulatedFocus { outline: 2px solid var(--signal-focus); outline-offset: 2px; }
-@keyframes spin { to { transform: rotate(360deg); } }
 
 .formStage { display: grid; grid-template-columns: 1fr 1fr; gap: var(--signal-space-6); }
 .fieldset label,

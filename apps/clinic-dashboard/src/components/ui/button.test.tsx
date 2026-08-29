@@ -28,6 +28,20 @@ describe("Button", () => {
     expect(button).not.toHaveAttribute("aria-live");
   });
 
+  it("keeps an explicit accessible name when pending replaces JSX children", () => {
+    render(
+      <Button pending pendingLabel="Saving change" aria-label="Save change">
+        <span>Save change</span>
+      </Button>,
+    );
+
+    const button = screen.getByRole("button", { name: "Save change" });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute("aria-label", "Save change");
+    expect(button).toHaveAttribute("aria-busy", "true");
+    expect(button).toHaveTextContent("Saving change");
+  });
+
   it("honors disabled without changing the visible label", () => {
     render(<Button disabled>Resolve event</Button>);
 
