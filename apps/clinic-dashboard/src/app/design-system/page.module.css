@@ -306,64 +306,27 @@
 .controlStage,
 .formStage { padding: var(--signal-space-10); border: 1px solid var(--signal-border-subtle); border-radius: var(--signal-radius-popover); background: var(--signal-surface); box-shadow: var(--signal-shadow-card); }
 .buttonRow { display: flex; flex-wrap: wrap; gap: var(--signal-space-3); margin-top: var(--signal-space-4); }
-.primaryButton,
-.secondaryButton,
-.ghostButton,
-.destructiveButton,
-.loadingButton,
 .successButton,
-.iconButton { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: var(--signal-space-2); padding: var(--signal-space-2) var(--signal-space-4); border: 1px solid transparent; border-radius: var(--signal-radius-control); cursor: pointer; font-size: 13px; font-weight: 600; transition: color var(--signal-duration-fast) var(--signal-ease-standard), background-color var(--signal-duration-fast) var(--signal-ease-standard), border-color var(--signal-duration-fast) var(--signal-ease-standard); }
-.primaryButton,
-.loadingButton { color: var(--signal-text-inverse); background: var(--signal-action); }
-.primaryButton:hover,
-.loadingButton:hover { background: var(--signal-action-hover); }
-.primaryButton:active { background: var(--signal-action-pressed); }
-.secondaryButton { border-color: var(--signal-border-strong); color: var(--signal-text-primary); background: var(--signal-surface); }
-.secondaryButton:hover { border-color: var(--signal-border-interactive); background: var(--signal-surface-hover); }
-.ghostButton { color: var(--signal-text-strong-secondary); background: transparent; }
-.ghostButton:hover { background: var(--signal-surface-hover); }
-.destructiveButton { border-color: var(--signal-risk-border); color: var(--signal-risk-text); background: var(--signal-risk-bg); }
-.destructiveButton:hover { color: var(--signal-risk-strong); }
-.successButton { border-color: var(--signal-positive-border); color: var(--signal-positive-text); background: var(--signal-positive-bg); cursor: default; }
+.successButton { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: var(--signal-space-2); padding: var(--signal-space-2) var(--signal-space-4); border: 1px solid var(--signal-positive-border); border-radius: var(--signal-radius-control); color: var(--signal-positive-text); background: var(--signal-positive-bg); cursor: default; font-size: 13px; font-weight: 600; }
 .successButton svg { width: 18px; }
-.iconButton { width: 44px; height: 44px; flex: 0 0 44px; padding: 0; border-color: var(--signal-border-subtle); color: var(--signal-text-secondary); background: var(--signal-surface); }
-.iconButton:hover { border-color: var(--signal-action-border); color: var(--signal-action); background: var(--signal-action-soft); }
-.iconButton svg { width: 18px; height: 18px; }
-.loadingButton > span { width: 14px; height: 14px; border: 2px solid var(--signal-action-border); border-top-color: var(--signal-text-inverse); border-radius: var(--signal-radius-pill); animation: spin 800ms linear infinite; }
-.primaryButton:disabled,
-.loadingButton:disabled { color: var(--signal-text-disabled); background: var(--signal-surface-quiet); cursor: not-allowed; }
-.iconButton:disabled { color: var(--signal-text-disabled); background: var(--signal-surface-quiet); cursor: not-allowed; }
 .controlStage > .specimenLabel { margin-top: var(--signal-space-10); }
 .actionStates,
 .iconStates { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--signal-space-3); margin-top: var(--signal-space-4); }
 .actionStates > div,
 .iconStates > div { display: grid; justify-items: start; gap: var(--signal-space-3); padding: var(--signal-space-4); border-radius: var(--signal-radius-card); background: var(--signal-surface-raised); }
-.actionStates span,
-.iconStates span { color: var(--signal-text-secondary); font-family: var(--ac-font-mono); font-size: 10px; letter-spacing: .04em; text-transform: uppercase; }
+.actionStates > div > span,
+.iconStates > div > span { color: var(--signal-text-secondary); font-family: var(--ac-font-mono); font-size: 10px; letter-spacing: .04em; text-transform: uppercase; }
 .simulatedHover { background: var(--signal-action-hover); }
 .simulatedIconHover { border-color: var(--signal-action-border); color: var(--signal-action); background: var(--signal-action-soft); }
 .simulatedFocus { outline: 2px solid var(--signal-focus); outline-offset: 2px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .formStage { display: grid; grid-template-columns: 1fr 1fr; gap: var(--signal-space-6); }
-.fieldGroup { display: grid; align-content: start; gap: var(--signal-space-1-5); }
-.fieldGroup label,
-.fieldset legend { color: var(--signal-text-primary); font-size: 13px; font-weight: 600; line-height: 18px; }
-.fieldGroup label span { color: var(--signal-text-secondary); font-size: 11px; font-weight: 450; }
-.fieldGroup > p { color: var(--signal-text-secondary); font-size: 12px; line-height: 17px; }
-.fieldGroup input,
-.fieldGroup select,
-.fieldGroup textarea { width: 100%; min-height: 40px; padding: var(--signal-space-2) var(--signal-space-3); border: 1px solid var(--signal-border-interactive); border-radius: var(--signal-radius-control); color: var(--signal-text-primary); background: var(--signal-surface); font-size: 14px; }
-.fieldGroup textarea { min-height: 92px; resize: vertical; }
-.fieldset { display: flex; flex-wrap: wrap; gap: var(--signal-space-4); padding: 0; border: 0; }
-.fieldset legend { width: 100%; margin-bottom: var(--signal-space-2); }
 .fieldset label,
 .checkbox { display: flex; min-height: 40px; align-items: center; gap: var(--signal-space-2); font-size: 13px; }
 .fieldset input,
 .checkbox input { width: 18px; height: 18px; accent-color: var(--signal-action); }
-.errorField textarea { border-color: var(--signal-risk-text); }
-.errorField p:last-child { color: var(--signal-risk-text); }
-.focusField input { border-color: var(--signal-action); outline: 2px solid var(--signal-focus); outline-offset: 2px; }
+.focusField .control { border-color: var(--signal-action); outline: 2px solid var(--signal-focus); outline-offset: 2px; }
 .formStage > button { align-self: end; justify-self: start; }
 
 .statusAxisCatalog { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--signal-space-4); margin-top: var(--signal-space-8); }
@@ -391,7 +354,6 @@
 .evidenceStack h3 { margin-top: var(--signal-space-5); font-size: 14px; line-height: 20px; }
 .evidenceStack article p { margin-top: var(--signal-space-2); color: var(--signal-text-secondary); font-size: 12px; line-height: 18px; }
 
-.elapsed { font-family: var(--ac-font-mono); font-variant-numeric: tabular-nums lining-nums; }
 .textButton { min-height: 44px; padding: var(--signal-space-1) var(--signal-space-2); border: 0; border-radius: var(--signal-radius-sm); color: var(--signal-action-hover); background: transparent; cursor: pointer; font-size: 13px; font-weight: 600; }
 .textButton:hover { background: var(--signal-action-soft); }
 .stateRow { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--signal-space-4); margin-top: var(--signal-space-6); }
@@ -400,22 +362,6 @@
 .stateRow p { max-width: 220px; margin-top: var(--signal-space-2); color: var(--signal-text-secondary); font-size: 12px; line-height: 18px; }
 .stateRow .textButton { margin-top: var(--signal-space-2); padding-left: 0; }
 
-.attentionFrame { overflow: hidden; border: 1px solid var(--signal-border-subtle); border-radius: var(--signal-radius-popover); background: var(--signal-surface); box-shadow: var(--signal-shadow-card); }
-.attentionTop { display: flex; align-items: center; justify-content: space-between; gap: var(--signal-space-4); padding: var(--signal-space-4) var(--signal-space-5); border-bottom: 1px solid var(--signal-border-subtle); }
-.elapsed { color: var(--signal-text-secondary); font-size: 12px; }
-.attentionIdentity { display: flex; align-items: center; justify-content: space-between; gap: var(--signal-space-8); padding: var(--signal-space-10) var(--signal-space-6); }
-.attentionIdentity p { color: var(--signal-text-secondary); font-size: 12px; font-weight: 600; }
-.attentionIdentity h3 { margin-top: var(--signal-space-1); font-size: clamp(19px, 2.5vw, 26px); line-height: 1.2; letter-spacing: -.02em; }
-.attentionIdentity span { display: block; margin-top: var(--signal-space-2); color: var(--signal-text-secondary); font-size: 12px; }
-.truthGrid { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--signal-border-subtle); }
-.truthGrid dl { padding: var(--signal-space-5); }
-.truthGrid dl + dl { border-left: 1px solid var(--signal-border-subtle); }
-.truthGrid dt { color: var(--signal-text-secondary); font-size: 11px; font-weight: 650; letter-spacing: .05em; text-transform: uppercase; }
-.truthGrid dd { margin-top: var(--signal-space-2); }
-.truthGrid dd strong,
-.truthGrid dd span { display: block; }
-.truthGrid dd strong { font-size: 13px; }
-.truthGrid dd span { margin-top: var(--signal-space-1); color: var(--signal-text-secondary); font-size: 11px; line-height: 16px; }
 .evidenceGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--signal-space-4); margin-top: var(--signal-space-6); }
 .evidenceGrid article { padding: var(--signal-space-6); border: 1px solid var(--signal-border-subtle); border-radius: var(--signal-radius-card); background: var(--signal-surface); box-shadow: var(--signal-shadow-card); }
 .evidenceGrid article + article { border-left: 1px solid var(--signal-border-subtle); }
@@ -484,20 +430,12 @@
   .formStage { padding: var(--signal-space-5); }
   .buttonRow { align-items: stretch; }
   .buttonRow > button { flex: 1 1 140px; }
-  .buttonRow > .iconButton { flex: 0 0 44px; }
   .formStage { grid-template-columns: 1fr; }
   .formStage > button { width: 100%; }
-  .fieldGroup input,
-  .fieldGroup select { min-height: 44px; }
   .fieldset label,
   .checkbox { min-height: 44px; }
   .fieldset input,
   .checkbox input { width: 20px; height: 20px; }
-  .attentionIdentity { align-items: stretch; flex-direction: column; }
-  .attentionIdentity button { width: 100%; }
-  .truthGrid { grid-template-columns: repeat(2, 1fr); }
-  .truthGrid dl:nth-child(3) { border-left: 0; border-top: 1px solid var(--signal-border-subtle); }
-  .truthGrid dl:nth-child(4) { border-top: 1px solid var(--signal-border-subtle); }
   .pageFooter { align-items: flex-start; flex-direction: column; }
 }
 
@@ -507,12 +445,10 @@
   .heroFoot > p { font-size: 14px; line-height: 22px; }
   .swatchStrip { grid-template-columns: repeat(2, 1fr); }
   .radiusRow { grid-template-columns: repeat(2, 1fr); }
-  .attentionTop { align-items: flex-start; flex-direction: column; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .viewport { scroll-behavior: auto; }
-  .loadingButton > span { animation: none; }
 }
 
 @media (forced-colors: active) {

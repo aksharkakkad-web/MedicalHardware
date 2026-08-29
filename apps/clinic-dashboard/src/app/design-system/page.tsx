@@ -1,5 +1,8 @@
 import type { CSSProperties, ReactNode, SVGProps } from "react";
 
+import { AttentionItem, type AttentionRecord } from "../../components/ui/attention-item";
+import { Button, IconButton } from "../../components/ui/button";
+import { FormField, FormFieldset } from "../../components/ui/form-field";
 import { ResidentRecords, type ResidentRecord } from "../../components/ui/resident-records";
 import { StatusIndicator } from "../../components/ui/status-indicator";
 import { DesignSystemShell } from "./design-system-shell";
@@ -141,6 +144,23 @@ const residentRecords: ResidentRecord[] = [
     lastObserved: "1 minute ago",
   },
 ];
+
+const attentionRecord: AttentionRecord = {
+  id: "resident-b-room-214",
+  residentName: "Resident B",
+  room: "Room 214",
+  attentionReason: "Unexpected movement needs review",
+  attention: "high",
+  monitoring: "active",
+  confidence: "low",
+  freshness: { value: "current" },
+  device: "healthy",
+  workflow: "investigating",
+  elapsed: "12 min open",
+  observedContext: "Synthetic/test-only example. Review the available evidence before deciding what to do next.",
+  deviceDetails: "Radar, thermal, and Wi-Fi CSI sources are reporting.",
+  primaryAction: { label: "Review resident", href: "#section-08" },
+};
 
 function Section({
   number,
@@ -321,31 +341,31 @@ export default function DesignSystemPage() {
               <div className={styles.controlStage}>
                 <SpecimenLabel>Button hierarchy</SpecimenLabel>
                 <div className={styles.buttonRow}>
-                  <button className={styles.primaryButton} type="button">Review resident</button>
-                  <button className={styles.secondaryButton} type="button">Acknowledge</button>
-                  <button className={styles.ghostButton} type="button">View history</button>
-                  <button className={styles.destructiveButton} type="button">Remove device</button>
-                  <button className={styles.iconButton} type="button" aria-label="More actions"><MoreIcon /></button>
+                  <Button variant="primary">Review resident</Button>
+                  <Button variant="secondary">Acknowledge</Button>
+                  <Button variant="quiet">View history</Button>
+                  <Button variant="danger">Remove device</Button>
+                  <IconButton aria-label="More actions"><MoreIcon /></IconButton>
                 </div>
                 <SpecimenLabel>Loading and success specimens</SpecimenLabel>
                 <div className={styles.buttonRow}>
-                  <button className={styles.loadingButton} type="button" aria-busy="true" disabled><span aria-hidden="true" />Saving change</button>
+                  <Button pending pendingLabel="Saving change">Saving change</Button>
                   <span className={styles.successButton}><CheckIcon />Saved</span>
-                  <button className={styles.primaryButton} type="button" disabled>Resolve event</button>
+                  <Button disabled>Resolve event</Button>
                 </div>
                 <SpecimenLabel>Primary action states</SpecimenLabel>
                 <div className={styles.actionStates}>
-                  <div><span>Resting</span><button className={styles.primaryButton} type="button">Review resident</button></div>
-                  <div><span>Hover</span><button className={`${styles.primaryButton} ${styles.simulatedHover}`} type="button">Review resident</button></div>
-                  <div><span>Focus</span><button className={`${styles.primaryButton} ${styles.simulatedFocus}`} type="button">Review resident</button></div>
-                  <div><span>Disabled</span><button className={styles.primaryButton} type="button" disabled>Review resident</button></div>
+                  <div><span>Resting</span><Button>Review resident</Button></div>
+                  <div><span>Hover visual specimen</span><Button className={styles.simulatedHover}>Review resident</Button></div>
+                  <div><span>Focus visual specimen</span><Button className={styles.simulatedFocus}>Review resident</Button></div>
+                  <div><span>Disabled</span><Button disabled>Review resident</Button></div>
                 </div>
                 <SpecimenLabel>Icon action states</SpecimenLabel>
                 <div className={styles.iconStates}>
-                  <div><span>Resting</span><button className={styles.iconButton} type="button" aria-label="More actions, resting"><MoreIcon /></button></div>
-                  <div><span>Hover</span><button className={`${styles.iconButton} ${styles.simulatedIconHover}`} type="button" aria-label="More actions, hover"><MoreIcon /></button></div>
-                  <div><span>Focus</span><button className={`${styles.iconButton} ${styles.simulatedFocus}`} type="button" aria-label="More actions, focus"><MoreIcon /></button></div>
-                  <div><span>Disabled</span><button className={styles.iconButton} type="button" aria-label="More actions, disabled" disabled><MoreIcon /></button></div>
+                  <div><span>Resting</span><IconButton aria-label="More actions, resting"><MoreIcon /></IconButton></div>
+                  <div><span>Hover visual specimen</span><IconButton className={styles.simulatedIconHover} aria-label="More actions, hover"><MoreIcon /></IconButton></div>
+                  <div><span>Focus visual specimen</span><IconButton className={styles.simulatedFocus} aria-label="More actions, focus"><MoreIcon /></IconButton></div>
+                  <div><span>Disabled</span><IconButton aria-label="More actions, disabled" disabled><MoreIcon /></IconButton></div>
                 </div>
               </div>
               <p className={styles.ruleNote}><strong>Action rule</strong> Disabled actions keep their label and explain the reason nearby. Loading never changes a button’s width.</p>
@@ -353,32 +373,16 @@ export default function DesignSystemPage() {
 
             <Section number="06" title="Forms" intro="Visible labels, clear requirements, and local recovery.">
               <form className={styles.formStage}>
-                <div className={styles.fieldGroup}>
-                  <label htmlFor="resident-search">Search residents</label>
-                  <p id="resident-search-hint">Search by resident label or room.</p>
-                  <input id="resident-search" type="search" aria-describedby="resident-search-hint" placeholder="Example: Room 214" />
-                </div>
-                <div className={`${styles.fieldGroup} ${styles.focusField}`}>
-                  <label htmlFor="room-search-focus">Search focus state</label>
-                  <p id="room-search-focus-hint">Visible focus uses the blue interaction ring.</p>
-                  <input id="room-search-focus" aria-describedby="room-search-focus-hint" defaultValue="Room 214" />
-                </div>
-                <div className={styles.fieldGroup}>
-                  <label htmlFor="workflow-state">Workflow state</label>
-                  <select id="workflow-state" defaultValue="acknowledged"><option value="new">New</option><option value="acknowledged">Acknowledged</option><option value="investigating">Investigating</option><option value="resolved">Resolved</option></select>
-                </div>
-                <fieldset className={styles.fieldset}>
-                  <legend>Follow-up timing</legend>
+                <FormField id="resident-search" label="Search residents" hint="Search by resident label or room." type="search" placeholder="Example: Room 214" />
+                <FormField id="room-search-focus" className={styles.focusField} label="Search focus state" hint="Visible focus uses the blue interaction ring." defaultValue="Room 214" />
+                <FormField id="workflow-state" label="Workflow state" as="select" defaultValue="acknowledged" options={[{ value: "new", label: "New" }, { value: "acknowledged", label: "Acknowledged" }, { value: "investigating", label: "Investigating" }, { value: "resolved", label: "Resolved" }]} />
+                <FormFieldset legend="Follow-up timing">
                   <label><input type="radio" name="follow-up" defaultChecked /> This round</label>
                   <label><input type="radio" name="follow-up" /> Next round</label>
-                </fieldset>
+                </FormFieldset>
                 <label className={styles.checkbox}><input type="checkbox" defaultChecked /><span>Record staff observation pending review</span></label>
-                <div className={`${styles.fieldGroup} ${styles.errorField}`}>
-                  <label htmlFor="care-note">Care note <span>Required</span></label>
-                  <textarea id="care-note" aria-invalid="true" aria-describedby="care-note-error" defaultValue="Resident checked." />
-                  <p id="care-note-error">Add what staff observed before saving.</p>
-                </div>
-                <button className={styles.primaryButton} type="button">Save observation</button>
+                <FormField id="care-note" label="Care note" hint="Record what staff observed." error="Add what staff observed before saving." as="textarea" defaultValue="Resident checked." required />
+                <Button>Save observation</Button>
               </form>
             </Section>
 
@@ -472,16 +476,7 @@ export default function DesignSystemPage() {
 
             <Section number="09" title="Care patterns" intro="Operational components keep priority, truth, workflow, and action together.">
               <SpecimenLabel>Attention queue item</SpecimenLabel>
-              <div className={styles.attentionFrame}>
-                <div className={styles.attentionTop}><StatusIndicator axis="attention" value="high" /><span className={styles.elapsed}>12 min open</span></div>
-                <div className={styles.attentionIdentity}><div><p>Resident B</p><h3>Unexpected movement needs review</h3><span>Room 214 · Synthetic scenario</span></div><button className={styles.primaryButton} type="button">Review resident</button></div>
-                <div className={styles.truthGrid}>
-                  <dl><dt>Confidence</dt><dd><strong>Low</strong><span>Occupancy is unclear</span></dd></dl>
-                  <dl><dt>Freshness</dt><dd><strong>Current</strong><span>38 seconds ago</span></dd></dl>
-                  <dl><dt>Device</dt><dd><strong>Online</strong><span>3 sources reporting</span></dd></dl>
-                  <dl><dt>Workflow</dt><dd><strong>Investigating</strong><span>Review is in progress</span></dd></dl>
-                </div>
-              </div>
+              <AttentionItem record={attentionRecord} />
               <div className={styles.evidenceGrid}>
                 <article><span>Resident status</span><h3>Monitoring current</h3><p>High confidence. Latest evidence arrived 38 seconds ago.</p><small>Keep risk, confidence, and freshness separate.</small></article>
                 <article><span>Device status</span><h3>Healthy device</h3><p>Radar, thermal, and Wi-Fi sources are reporting.</p><small>Device health is separate from resident attention and confidence.</small></article>

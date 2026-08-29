@@ -1,0 +1,113 @@
+.button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ac-space-2);
+  padding: var(--ac-space-2) var(--ac-space-4);
+  border: 1px solid transparent;
+  border-radius: var(--ac-radius-control);
+  color: var(--ac-text-primary);
+  background: var(--ac-surface);
+  cursor: pointer;
+  font-size: var(--ac-font-size-label);
+  font-weight: 650;
+  line-height: 1.25;
+  text-align: center;
+  transition: color var(--ac-duration-fast) var(--ac-ease-standard), background-color var(--ac-duration-fast) var(--ac-ease-standard), border-color var(--ac-duration-fast) var(--ac-ease-standard);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--ac-focus);
+  outline-offset: 3px;
+}
+
+.button:disabled {
+  color: var(--ac-text-disabled);
+  background: var(--ac-surface-quiet);
+  cursor: not-allowed;
+}
+
+.primary {
+  color: var(--ac-text-inverse);
+  background: var(--ac-action);
+}
+
+.primary:hover:not(:disabled) { background: var(--ac-action-hover); }
+.primary:active:not(:disabled) { background: var(--ac-action-pressed); }
+
+.secondary {
+  border-color: var(--ac-border-strong);
+  background: var(--ac-surface);
+}
+
+.secondary:hover:not(:disabled) {
+  border-color: var(--ac-border-interactive);
+  background: var(--ac-surface-hover);
+}
+
+.quiet,
+.ghost {
+  color: var(--ac-text-strong-secondary);
+  background: transparent;
+}
+
+.quiet:hover:not(:disabled),
+.ghost:hover:not(:disabled) { background: var(--ac-surface-hover); }
+
+.danger {
+  border-color: var(--ac-risk-border);
+  color: var(--ac-risk-text);
+  background: var(--ac-risk-bg);
+}
+
+.danger:hover:not(:disabled) {
+  border-color: var(--ac-risk-strong);
+  color: var(--ac-risk-strong);
+}
+
+.iconButton {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  padding: 0;
+  border-color: var(--ac-border-subtle);
+  color: var(--ac-text-secondary);
+  background: var(--ac-surface);
+}
+
+.iconButton:hover:not(:disabled) {
+  border-color: var(--ac-action-border);
+  color: var(--ac-action);
+  background: var(--ac-action-soft);
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: var(--ac-radius-pill);
+  animation: spin 800ms linear infinite;
+}
+
+.buttonContent { min-width: 0; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .button { transition-duration: 0.01ms; }
+  .spinner { animation: none; }
+}
+
+@media (forced-colors: active) {
+  .button {
+    border-color: ButtonText;
+    color: ButtonText;
+    background: ButtonFace;
+  }
+
+  .button:disabled { color: GrayText; }
+  .button:focus-visible { outline-color: Highlight; }
+}
