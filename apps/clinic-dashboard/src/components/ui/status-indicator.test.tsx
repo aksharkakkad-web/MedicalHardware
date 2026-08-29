@@ -1,8 +1,16 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import type { StatusIndicatorProps } from "./status-indicator";
 import { StatusIndicator } from "./status-indicator";
+
+const statusStyles = readFileSync(
+  resolve(import.meta.dirname, "status-indicator.module.css"),
+  "utf8",
+);
 
 describe("StatusIndicator", () => {
   it("uses active monitoring wording for the active value", () => {
@@ -72,6 +80,16 @@ describe("StatusIndicator", () => {
       .getByText("No attention priority")
       .closest("[data-axis=attention]");
     expect(indicator).toHaveAttribute("data-semantic", "neutral");
+  });
+
+  it("keeps no-attention styling on general neutral roles", () => {
+    const neutralRule =
+      statusStyles.match(/\.indicator\[data-semantic="neutral"\]\s*\{([^}]*)\}/)?.[1] ?? "";
+
+    expect(neutralRule).toContain("--ac-border-subtle");
+    expect(neutralRule).toContain("--ac-text-primary");
+    expect(neutralRule).toContain("--ac-surface");
+    expect(neutralRule).not.toContain("--ac-unavailable");
   });
 
   it("keeps reusable descriptions free of specimen-only wording", () => {

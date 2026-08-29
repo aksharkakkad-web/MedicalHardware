@@ -103,10 +103,10 @@
   background: var(--ac-unavailable-bg);
 }
 
-.indicator[data-axis="attention"][data-value="none"] {
-  border-color: var(--ac-unavailable-border);
-  color: var(--ac-unavailable-text);
-  background: var(--ac-unavailable-bg);
+.indicator[data-semantic="neutral"] {
+  border-color: var(--ac-border-subtle);
+  color: var(--ac-text-primary);
+  background: var(--ac-surface);
 }
 
 @media (max-width: 600px) {
