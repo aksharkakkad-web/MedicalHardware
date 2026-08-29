@@ -5,14 +5,12 @@ import buttonStyles from "./button.module.css";
 import { StatusIndicator, type StatusValue } from "./status-indicator";
 import styles from "./attention-item.module.css";
 
-export type AttentionRecord = Readonly<{
+type AttentionRecordBase = Readonly<{
   id: string;
   residentName: string;
   room: string;
   attentionReason: string;
   attention: StatusValue<"attention">;
-  monitoring: StatusValue<"monitoring">;
-  confidence: StatusValue<"confidence">;
   freshness:
     | Readonly<{ value: "stale"; lastCurrentUpdate?: string }>
     | Readonly<{ value: Exclude<StatusValue<"freshness">, "stale"> }>;
@@ -25,6 +23,18 @@ export type AttentionRecord = Readonly<{
     | Readonly<{ label: string; href: string }>
     | Readonly<{ label: string; onClick: () => void }>;
 }>;
+
+export type AttentionRecord = AttentionRecordBase &
+  (
+    | Readonly<{
+        monitoring: "possible_multi_person";
+        confidence: "unavailable";
+      }>
+    | Readonly<{
+        monitoring: Exclude<StatusValue<"monitoring">, "possible_multi_person">;
+        confidence: StatusValue<"confidence">;
+      }>
+  );
 
 export type AttentionItemProps = Readonly<{ record: AttentionRecord; className?: string }>;
 
@@ -52,6 +62,7 @@ export function AttentionItem({ record, className }: AttentionItemProps) {
     </Button>
   );
   const multiPerson = record.monitoring === "possible_multi_person";
+  const confidence = multiPerson ? "unavailable" : record.confidence;
 
   return (
     <article className={[styles.item, className].filter(Boolean).join(" ")} data-attention-item data-record-id={record.id} aria-label={`${record.residentName}, ${record.room}`}>
@@ -72,7 +83,7 @@ export function AttentionItem({ record, className }: AttentionItemProps) {
         <StatusAxis axis="attention"><StatusIndicator axis="attention" value={record.attention} /></StatusAxis>
         <StatusAxis axis="monitoring"><StatusIndicator axis="monitoring" value={record.monitoring} /></StatusAxis>
         {multiPerson ? <p className={styles.attributionLimit}>Resident-specific attribution is unavailable while multiple people may be present. Do not guess which person caused this signal.</p> : null}
-        <StatusAxis axis="confidence"><StatusIndicator axis="confidence" value={record.confidence} /></StatusAxis>
+        <StatusAxis axis="confidence"><StatusIndicator axis="confidence" value={confidence} /></StatusAxis>
         <StatusAxis axis="freshness"><FreshnessStatus record={record} /></StatusAxis>
         <StatusAxis axis="device"><StatusIndicator axis="device" value={record.device} /></StatusAxis>
         <StatusAxis axis="workflow"><StatusIndicator axis="workflow" value={record.workflow} /></StatusAxis>

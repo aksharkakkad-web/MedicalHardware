@@ -82,6 +82,19 @@
   background: var(--ac-action-soft);
 }
 
+.progressSlot {
+  display: grid;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  place-items: center;
+  visibility: hidden;
+}
+
+.progressSlot[data-button-progress="visible"] {
+  visibility: visible;
+}
+
 .spinner {
   width: 14px;
   height: 14px;
@@ -92,7 +105,42 @@
   animation: spin 800ms linear infinite;
 }
 
-.buttonContent { min-width: 0; }
+.buttonContent {
+  display: grid;
+  min-width: 0;
+}
+
+.buttonLabel,
+.pendingLabel {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
+.buttonLabel[aria-hidden="true"],
+.pendingLabel {
+  visibility: hidden;
+}
+
+.pendingLabel {
+  visibility: visible;
+}
+
+.iconContent {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+}
+
+.iconLabel,
+.iconPending {
+  grid-area: 1 / 1;
+}
+
+.iconLabel[aria-hidden="true"],
+.iconPending[aria-hidden="true"] {
+  visibility: hidden;
+}
 
 @keyframes spin { to { transform: rotate(360deg); } }
 

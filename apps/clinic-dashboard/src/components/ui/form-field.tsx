@@ -1,7 +1,11 @@
 import {
+  forwardRef,
   useId,
   type InputHTMLAttributes,
+  type Ref,
+  type ReactElement,
   type ReactNode,
+  type RefAttributes,
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
 } from "react";
@@ -52,11 +56,13 @@ function nativeProps(props: FormFieldProps) {
   return Object.fromEntries(Object.entries(props).filter(([key]) => !fieldOnlyProps.has(key)));
 }
 
-export function FormField(props: FormFieldProps) {
-  const generatedId = useId();
-  const fieldId = props.id ?? generatedId;
-  const hintId = props.hint ? `${fieldId}-hint` : undefined;
-  const errorId = props.error ? `${fieldId}-error` : undefined;
+type FormFieldControl = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+
+function FormFieldImpl(props: FormFieldProps, ref: Ref<FormFieldControl>) {
+  const fieldToken = useId();
+  const fieldId = props.id ?? `${fieldToken}-control`;
+  const hintId = props.hint ? `${fieldToken}-hint` : undefined;
+  const errorId = props.error ? `${fieldToken}-error` : undefined;
   const describedBy = mergeIds(props["aria-describedby"], hintId, errorId);
   const invalid = Boolean(props.error) || props["aria-invalid"] === true || props["aria-invalid"] === "true";
   const fieldClassName = [styles.field, props.className].filter(Boolean).join(" ");
@@ -74,7 +80,7 @@ export function FormField(props: FormFieldProps) {
       <div className={fieldClassName}>
         {label}
         {hint}
-        <textarea {...nativeProps(props)} id={fieldId} className={styles.control} required={props.required} aria-invalid={invalid || undefined} aria-describedby={describedBy} />
+        <textarea {...nativeProps(props)} ref={ref as Ref<HTMLTextAreaElement>} id={fieldId} className={styles.control} required={props.required} aria-invalid={invalid || undefined} aria-describedby={describedBy} />
         {error}
       </div>
     );
@@ -85,7 +91,7 @@ export function FormField(props: FormFieldProps) {
       <div className={fieldClassName}>
         {label}
         {hint}
-        <select {...nativeProps(props)} id={fieldId} className={styles.control} required={props.required} aria-invalid={invalid || undefined} aria-describedby={describedBy}>
+        <select {...nativeProps(props)} ref={ref as Ref<HTMLSelectElement>} id={fieldId} className={styles.control} required={props.required} aria-invalid={invalid || undefined} aria-describedby={describedBy}>
           {props.options?.map((option) => <option key={option.value} value={option.value} disabled={option.disabled}>{option.label}</option>)}
           {props.children}
         </select>
@@ -98,11 +104,19 @@ export function FormField(props: FormFieldProps) {
     <div className={fieldClassName}>
       {label}
       {hint}
-      <input {...nativeProps(props)} id={fieldId} className={styles.control} required={props.required} aria-invalid={invalid || undefined} aria-describedby={describedBy} />
+      <input {...nativeProps(props)} ref={ref as Ref<HTMLInputElement>} id={fieldId} className={styles.control} required={props.required} aria-invalid={invalid || undefined} aria-describedby={describedBy} />
       {error}
     </div>
   );
 }
+
+type FormFieldComponent = {
+  (props: InputFieldProps & RefAttributes<HTMLInputElement>): ReactElement;
+  (props: TextareaFieldProps & RefAttributes<HTMLTextAreaElement>): ReactElement;
+  (props: SelectFieldProps & RefAttributes<HTMLSelectElement>): ReactElement;
+};
+
+export const FormField = forwardRef<FormFieldControl, FormFieldProps>(FormFieldImpl) as FormFieldComponent;
 
 export function FormFieldset({ legend, children, className }: Readonly<{ legend: string; children: ReactNode; className?: string }>) {
   return <fieldset className={[styles.fieldset, className].filter(Boolean).join(" ")}><legend>{legend}</legend>{children}</fieldset>;

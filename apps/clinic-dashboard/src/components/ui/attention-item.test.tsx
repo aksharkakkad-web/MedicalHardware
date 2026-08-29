@@ -20,6 +20,10 @@ const record: AttentionRecord = {
   primaryAction: { label: "Review record", href: "/residents/sam-rivera" },
 };
 
+// @ts-expect-error Possible multi-person monitoring requires unavailable confidence.
+const invalidMultiPersonRecord: AttentionRecord = { ...record, confidence: "high" };
+void invalidMultiPersonRecord;
+
 describe("AttentionItem", () => {
   it("renders each status axis independently in a semantic reading order", () => {
     render(<AttentionItem record={record} />);
@@ -41,6 +45,17 @@ describe("AttentionItem", () => {
     expect(item).toHaveTextContent(/resident-specific attribution is unavailable/i);
     expect(item).toHaveTextContent(/do not guess which person caused this signal/i);
     expect(item).not.toHaveTextContent(/resident is being monitored normally/i);
+  });
+
+  it("normalizes malformed runtime multi-person confidence to unavailable", () => {
+    const malformedRecord = { ...record, confidence: "high" } as unknown as AttentionRecord;
+    render(<AttentionItem record={malformedRecord} />);
+
+    const item = screen.getByRole("article", { name: /Sam Rivera.*Room 302/i });
+    expect(within(item).getByText("Confidence unavailable")).toBeVisible();
+    expect(within(item).queryByText("High confidence")).not.toBeInTheDocument();
+    expect(item).toHaveTextContent(/resident-specific attribution is unavailable/i);
+    expect(item).toHaveTextContent(/do not guess which person caused this signal/i);
   });
 
   it("gives the one resident-specific primary action a unique accessible name", () => {

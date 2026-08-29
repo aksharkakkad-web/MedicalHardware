@@ -1,6 +1,8 @@
 import {
   forwardRef,
+  isValidElement,
   type ButtonHTMLAttributes,
+  type ReactElement,
   type ReactNode,
 } from "react";
 
@@ -33,7 +35,7 @@ type ButtonLabeledProps = ButtonBaseProps & {
   );
 
 type ButtonUnlabeledProps = ButtonBaseProps & {
-  children: ReactNode;
+  children: string;
   "aria-label"?: never;
   "aria-labelledby"?: never;
   pendingLabel?: never;
@@ -72,21 +74,39 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       className={classNames(styles.button, styles[variant], className)}
       type={type}
       disabled={isDisabled}
-      aria-label={pending && stableLabel !== undefined ? stableLabel : ariaLabel}
+      aria-label={stableLabel}
       aria-labelledby={ariaLabelledBy}
       aria-busy={pending || undefined}
     >
-      {pending ? <span className={styles.spinner} aria-hidden="true" /> : null}
+      <span
+        className={styles.progressSlot}
+        data-button-progress={pending ? "visible" : "hidden"}
+        aria-hidden="true"
+      >
+        <span className={styles.spinner} />
+      </span>
       <span className={styles.buttonContent}>
-        {shouldReplaceChildren ? pendingLabel : children}
+        <span
+          className={styles.buttonLabel}
+          data-button-label
+          aria-hidden={shouldReplaceChildren || undefined}
+        >
+          {children}
+        </span>
+        {shouldReplaceChildren ? (
+          <span className={styles.pendingLabel} data-button-pending-label>
+            {pendingLabel}
+          </span>
+        ) : null}
       </span>
     </button>
   );
 });
 
 export type IconButtonProps = Readonly<
-  Omit<ButtonHTMLAttributes<HTMLButtonElement>, "type" | "aria-label"> & {
+  Omit<ButtonHTMLAttributes<HTMLButtonElement>, "type" | "aria-label" | "children"> & {
     "aria-label": string;
+    children: ReactElement;
     type?: ButtonHTMLAttributes<HTMLButtonElement>["type"];
     pending?: boolean;
   }
@@ -96,6 +116,10 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
   { className, disabled = false, pending = false, type = "button", children, ...props },
   ref,
 ) {
+  if (!isValidElement(children) || props["aria-label"].trim().length === 0) {
+    return null;
+  }
+
   return (
     <button
       {...props}
@@ -105,7 +129,16 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
       disabled={disabled || pending}
       aria-busy={pending || undefined}
     >
-      {pending ? <span className={styles.spinner} aria-hidden="true" /> : children}
+      <span className={styles.iconContent}>
+        <span className={styles.iconLabel} aria-hidden={pending || undefined} data-icon-label>
+          {children}
+        </span>
+        {pending ? (
+          <span className={styles.iconPending} data-icon-pending aria-hidden="true">
+            <span className={styles.spinner} />
+          </span>
+        ) : null}
+      </span>
     </button>
   );
 });
