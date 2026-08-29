@@ -126,6 +126,12 @@
   line-height: 1.2;
 }
 
+.compactStatus small {
+  color: var(--ac-text-secondary);
+  font-size: var(--ac-font-size-metadata);
+  line-height: 1.25;
+}
+
 .actionColumn .primaryAction {
   width: 100%;
   padding-inline: var(--ac-space-2);

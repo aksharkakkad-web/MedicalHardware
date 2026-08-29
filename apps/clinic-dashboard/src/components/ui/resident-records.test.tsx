@@ -81,6 +81,17 @@ describe("ResidentRecords", () => {
     expect(css).toMatch(/\.actionColumn/);
   });
 
+  it("shows the attribution limitation in the desktop Operations cell", () => {
+    render(<ResidentRecords records={records} />);
+
+    const table = screen.getByRole("table", { name: /synthetic resident monitoring records/i });
+    const samRow = within(table).getAllByRole("row").find((row) => row.textContent?.includes("Sam Rivera"));
+    expect(samRow).toBeDefined();
+    expect(samRow).toHaveTextContent("Resident attribution unavailable");
+    expect(samRow).toHaveTextContent(/do not guess/i);
+    expect(within(samRow as HTMLElement).getByLabelText(/monitoring: possible multi-person; resident attribution unavailable/i)).toBeInTheDocument();
+  });
+
   it("keeps mobile record facts in the required reading order and discloses device details last", () => {
     render(<ResidentRecords records={records} />);
 

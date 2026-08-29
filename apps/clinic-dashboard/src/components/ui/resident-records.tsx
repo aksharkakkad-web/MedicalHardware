@@ -90,6 +90,7 @@ function CompactStatus({ axis, value, detail }: Readonly<{ axis: string; value: 
     <span className={styles.compactStatus} data-axis={axis.toLowerCase()} data-value={value} aria-label={accessibleLabel}>
       <span>{axis}</span>
       <strong>{label}</strong>
+      {detail ? <small>{detail}</small> : null}
     </span>
   );
 }
@@ -166,7 +167,11 @@ function DesktopTable({ records }: ResidentRecordsProps) {
               </td>
               <td className={styles.operationsColumn}>
                 <div className={styles.compactGroup}>
-                  <CompactStatus axis="Monitoring" value={record.monitoring} />
+                  <CompactStatus
+                    axis="Monitoring"
+                    value={record.monitoring}
+                    detail={record.monitoring === "possible_multi_person" ? "Resident attribution unavailable; do not guess which resident caused this signal." : undefined}
+                  />
                   <CompactStatus axis="Device" value={record.device} />
                   <CompactStatus axis="Workflow" value={record.workflow} />
                 </div>
