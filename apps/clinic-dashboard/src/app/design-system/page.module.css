@@ -231,7 +231,7 @@
 .cobalt50 { background: var(--signal-action-soft); }
 .cobalt100 { background: var(--signal-action-soft-strong); }
 .sky200 { background: var(--signal-action-border); }
-.sky400 { color: var(--signal-text-inverse); background: var(--signal-sky-accent); }
+.sky400 { color: var(--signal-text-primary); background: var(--signal-sky-accent); }
 .cobalt600 { color: var(--signal-text-inverse); background: var(--signal-action); }
 .cobalt800 { color: var(--signal-text-inverse); background: var(--signal-action-pressed); }
 .violet500 { color: var(--signal-text-inverse); background: var(--signal-violet-accent); }

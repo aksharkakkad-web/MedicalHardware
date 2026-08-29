@@ -146,9 +146,11 @@ updates must be available to assistive technology without relying on animation.
 
 `--brand-*`, `--gray-*`, `--color-*`, status, spacing, radius, duration, and
 shadow names remain as aliases for one release only. They are defined in
-`design-tokens.css` and map to `--ac-*`; new code must not introduce another
-legacy alias. Remove legacy consumers after migration and then delete the
-aliases in the next intentional design-system release.
+`design-tokens.css` and map to an explicit, frozen `--ac-legacy-*`
+compatibility tier so existing screens retain their pre-V3.0 appearance. New
+code must not use or add this tier. Remove legacy consumers after migration
+and then delete the aliases and frozen values in the next intentional
+design-system release.
 
 Warm Indigo and Inter are retired directions, not active rules. Changes to
 roles, semantic permissions, typography, or status meaning require updating
