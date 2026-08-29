@@ -60,4 +60,16 @@ describe("Today", () => {
     expect(screen.getByText("Not enough information yet")).toBeInTheDocument();
     expect(screen.queryByRole("img", { name: /resting pattern stayed close/i })).not.toBeInTheDocument();
   });
+
+  it("centers a single trend point instead of rendering an invalid coordinate", async () => {
+    const client = new MockHomeMonitoringClient();
+    const overview = await client.getOverview();
+    overview.lovedOne.trends[0] = { ...overview.lovedOne.trends[0], points: [4] };
+    client.getOverview = async () => overview;
+
+    renderToday(client);
+
+    const trend = await screen.findByRole("img", { name: /movement routine stayed close/i });
+    expect(trend.querySelector("polyline")).toHaveAttribute("points", "56,28");
+  });
 });

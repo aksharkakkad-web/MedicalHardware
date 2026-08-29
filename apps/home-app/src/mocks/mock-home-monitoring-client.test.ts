@@ -55,6 +55,18 @@ describe("MockHomeMonitoringClient", () => {
     expect(routines.entries[0].description).toBe("Evening stretching");
   });
 
+  it("records a remembered routine only once when feedback is submitted repeatedly", async () => {
+    const input = { outcome: "expected" as const, note: "Evening stretching", shouldRememberRoutine: true };
+
+    await Promise.all([
+      client.saveUpdateFeedback("home_evt_unusual_001", input),
+      client.saveUpdateFeedback("home_evt_unusual_001", input),
+    ]);
+
+    const routines = await client.getRoutines();
+    expect(routines.entries.filter((routine) => routine.description === input.note)).toHaveLength(1);
+  });
+
   it("adds and retires routines with version checks and preserved history", async () => {
     const initial = await client.getRoutines();
     const added = await client.addRoutine({ expectedVersion: initial.version, description: "  Takes a short walk after lunch  " });

@@ -90,6 +90,7 @@ export class MockHomeMonitoringClient implements HomeMonitoringClient {
 
   async saveUpdateFeedback(eventId: string, input: SaveHomeFeedbackInput): Promise<HomeUpdateDetail> {
     if (eventId !== HOME_UPDATE_ID) throw new Error("This update could not be found.");
+    if (this.feedback[eventId]) return (await this.getUpdate(eventId)) as HomeUpdateDetail;
     const note = input.note.trim();
     if (note.length > 240) throw new Error("Keep the note to 240 characters or fewer.");
     if (!["expected", "not_expected", "unsure"].includes(input.outcome)) throw new Error("Choose the answer that fits best.");

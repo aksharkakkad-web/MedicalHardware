@@ -17,7 +17,7 @@ function Sparkline({ trend }: { trend: HomeTrend }) {
   const min = Math.min(...trend.points);
   const max = Math.max(...trend.points);
   const range = Math.max(max - min, 1);
-  const points = trend.points.map((point, index) => `${(index / (trend.points!.length - 1)) * width},${height - 4 - ((point - min) / range) * (height - 8)}`).join(" ");
+  const points = trend.points.map((point, index) => `${trend.points!.length === 1 ? width / 2 : (index / (trend.points!.length - 1)) * width},${height - 4 - ((point - min) / range) * (height - 8)}`).join(" ");
   const directionLabel = trend.direction === "changed" ? "showed a meaningful change" : "stayed close to its recent range";
   return <svg className={styles.sparkline} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${trend.label} ${directionLabel}`}><polyline points={points}/></svg>;
 }
