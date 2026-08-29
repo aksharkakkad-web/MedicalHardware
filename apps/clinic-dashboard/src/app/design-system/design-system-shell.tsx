@@ -4,77 +4,105 @@ import { useEffect, useRef, type ReactNode } from "react";
 
 import styles from "./page.module.css";
 
+function decodeHashTarget(hash: string) {
+  if (!hash.startsWith("#") || hash.length < 2) return null;
+
+  try {
+    const targetId = decodeURIComponent(hash.slice(1));
+    return targetId.length > 0 ? targetId : null;
+  } catch {
+    return null;
+  }
+}
+
 export function DesignSystemShell({ children }: Readonly<{ children: ReactNode }>) {
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const pageRoot = rootRef.current;
-    const appMain = rootRef.current?.closest("main");
-    const appTopbar = appMain?.previousElementSibling as HTMLElement | null;
-    const appSidebar = appMain?.parentElement?.previousElementSibling as HTMLElement | null;
-    const hiddenElements = [appTopbar, appSidebar].filter(
-      (element): element is HTMLElement => element !== null,
-    );
-
-    hiddenElements.forEach((element) => {
-      element.inert = true;
-      element.setAttribute("aria-hidden", "true");
-    });
-
-    const scrollToHash = (hash: string, behavior: ScrollBehavior) => {
-      if (!pageRoot || !hash.startsWith("#")) return;
-      const target = pageRoot.querySelector<HTMLElement>(hash);
-      if (!target) return;
-      const stickyOffset = window.matchMedia("(max-width: 980px)").matches ? 58 : 16;
-      const top = pageRoot.scrollTop + target.getBoundingClientRect().top - stickyOffset;
-      pageRoot.scrollTo({ top, behavior });
-    };
-
-    const handleAnchorClick = (event: MouseEvent) => {
-      const anchor = (event.target as HTMLElement).closest<HTMLAnchorElement>('a[href^="#"]');
-      if (!anchor) return;
-      event.preventDefault();
-      const hash = anchor.getAttribute("href") ?? "";
-      window.history.replaceState(null, "", hash);
-      scrollToHash(hash, "auto");
-    };
+    if (!pageRoot) return;
 
     const sectionLinks = Array.from(
-      pageRoot?.querySelectorAll<HTMLAnchorElement>('aside nav a[href^="#section-"]') ?? [],
+      pageRoot.querySelectorAll<HTMLAnchorElement>('aside nav a[href^="#section-"]'),
     );
-    const setActiveSection = (sectionId: string) => {
+    const sections = Array.from(pageRoot.querySelectorAll<HTMLElement>("section[id^='section-']"));
+    const getTarget = (hash: string) => {
+      const targetId = decodeHashTarget(hash);
+      if (!targetId) return null;
+      return Array.from(pageRoot.querySelectorAll<HTMLElement>("[id]"))
+        .find((element) => element.id === targetId) ?? null;
+    };
+    const setActiveSection = (sectionId: string | null) => {
       sectionLinks.forEach((link) => {
-        const active = link.getAttribute("href") === `#${sectionId}`;
+        const active = sectionId !== null && link.getAttribute("href") === `#${sectionId}`;
         if (active) link.setAttribute("aria-current", "true");
         else link.removeAttribute("aria-current");
       });
     };
+    const scrollToTarget = (target: HTMLElement, behavior: ScrollBehavior) => {
+      const isNarrow = typeof window.matchMedia === "function"
+        && window.matchMedia("(max-width: 980px)").matches;
+      const stickyOffset = isNarrow ? 58 : 16;
+      const rootTop = pageRoot.getBoundingClientRect().top;
+      const top = pageRoot.scrollTop + target.getBoundingClientRect().top - rootTop - stickyOffset;
+      if (typeof pageRoot.scrollTo === "function") pageRoot.scrollTo({ top, behavior });
+      else pageRoot.scrollTop = top;
+    };
+    const focusTarget = (target: HTMLElement) => {
+      target.focus({ preventScroll: true });
+    };
+    const navigateToHash = (hash: string, behavior: ScrollBehavior = "auto") => {
+      const target = getTarget(hash);
+      if (!target) return false;
+
+      const section = target.closest<HTMLElement>("section[id^='section-']");
+      setActiveSection(section?.id ?? null);
+      scrollToTarget(target, behavior);
+      focusTarget(target);
+      return true;
+    };
+
+    const handleAnchorClick = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const clickedElement = event.target;
+      if (!(clickedElement instanceof Element)) return;
+      const anchor = clickedElement.closest<HTMLAnchorElement>('a[href^="#"]');
+      if (!anchor || !pageRoot.contains(anchor)) return;
+      const hash = anchor.getAttribute("href") ?? "";
+      if (!getTarget(hash)) return;
+      event.preventDefault();
+      window.history.pushState(null, "", `${window.location.pathname}${window.location.search}${hash}`);
+      navigateToHash(hash);
+    };
+
+    const handleHashNavigation = () => {
+      navigateToHash(window.location.hash);
+    };
+    const sectionObserver = typeof IntersectionObserver === "function"
+      ? new IntersectionObserver(
+          (entries) => {
+            const visible = entries
+              .filter((entry) => entry.isIntersecting)
+              .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+            const current = visible[0]?.target as HTMLElement | undefined;
+            if (current) setActiveSection(current.id);
+          },
+          { root: pageRoot, rootMargin: "-18% 0px -72% 0px", threshold: 0 },
+        )
+      : null;
+
     setActiveSection("section-01");
-
-    const sectionObserver = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        const current = visible[0]?.target as HTMLElement | undefined;
-        if (current) setActiveSection(current.id);
-      },
-      { root: pageRoot, rootMargin: "-18% 0px -72% 0px", threshold: 0 },
-    );
-    pageRoot?.querySelectorAll<HTMLElement>("section[id^='section-']").forEach((section) => {
-      sectionObserver.observe(section);
-    });
-
-    pageRoot?.addEventListener("click", handleAnchorClick);
-    if (window.location.hash) requestAnimationFrame(() => scrollToHash(window.location.hash, "auto"));
+    sections.forEach((section) => sectionObserver?.observe(section));
+    pageRoot.addEventListener("click", handleAnchorClick);
+    window.addEventListener("hashchange", handleHashNavigation);
+    window.addEventListener("popstate", handleHashNavigation);
+    if (window.location.hash) requestAnimationFrame(() => navigateToHash(window.location.hash));
 
     return () => {
-      pageRoot?.removeEventListener("click", handleAnchorClick);
-      sectionObserver.disconnect();
-      hiddenElements.forEach((element) => {
-        element.inert = false;
-        element.removeAttribute("aria-hidden");
-      });
+      pageRoot.removeEventListener("click", handleAnchorClick);
+      window.removeEventListener("hashchange", handleHashNavigation);
+      window.removeEventListener("popstate", handleHashNavigation);
+      sectionObserver?.disconnect();
     };
   }, []);
 

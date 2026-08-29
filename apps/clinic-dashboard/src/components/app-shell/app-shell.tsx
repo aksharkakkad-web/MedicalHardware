@@ -17,6 +17,9 @@ const destinations = [
 
 export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
   const pathname = usePathname();
+
+  if (pathname.startsWith("/design-system")) return children;
+
   return (
     <div className={styles.shell}>
       <header className={styles.sidebar}>

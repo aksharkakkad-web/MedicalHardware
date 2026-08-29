@@ -99,6 +99,9 @@
   top: var(--signal-space-3);
   left: var(--signal-space-3);
   z-index: 4;
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
   padding: var(--signal-space-2) var(--signal-space-3);
   border-radius: var(--signal-radius-control);
   color: var(--signal-text-inverse);
@@ -132,7 +135,7 @@
   text-transform: uppercase;
 }
 
-.wordmark { display: flex; align-items: center; gap: var(--signal-space-3); font-size: 14px; }
+.wordmark { display: flex; min-height: 44px; align-items: center; gap: var(--signal-space-3); font-size: 14px; }
 .wordmark > span { display: grid; width: 34px; height: 34px; place-items: center; border-radius: var(--signal-radius-sm); color: var(--signal-text-inverse); background: var(--signal-action); font-size: 11px; font-weight: 700; letter-spacing: .04em; }
 .wordmark strong { font-weight: 650; }
 
@@ -301,7 +304,7 @@
 .destructiveButton,
 .loadingButton,
 .successButton,
-.iconButton { display: inline-flex; min-height: 40px; align-items: center; justify-content: center; gap: var(--signal-space-2); padding: var(--signal-space-2) var(--signal-space-4); border: 1px solid transparent; border-radius: var(--signal-radius-control); cursor: pointer; font-size: 13px; font-weight: 600; transition: color var(--signal-duration-fast) var(--signal-ease-standard), background-color var(--signal-duration-fast) var(--signal-ease-standard), border-color var(--signal-duration-fast) var(--signal-ease-standard); }
+.iconButton { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: var(--signal-space-2); padding: var(--signal-space-2) var(--signal-space-4); border: 1px solid transparent; border-radius: var(--signal-radius-control); cursor: pointer; font-size: 13px; font-weight: 600; transition: color var(--signal-duration-fast) var(--signal-ease-standard), background-color var(--signal-duration-fast) var(--signal-ease-standard), border-color var(--signal-duration-fast) var(--signal-ease-standard); }
 .primaryButton,
 .loadingButton { color: var(--signal-text-inverse); background: var(--signal-action); }
 .primaryButton:hover,
@@ -313,13 +316,14 @@
 .ghostButton:hover { background: var(--signal-surface-hover); }
 .destructiveButton { border-color: var(--signal-risk-border); color: var(--signal-risk-text); background: var(--signal-risk-bg); }
 .destructiveButton:hover { color: var(--signal-risk-strong); }
-.successButton { border-color: var(--signal-positive-border); color: var(--signal-positive-text); background: var(--signal-positive-bg); }
+.successButton { border-color: var(--signal-positive-border); color: var(--signal-positive-text); background: var(--signal-positive-bg); cursor: default; }
 .successButton svg { width: 18px; }
-.iconButton { width: 40px; flex: 0 0 40px; padding: 0; border-color: var(--signal-border-subtle); color: var(--signal-text-secondary); background: var(--signal-surface); }
+.iconButton { width: 44px; height: 44px; flex: 0 0 44px; padding: 0; border-color: var(--signal-border-subtle); color: var(--signal-text-secondary); background: var(--signal-surface); }
 .iconButton:hover { border-color: var(--signal-action-border); color: var(--signal-action); background: var(--signal-action-soft); }
 .iconButton svg { width: 18px; height: 18px; }
 .loadingButton > span { width: 14px; height: 14px; border: 2px solid var(--signal-action-border); border-top-color: var(--signal-text-inverse); border-radius: var(--signal-radius-pill); animation: spin 800ms linear infinite; }
-.primaryButton:disabled { color: var(--signal-text-disabled); background: var(--signal-surface-quiet); cursor: not-allowed; }
+.primaryButton:disabled,
+.loadingButton:disabled { color: var(--signal-text-disabled); background: var(--signal-surface-quiet); cursor: not-allowed; }
 .iconButton:disabled { color: var(--signal-text-disabled); background: var(--signal-surface-quiet); cursor: not-allowed; }
 .controlStage > .specimenLabel { margin-top: var(--signal-space-10); }
 .actionStates,
@@ -409,7 +413,7 @@
 .criticalRow { background: var(--signal-risk-bg); box-shadow: inset 3px 0 0 var(--signal-risk-text); }
 .numeric,
 .elapsed { font-family: var(--ac-font-mono); font-variant-numeric: tabular-nums lining-nums; }
-.textButton { min-height: 36px; padding: var(--signal-space-1) var(--signal-space-2); border: 0; border-radius: var(--signal-radius-sm); color: var(--signal-action-hover); background: transparent; cursor: pointer; font-size: 13px; font-weight: 600; }
+.textButton { min-height: 44px; padding: var(--signal-space-1) var(--signal-space-2); border: 0; border-radius: var(--signal-radius-sm); color: var(--signal-action-hover); background: transparent; cursor: pointer; font-size: 13px; font-weight: 600; }
 .textButton:hover { background: var(--signal-action-soft); }
 .stateRow { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--signal-space-4); margin-top: var(--signal-space-6); }
 .stateRow > div { min-height: 160px; padding: var(--signal-space-6); border: 1px solid var(--signal-border-subtle); border-radius: var(--signal-radius-card); background: var(--signal-surface); box-shadow: var(--signal-shadow-card); }
@@ -443,14 +447,14 @@
 .alertHierarchy li { display: flex; align-items: center; gap: var(--signal-space-2); color: var(--signal-text-strong-secondary); font-size: 12px; }
 .alertHierarchy b { display: grid; width: 22px; height: 22px; place-items: center; border-radius: var(--signal-radius-sm); color: var(--signal-action); background: var(--signal-action-soft); font-family: var(--ac-font-mono); font-size: 10px; }
 .pageFooter { display: flex; align-items: center; justify-content: space-between; gap: var(--signal-space-6); margin-top: var(--signal-space-16); padding-top: var(--signal-space-5); border-top: 1px solid var(--signal-border-strong); color: var(--signal-text-secondary); font-size: 12px; }
-.pageFooter a { min-height: 36px; display: inline-flex; align-items: center; color: var(--signal-action-hover); font-weight: 600; }
+.pageFooter a { display: inline-flex; min-height: 44px; align-items: center; color: var(--signal-action-hover); font-weight: 600; }
 
 @media (max-width: 980px) {
   .index { position: sticky; top: 0; z-index: 3; width: 100%; height: auto; display: block; padding: var(--signal-space-2) var(--signal-space-4); overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--signal-border-subtle); }
   .indexTitle,
   .indexNote { display: none; }
   .index ol { display: flex; width: max-content; gap: var(--signal-space-1); margin: 0; }
-  .index a { min-height: 40px; white-space: nowrap; }
+  .index a { min-height: 44px; white-space: nowrap; }
   .hero { min-height: calc(100vh - 121px); }
   .heroFoot { grid-template-columns: 1fr; }
   .sectionHeader { grid-template-columns: 56px 1fr; }

@@ -73,7 +73,7 @@ function Section({
   children: ReactNode;
 }>) {
   return (
-    <section className={styles.section} id={`section-${number}`} aria-labelledby={`heading-${number}`}>
+    <section className={styles.section} id={`section-${number}`} tabIndex={-1} aria-labelledby={`heading-${number}`}>
       <header className={styles.sectionHeader}>
         <p className={styles.sectionNumber}>{number}</p>
         <div>
@@ -137,7 +137,7 @@ export default function DesignSystemPage() {
             <p className={styles.indexNote}>Quiet at rest.<br />Unmistakable when action is required.</p>
           </aside>
 
-          <main className={styles.content} id="design-system-content">
+          <main className={styles.content} id="design-system-content" tabIndex={-1}>
             <section className={styles.hero} aria-labelledby="page-title">
               <p className={styles.eyebrow}>Visual language for contactless care operations</p>
               <h1 id="page-title">Calm enough to scan.<br /><em>Precise enough to trust.</em></h1>
@@ -232,8 +232,8 @@ export default function DesignSystemPage() {
                   <button className={styles.iconButton} type="button" aria-label="More actions"><MoreIcon /></button>
                 </div>
                 <div className={styles.buttonRow}>
-                  <button className={styles.loadingButton} type="button" aria-busy="true"><span aria-hidden="true" />Saving change</button>
-                  <button className={styles.successButton} type="button"><CheckIcon />Saved</button>
+                  <button className={styles.loadingButton} type="button" aria-busy="true" disabled><span aria-hidden="true" />Saving change</button>
+                  <span className={styles.successButton} role="status"><CheckIcon />Saved</span>
                   <button className={styles.primaryButton} type="button" disabled>Resolve event</button>
                 </div>
                 <SpecimenLabel>Primary action states</SpecimenLabel>
