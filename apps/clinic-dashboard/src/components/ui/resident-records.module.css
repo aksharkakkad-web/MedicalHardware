@@ -1,0 +1,227 @@
+.records {
+  min-width: 0;
+}
+
+.desktopTable {
+  display: none;
+  overflow-x: auto;
+  border: 1px solid var(--ac-border-subtle);
+  border-radius: var(--ac-radius-card);
+  background: var(--ac-surface);
+  box-shadow: var(--ac-shadow-card);
+}
+
+.desktopTable table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.desktopTable caption {
+  padding: var(--ac-space-4) var(--ac-space-5);
+  border-bottom: 1px solid var(--ac-border-subtle);
+  color: var(--ac-text-secondary);
+  font-size: var(--ac-font-size-metadata);
+  text-align: left;
+}
+
+.desktopTable th,
+.desktopTable td {
+  padding: var(--ac-space-3) var(--ac-space-4);
+  border-bottom: 1px solid var(--ac-border-subtle);
+  vertical-align: middle;
+  font-size: var(--ac-font-size-label);
+}
+
+.desktopTable thead th {
+  color: var(--ac-text-secondary);
+  background: var(--ac-surface-quiet);
+  font-family: var(--ac-font-mono);
+  font-size: var(--ac-font-size-overline);
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.desktopTable tbody tr:last-child th,
+.desktopTable tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.desktopTable tbody tr:hover {
+  background: var(--ac-surface-hover);
+}
+
+.desktopTable .indicator {
+  width: max-content;
+}
+
+.recordIdentity {
+  display: grid;
+  gap: var(--ac-space-0-5);
+  min-width: 9rem;
+}
+
+.recordIdentity strong {
+  color: var(--ac-text-primary);
+  font-size: var(--ac-font-size-label);
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.recordIdentity span {
+  color: var(--ac-text-secondary);
+  font-family: var(--ac-font-mono);
+  font-size: var(--ac-font-size-metadata);
+  line-height: 1.25;
+}
+
+.primaryAction {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: var(--ac-space-2) var(--ac-space-3);
+  border: 1px solid var(--ac-action);
+  border-radius: var(--ac-radius-control);
+  color: var(--ac-text-inverse);
+  background: var(--ac-action);
+  font-size: var(--ac-font-size-label);
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.primaryAction:hover {
+  background: var(--ac-action-hover);
+}
+
+.primaryAction:active {
+  background: var(--ac-action-pressed);
+}
+
+.mobileRecords {
+  display: grid;
+  gap: var(--ac-space-4);
+}
+
+.recordCard {
+  display: grid;
+  gap: var(--ac-space-4);
+  min-width: 0;
+  padding: var(--ac-space-4);
+  border: 1px solid var(--ac-border-subtle);
+  border-radius: var(--ac-radius-card);
+  background: var(--ac-surface);
+  box-shadow: var(--ac-shadow-card);
+}
+
+.recordCard .recordIdentity {
+  padding-bottom: var(--ac-space-3);
+  border-bottom: 1px solid var(--ac-border-subtle);
+}
+
+.recordCard .recordIdentity strong {
+  font-size: var(--ac-font-size-record-title);
+}
+
+.attentionReason {
+  display: grid;
+  gap: var(--ac-space-1);
+}
+
+.attentionReason > span {
+  color: var(--ac-text-secondary);
+  font-family: var(--ac-font-mono);
+  font-size: var(--ac-font-size-overline);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.attentionReason p {
+  color: var(--ac-text-primary);
+  font-size: var(--ac-font-size-body);
+  line-height: 1.35;
+}
+
+.attentionPriority,
+.workflow {
+  min-width: 0;
+}
+
+.attentionPriority .indicator,
+.workflow .indicator,
+.evidence .indicator {
+  width: 100%;
+}
+
+.evidence {
+  display: grid;
+  gap: var(--ac-space-2);
+  min-width: 0;
+  padding: var(--ac-space-3) 0;
+  border-block: 1px solid var(--ac-border-subtle);
+}
+
+.deviceDetails {
+  color: var(--ac-text-secondary);
+  font-size: var(--ac-font-size-metadata);
+}
+
+.deviceDetails summary {
+  min-height: 44px;
+  align-content: center;
+  color: var(--ac-action-hover);
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.deviceDetails > div {
+  display: grid;
+  gap: var(--ac-space-1);
+  padding: var(--ac-space-2) 0 var(--ac-space-1);
+  line-height: 1.4;
+}
+
+.deviceDetails .indicator {
+  width: 100%;
+}
+
+.deviceDetails time {
+  font-family: var(--ac-font-mono);
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (min-width: 768px) {
+  .desktopTable {
+    display: block;
+  }
+
+  .mobileRecords {
+    display: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .desktopTable,
+  .recordCard {
+    border-color: CanvasText;
+    background: Canvas;
+  }
+
+  .primaryAction {
+    border-color: CanvasText;
+    color: Canvas;
+    background: CanvasText;
+  }
+}

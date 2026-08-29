@@ -27,6 +27,24 @@ export function DesignSystemShell({ children }: Readonly<{ children: ReactNode }
     );
     const sections = Array.from(pageRoot.querySelectorAll<HTMLElement>("section[id^='section-']"));
     const index = pageRoot.querySelector<HTMLElement>("[data-design-system-index]");
+    const sectionNav = pageRoot.querySelector<HTMLElement>("[data-design-system-nav]");
+    const moreSections = pageRoot.querySelector<HTMLButtonElement>("[data-design-system-more]");
+    const navFade = pageRoot.querySelector<HTMLElement>("[data-design-system-nav-fade]");
+    const syncNavCue = () => {
+      if (!sectionNav || !moreSections || !navFade) return;
+      const hasOverflow = sectionNav.scrollWidth > sectionNav.clientWidth + 1;
+      const hasMore = sectionNav.scrollLeft + sectionNav.clientWidth < sectionNav.scrollWidth - 1;
+      const showCue = hasOverflow && hasMore;
+      moreSections.hidden = !showCue;
+      navFade.hidden = !showCue;
+    };
+    const handleMoreSections = () => {
+      if (!sectionNav) return;
+      const maxScroll = Math.max(0, sectionNav.scrollWidth - sectionNav.clientWidth);
+      const step = Math.max(sectionNav.clientWidth * 0.75, 160);
+      sectionNav.scrollLeft = Math.min(sectionNav.scrollLeft + step, maxScroll);
+      syncNavCue();
+    };
     const getTarget = (hash: string) => {
       const targetId = decodeHashTarget(hash);
       if (!targetId) return null;
@@ -109,12 +127,19 @@ export function DesignSystemShell({ children }: Readonly<{ children: ReactNode }
     setActiveSection("section-01");
     sections.forEach((section) => sectionObserver?.observe(section));
     pageRoot.addEventListener("click", handleAnchorClick);
+    sectionNav?.addEventListener("scroll", syncNavCue, { passive: true });
+    moreSections?.addEventListener("click", handleMoreSections);
+    window.addEventListener("resize", syncNavCue);
     window.addEventListener("hashchange", handleHashNavigation);
     window.addEventListener("popstate", handleHashNavigation);
+    syncNavCue();
     if (window.location.hash) requestAnimationFrame(() => navigateToHash(window.location.hash));
 
     return () => {
       pageRoot.removeEventListener("click", handleAnchorClick);
+      sectionNav?.removeEventListener("scroll", syncNavCue);
+      moreSections?.removeEventListener("click", handleMoreSections);
+      window.removeEventListener("resize", syncNavCue);
       window.removeEventListener("hashchange", handleHashNavigation);
       window.removeEventListener("popstate", handleHashNavigation);
       sectionObserver?.disconnect();

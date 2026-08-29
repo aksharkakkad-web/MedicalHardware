@@ -18,10 +18,14 @@ function renderShell() {
     <DesignSystemShell>
       <a href="#design-system-content">Skip to specimens</a>
       <aside aria-label="Design system sections" data-design-system-index>
-        <nav>
-          <a href="#section-01">Foundation</a>
-          <a href="#section-02">Color</a>
-        </nav>
+        <div>
+          <nav data-design-system-nav>
+            <a href="#section-01">Foundation</a>
+            <a href="#section-02">Color</a>
+          </nav>
+          <span data-design-system-nav-fade aria-hidden="true" hidden />
+          <button type="button" data-design-system-more aria-label="More design system sections" hidden>More sections</button>
+        </div>
       </aside>
       <main id="design-system-content" tabIndex={-1}>
         <section id="section-01" tabIndex={-1}>Foundation specimens</section>
@@ -29,6 +33,17 @@ function renderShell() {
       </main>
     </DesignSystemShell>,
   );
+}
+
+function setNavMetrics({ clientWidth, scrollWidth, scrollLeft = 0 }: { clientWidth: number; scrollWidth: number; scrollLeft?: number }) {
+  const nav = document.querySelector<HTMLElement>("[data-design-system-nav]");
+  if (!nav) throw new Error("section navigation is missing");
+  Object.defineProperties(nav, {
+    clientWidth: { configurable: true, value: clientWidth },
+    scrollWidth: { configurable: true, value: scrollWidth },
+    scrollLeft: { configurable: true, writable: true, value: scrollLeft },
+  });
+  return nav;
 }
 
 describe("DesignSystemShell", () => {
@@ -141,6 +156,45 @@ describe("DesignSystemShell", () => {
     expect(screen.getByRole("link", { name: "Color" })).not.toHaveAttribute("aria-current");
     expect(scrollTo).toHaveBeenLastCalledWith({ top: 0, behavior: "auto" });
     expect(destinationFocus).not.toHaveBeenCalled();
+  });
+
+  it("shows the more-sections cue when the section navigation initially overflows", () => {
+    renderShell();
+    setNavMetrics({ clientWidth: 160, scrollWidth: 520 });
+    fireEvent(window, new Event("resize"));
+
+    expect(screen.getByRole("button", { name: /more design system sections/i })).not.toHaveAttribute("hidden");
+    expect(document.querySelector("[data-design-system-nav-fade]")).not.toHaveAttribute("hidden");
+  });
+
+  it("scrolls the section navigation forward and hides the cue at the end", () => {
+    renderShell();
+    const nav = setNavMetrics({ clientWidth: 160, scrollWidth: 520 });
+    fireEvent(window, new Event("resize"));
+    const more = screen.getByRole("button", { name: /more design system sections/i });
+
+    fireEvent.click(more);
+    expect(nav.scrollLeft).toBeGreaterThan(0);
+
+    nav.scrollLeft = 360;
+    fireEvent(nav, new Event("scroll"));
+    expect(more).toHaveAttribute("hidden");
+    expect(document.querySelector("[data-design-system-nav-fade]")).toHaveAttribute("hidden");
+  });
+
+  it("updates overflow visibility on resize and cleans up listeners on unmount", () => {
+    const removeEventListener = vi.spyOn(window, "removeEventListener");
+    const view = renderShell();
+    const nav = setNavMetrics({ clientWidth: 240, scrollWidth: 200 });
+    fireEvent(window, new Event("resize"));
+    expect(document.querySelector("[data-design-system-more]")).toHaveAttribute("hidden");
+
+    Object.defineProperty(nav, "scrollWidth", { configurable: true, value: 500 });
+    fireEvent(window, new Event("resize"));
+    expect(document.querySelector("[data-design-system-more]")).not.toHaveAttribute("hidden");
+
+    view.unmount();
+    expect(removeEventListener).toHaveBeenCalledWith("resize", expect.any(Function));
   });
 
   it("keeps static loading and success specimens semantically honest", () => {

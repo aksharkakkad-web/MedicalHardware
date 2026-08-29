@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode, SVGProps } from "react";
 
+import { ResidentRecords, type ResidentRecord } from "../../components/ui/resident-records";
 import { StatusIndicator } from "../../components/ui/status-indicator";
 import { DesignSystemShell } from "./design-system-shell";
 import styles from "./page.module.css";
@@ -61,6 +62,54 @@ const radii = [
   ["Feature", "24px", "radiusOverlay"],
 ] as const;
 
+const residentRecords: ResidentRecord[] = [
+  {
+    id: "avery-chen",
+    residentName: "Avery Chen",
+    room: "Room 214",
+    attentionReason: "Unexpected movement needs review",
+    attention: "high",
+    monitoring: "active",
+    confidence: "low",
+    freshness: { value: "delayed" },
+    device: "degraded",
+    workflow: "investigating",
+    primaryAction: { label: "Review record", href: "#section-09" },
+    deviceDetails: "Radar and thermal are reporting; Wi-Fi CSI is delayed.",
+    lastObserved: "38 seconds ago",
+  },
+  {
+    id: "jordan-lee",
+    residentName: "Jordan Lee",
+    room: "Room 108",
+    attentionReason: "Resident-away period needs a coverage check",
+    attention: "watch",
+    monitoring: "away",
+    confidence: "unavailable",
+    freshness: { value: "stale", lastCurrentUpdate: "08:38:12" },
+    device: "healthy",
+    workflow: "acknowledged",
+    primaryAction: { label: "Open record", href: "#section-09" },
+    deviceDetails: "All three room sources are reporting.",
+    lastObserved: "4 minutes ago",
+  },
+  {
+    id: "sam-rivera",
+    residentName: "Sam Rivera",
+    room: "Room 302",
+    attentionReason: "Multiple people may be present in the room",
+    attention: "none",
+    monitoring: "possible_multi_person",
+    confidence: "unavailable",
+    freshness: { value: "unknown" },
+    device: "healthy",
+    workflow: "new",
+    primaryAction: { label: "Review record", href: "#section-09" },
+    deviceDetails: "Room sources are reporting, but resident attribution is unavailable.",
+    lastObserved: "Last current update unknown",
+  },
+];
+
 function Section({
   number,
   title,
@@ -106,6 +155,14 @@ function MoreIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+function ChevronRightIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
+      <path d="m7.5 4.5 5.5 5.5-5.5 5.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export default function DesignSystemPage() {
   return (
     <DesignSystemShell>
@@ -122,18 +179,25 @@ export default function DesignSystemPage() {
         <div className={styles.pageGrid} id="top">
           <aside className={styles.index} aria-label="Design system sections" data-design-system-index>
             <p className={styles.indexTitle}>Contents</p>
-            <nav>
-              <ol>
-                {sections.map(([number, label]) => (
-                  <li key={number}>
-                    <a href={`#section-${number}`}>
-                      <span>{number}</span>
-                      {label}
-                    </a>
-                  </li>
-                ))}
-              </ol>
-            </nav>
+            <div className={styles.indexNavFrame}>
+              <nav data-design-system-nav>
+                <ol>
+                  {sections.map(([number, label]) => (
+                    <li key={number}>
+                      <a href={`#section-${number}`}>
+                        <span>{number}</span>
+                        {label}
+                      </a>
+                    </li>
+                  ))}
+                </ol>
+              </nav>
+              <span className={styles.indexFade} data-design-system-nav-fade aria-hidden="true" hidden />
+              <button className={styles.moreSections} type="button" data-design-system-more aria-label="More design system sections" hidden>
+                <span>More sections</span>
+                <ChevronRightIcon />
+              </button>
+            </div>
             <p className={styles.indexNote}>Quiet at rest.<br />Unmistakable when action is required.</p>
           </aside>
 
@@ -368,22 +432,9 @@ export default function DesignSystemPage() {
             </Section>
 
             <Section number="08" title="Data" intro="Repeated records use tables. Missing values say what they mean.">
-              <div className={styles.tableFrame}>
-                <div className={styles.tableToolbar}><div><h3>Resident inventory</h3><p>5 synthetic state specimens</p></div><button className={styles.secondaryButton} type="button">Filter residents</button></div>
-                <div className={styles.tableScroll}>
-                  <table>
-                    <caption>Example resident monitoring inventory</caption>
-                    <thead><tr><th scope="col">Resident</th><th scope="col">Monitoring</th><th scope="col">Confidence</th><th scope="col">Freshness</th><th scope="col">Row state</th><th scope="col" aria-label="Action" /></tr></thead>
-                    <tbody>
-                      <tr className={styles.normalRow}><th scope="row"><strong>Resident A</strong><span>Room 102</span></th><td><span className={`${styles.miniStatus} ${styles.positiveMini}`}>Monitoring current</span></td><td>High</td><td className={styles.numeric}>22 sec ago</td><td><span className={styles.rowStateLabel}>Current</span></td><td><button className={styles.textButton} type="button">Open</button></td></tr>
-                      <tr className={styles.hoverRow}><th scope="row"><strong>Resident B</strong><span>Room 214</span></th><td><span className={`${styles.miniStatus} ${styles.positiveMini}`}>Monitoring current</span></td><td>High</td><td className={styles.numeric}>38 sec ago</td><td><span className={styles.rowStateLabel}>Hover</span></td><td><button className={styles.textButton} type="button">Open</button></td></tr>
-                      <tr className={styles.selectedRow}><th scope="row"><strong>Resident C</strong><span>Room 220</span></th><td><span className={`${styles.miniStatus} ${styles.positiveMini}`}>Monitoring current</span></td><td>Medium</td><td className={styles.numeric}>51 sec ago</td><td><span className={styles.rowStateLabel}>Selected</span></td><td><button className={styles.textButton} type="button">Open</button></td></tr>
-                      <tr className={styles.warningRow}><th scope="row"><strong>Resident D</strong><span>Room 108</span></th><td><span className={`${styles.miniStatus} ${styles.watchMini}`}>Monitoring away</span></td><td>Low</td><td className={styles.numeric}>4 min ago</td><td><span className={styles.rowStateLabel}>Review</span></td><td><button className={styles.textButton} type="button">Review</button></td></tr>
-                      <tr className={styles.criticalRow}><th scope="row"><strong>Resident F</strong><span>Room 302</span></th><td><span className={`${styles.miniStatus} ${styles.riskMini}`}>High attention priority</span></td><td>Medium</td><td className={styles.numeric}>1 min ago</td><td><span className={styles.rowStateLabel}>High priority</span></td><td><button className={styles.textButton} type="button">Review</button></td></tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+              <SpecimenLabel>Resident records · synthetic/test-only</SpecimenLabel>
+              <ResidentRecords records={residentRecords} />
+              <p className={styles.ruleNote}><strong>Responsive rule</strong> Desktop uses a scannable table; narrow screens use ordered records so the resident, reason, evidence, workflow, and action remain visible without horizontal panning.</p>
               <div className={styles.stateRow}><div><strong>No active events</strong><p>The queue is clear. Monitoring continues.</p></div><div><strong>No filtered results</strong><p>Try removing a filter.</p><button className={styles.textButton} type="button">Clear filters</button></div><div><strong>Couldn’t refresh</strong><p>Showing data from 08:38.</p><button className={styles.textButton} type="button">Retry</button></div></div>
             </Section>
 
