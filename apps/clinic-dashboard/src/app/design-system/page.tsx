@@ -5,6 +5,7 @@ import { Button, IconButton } from "../../components/ui/button";
 import { FormField, FormFieldset } from "../../components/ui/form-field";
 import { ResidentRecords, type ResidentRecord } from "../../components/ui/resident-records";
 import { StatusIndicator } from "../../components/ui/status-indicator";
+import { SystemFeedback, SystemLifecycle, SystemStateCatalog } from "../../components/ui/system-state";
 import { DesignSystemShell } from "./design-system-shell";
 import styles from "./page.module.css";
 
@@ -471,7 +472,6 @@ export default function DesignSystemPage() {
               <SpecimenLabel>Resident records · synthetic/test-only</SpecimenLabel>
               <ResidentRecords records={residentRecords} />
               <p className={styles.ruleNote}><strong>Responsive rule</strong> Desktop uses a scannable table; narrow screens use ordered records so the resident, reason, evidence, workflow, and action remain visible without horizontal panning.</p>
-              <div className={styles.stateRow}><div><strong>No active events</strong><p>The queue is clear. Monitoring continues.</p></div><div><strong>No filtered results</strong><p>Try removing a filter.</p><button className={styles.textButton} type="button">Clear filters</button></div><div><strong>Couldn’t refresh</strong><p>Showing data from 08:38.</p><button className={styles.textButton} type="button">Retry</button></div></div>
             </Section>
 
             <Section number="09" title="Care patterns" intro="Operational components keep priority, truth, workflow, and action together.">
@@ -481,6 +481,13 @@ export default function DesignSystemPage() {
                 <article><span>Resident status</span><h3>Monitoring current</h3><p>High confidence. Latest evidence arrived 38 seconds ago.</p><small>Keep risk, confidence, and freshness separate.</small></article>
                 <article><span>Device status</span><h3>Healthy device</h3><p>Radar, thermal, and Wi-Fi sources are reporting.</p><small>Device health is separate from resident attention and confidence.</small></article>
                 <article><span>Attention hierarchy</span><ol className={styles.alertHierarchy}><li><b>1</b> High attention priority</li><li><b>2</b> Review workflow state</li><li><b>3</b> Device and data limits</li></ol><small>This synthetic example does not identify a medical cause.</small></article>
+              </div>
+              <div className={styles.operationalStates}>
+                <SpecimenLabel>Operational states · synthetic/test-only</SpecimenLabel>
+                <p className={styles.operationalStatesIntro}>One reusable catalog keeps known facts, limitations, why they matter, and the allowed next action together. Color supports the words; it never carries meaning alone.</p>
+                <SystemStateCatalog />
+                <SystemLifecycle />
+                <SystemFeedback />
               </div>
               <footer className={styles.pageFooter}><span>Adaptive Care · Clear Signal V3.0</span><a href="#top">Back to top ↑</a></footer>
             </Section>
