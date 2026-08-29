@@ -202,6 +202,7 @@ describe("DesignSystemShell", () => {
 
     expect(screen.getByRole("button", { name: /saving change/i })).toBeDisabled();
     expect(screen.getByText("Saved")).not.toHaveAttribute("role", "status");
+    expect(screen.getAllByText("Selected record")).toHaveLength(2);
     expect(Array.from(document.querySelectorAll("button")).every((button) => button.type === "button")).toBe(true);
   });
 });

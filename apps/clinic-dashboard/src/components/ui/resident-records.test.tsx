@@ -1,4 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { ResidentRecords, type ResidentRecord } from "./resident-records";
@@ -6,6 +7,7 @@ import { ResidentRecords, type ResidentRecord } from "./resident-records";
 const records: ResidentRecord[] = [
   {
     id: "avery-chen",
+    selected: true,
     residentName: "Avery Chen",
     room: "Room 214",
     attentionReason: "Unexpected movement needs review",
@@ -58,12 +60,25 @@ describe("ResidentRecords", () => {
     const table = screen.getByRole("table", { name: /synthetic resident monitoring records/i });
     expect(within(table).getAllByRole("row")).toHaveLength(records.length + 1);
     expect(within(table).getByRole("columnheader", { name: "Resident" })).toBeInTheDocument();
-    expect(within(table).getByRole("columnheader", { name: "Attention" })).toBeInTheDocument();
-    expect(within(table).getByRole("columnheader", { name: "Monitoring" })).toBeInTheDocument();
-    expect(within(table).getByRole("columnheader", { name: "Confidence" })).toBeInTheDocument();
-    expect(within(table).getByRole("columnheader", { name: "Freshness" })).toBeInTheDocument();
-    expect(within(table).getByRole("columnheader", { name: "Workflow" })).toBeInTheDocument();
+    expect(within(table).getByRole("columnheader", { name: "Attention priority" })).toBeInTheDocument();
+    expect(within(table).getByRole("columnheader", { name: "Evidence" })).toBeInTheDocument();
+    expect(within(table).getByRole("columnheader", { name: "Operations" })).toBeInTheDocument();
+    expect(within(table).getAllByRole("columnheader")).toHaveLength(5);
     expect(within(table).getAllByRole("link", { name: /for Avery Chen/i })).toHaveLength(1);
+    const selectedRow = within(table).getAllByRole("row")[1];
+    expect(selectedRow).toHaveAttribute("aria-selected", "true");
+    expect(selectedRow).toHaveTextContent("Selected record");
+    expect(within(selectedRow).getByRole("link", { name: /for Avery Chen/i })).toBeInTheDocument();
+  });
+
+  it("keeps the desktop table fixed and action-visible at tablet widths", () => {
+    const css = readFileSync("src/components/ui/resident-records.module.css", "utf8");
+
+    expect(css).toMatch(/table-layout:\s*fixed/);
+    expect(css).toMatch(/min-width:\s*0/);
+    expect(css).not.toMatch(/\.desktopTable\s*\{[^}]*overflow-x\s*:\s*auto/);
+    expect(css).not.toMatch(/\.desktopTable\s+table\s*\{[^}]*min-width\s*:\s*980px/);
+    expect(css).toMatch(/\.actionColumn/);
   });
 
   it("keeps mobile record facts in the required reading order and discloses device details last", () => {
@@ -89,6 +104,10 @@ describe("ResidentRecords", () => {
       expect(indexes).toEqual([...indexes].sort((a, b) => a - b));
       expect(card.querySelector("details")?.previousElementSibling).toHaveAttribute("data-primary-action");
     });
+
+    const selectedCard = cards.find((card) => card.textContent?.includes("Avery Chen"));
+    expect(selectedCard).toHaveAttribute("data-interaction", "selected");
+    expect(selectedCard).toHaveTextContent("Selected record");
 
     const evidence = cards[0].querySelector("[data-evidence]");
     expect(evidence).toHaveTextContent("Confidence");

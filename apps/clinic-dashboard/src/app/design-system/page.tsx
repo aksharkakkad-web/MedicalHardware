@@ -65,6 +65,7 @@ const radii = [
 const residentRecords: ResidentRecord[] = [
   {
     id: "avery-chen",
+    selected: true,
     residentName: "Avery Chen",
     room: "Room 214",
     attentionReason: "Unexpected movement needs review",

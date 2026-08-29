@@ -4,7 +4,6 @@
 
 .desktopTable {
   display: none;
-  overflow-x: auto;
   border: 1px solid var(--ac-border-subtle);
   border-radius: var(--ac-radius-card);
   background: var(--ac-surface);
@@ -13,7 +12,8 @@
 
 .desktopTable table {
   width: 100%;
-  min-width: 980px;
+  min-width: 0;
+  table-layout: fixed;
   border-collapse: collapse;
   text-align: left;
 }
@@ -53,14 +53,83 @@
   background: var(--ac-surface-hover);
 }
 
-.desktopTable .indicator {
-  width: max-content;
-}
-
 .recordIdentity {
   display: grid;
   gap: var(--ac-space-0-5);
   min-width: 9rem;
+}
+
+.residentColumn { width: 27%; }
+.attentionColumn { width: 13%; }
+.evidenceColumn { width: 25%; }
+.operationsColumn { width: 19%; }
+.actionColumn { width: 16%; }
+
+.desktopTable th,
+.desktopTable td {
+  overflow-wrap: anywhere;
+}
+
+.desktopTable tbody tr[data-interaction="selected"] {
+  background: var(--ac-action-soft);
+  box-shadow: inset 3px 0 0 var(--ac-action);
+}
+
+.tableResidentReason {
+  display: grid;
+  gap: var(--ac-space-1);
+  margin-top: var(--ac-space-3);
+}
+
+.tableResidentReason > span,
+.selectedCue {
+  color: var(--ac-text-secondary);
+  font-family: var(--ac-font-mono);
+  font-size: var(--ac-font-size-overline);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tableResidentReason p {
+  color: var(--ac-text-secondary);
+  font-size: var(--ac-font-size-metadata);
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.compactGroup {
+  display: grid;
+  gap: var(--ac-space-2);
+  min-width: 0;
+}
+
+.compactStatus {
+  display: grid;
+  gap: var(--ac-space-0-5);
+  min-width: 0;
+  color: var(--ac-text-primary);
+}
+
+.compactStatus > span {
+  color: var(--ac-text-secondary);
+  font-family: var(--ac-font-mono);
+  font-size: var(--ac-font-size-overline);
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.compactStatus strong {
+  overflow-wrap: anywhere;
+  font-size: var(--ac-font-size-label);
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.actionColumn .primaryAction {
+  width: 100%;
+  padding-inline: var(--ac-space-2);
+  font-size: var(--ac-font-size-metadata);
 }
 
 .recordIdentity strong {
@@ -114,6 +183,16 @@
   border-radius: var(--ac-radius-card);
   background: var(--ac-surface);
   box-shadow: var(--ac-shadow-card);
+}
+
+.recordCard[data-interaction="selected"] {
+  border-color: var(--ac-action-border);
+  background: var(--ac-action-soft);
+  box-shadow: inset 3px 0 0 var(--ac-action), var(--ac-shadow-card);
+}
+
+.recordCard .selectedCue {
+  color: var(--ac-action-hover);
 }
 
 .recordCard .recordIdentity {
