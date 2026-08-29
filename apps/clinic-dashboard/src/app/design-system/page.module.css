@@ -507,6 +507,12 @@
   .buttonRow > .iconButton { flex: 0 0 44px; }
   .formStage { grid-template-columns: 1fr; }
   .formStage > button { width: 100%; }
+  .fieldGroup input,
+  .fieldGroup select { min-height: 44px; }
+  .fieldset label,
+  .checkbox { min-height: 44px; }
+  .fieldset input,
+  .checkbox input { width: 20px; height: 20px; }
   .tableToolbar { align-items: flex-start; }
   .tableToolbar button { flex: 0 0 auto; }
   .attentionIdentity { align-items: stretch; flex-direction: column; }

@@ -120,7 +120,7 @@ export default function DesignSystemPage() {
         </header>
 
         <div className={styles.pageGrid} id="top">
-          <aside className={styles.index} aria-label="Design system sections">
+          <aside className={styles.index} aria-label="Design system sections" data-design-system-index>
             <p className={styles.indexTitle}>Contents</p>
             <nav>
               <ol>
@@ -231,9 +231,10 @@ export default function DesignSystemPage() {
                   <button className={styles.destructiveButton} type="button">Remove device</button>
                   <button className={styles.iconButton} type="button" aria-label="More actions"><MoreIcon /></button>
                 </div>
+                <SpecimenLabel>Loading and success specimens</SpecimenLabel>
                 <div className={styles.buttonRow}>
                   <button className={styles.loadingButton} type="button" aria-busy="true" disabled><span aria-hidden="true" />Saving change</button>
-                  <span className={styles.successButton} role="status"><CheckIcon />Saved</span>
+                  <span className={styles.successButton}><CheckIcon />Saved</span>
                   <button className={styles.primaryButton} type="button" disabled>Resolve event</button>
                 </div>
                 <SpecimenLabel>Primary action states</SpecimenLabel>

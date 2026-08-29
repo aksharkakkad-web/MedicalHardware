@@ -26,6 +26,7 @@ export function DesignSystemShell({ children }: Readonly<{ children: ReactNode }
       pageRoot.querySelectorAll<HTMLAnchorElement>('aside nav a[href^="#section-"]'),
     );
     const sections = Array.from(pageRoot.querySelectorAll<HTMLElement>("section[id^='section-']"));
+    const index = pageRoot.querySelector<HTMLElement>("[data-design-system-index]");
     const getTarget = (hash: string) => {
       const targetId = decodeHashTarget(hash);
       if (!targetId) return null;
@@ -39,21 +40,30 @@ export function DesignSystemShell({ children }: Readonly<{ children: ReactNode }
         else link.removeAttribute("aria-current");
       });
     };
+    const getStickyOffset = () => {
+      const measuredHeight = index?.offsetHeight ?? 0;
+      return (measuredHeight > 0 ? measuredHeight : 0) + 16;
+    };
     const scrollToTarget = (target: HTMLElement, behavior: ScrollBehavior) => {
-      const isNarrow = typeof window.matchMedia === "function"
-        && window.matchMedia("(max-width: 980px)").matches;
-      const stickyOffset = isNarrow ? 58 : 16;
+      const stickyOffset = getStickyOffset();
       const rootTop = pageRoot.getBoundingClientRect().top;
       const top = pageRoot.scrollTop + target.getBoundingClientRect().top - rootTop - stickyOffset;
       if (typeof pageRoot.scrollTo === "function") pageRoot.scrollTo({ top, behavior });
       else pageRoot.scrollTop = top;
+    };
+    const scrollRootToTop = () => {
+      if (typeof pageRoot.scrollTo === "function") pageRoot.scrollTo({ top: 0, behavior: "auto" });
+      else pageRoot.scrollTop = 0;
     };
     const focusTarget = (target: HTMLElement) => {
       target.focus({ preventScroll: true });
     };
     const navigateToHash = (hash: string, behavior: ScrollBehavior = "auto") => {
       const target = getTarget(hash);
-      if (!target) return false;
+      if (!target) {
+        setActiveSection(null);
+        return false;
+      }
 
       const section = target.closest<HTMLElement>("section[id^='section-']");
       setActiveSection(section?.id ?? null);
@@ -76,6 +86,11 @@ export function DesignSystemShell({ children }: Readonly<{ children: ReactNode }
     };
 
     const handleHashNavigation = () => {
+      if (!window.location.hash) {
+        setActiveSection("section-01");
+        scrollRootToTop();
+        return;
+      }
       navigateToHash(window.location.hash);
     };
     const sectionObserver = typeof IntersectionObserver === "function"

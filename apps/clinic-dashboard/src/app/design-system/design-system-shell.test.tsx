@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DesignSystemShell } from "./design-system-shell";
+import DesignSystemPage from "./page";
 
 class IntersectionObserverStub {
   observe = vi.fn();
@@ -16,7 +17,7 @@ function renderShell() {
   return render(
     <DesignSystemShell>
       <a href="#design-system-content">Skip to specimens</a>
-      <aside aria-label="Design system sections">
+      <aside aria-label="Design system sections" data-design-system-index>
         <nav>
           <a href="#section-01">Foundation</a>
           <a href="#section-02">Color</a>
@@ -58,6 +59,7 @@ describe("DesignSystemShell", () => {
     renderShell();
 
     expect(() => {
+      fireEvent.click(screen.getByRole("link", { name: "Color" }));
       window.history.replaceState(null, "", "/design-system#%E0%A4%A");
       fireEvent(window, new HashChangeEvent("hashchange"));
       window.history.replaceState(null, "", "/design-system#not-present");
@@ -65,6 +67,8 @@ describe("DesignSystemShell", () => {
     }).not.toThrow();
 
     expect(document.activeElement).not.toBe(screen.getByRole("main"));
+    expect(screen.getByRole("link", { name: "Foundation" })).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("link", { name: "Color" })).not.toHaveAttribute("aria-current");
   });
 
   it("updates active state, hash, scroll, and focus immediately for section navigation", () => {
@@ -73,6 +77,8 @@ describe("DesignSystemShell", () => {
     const destination = screen.getByText("Color specimens");
     const scrollTo = vi.fn();
     const focus = vi.spyOn(destination, "focus");
+    const index = document.querySelector<HTMLElement>("[data-design-system-index]");
+    Object.defineProperty(index, "offsetHeight", { configurable: true, value: 61 });
     Object.defineProperty(viewport, "scrollTop", { configurable: true, value: 0, writable: true });
     Object.defineProperty(viewport, "scrollTo", { configurable: true, value: scrollTo });
     vi.spyOn(destination, "getBoundingClientRect").mockReturnValue({
@@ -92,7 +98,7 @@ describe("DesignSystemShell", () => {
     expect(window.location.hash).toBe("#section-02");
     expect(screen.getByRole("link", { name: "Color" })).toHaveAttribute("aria-current", "true");
     expect(screen.getByRole("link", { name: "Foundation" })).not.toHaveAttribute("aria-current");
-    expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ behavior: "auto" }));
+    expect(scrollTo).toHaveBeenCalledWith({ top: 103, behavior: "auto" });
     expect(focus).toHaveBeenCalledWith({ preventScroll: true });
     expect(document.activeElement).toBe(destination);
   });
@@ -116,5 +122,32 @@ describe("DesignSystemShell", () => {
 
     expect(screen.getByRole("link", { name: "Foundation" })).toHaveAttribute("aria-current", "true");
     expect(firstFocus).toHaveBeenCalledWith({ preventScroll: true });
+  });
+
+  it("restores the first section and root scroll when history returns to an empty hash", () => {
+    renderShell();
+    const viewport = screen.getByRole("main").parentElement;
+    const destination = screen.getByText("Color specimens");
+    const destinationFocus = vi.spyOn(destination, "focus");
+    const scrollTo = vi.fn();
+    Object.defineProperty(viewport, "scrollTo", { configurable: true, value: scrollTo });
+
+    fireEvent.click(screen.getByRole("link", { name: "Color" }));
+    destinationFocus.mockClear();
+    window.history.replaceState(null, "", "/design-system");
+    fireEvent(window, new PopStateEvent("popstate"));
+
+    expect(screen.getByRole("link", { name: "Foundation" })).toHaveAttribute("aria-current", "true");
+    expect(screen.getByRole("link", { name: "Color" })).not.toHaveAttribute("aria-current");
+    expect(scrollTo).toHaveBeenLastCalledWith({ top: 0, behavior: "auto" });
+    expect(destinationFocus).not.toHaveBeenCalled();
+  });
+
+  it("keeps static loading and success specimens semantically honest", () => {
+    render(<DesignSystemPage />);
+
+    expect(screen.getByRole("button", { name: /saving change/i })).toBeDisabled();
+    expect(screen.getByText("Saved")).not.toHaveAttribute("role", "status");
+    expect(Array.from(document.querySelectorAll("button")).every((button) => button.type === "button")).toBe(true);
   });
 });
