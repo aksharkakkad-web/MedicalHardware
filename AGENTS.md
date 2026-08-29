@@ -211,6 +211,10 @@ The repository docs are the system of record. If an architectural, product, or c
 
 Do not turn this file into a giant manual. Add detailed knowledge to the relevant `docs/` file and link it here if needed.
 
+## Adaptive Care UI design system
+
+All frontend/UI work must follow docs/design-system.md. Use its tokens, layout, status semantics, component rules, and responsive behavior; extend shared primitives before adding page-specific patterns. Preserve working behavior, inspect the rendered screen before and after UI changes, and visually verify hierarchy, spacing, truncation, states, and responsive layouts before calling a screen complete.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.

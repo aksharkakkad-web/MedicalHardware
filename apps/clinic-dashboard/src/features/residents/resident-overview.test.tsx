@@ -69,11 +69,12 @@ describe("ResidentOverview", () => {
     expect(screen.getByText("Resident A")).toBeVisible();
     expect(screen.getByText(/possible visitor/i)).toBeVisible();
     expect(screen.getByText(/device offline/i)).toBeVisible();
-    expect(screen.getByText(/^needs attention$/i)).toBeVisible();
-    expect(screen.getByRole("heading", { name: "4 residents need attention" })).toBeVisible();
-    expect(screen.getByText("2 of 6 active")).toBeVisible();
-    expect(screen.getByText(/based on the device state attached to each resident record/i)).toBeVisible();
-    expect(screen.getByRole("link", { name: /review highest-priority event/i })).toHaveAttribute(
+    expect(screen.getAllByText(/^needs attention$/i)).toHaveLength(2);
+    expect(screen.getByRole("heading", { name: "Residents needing review" })).toBeVisible();
+    expect(screen.getByText("4 open")).toBeVisible();
+    expect(screen.getByText("2 of 6")).toBeVisible();
+    expect(screen.getByText("rooms actively monitoring")).toBeVisible();
+    expect(screen.getAllByRole("link", { name: "Review event" })[0]).toHaveAttribute(
       "href",
       "/events/evt_unusual_movement_102",
     );

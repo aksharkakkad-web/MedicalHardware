@@ -1336,8 +1336,8 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1787873979.0945935,
-    "ast_hash": "23849366440977b04cbdd3304f4d956c",
+    "mtime": 1787965795.4716744,
+    "ast_hash": "04c1872f77ae87187813aa6eff115a27",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -1471,13 +1471,13 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/components/app-shell/app-shell.test.tsx": {
-    "mtime": 1787962710.782646,
-    "ast_hash": "3f0beac5ef68b6e626d9ce0d5c88ede9",
+    "mtime": 1787964831.6174212,
+    "ast_hash": "91aa2b6b91260a7afb084980828befa5",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/components/app-shell/app-shell.tsx": {
-    "mtime": 1787962646.3050787,
-    "ast_hash": "3fc4ec15d7d44e91021f439421e2d0e7",
+    "mtime": 1787964882.465731,
+    "ast_hash": "ad13639dc0e5c2b7d99c54ec2cd76677",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/components/status-pill/status-pill.test.tsx": {
@@ -1501,13 +1501,13 @@
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/resident-overview.test.tsx": {
-    "mtime": 1787962835.0138896,
-    "ast_hash": "e5bb655bb757ab6f0f3a433cbf3328fd",
+    "mtime": 1787966272.9548838,
+    "ast_hash": "7cc406fe0f74ea5b67cb3ab490ae9026",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/resident-overview.tsx": {
-    "mtime": 1787963006.0696695,
-    "ast_hash": "37fdac6233affe12ef4d5578258d1be3",
+    "mtime": 1787966272.9534876,
+    "ast_hash": "2a26b906c43f150215b0eb3d8d724a5a",
     "semantic_hash": ""
   },
   "apps/clinic-dashboard/src/features/residents/use-resident-overview.test.tsx": {
@@ -2289,6 +2289,11 @@
   "docs/design-references/clinic-overview-concept.png": {
     "mtime": 1787962009.635977,
     "ast_hash": "b586f9f5c92d227891d9a214ab973415",
+    "semantic_hash": ""
+  },
+  "docs/design-system.md": {
+    "mtime": 1787965795.4712,
+    "ast_hash": "86f0d5edd56ae14d87bc27d2f2e36c6a",
     "semantic_hash": ""
   }
 }
