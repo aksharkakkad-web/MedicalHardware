@@ -11,23 +11,6 @@
   transition: background-color 150ms ease, box-shadow 150ms ease;
 }
 
-.card::before {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 0.18rem;
-  background: transparent;
-  content: "";
-}
-
-.card[data-priority="critical"]::before,
-.card[data-priority="high"]::before {
-  background: var(--color-status-critical-text);
-}
-
-.card[data-priority="watch"]::before {
-  background: #d58a0b;
-}
-
 .card:hover {
   z-index: 1;
   background: #fafcff;

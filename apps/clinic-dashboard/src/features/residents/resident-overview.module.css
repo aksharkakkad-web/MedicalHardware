@@ -82,14 +82,6 @@
   box-shadow: var(--shadow-card);
 }
 
-.attentionBanner::after {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 0.22rem;
-  background: var(--color-status-critical-text);
-  content: "";
-}
-
 .alertMark {
   display: grid;
   width: 3.05rem;
