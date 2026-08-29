@@ -1,80 +1,80 @@
 .viewport {
-  /* Clear Signal is scoped away from the live clinic shell. */
-  --signal-canvas: #fbfaf8;
-  --signal-cool-canvas: #f4f7fc;
-  --signal-surface: #ffffff;
-  --signal-surface-raised: #fbfcff;
-  --signal-surface-quiet: #eef3fa;
-  --signal-surface-hover: #e7edf7;
-  --signal-text-primary: #111827;
-  --signal-text-secondary: #536174;
-  --signal-text-strong-secondary: #344054;
-  --signal-text-disabled: #7c899d;
-  --signal-text-inverse: #ffffff;
-  --signal-border-subtle: #dde4ef;
-  --signal-border-strong: #c5cfdd;
-  --signal-border-interactive: #91a0b5;
-  --signal-action: #175cd3;
-  --signal-brand-mark: #2563eb;
-  --signal-action-hover: #164fb3;
-  --signal-action-pressed: #123e9a;
-  --signal-action-soft: #eef4ff;
-  --signal-action-soft-strong: #dce9ff;
-  --signal-action-border: #b8d0ff;
-  --signal-focus: #1d4ed8;
-  --signal-sky-accent: #55acff;
-  --signal-violet-accent: #7357d8;
-  --signal-mint-accent: #76d6b1;
-  --signal-positive-bg: #e8f8f1;
-  --signal-positive-border: #9ed9be;
-  --signal-positive-text: #147d5a;
-  --signal-positive-strong: #105b42;
-  --signal-watch-bg: #fff5dc;
-  --signal-watch-border: #efc76d;
-  --signal-watch-text: #a15c00;
-  --signal-watch-strong: #6f4306;
-  --signal-risk-bg: #fff0ed;
-  --signal-risk-border: #f1a692;
-  --signal-risk-text: #c53b30;
-  --signal-risk-strong: #92301f;
-  --signal-device-bg: #edf7ff;
-  --signal-device-border: #a9d5ff;
-  --signal-device-text: #24628f;
-  --signal-device-strong: #1b4e73;
-  --signal-violet-bg: #f2efff;
-  --signal-violet-border: #c9bfff;
-  --signal-violet-text: #6246c7;
-  --signal-unavailable-bg: #f0f3f7;
-  --signal-unavailable-border: #cbd4df;
-  --signal-unavailable-text: #526172;
-  --signal-unavailable-strong: #3e4a58;
-  --signal-space-0: 0;
-  --signal-space-0-5: 2px;
-  --signal-space-1: 4px;
-  --signal-space-1-5: 6px;
-  --signal-space-2: 8px;
-  --signal-space-3: 12px;
-  --signal-space-4: 16px;
-  --signal-space-5: 20px;
-  --signal-space-6: 24px;
-  --signal-space-8: 32px;
-  --signal-space-10: 40px;
-  --signal-space-12: 48px;
-  --signal-space-16: 64px;
-  --signal-space-20: 80px;
-  --signal-radius-xs: 4px;
-  --signal-radius-sm: 8px;
-  --signal-radius-control: 10px;
-  --signal-radius-card: 20px;
-  --signal-radius-popover: 24px;
-  --signal-radius-dialog: 24px;
-  --signal-radius-pill: 50%;
-  --signal-shadow-card: 0 2px 8px rgb(17 24 39 / 3%), 0 18px 48px rgb(66 82 120 / 7%);
-  --signal-shadow-popover: 0 22px 60px rgb(66 82 120 / 14%);
-  --signal-duration-instant: 80ms;
-  --signal-duration-fast: 120ms;
-  --signal-duration-standard: 160ms;
-  --signal-ease-standard: cubic-bezier(.2, 0, 0, 1);
+  /* Temporary aliases keep the reference page on one canonical namespace. */
+  --signal-canvas: var(--ac-canvas);
+  --signal-cool-canvas: var(--ac-cool-canvas);
+  --signal-surface: var(--ac-surface);
+  --signal-surface-raised: var(--ac-surface-raised);
+  --signal-surface-quiet: var(--ac-surface-quiet);
+  --signal-surface-hover: var(--ac-surface-hover);
+  --signal-text-primary: var(--ac-text-primary);
+  --signal-text-secondary: var(--ac-text-secondary);
+  --signal-text-strong-secondary: var(--ac-text-strong-secondary);
+  --signal-text-disabled: var(--ac-text-disabled);
+  --signal-text-inverse: var(--ac-text-inverse);
+  --signal-border-subtle: var(--ac-border-subtle);
+  --signal-border-strong: var(--ac-border-strong);
+  --signal-border-interactive: var(--ac-border-interactive);
+  --signal-action: var(--ac-action);
+  --signal-brand-mark: var(--ac-brand-mark);
+  --signal-action-hover: var(--ac-action-hover);
+  --signal-action-pressed: var(--ac-action-pressed);
+  --signal-action-soft: var(--ac-action-soft);
+  --signal-action-soft-strong: var(--ac-action-soft-strong);
+  --signal-action-border: var(--ac-action-border);
+  --signal-focus: var(--ac-focus);
+  --signal-sky-accent: var(--ac-info-accent);
+  --signal-violet-accent: var(--ac-brand-accent);
+  --signal-mint-accent: var(--ac-positive-accent);
+  --signal-positive-bg: var(--ac-positive-bg);
+  --signal-positive-border: var(--ac-positive-border);
+  --signal-positive-text: var(--ac-positive-text);
+  --signal-positive-strong: var(--ac-positive-strong);
+  --signal-watch-bg: var(--ac-watch-bg);
+  --signal-watch-border: var(--ac-watch-border);
+  --signal-watch-text: var(--ac-watch-text);
+  --signal-watch-strong: var(--ac-watch-strong);
+  --signal-risk-bg: var(--ac-risk-bg);
+  --signal-risk-border: var(--ac-risk-border);
+  --signal-risk-text: var(--ac-risk-text);
+  --signal-risk-strong: var(--ac-risk-strong);
+  --signal-device-bg: var(--ac-device-bg);
+  --signal-device-border: var(--ac-device-border);
+  --signal-device-text: var(--ac-device-text);
+  --signal-device-strong: var(--ac-device-strong);
+  --signal-violet-bg: var(--ac-violet-bg);
+  --signal-violet-border: var(--ac-violet-border);
+  --signal-violet-text: var(--ac-violet-text);
+  --signal-unavailable-bg: var(--ac-unavailable-bg);
+  --signal-unavailable-border: var(--ac-unavailable-border);
+  --signal-unavailable-text: var(--ac-unavailable-text);
+  --signal-unavailable-strong: var(--ac-unavailable-strong);
+  --signal-space-0: var(--ac-space-0);
+  --signal-space-0-5: var(--ac-space-0-5);
+  --signal-space-1: var(--ac-space-1);
+  --signal-space-1-5: var(--ac-space-1-5);
+  --signal-space-2: var(--ac-space-2);
+  --signal-space-3: var(--ac-space-3);
+  --signal-space-4: var(--ac-space-4);
+  --signal-space-5: var(--ac-space-5);
+  --signal-space-6: var(--ac-space-6);
+  --signal-space-8: var(--ac-space-8);
+  --signal-space-10: var(--ac-space-10);
+  --signal-space-12: var(--ac-space-12);
+  --signal-space-16: var(--ac-space-16);
+  --signal-space-20: var(--ac-space-20);
+  --signal-radius-xs: var(--ac-radius-xs);
+  --signal-radius-sm: var(--ac-radius-sm);
+  --signal-radius-control: var(--ac-radius-control);
+  --signal-radius-card: var(--ac-radius-card);
+  --signal-radius-popover: var(--ac-radius-popover);
+  --signal-radius-dialog: var(--ac-radius-dialog);
+  --signal-radius-pill: var(--ac-radius-pill);
+  --signal-shadow-card: var(--ac-shadow-card);
+  --signal-shadow-popover: var(--ac-shadow-popover);
+  --signal-duration-instant: var(--ac-duration-instant);
+  --signal-duration-fast: var(--ac-duration-fast);
+  --signal-duration-standard: var(--ac-duration-standard);
+  --signal-ease-standard: var(--ac-ease-standard);
   position: fixed;
   inset: 0;
   z-index: 100;
@@ -82,7 +82,7 @@
   overflow-y: auto;
   color: var(--signal-text-primary);
   background: var(--signal-canvas);
-  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--ac-font-sans);
   font-optical-sizing: auto;
   font-synthesis: none;
   scroll-behavior: auto;
@@ -193,7 +193,7 @@
 .section { scroll-margin-top: 60px; border-bottom: 1px solid var(--signal-border-subtle); background: var(--signal-surface); }
 .section:nth-of-type(odd) { background: var(--signal-canvas); }
 .sectionHeader { display: grid; max-width: 1200px; grid-template-columns: 64px minmax(0, 1fr); gap: var(--signal-space-8); margin: 0 auto; padding: clamp(var(--signal-space-20), 9vw, 132px) var(--signal-space-6) var(--signal-space-12); }
-.sectionNumber { display: grid; width: 44px; height: 44px; place-items: center; border-radius: var(--signal-radius-card); color: var(--signal-action); background: var(--signal-action-soft); font-family: var(--font-geist-mono), monospace; font-size: 12px; font-weight: 700; line-height: 16px; font-variant-numeric: tabular-nums; }
+.sectionNumber { display: grid; width: 44px; height: 44px; place-items: center; border-radius: var(--signal-radius-card); color: var(--signal-action); background: var(--signal-action-soft); font-family: var(--ac-font-mono); font-size: 12px; font-weight: 700; line-height: 16px; font-variant-numeric: tabular-nums; }
 .sectionHeader h2 { font-size: clamp(44px, 5.5vw, 76px); font-weight: 740; line-height: .98; letter-spacing: -.055em; }
 .sectionHeader div > p { max-width: 560px; margin-top: var(--signal-space-3); color: var(--signal-text-secondary); font-size: 14px; line-height: 21px; }
 .sectionBody { max-width: 1200px; margin: 0 auto; padding: 0 var(--signal-space-6) clamp(96px, 9vw, 132px) 128px; }
@@ -220,7 +220,7 @@
 .swatchStrip small,
 .semanticStrip small { min-height: 32px; margin-top: var(--signal-space-1); font-size: 11px; line-height: 16px; }
 .swatchStrip code,
-.semanticStrip code { margin-top: var(--signal-space-2); font-family: var(--font-geist-mono), monospace; font-size: 10px; letter-spacing: .02em; }
+.semanticStrip code { margin-top: var(--signal-space-2); font-family: var(--ac-font-mono); font-size: 10px; letter-spacing: .02em; }
 .canvasToken { background: var(--signal-canvas); }
 .paper0 { background: var(--signal-surface); }
 .paper50 { background: var(--signal-surface-raised); }
@@ -260,11 +260,11 @@
 .labelType { font-size: 13px; font-weight: 550; line-height: 18px; }
 .metadataType { color: var(--signal-text-secondary); font-size: 12px; font-weight: 450; line-height: 17px; }
 .overlineType { font-size: 11px; font-weight: 650; line-height: 16px; letter-spacing: .08em; text-transform: uppercase; }
-.metaType { font-family: var(--font-geist-mono), monospace; font-size: 12px; line-height: 17px; font-variant-numeric: tabular-nums; }
+.metaType { font-family: var(--ac-font-mono); font-size: 12px; line-height: 17px; font-variant-numeric: tabular-nums; }
 .numericSpecimen { display: grid; grid-template-columns: minmax(180px, 22%) 1fr 1fr; gap: var(--signal-space-6); margin-top: var(--signal-space-6); padding: var(--signal-space-8); border: 1px solid var(--signal-action-border); border-radius: var(--signal-radius-popover); background: var(--signal-action-soft); font-variant-numeric: tabular-nums lining-nums; }
 .numericSpecimen span { color: var(--signal-text-secondary); font-size: 12px; }
 .numericSpecimen strong { font-size: 16px; }
-.numericSpecimen code { color: var(--signal-text-strong-secondary); font-family: var(--font-geist-mono), monospace; font-size: 12px; line-height: 20px; }
+.numericSpecimen code { color: var(--signal-text-strong-secondary); font-family: var(--ac-font-mono); font-size: 12px; line-height: 20px; }
 
 .spacingGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--signal-space-2); padding: var(--signal-space-4); border: 1px solid var(--signal-border-subtle); border-radius: var(--signal-radius-popover); background: var(--signal-surface); box-shadow: var(--signal-shadow-card); }
 .spacingGrid > div { display: grid; min-height: 150px; align-content: end; justify-items: start; gap: var(--signal-space-2); padding: var(--signal-space-4); border-radius: var(--signal-radius-sm); background: var(--signal-surface-raised); }
@@ -290,7 +290,7 @@
 .overlaySurface { box-shadow: var(--signal-shadow-popover); }
 .layoutSpacing { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--signal-space-4); margin-top: var(--signal-space-12); }
 .layoutSpacing article { display: grid; gap: var(--signal-space-2); padding: var(--signal-space-6); border: 1px solid var(--signal-border-subtle); border-radius: var(--signal-radius-card); background: var(--signal-surface); box-shadow: var(--signal-shadow-card); }
-.layoutSpacing strong { color: var(--signal-action); font-family: var(--font-geist-mono), monospace; font-size: 22px; }
+.layoutSpacing strong { color: var(--signal-action); font-family: var(--ac-font-mono); font-size: 22px; }
 .layoutSpacing span { font-size: 13px; font-weight: 650; line-height: 18px; }
 .layoutSpacing small { color: var(--signal-text-secondary); font-size: 11px; line-height: 16px; }
 
@@ -329,7 +329,7 @@
 .actionStates > div,
 .iconStates > div { display: grid; justify-items: start; gap: var(--signal-space-3); padding: var(--signal-space-4); border-radius: var(--signal-radius-card); background: var(--signal-surface-raised); }
 .actionStates span,
-.iconStates span { color: var(--signal-text-secondary); font-family: var(--font-geist-mono), monospace; font-size: 10px; letter-spacing: .04em; text-transform: uppercase; }
+.iconStates span { color: var(--signal-text-secondary); font-family: var(--ac-font-mono); font-size: 10px; letter-spacing: .04em; text-transform: uppercase; }
 .simulatedHover { background: var(--signal-action-hover); }
 .simulatedIconHover { border-color: var(--signal-action-border); color: var(--signal-action); background: var(--signal-action-soft); }
 .simulatedFocus { outline: 2px solid var(--signal-focus); outline-offset: 2px; }
@@ -410,13 +410,13 @@
 .watchMini { border-color: var(--signal-watch-border); color: var(--signal-watch-text); background: var(--signal-watch-bg); }
 .unavailableMini { border-color: var(--signal-unavailable-border); color: var(--signal-unavailable-text); background: var(--signal-unavailable-bg); }
 .riskMini { border-color: var(--signal-risk-border); color: var(--signal-risk-text); background: var(--signal-risk-bg); }
-.rowStateLabel { color: var(--signal-text-secondary); font-family: var(--font-geist-mono), monospace; font-size: 10px !important; letter-spacing: .04em; text-transform: uppercase; }
+.rowStateLabel { color: var(--signal-text-secondary); font-family: var(--ac-font-mono); font-size: 10px !important; letter-spacing: .04em; text-transform: uppercase; }
 .hoverRow { background: var(--signal-surface-raised); }
 .selectedRow { background: var(--signal-action-soft); box-shadow: inset 3px 0 0 var(--signal-action); }
 .warningRow { background: var(--signal-watch-bg); box-shadow: inset 3px 0 0 var(--signal-watch-text); }
 .criticalRow { background: var(--signal-risk-bg); box-shadow: inset 3px 0 0 var(--signal-risk-text); }
 .numeric,
-.elapsed { font-family: var(--font-geist-mono), monospace; font-variant-numeric: tabular-nums lining-nums; }
+.elapsed { font-family: var(--ac-font-mono); font-variant-numeric: tabular-nums lining-nums; }
 .textButton { min-height: 36px; padding: var(--signal-space-1) var(--signal-space-2); border: 0; border-radius: var(--signal-radius-sm); color: var(--signal-action-hover); background: transparent; cursor: pointer; font-size: 13px; font-weight: 600; }
 .textButton:hover { background: var(--signal-action-soft); }
 .stateRow { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--signal-space-4); margin-top: var(--signal-space-6); }
@@ -449,7 +449,7 @@
 .evidenceGrid article > small { display: block; margin-top: var(--signal-space-5); color: var(--signal-text-secondary); font-size: 11px; line-height: 16px; }
 .alertHierarchy { display: grid; gap: var(--signal-space-2); margin-top: var(--signal-space-5); list-style: none; }
 .alertHierarchy li { display: flex; align-items: center; gap: var(--signal-space-2); color: var(--signal-text-strong-secondary); font-size: 12px; }
-.alertHierarchy b { display: grid; width: 22px; height: 22px; place-items: center; border-radius: var(--signal-radius-sm); color: var(--signal-action); background: var(--signal-action-soft); font-family: var(--font-geist-mono), monospace; font-size: 10px; }
+.alertHierarchy b { display: grid; width: 22px; height: 22px; place-items: center; border-radius: var(--signal-radius-sm); color: var(--signal-action); background: var(--signal-action-soft); font-family: var(--ac-font-mono); font-size: 10px; }
 .pageFooter { display: flex; align-items: center; justify-content: space-between; gap: var(--signal-space-6); margin-top: var(--signal-space-16); padding-top: var(--signal-space-5); border-top: 1px solid var(--signal-border-strong); color: var(--signal-text-secondary); font-size: 12px; }
 .pageFooter a { min-height: 36px; display: inline-flex; align-items: center; color: var(--signal-action-hover); font-weight: 600; }
 

@@ -132,7 +132,7 @@ export default function DesignSystemPage() {
             <span aria-hidden="true">AC</span>
             <strong>Adaptive Care</strong>
           </a>
-          <p>Adaptive Care · Design System 02</p>
+          <p>ADAPTIVE CARE · DESIGN SYSTEM V3.0</p>
         </header>
 
         <div className={styles.pageGrid} id="top">
@@ -166,7 +166,7 @@ export default function DesignSystemPage() {
                 </div>
                 <dl>
                   <div><dt>Product mode</dt><dd>Clinic operations</dd></div>
-                  <div><dt>Visual direction</dt><dd>Clear Signal</dd></div>
+                  <div><dt>Visual direction</dt><dd>Clear Signal V3.0</dd></div>
                   <div><dt>Product type</dt><dd>Restrained Geist Sans</dd></div>
                   <div><dt>Access floor</dt><dd>WCAG 2.2 AA</dd></div>
                 </dl>
@@ -361,7 +361,7 @@ export default function DesignSystemPage() {
                 <article><span>Device status</span><h3>Room unit online</h3><p>Radar, thermal, and Wi-Fi sources are reporting.</p><small>Device health uses information or operational status, never resident-risk red.</small></article>
                 <article><span>Alert hierarchy</span><ol className={styles.alertHierarchy}><li><b>1</b> Critical resident risk</li><li><b>2</b> Warning or overdue work</li><li><b>3</b> Device and data limits</li></ol><small>This synthetic example does not identify a medical cause.</small></article>
               </div>
-              <footer className={styles.pageFooter}><span>Adaptive Care · Clear Signal working system 02</span><a href="#top">Back to top ↑</a></footer>
+              <footer className={styles.pageFooter}><span>Adaptive Care · Clear Signal V3.0</span><a href="#top">Back to top ↑</a></footer>
             </Section>
           </main>
         </div>
