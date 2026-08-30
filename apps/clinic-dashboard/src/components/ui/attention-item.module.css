@@ -1,0 +1,99 @@
+.item {
+  display: grid;
+  gap: var(--ac-space-4);
+  min-width: 0;
+  overflow: hidden;
+  padding: var(--ac-space-5);
+  border: 1px solid var(--ac-border-subtle);
+  border-radius: var(--ac-radius-popover);
+  background: var(--ac-surface);
+  box-shadow: var(--ac-shadow-card);
+}
+
+.topline,
+.identity,
+.actionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ac-space-4);
+}
+
+.identity { justify-content: flex-start; }
+.identity strong { color: var(--ac-text-primary); font-size: var(--ac-font-size-record-title); }
+.identity span,
+.elapsed { color: var(--ac-text-secondary); font-family: var(--ac-font-mono); font-size: var(--ac-font-size-metadata); }
+.elapsed { margin-left: auto; white-space: nowrap; }
+
+.reason {
+  display: grid;
+  gap: var(--ac-space-1);
+  padding-block: var(--ac-space-2);
+}
+
+.reason > span,
+.context strong {
+  color: var(--ac-text-secondary);
+  font-family: var(--ac-font-mono);
+  font-size: var(--ac-font-size-overline);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.reason h3 { font-size: var(--ac-font-size-section-heading); line-height: 1.35; }
+
+.statuses {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ac-space-2);
+  min-width: 0;
+  padding-block: var(--ac-space-4);
+  border-block: 1px solid var(--ac-border-subtle);
+}
+
+.axis { min-width: 0; }
+.axis > * { width: 100%; }
+
+.attributionLimit,
+.context {
+  grid-column: 1 / -1;
+  color: var(--ac-text-secondary);
+  font-size: var(--ac-font-size-metadata);
+  line-height: 1.45;
+}
+
+.attributionLimit { color: var(--ac-unavailable-strong); }
+
+.context { display: grid; gap: var(--ac-space-1); }
+.context strong { color: var(--ac-text-secondary); }
+
+.actionRow { justify-content: flex-start; }
+.actionRow > * { min-width: 44px; }
+
+.deviceDetails {
+  color: var(--ac-text-secondary);
+  font-size: var(--ac-font-size-metadata);
+  line-height: 1.45;
+}
+
+.deviceDetails summary {
+  min-height: 44px;
+  align-content: center;
+  color: var(--ac-action-hover);
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.deviceDetails p { padding-top: var(--ac-space-2); }
+
+@media (max-width: 600px) {
+  .item { padding: var(--ac-space-4); }
+  .statuses { grid-template-columns: 1fr; }
+  .topline { align-items: flex-start; flex-direction: column; }
+  .elapsed { margin-left: 0; }
+  .actionRow > * { width: 100%; }
+}
+
+@media (forced-colors: active) {
+  .item { border-color: CanvasText; background: Canvas; }
+}

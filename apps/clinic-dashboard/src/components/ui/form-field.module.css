@@ -1,0 +1,65 @@
+.field {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: var(--ac-space-1);
+}
+
+.label,
+.fieldset legend {
+  color: var(--ac-text-primary);
+  font-size: var(--ac-font-size-label);
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.required {
+  margin-left: var(--ac-space-2);
+  color: var(--ac-text-secondary);
+  font-size: var(--ac-font-size-metadata);
+  font-weight: 450;
+}
+
+.hint,
+.error {
+  color: var(--ac-text-secondary);
+  font-size: var(--ac-font-size-metadata);
+  line-height: 1.4;
+}
+
+.error { color: var(--ac-risk-text); }
+
+.control {
+  width: 100%;
+  min-height: 44px;
+  padding: var(--ac-space-2) var(--ac-space-3);
+  border: 1px solid var(--ac-border-interactive);
+  border-radius: var(--ac-radius-control);
+  color: var(--ac-text-primary);
+  background: var(--ac-surface);
+  font-size: var(--ac-font-size-body);
+}
+
+.control:hover:not(:disabled) { border-color: var(--ac-text-secondary); }
+.control:focus-visible { border-color: var(--ac-action); outline: 2px solid var(--ac-focus); outline-offset: 2px; }
+.control[aria-invalid="true"] { border-color: var(--ac-risk-text); }
+.control:disabled { color: var(--ac-text-disabled); background: var(--ac-surface-quiet); cursor: not-allowed; }
+.control[readonly] { background: var(--ac-surface-raised); }
+
+textarea.control { min-height: 92px; resize: vertical; }
+
+.fieldset {
+  display: grid;
+  gap: var(--ac-space-3);
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+
+.fieldset legend { width: 100%; margin-bottom: var(--ac-space-1); }
+
+@media (forced-colors: active) {
+  .control { border-color: ButtonText; color: FieldText; background: Field; }
+  .control:focus-visible { outline-color: Highlight; }
+  .control[aria-invalid="true"] { border-color: Mark; }
+}

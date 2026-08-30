@@ -1,0 +1,124 @@
+.indicator {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  align-items: flex-start;
+  gap: var(--ac-space-2);
+  padding: var(--ac-space-2) var(--ac-space-3);
+  border: 1px solid var(--ac-border-subtle);
+  border-radius: var(--ac-radius-sm);
+  color: var(--ac-text-primary);
+  background: var(--ac-surface);
+}
+
+.marker {
+  width: 0.375rem;
+  height: 0.375rem;
+  flex: 0 0 auto;
+  margin-top: var(--ac-space-1);
+  border-radius: var(--ac-radius-pill);
+  background: currentColor;
+}
+
+.content {
+  display: grid;
+  min-width: 0;
+  gap: var(--ac-space-0-5);
+}
+
+.axis {
+  color: var(--ac-text-secondary);
+  font-family: var(--ac-font-mono);
+  font-size: var(--ac-font-size-metadata);
+  line-height: 1rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.label {
+  font-size: var(--ac-font-size-label);
+  font-weight: 650;
+  line-height: 1.125rem;
+}
+
+.description {
+  max-width: 34rem;
+  color: var(--ac-text-secondary);
+  font-size: var(--ac-font-size-metadata);
+  line-height: 1.0625rem;
+}
+
+.indicator[data-axis="attention"][data-value="critical"],
+.indicator[data-axis="attention"][data-value="high"] {
+  border-color: var(--ac-risk-border);
+  color: var(--ac-risk-text);
+  background: var(--ac-risk-bg);
+}
+
+.indicator[data-axis="attention"][data-value="watch"],
+.indicator[data-axis="monitoring"][data-value="away"],
+.indicator[data-axis="confidence"][data-value="medium"],
+.indicator[data-axis="freshness"][data-value="delayed"],
+.indicator[data-axis="device"][data-value="degraded"],
+.indicator[data-axis="workflow"][data-value="investigating"] {
+  border-color: var(--ac-watch-border);
+  color: var(--ac-watch-text);
+  background: var(--ac-watch-bg);
+}
+
+.indicator[data-axis="monitoring"][data-value="active"],
+.indicator[data-axis="confidence"][data-value="high"],
+.indicator[data-axis="freshness"][data-value="current"],
+.indicator[data-axis="device"][data-value="healthy"],
+.indicator[data-axis="workflow"][data-value="resolved"] {
+  border-color: var(--ac-positive-border);
+  color: var(--ac-positive-text);
+  background: var(--ac-positive-bg);
+}
+
+.indicator[data-axis="monitoring"][data-value="possible_multi_person"],
+.indicator[data-axis="monitoring"][data-value="calibrating"],
+.indicator[data-axis="confidence"][data-value="low"],
+.indicator[data-axis="device"][data-value="maintenance"] {
+  border-color: var(--ac-device-border);
+  color: var(--ac-device-text);
+  background: var(--ac-device-bg);
+}
+
+.indicator[data-axis="monitoring"][data-value="paused"],
+.indicator[data-axis="workflow"][data-value="new"],
+.indicator[data-axis="workflow"][data-value="acknowledged"] {
+  border-color: var(--ac-action-border);
+  color: var(--ac-action-hover);
+  background: var(--ac-action-soft);
+}
+
+.indicator[data-axis="monitoring"][data-value="unavailable"],
+.indicator[data-axis="confidence"][data-value="unavailable"],
+.indicator[data-axis="freshness"][data-value="stale"],
+.indicator[data-axis="freshness"][data-value="unknown"],
+.indicator[data-axis="device"][data-value="offline"] {
+  border-color: var(--ac-unavailable-border);
+  color: var(--ac-unavailable-text);
+  background: var(--ac-unavailable-bg);
+}
+
+.indicator[data-semantic="neutral"] {
+  border-color: var(--ac-border-subtle);
+  color: var(--ac-text-primary);
+  background: var(--ac-surface);
+}
+
+@media (max-width: 600px) {
+  .indicator {
+    width: 100%;
+  }
+}
+
+@media (forced-colors: active) {
+  .indicator {
+    border-color: CanvasText;
+    color: CanvasText;
+    background: Canvas;
+  }
+}
