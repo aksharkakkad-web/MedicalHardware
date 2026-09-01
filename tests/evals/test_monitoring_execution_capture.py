@@ -40,3 +40,17 @@ def test_run_scenario_captures_provider_failure_without_hiding_fallback() -> Non
     assert execution.interpretation_results == ()
     assert execution.provider_errors == ("RuntimeError: sanitized provider failure",)
     assert execution.record["fallback_used"] is True
+
+
+def test_run_scenario_binds_provider_model_version_into_the_ai_request() -> None:
+    class VersionedProvider(DeterministicFakeLLMClient):
+        model = "gemini-3.5-flash"
+
+    execution = run_scenario(
+        "sustained_movement_change",
+        llm_client=VersionedProvider(),
+    )
+
+    assert execution.interpretation_requests[0].model_id == "gemini"
+    assert execution.interpretation_requests[0].model_version == "gemini-3.5-flash"
+    assert execution.interpretation_results[0].model_version == "gemini-3.5-flash"

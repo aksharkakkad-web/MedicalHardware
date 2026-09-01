@@ -456,7 +456,16 @@ def _engine(
         client = RecordingLLMClient(llm_client)
     else:
         client = None if mode is None else ScenarioLLMClient(mode)
-    return MonitoringIntelligenceEngine(llm_client=client), client
+    provider = llm_client
+    while isinstance(provider, RecordingLLMClient):
+        provider = provider.client
+    provider_model = getattr(provider, "model", None)
+    engine_options = (
+        {"model_id": "gemini", "model_version": provider_model}
+        if isinstance(provider_model, str) and provider_model
+        else {}
+    )
+    return MonitoringIntelligenceEngine(llm_client=client, **engine_options), client
 
 
 def _process(

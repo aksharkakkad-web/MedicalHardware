@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from statistics import mean
 from typing import Mapping
 
+from backend.app.ai.analysis_contracts import AnalysisRun
 from evals.monitoring.generation import GeneratedCase
 from evals.monitoring.scenarios import ScenarioExecution
 
@@ -19,6 +20,68 @@ class CaseGrade:
     warnings: tuple[str, ...]
     scores: Mapping[str, float]
     evidence: Mapping[str, object]
+
+
+@dataclass(frozen=True)
+class MultiAgentExpectation:
+    possibility_labels: tuple[str, ...]
+    specialist_names: tuple[str, ...]
+    final_disposition: str
+    final_severity: str
+    allowed_evidence_refs: tuple[str, ...]
+
+
+def multi_agent_evaluation_record(
+    case_id: str,
+    cluster_id: str,
+    run: AnalysisRun,
+    expectation: MultiAgentExpectation,
+    *,
+    stage_latencies_ms: Mapping[str, float] | None = None,
+    stage_call_counts: Mapping[str, int] | None = None,
+) -> dict[str, object]:
+    plan = run.routing_plan
+    final = run.final_analysis
+    routed_labels = () if plan is None else tuple(item.label for item in plan.possibilities)
+    routed_specialists = () if plan is None else tuple(item.specialist for item in plan.assignments)
+    specialist_labels = tuple(
+        possibility.label
+        for assessment in run.specialist_assessments
+        for possibility in assessment.possibilities
+    )
+    final_labels = () if final is None else tuple(item.label for item in final.possibilities)
+    used_refs = set()
+    if plan is not None:
+        used_refs.update(plan.evidence_refs)
+    for assessment in run.specialist_assessments:
+        used_refs.update(assessment.evidence_refs)
+    if final is not None:
+        used_refs.update(final.evidence_refs)
+    return {
+        "case_id": case_id,
+        "cluster_id": cluster_id,
+        "analysis_state": run.state.value,
+        "expected_possibility_labels": list(expectation.possibility_labels),
+        "routed_possibility_labels": list(routed_labels),
+        "expected_specialists": list(expectation.specialist_names),
+        "routed_specialists": list(routed_specialists),
+        "specialist_possibility_labels": list(specialist_labels),
+        "final_possibility_labels": list(final_labels),
+        "expected_disposition": expectation.final_disposition,
+        "actual_disposition": None if final is None else final.recommended_disposition.value,
+        "expected_severity": expectation.final_severity,
+        "actual_severity": None if final is None else final.severity.value,
+        "allowed_evidence_refs": list(expectation.allowed_evidence_refs),
+        "used_evidence_refs": sorted(used_refs),
+        "hallucinated_evidence_refs": sorted(
+            used_refs - set(expectation.allowed_evidence_refs)
+        ),
+        "unavailable_specialists": list(run.unavailable_specialists),
+        "repair_count": run.repair_count,
+        "errors": list(run.errors),
+        "stage_latencies_ms": dict(stage_latencies_ms or {}),
+        "stage_call_counts": dict(stage_call_counts or {}),
+    }
 
 
 def _append(values: list[str], value: str) -> None:
@@ -158,4 +221,10 @@ def summarize_grades(grades: tuple[CaseGrade, ...]) -> dict[str, object]:
     }
 
 
-__all__ = ["CaseGrade", "grade_case", "summarize_grades"]
+__all__ = [
+    "CaseGrade",
+    "MultiAgentExpectation",
+    "grade_case",
+    "multi_agent_evaluation_record",
+    "summarize_grades",
+]

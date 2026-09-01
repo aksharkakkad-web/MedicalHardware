@@ -437,28 +437,28 @@ git commit -m "feat: persist and expose multi-agent analysis"
 - Consumes: `AnalysisRun` stage records and existing 12-cluster scenario truth.
 - Produces: stage-specific and end-to-end metrics, resumable artifacts, and provider/model/skill comparisons.
 
-- [ ] **Step 1: Write failing evaluation tests**
+- [x] **Step 1: Write failing evaluation tests**
 
 Use literal scenario expectations to measure possibility recall, routing accuracy, specialist precision, hallucinations, alternative preservation, final action/severity agreement, repair rate, stage latency, total latency, calls, and unavailable-stage behavior.
 
-- [ ] **Step 2: Verify failure**
+- [x] **Step 2: Verify failure**
 
 ```bash
 pytest tests/evals/test_multi_agent_evaluation.py tests/evals/test_monitoring_execution_capture.py -q
 ```
 
-- [ ] **Step 3: Implement metrics and artifact capture**
+- [x] **Step 3: Implement metrics and artifact capture**
 
 Preserve real attempted/completed counts. Save stage outputs and errors with credential redaction and checksums. Keep deterministic million-case evidence separate from live multi-agent AI evidence.
 
-- [ ] **Step 4: Run smoke and canonical campaigns**
+- [x] **Step 4: Run smoke and canonical campaigns**
 
 ```bash
 python3 -m evals.monitoring.cli smoke --output-dir eval-results/monitoring/multi_agent_smoke
 python3 -m evals.monitoring.cli pr --output-dir eval-results/monitoring/multi_agent_pr
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add evals/monitoring tests/evals
