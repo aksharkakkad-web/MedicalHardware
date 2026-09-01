@@ -23,6 +23,7 @@ from backend.app.ai.analysis_skills import (
     fallback_specialists,
     load_analysis_skill,
 )
+from backend.app.ai.analysis_orchestration import MultiAgentAnalysisOrchestrator
 
 from backend.app.ai.client import (
     DeterministicFakeLLMClient,
@@ -64,6 +65,7 @@ __all__ = [
     "GeminiProviderError",
     "MemoryUpdateAction",
     "MemoryUpdateProposal",
+    "MultiAgentAnalysisOrchestrator",
     "Possibility",
     "RecommendedDisposition",
     "RoutingPlan",

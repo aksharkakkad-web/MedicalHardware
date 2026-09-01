@@ -252,25 +252,25 @@ git commit -m "feat: build grounded multi-agent analysis requests"
 - Consumes: one client per capability tier, context builders, validators, and stage contracts.
 - Produces: `MultiAgentAnalysisOrchestrator.analyze(packet, resident_memory, relevant_context_entry_ids) -> AnalysisRun`.
 
-- [ ] **Step 1: Write failing happy-path test**
+- [x] **Step 1: Write failing happy-path test**
 
 Use a deterministic scripted client and assert exact call order: one recall call, selected specialist calls in one parallel wave, then one final call. Assert the final result retains two credible possibilities and the specialists do not receive one another's output.
 
-- [ ] **Step 2: Write failing resilience tests**
+- [x] **Step 2: Write failing resilience tests**
 
 Cover recall failure with deterministic routing-only fallback, one missing specialist, invalid final output followed by exactly one targeted repair, second invalid output becoming `needs_staff_review`, stage checkpoint reuse, and exact replay idempotency.
 
-- [ ] **Step 3: Verify failure**
+- [x] **Step 3: Verify failure**
 
 ```bash
 pytest tests/ai/test_analysis_orchestration.py -q
 ```
 
-- [ ] **Step 4: Implement the orchestrator**
+- [x] **Step 4: Implement the orchestrator**
 
 Use `ThreadPoolExecutor` with a configured maximum of four specialist workers. Preserve input order in saved results, record failed specialists explicitly, and never loop repairs beyond one attempt.
 
-- [ ] **Step 5: Run focused tests repeatedly**
+- [x] **Step 5: Run focused tests repeatedly**
 
 ```bash
 pytest tests/ai/test_analysis_orchestration.py -q
@@ -279,7 +279,7 @@ pytest tests/ai/test_analysis_orchestration.py -q
 
 Expected: deterministic identical outcomes across both runs.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/app/ai/analysis_orchestration.py tests/ai/test_analysis_orchestration.py
