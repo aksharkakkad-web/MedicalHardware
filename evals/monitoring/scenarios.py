@@ -115,6 +115,7 @@ class ScenarioExecution:
     record: dict[str, Any]
     interpretation_requests: tuple[InterpretationRequest, ...]
     interpretation_results: tuple[InterpretationResult, ...]
+    provider_errors: tuple[str, ...]
 
 
 SCENARIOS = (
@@ -185,10 +186,15 @@ class RecordingLLMClient:
         self.client = client
         self.requests: list[InterpretationRequest] = []
         self.raw_results: list[InterpretationResult] = []
+        self.errors: list[str] = []
 
     def interpret(self, request: InterpretationRequest) -> InterpretationResult:
         self.requests.append(request)
-        result = self.client.interpret(request)
+        try:
+            result = self.client.interpret(request)
+        except Exception as exc:
+            self.errors.append(f"{type(exc).__name__}: {exc}")
+            raise
         self.raw_results.append(result)
         return result
 
@@ -917,16 +923,17 @@ def _simple_scenario(
         extra_values["setup_version_changed"] = recalibrated.setup_version != progress.setup_version
         extra_values["affected_dimensions"] = list(recalibrated.setup_change_history[-1].affected_dimensions)
     if scenario_id == "sustained_movement_change":
-        if client is None or not client.requests or not client.raw_results:
+        if client is None or not client.requests:
             raise RuntimeError("synthetic selected-context scenario did not invoke AI")
         request = client.requests[-1]
-        raw_result = client.raw_results[-1]
+        raw_result = client.raw_results[-1] if client.raw_results else None
         extra_values["context_provenance"] = {
             "explicit_selection": True,
             "selected_entry_ids": ["sustained_movement_context"],
             "retrieved_context_refs": list(request.retrieved_context_refs),
             "result_request_fingerprint_matches": (
-                raw_result.request_fingerprint == request.request_fingerprint
+                raw_result is not None
+                and raw_result.request_fingerprint == request.request_fingerprint
             ),
         }
     return _finalize(definition, start, results, learning, client, monitoring.state, extras=extra_values)
@@ -1350,6 +1357,7 @@ def run_scenario(
         record=record,
         interpretation_requests=tuple(capture.requests) if capture else (),
         interpretation_results=tuple(capture.raw_results) if capture else (),
+        provider_errors=tuple(capture.errors) if capture else (),
     )
 
 

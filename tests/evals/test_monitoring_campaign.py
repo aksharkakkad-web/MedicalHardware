@@ -1,3 +1,4 @@
+import gzip
 import json
 from pathlib import Path
 
@@ -68,6 +69,27 @@ def test_gemini_mode_requires_an_explicit_provider(tmp_path: Path) -> None:
             output_root=tmp_path,
             run_id="gemini_missing",
         )
+
+
+def test_gemini_campaign_records_provider_failure_as_failure_not_fallback_pass(tmp_path: Path) -> None:
+    class FailingProvider:
+        def interpret(self, request):
+            raise RuntimeError("sanitized live failure")
+
+    result = run_campaign(
+        CampaignConfig(mode="gemini", case_count=1),
+        output_root=tmp_path,
+        run_id="gemini_failure",
+        provider=FailingProvider(),
+    )
+
+    assert result.completed == 0
+    assert result.failed == 1
+    assert result.passed is False
+    failure_text = gzip.decompress(
+        (result.artifact_path / "failures.jsonl.gz").read_bytes()
+    ).decode()
+    assert "sanitized live failure" in failure_text
 
 
 def test_full_canonical_review_set_completes_without_hard_failures(tmp_path: Path) -> None:

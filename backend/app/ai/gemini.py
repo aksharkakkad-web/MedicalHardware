@@ -1,10 +1,11 @@
 """Strict Gemini REST adapter for bounded monitoring interpretations."""
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from hashlib import sha256
 import json
 import os
+import re
 import time
 from typing import Protocol
 from urllib.error import HTTPError, URLError
@@ -36,9 +37,17 @@ class GeminiTransport(Protocol):
 
 
 class GeminiTransportError(RuntimeError):
-    def __init__(self, message: str, *, status_code: int | None, retryable: bool) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        status_code: int | None,
+        retryable: bool,
+        retry_after_seconds: float | None = None,
+    ) -> None:
         self.status_code = status_code
         self.retryable = retryable
+        self.retry_after_seconds = retry_after_seconds
         super().__init__(message)
 
 
@@ -70,10 +79,30 @@ class UrllibGeminiTransport:
                 return response.read()
         except HTTPError as exc:
             retryable = exc.code in {408, 429, 500, 502, 503, 504}
+            retry_after_seconds = None
+            header = exc.headers.get("Retry-After") if exc.headers else None
+            if header:
+                try:
+                    retry_after_seconds = float(header)
+                except ValueError:
+                    retry_after_seconds = None
+            try:
+                payload = json.loads(exc.read())
+                details = payload.get("error", {}).get("details", [])
+                for detail in details:
+                    delay = detail.get("retryDelay") if isinstance(detail, dict) else None
+                    if isinstance(delay, str) and re.fullmatch(r"[0-9.]+s", delay):
+                        retry_after_seconds = max(
+                            retry_after_seconds or 0.0,
+                            float(delay[:-1]),
+                        )
+            except (UnicodeDecodeError, json.JSONDecodeError, AttributeError, TypeError, ValueError):
+                pass
             raise GeminiTransportError(
                 "Gemini HTTP request failed",
                 status_code=exc.code,
                 retryable=retryable,
+                retry_after_seconds=retry_after_seconds,
             ) from None
         except (URLError, TimeoutError, OSError):
             raise GeminiTransportError(
@@ -110,7 +139,6 @@ def _string_array() -> dict[str, object]:
 def _response_schema() -> dict[str, object]:
     alternative = {
         "type": "object",
-        "additionalProperties": False,
         "required": [
             "rank",
             "label",
@@ -128,7 +156,6 @@ def _response_schema() -> dict[str, object]:
     }
     return {
         "type": "object",
-        "additionalProperties": False,
         "required": list(_REQUIRED_OUTPUT_FIELDS),
         "properties": {
             "likely_explanation": {"type": "string", "enum": _CATEGORIES},
@@ -266,8 +293,11 @@ class GeminiLLMClient:
     model: str = "gemini-3.7-flash"
     timeout_seconds: float = 180.0
     max_attempts: int = 3
+    minimum_interval_seconds: float = 12.5
     transport: GeminiTransport | None = None
     sleep: Callable[[float], None] = time.sleep
+    monotonic: Callable[[], float] = time.monotonic
+    _last_request_started_at: float | None = field(default=None, init=False, repr=False)
 
     def __post_init__(self) -> None:
         self.api_key = self.api_key if self.api_key is not None else os.getenv("GEMINI_API_KEY")
@@ -279,11 +309,20 @@ class GeminiLLMClient:
             raise ValueError("timeout_seconds must be between 0 and 180")
         if not 1 <= self.max_attempts <= 5:
             raise ValueError("max_attempts must be between 1 and 5")
+        if not 0 <= self.minimum_interval_seconds <= 60:
+            raise ValueError("minimum_interval_seconds must be between 0 and 60")
         if self.transport is None:
             self.transport = UrllibGeminiTransport()
 
     def interpret(self, request: InterpretationRequest) -> InterpretationResult:
         body = _request_body(request)
+        if self._last_request_started_at is not None:
+            remaining = self.minimum_interval_seconds - (
+                self.monotonic() - self._last_request_started_at
+            )
+            if remaining > 0:
+                self.sleep(remaining)
+        self._last_request_started_at = self.monotonic()
         for attempt in range(1, self.max_attempts + 1):
             try:
                 response = self.transport.generate(
@@ -297,7 +336,12 @@ class GeminiLLMClient:
                 if not exc.retryable or attempt == self.max_attempts:
                     status = f" status={exc.status_code}" if exc.status_code is not None else ""
                     raise GeminiProviderError(f"Gemini request failed.{status}") from None
-                self.sleep(0.25 * (2 ** (attempt - 1)))
+                self.sleep(
+                    max(
+                        0.25 * (2 ** (attempt - 1)),
+                        exc.retry_after_seconds or 0.0,
+                    )
+                )
         raise GeminiProviderError("Gemini request failed")
 
 

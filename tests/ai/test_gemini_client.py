@@ -86,6 +86,8 @@ def test_gemini_request_uses_low_thinking_and_strict_json_schema() -> None:
     assert config["thinkingConfig"] == {"thinkingLevel": "low"}
     assert config["responseMimeType"] == "application/json"
     assert config["responseSchema"]["required"]
+    assert "additionalProperties" not in config["responseSchema"]
+    assert "additionalProperties" not in config["responseSchema"]["properties"]["alternatives"]["items"]
     assert config["maxOutputTokens"] >= 2048
     assert result.anomaly_id == "anomaly_1"
     assert result.request_fingerprint == "fingerprint_1"
@@ -104,6 +106,22 @@ def test_gemini_retries_transient_errors_but_not_invalid_output() -> None:
     with pytest.raises(GeminiProviderError, match="usable candidate"):
         client.interpret(_request())
     assert len(invalid.calls) == 1
+
+
+def test_gemini_respects_provider_retry_delay_for_rate_limits() -> None:
+    sleeps: list[float] = []
+    limited = GeminiTransportError(
+        "rate limited",
+        status_code=429,
+        retryable=True,
+        retry_after_seconds=2.5,
+    )
+    transport = RecordingTransport([limited, _response()])
+    client = GeminiLLMClient(api_key="test-secret", transport=transport, sleep=sleeps.append)
+
+    client.interpret(_request())
+
+    assert sleeps == [2.5]
 
 
 def test_provider_errors_never_include_the_api_key() -> None:

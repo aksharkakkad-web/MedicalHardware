@@ -231,6 +231,17 @@ def run_campaign(
                 llm_client=provider,
                 frame_transform=transform,
             )
+            if config.mode == "gemini":
+                if execution.provider_errors:
+                    raise RuntimeError(execution.provider_errors[0])
+                if (
+                    not execution.interpretation_requests
+                    or len(execution.interpretation_results)
+                    != len(execution.interpretation_requests)
+                ):
+                    raise RuntimeError(
+                        "live provider did not return one valid result per request"
+                    )
             grade = grade_case(case, execution)
             grades.append(grade)
             case_buffer.append(_case_record(case, execution, grade))

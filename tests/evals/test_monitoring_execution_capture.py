@@ -27,3 +27,16 @@ def test_run_scenario_rejects_unknown_id() -> None:
         assert "unknown scenario_id" in str(error)
     else:
         raise AssertionError("unknown scenario id was accepted")
+
+
+def test_run_scenario_captures_provider_failure_without_hiding_fallback() -> None:
+    class FailingClient:
+        def interpret(self, request):
+            raise RuntimeError("sanitized provider failure")
+
+    execution = run_scenario("sustained_movement_change", llm_client=FailingClient())
+
+    assert execution.interpretation_requests
+    assert execution.interpretation_results == ()
+    assert execution.provider_errors == ("RuntimeError: sanitized provider failure",)
+    assert execution.record["fallback_used"] is True
