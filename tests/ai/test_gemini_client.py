@@ -21,7 +21,7 @@ def _request() -> InterpretationRequest:
         retrieval_contract_version="retrieval_v1",
         output_schema_version="output_v1",
         model_id="gemini",
-        model_version="gemini-3.7-flash",
+        model_version="gemini-3.5-flash",
         invocation_version="invocation_v1",
         relevant_context_version="memory_v1",
         payload_json='{"evidence":"bounded"}',
@@ -82,13 +82,20 @@ def test_gemini_request_uses_low_thinking_and_strict_json_schema() -> None:
 
     body = json.loads(transport.calls[0]["body"])
     config = body["generationConfig"]
-    assert transport.calls[0]["model"] == "gemini-3.7-flash"
+    prompt_text = body["contents"][0]["parts"][0]["text"]
+    assert transport.calls[0]["model"] == "gemini-3.5-flash"
     assert config["thinkingConfig"] == {"thinkingLevel": "low"}
     assert config["responseMimeType"] == "application/json"
     assert config["responseSchema"]["required"]
     assert "additionalProperties" not in config["responseSchema"]
     assert "additionalProperties" not in config["responseSchema"]["properties"]["alternatives"]["items"]
+    assert config["responseSchema"]["properties"]["alternatives"]["maxItems"] == 0
     assert config["maxOutputTokens"] >= 2048
+    assert '"allowed_evidence_refs":["evidence://1"]' in prompt_text
+    assert '"required_missing_information":["cause"]' in prompt_text
+    assert '"required_unsupported_conclusions"' in prompt_text
+    assert '"resident_context_refs_are_not_evidence":true' in prompt_text
+    assert '"non_unknown_alternatives_require_supporting_evidence":true' in prompt_text
     assert result.anomaly_id == "anomaly_1"
     assert result.request_fingerprint == "fingerprint_1"
 
@@ -139,3 +146,25 @@ def test_provider_errors_never_include_the_api_key() -> None:
 def test_gemini_requires_a_key_at_runtime() -> None:
     with pytest.raises(ValueError, match="GEMINI_API_KEY"):
         GeminiLLMClient(api_key="")
+
+
+def test_lean_provider_contract_drops_model_generated_alternatives() -> None:
+    payload = _model_output()
+    payload["alternatives"] = [
+        {
+            "rank": 1,
+            "label": "routine_movement",
+            "confidence": 0.2,
+            "supporting_evidence_refs": [],
+            "contradicting_evidence_refs": [],
+        }
+    ]
+    client = GeminiLLMClient(
+        api_key="test-secret",
+        transport=RecordingTransport([_response(payload)]),
+        sleep=lambda _: None,
+    )
+
+    result = client.interpret(_request())
+
+    assert result.alternatives == ()

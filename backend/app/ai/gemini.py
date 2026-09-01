@@ -11,6 +11,12 @@ from typing import Protocol
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from backend.app.ai.analysis_contracts import (
+    AnalysisStage,
+    StageRequest,
+    StageResponse,
+    StageStatus,
+)
 from backend.app.ai.client import (
     ExplanationCategory,
     InterpretationAlternative,
@@ -53,6 +59,78 @@ class GeminiTransportError(RuntimeError):
 
 class GeminiProviderError(RuntimeError):
     """Sanitized provider failure safe for logs and evaluation artifacts."""
+
+
+def _validate_provider_settings(
+    *,
+    api_key: str | None,
+    model: str,
+    timeout_seconds: float,
+    max_attempts: int,
+    minimum_interval_seconds: float,
+) -> str:
+    if not isinstance(api_key, str) or not api_key.strip():
+        raise ValueError("GEMINI_API_KEY is required at runtime")
+    if model != "gemini-3.5-flash":
+        raise ValueError("Gemini model must be pinned to gemini-3.5-flash")
+    if timeout_seconds <= 0 or timeout_seconds > 180:
+        raise ValueError("timeout_seconds must be between 0 and 180")
+    if not 1 <= max_attempts <= 5:
+        raise ValueError("max_attempts must be between 1 and 5")
+    if not 0 <= minimum_interval_seconds <= 60:
+        raise ValueError("minimum_interval_seconds must be between 0 and 60")
+    return api_key.strip()
+
+
+@dataclass
+class _GeminiExecutor:
+    api_key: str
+    model: str
+    timeout_seconds: float
+    max_attempts: int
+    minimum_interval_seconds: float
+    transport: GeminiTransport
+    sleep: Callable[[float], None]
+    monotonic: Callable[[], float]
+    _last_request_started_at: float | None = field(default=None, init=False)
+
+    def generate(self, body: bytes) -> tuple[bytes, float]:
+        if self._last_request_started_at is not None:
+            remaining = self.minimum_interval_seconds - (
+                self.monotonic() - self._last_request_started_at
+            )
+            if remaining > 0:
+                self.sleep(remaining)
+        started_at = self.monotonic()
+        self._last_request_started_at = started_at
+        for attempt in range(1, self.max_attempts + 1):
+            try:
+                return (
+                    self.transport.generate(
+                        model=self.model,
+                        api_key=self.api_key,
+                        body=body,
+                        timeout=self.timeout_seconds,
+                    ),
+                    started_at,
+                )
+            except GeminiTransportError as exc:
+                if not exc.retryable or attempt == self.max_attempts:
+                    status = (
+                        f" status={exc.status_code}"
+                        if exc.status_code is not None
+                        else ""
+                    )
+                    raise GeminiProviderError(
+                        f"Gemini request failed.{status}"
+                    ) from None
+                self.sleep(
+                    max(
+                        0.25 * (2 ** (attempt - 1)),
+                        exc.retry_after_seconds or 0.0,
+                    )
+                )
+        raise GeminiProviderError("Gemini request failed")
 
 
 class UrllibGeminiTransport:
@@ -115,6 +193,15 @@ class UrllibGeminiTransport:
 _CATEGORIES = [item.value for item in ExplanationCategory]
 _UNCERTAINTIES = [item.value for item in UncertaintyCategory]
 _DISPOSITIONS = [item.value for item in RecommendedDisposition]
+_CATEGORIES_BY_SKILL = {
+    "fall_like": ("unknown", "fall_like", "unusual_movement"),
+    "inactivity": ("unknown", "inactivity"),
+    "movement": ("unknown", "unusual_movement", "routine_movement"),
+    "respiration": ("unknown", "respiratory_change"),
+    "routine_change": ("unknown", "routine_change", "routine_movement"),
+    "monitoring_degraded": ("unknown", "monitoring_degraded"),
+    "unknown_anomaly": ("unknown",),
+}
 _REQUIRED_OUTPUT_FIELDS = (
     "likely_explanation",
     "confidence",
@@ -160,7 +247,7 @@ def _response_schema() -> dict[str, object]:
         "properties": {
             "likely_explanation": {"type": "string", "enum": _CATEGORIES},
             "confidence": {"type": "number", "minimum": 0, "maximum": 1},
-            "alternatives": {"type": "array", "items": alternative},
+            "alternatives": {"type": "array", "items": alternative, "maxItems": 0},
             "uncertainty": {"type": "string", "enum": _UNCERTAINTIES},
             "supporting_evidence_refs": _string_array(),
             "contradicting_evidence_refs": _string_array(),
@@ -176,11 +263,43 @@ def _response_schema() -> dict[str, object]:
 
 
 def _request_body(request: InterpretationRequest) -> bytes:
+    allowed_categories = list(_CATEGORIES_BY_SKILL[request.skill_bundle[1]])
+    if "multi_person" in request.skill_bundle:
+        allowed_categories.append("multi_person_ambiguity")
+    output_contract = {
+        "allowed_evidence_refs": list(request.available_evidence_refs),
+        "allowed_explanation_categories": allowed_categories,
+        "allowed_measurements": list(request.available_measurements),
+        "allowed_recommended_dispositions": (
+            ["caregiver_event"]
+            if request.urgent_deterministic_event
+            else _DISPOSITIONS
+        ),
+        "non_unknown_alternatives_require_supporting_evidence": True,
+        "resident_context_refs": list(request.retrieved_context_refs),
+        "resident_context_refs_are_not_evidence": True,
+        "required_addressed_contradictions": list(request.contradictions),
+        "required_limitations": list(request.required_limitations),
+        "required_missing_information": list(request.required_missing_information),
+        "required_unsupported_conclusions": list(
+            request.required_unsupported_conclusions
+        ),
+        "unavailable_measurements_must_not_be_described": list(
+            request.unavailable_measurements
+        ),
+    }
+    contract_json = json.dumps(
+        output_contract,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
     instruction = (
         f"{request.prompt}\n\n"
-        "Return only the JSON object required by the response schema. Copy only exact "
-        "controlled identifiers and evidence references supplied below.\n\n"
-        f"INPUT:\n{request.payload_json}"
+        "Return only the JSON object required by the response schema. The OUTPUT_CONTRACT "
+        "is authoritative: copy every required array exactly, choose only allowed controlled "
+        "values, use only allowed_evidence_refs as evidence, and never cite resident_context_refs "
+        "as sensor evidence.\n\n"
+        f"OUTPUT_CONTRACT:\n{contract_json}\n\nINPUT:\n{request.payload_json}"
     )
     payload = {
         "contents": [{"role": "user", "parts": [{"text": instruction}]}],
@@ -231,19 +350,7 @@ def _result_from_payload(
         alternatives_value = payload["alternatives"]
         if not isinstance(alternatives_value, list):
             raise TypeError
-        alternatives = tuple(
-            InterpretationAlternative(
-                rank=item["rank"],
-                label=item["label"],
-                confidence=item["confidence"],
-                supporting_evidence_refs=tuple(item["supporting_evidence_refs"]),
-                contradicting_evidence_refs=tuple(item["contradicting_evidence_refs"]),
-            )
-            for item in alternatives_value
-            if isinstance(item, dict)
-        )
-        if len(alternatives) != len(alternatives_value):
-            raise TypeError
+        alternatives: tuple[InterpretationAlternative, ...] = ()
         needs_more_observation = payload["needs_more_observation"]
         if not isinstance(needs_more_observation, bool):
             raise TypeError
@@ -290,7 +397,7 @@ def _result_from_payload(
 @dataclass
 class GeminiLLMClient:
     api_key: str | None = None
-    model: str = "gemini-3.7-flash"
+    model: str = "gemini-3.5-flash"
     timeout_seconds: float = 180.0
     max_attempts: int = 3
     minimum_interval_seconds: float = 12.5
@@ -298,56 +405,154 @@ class GeminiLLMClient:
     sleep: Callable[[float], None] = time.sleep
     monotonic: Callable[[], float] = time.monotonic
     _last_request_started_at: float | None = field(default=None, init=False, repr=False)
+    _executor: _GeminiExecutor = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
-        self.api_key = self.api_key if self.api_key is not None else os.getenv("GEMINI_API_KEY")
-        if not isinstance(self.api_key, str) or not self.api_key.strip():
-            raise ValueError("GEMINI_API_KEY is required at runtime")
-        if self.model != "gemini-3.7-flash":
-            raise ValueError("Gemini model must be pinned to gemini-3.7-flash")
-        if self.timeout_seconds <= 0 or self.timeout_seconds > 180:
-            raise ValueError("timeout_seconds must be between 0 and 180")
-        if not 1 <= self.max_attempts <= 5:
-            raise ValueError("max_attempts must be between 1 and 5")
-        if not 0 <= self.minimum_interval_seconds <= 60:
-            raise ValueError("minimum_interval_seconds must be between 0 and 60")
+        self.api_key = _validate_provider_settings(
+            api_key=(
+                self.api_key
+                if self.api_key is not None
+                else os.getenv("GEMINI_API_KEY")
+            ),
+            model=self.model,
+            timeout_seconds=self.timeout_seconds,
+            max_attempts=self.max_attempts,
+            minimum_interval_seconds=self.minimum_interval_seconds,
+        )
         if self.transport is None:
             self.transport = UrllibGeminiTransport()
+        self._executor = _GeminiExecutor(
+            api_key=self.api_key,
+            model=self.model,
+            timeout_seconds=self.timeout_seconds,
+            max_attempts=self.max_attempts,
+            minimum_interval_seconds=self.minimum_interval_seconds,
+            transport=self.transport,
+            sleep=self.sleep,
+            monotonic=self.monotonic,
+        )
 
     def interpret(self, request: InterpretationRequest) -> InterpretationResult:
         body = _request_body(request)
-        if self._last_request_started_at is not None:
-            remaining = self.minimum_interval_seconds - (
-                self.monotonic() - self._last_request_started_at
-            )
-            if remaining > 0:
-                self.sleep(remaining)
-        self._last_request_started_at = self.monotonic()
-        for attempt in range(1, self.max_attempts + 1):
-            try:
-                response = self.transport.generate(
-                    model=self.model,
-                    api_key=self.api_key,
-                    body=body,
-                    timeout=self.timeout_seconds,
-                )
-                return _result_from_payload(request, _parse_model_payload(response))
-            except GeminiTransportError as exc:
-                if not exc.retryable or attempt == self.max_attempts:
-                    status = f" status={exc.status_code}" if exc.status_code is not None else ""
-                    raise GeminiProviderError(f"Gemini request failed.{status}") from None
-                self.sleep(
-                    max(
-                        0.25 * (2 ** (attempt - 1)),
-                        exc.retry_after_seconds or 0.0,
-                    )
-                )
-        raise GeminiProviderError("Gemini request failed")
+        response, _started_at = self._executor.generate(body)
+        return _result_from_payload(request, _parse_model_payload(response))
+
+
+def _structured_body(request: StageRequest) -> bytes:
+    thinking_level = (
+        "low" if request.stage is AnalysisStage.RECALL else "high"
+    )
+    instruction = (
+        f"{request.prompt}\n\n"
+        "Return only the JSON object required by the response schema. Use only "
+        "the bounded INPUT and exact evidence identifiers supplied there.\n\n"
+        f"INPUT:\n{request.payload_json}"
+    )
+    return json.dumps(
+        {
+            "contents": [{"role": "user", "parts": [{"text": instruction}]}],
+            "generationConfig": {
+                "thinkingConfig": {"thinkingLevel": thinking_level},
+                "temperature": 0.1,
+                "maxOutputTokens": 8192,
+                "responseMimeType": "application/json",
+                "responseSchema": request.response_schema,
+            },
+        },
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+
+
+def _structured_payload(response: bytes) -> tuple[str, str, int | None, int | None]:
+    try:
+        envelope = json.loads(response)
+        text = envelope["candidates"][0]["content"]["parts"][0]["text"]
+        payload = json.loads(text)
+        if not isinstance(payload, dict):
+            raise TypeError
+        model_version = envelope.get("modelVersion", "gemini-3.5-flash")
+        usage = envelope.get("usageMetadata", {})
+        input_tokens = usage.get("promptTokenCount")
+        output_tokens = usage.get("candidatesTokenCount")
+        if not isinstance(model_version, str) or not model_version.strip():
+            raise TypeError
+        if input_tokens is not None and not isinstance(input_tokens, int):
+            raise TypeError
+        if output_tokens is not None and not isinstance(output_tokens, int):
+            raise TypeError
+    except (UnicodeDecodeError, json.JSONDecodeError, KeyError, IndexError, TypeError):
+        raise GeminiProviderError("Gemini returned no usable structured candidate") from None
+    return (
+        json.dumps(payload, separators=(",", ":"), sort_keys=True),
+        model_version,
+        input_tokens,
+        output_tokens,
+    )
+
+
+@dataclass
+class GeminiStructuredAnalysisClient:
+    api_key: str | None = None
+    model: str = "gemini-3.5-flash"
+    timeout_seconds: float = 180.0
+    max_attempts: int = 3
+    minimum_interval_seconds: float = 12.5
+    transport: GeminiTransport | None = None
+    sleep: Callable[[float], None] = time.sleep
+    monotonic: Callable[[], float] = time.monotonic
+    _executor: _GeminiExecutor = field(init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        self.api_key = _validate_provider_settings(
+            api_key=(
+                self.api_key
+                if self.api_key is not None
+                else os.getenv("GEMINI_API_KEY")
+            ),
+            model=self.model,
+            timeout_seconds=self.timeout_seconds,
+            max_attempts=self.max_attempts,
+            minimum_interval_seconds=self.minimum_interval_seconds,
+        )
+        if self.transport is None:
+            self.transport = UrllibGeminiTransport()
+        self._executor = _GeminiExecutor(
+            api_key=self.api_key,
+            model=self.model,
+            timeout_seconds=self.timeout_seconds,
+            max_attempts=self.max_attempts,
+            minimum_interval_seconds=self.minimum_interval_seconds,
+            transport=self.transport,
+            sleep=self.sleep,
+            monotonic=self.monotonic,
+        )
+
+    def analyze(self, request: StageRequest) -> StageResponse:
+        if not isinstance(request, StageRequest):
+            raise ValueError("request must be a StageRequest")
+        response, started_at = self._executor.generate(_structured_body(request))
+        payload_json, model_version, input_tokens, output_tokens = _structured_payload(
+            response
+        )
+        latency_ms = max(0.0, (self.monotonic() - started_at) * 1000.0)
+        return StageResponse(
+            stage=request.stage,
+            status=StageStatus.COMPLETE,
+            request_fingerprint=request.request_fingerprint,
+            payload_json=payload_json,
+            model_id="gemini",
+            model_version=model_version,
+            latency_ms=latency_ms,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+        )
 
 
 __all__ = [
     "GeminiLLMClient",
     "GeminiProviderError",
+    "GeminiStructuredAnalysisClient",
     "GeminiTransport",
     "GeminiTransportError",
     "UrllibGeminiTransport",

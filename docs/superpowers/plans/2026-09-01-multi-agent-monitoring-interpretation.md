@@ -297,28 +297,28 @@ git commit -m "feat: orchestrate recall specialists and final review"
 - Consumes: `StageRequest` and existing `GeminiTransport` retry/rate-limit boundary.
 - Produces: `GeminiStructuredAnalysisClient.analyze(request) -> StageResponse` while preserving `GeminiLLMClient` as a temporary legacy compatibility adapter.
 
-- [ ] **Step 1: Write failing provider tests**
+- [x] **Step 1: Write failing provider tests**
 
 Assert provider model pinning, per-stage JSON schema use, low thinking for recall, stronger thinking configuration for precision/final tiers, 180-second maximum timeout, sanitized errors, rate-limit pacing, and exact raw structured payload return.
 
-- [ ] **Step 2: Verify failure**
+- [x] **Step 2: Verify failure**
 
 ```bash
 pytest tests/ai/test_gemini_analysis_client.py -q
 ```
 
-- [ ] **Step 3: Implement the shared transport executor and stage client**
+- [x] **Step 3: Implement the shared transport executor and stage client**
 
 Refactor retry/pacing into one internal executor used by both legacy and staged clients. Do not log or persist API keys.
 
-- [ ] **Step 4: Run all Gemini tests and a secret scan**
+- [x] **Step 4: Run all Gemini tests and a secret scan**
 
 ```bash
 pytest tests/ai/test_gemini_client.py tests/ai/test_gemini_analysis_client.py -q
 git grep -nE 'AIza|AQ\.[A-Za-z0-9_-]{20,}' -- ':!*.md' || true
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/app/ai/gemini.py tests/ai/test_gemini_client.py tests/ai/test_gemini_analysis_client.py
