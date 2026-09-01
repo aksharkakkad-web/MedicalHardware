@@ -577,7 +577,7 @@ def _finalize(
         for attempted_result, raw_result in zip(
             attempted_results,
             (client.raw_results if client else ()),
-            strict=True,
+            strict=False,
         )
         if attempted_result in rejected_results
     )

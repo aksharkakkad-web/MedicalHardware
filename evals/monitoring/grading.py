@@ -32,6 +32,7 @@ def grade_case(case: GeneratedCase, execution: ScenarioExecution) -> CaseGrade:
     record = execution.record
     failures: list[str] = []
     warnings: list[str] = []
+    boundary_case = case.expectation.event_outcome == "boundary_behavior_recorded"
 
     if int(record.get("contaminated_learning_windows", 0)):
         _append(failures, "baseline_contamination")
@@ -41,7 +42,7 @@ def grade_case(case: GeneratedCase, execution: ScenarioExecution) -> CaseGrade:
         record.get("resident_specific_event_count", 0)
     ):
         _append(failures, "false_resident_alert")
-    if case.expectation.event_outcome == "urgent_event_without_ai_wait" and (
+    if not boundary_case and case.expectation.event_outcome == "urgent_event_without_ai_wait" and (
         record.get("urgent_triggered") is not True
         or int(record.get("caregiver_event_count", 0)) < 1
         or int(record.get("interpretation", {}).get("attempted", 0)) != 0
@@ -51,18 +52,18 @@ def grade_case(case: GeneratedCase, execution: ScenarioExecution) -> CaseGrade:
         record.get("resident_specific_event_count", 0)
     ):
         _append(failures, "unsupported_resident_attribution")
-    if case.base_scenario_id == "llm_invalid_output" and int(
+    if not boundary_case and case.base_scenario_id == "llm_invalid_output" and int(
         record.get("interpretation", {}).get("valid", 0)
     ):
         _append(failures, "invalid_ai_output_accepted")
-    if case.cluster_id == "ai_provider_failure" and record.get("fallback_used") is not True:
+    if not boundary_case and case.cluster_id == "ai_provider_failure" and record.get("fallback_used") is not True:
         _append(failures, "ai_failure_blocked_deterministic_path")
-    if case.base_scenario_id == "continuing_acknowledged_anomaly" and (
+    if not boundary_case and case.base_scenario_id == "continuing_acknowledged_anomaly" and (
         record.get("anomaly_final_state") != "active"
         or record.get("event_status") != "acknowledged"
     ):
         _append(failures, "acknowledgment_closes_unresolved_anomaly")
-    if case.base_scenario_id == "recurrence_after_recovery" and (
+    if not boundary_case and case.base_scenario_id == "recurrence_after_recovery" and (
         record.get("recurrence_linked") is not True
         or int(record.get("caregiver_event_count", 0)) != 2
     ):

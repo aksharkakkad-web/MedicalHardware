@@ -24,7 +24,7 @@ def test_generated_cases_are_lazy_balanced_and_reproducible() -> None:
     assert first == second
     assert len({case.case_id for case in first}) == 500
     cluster_counts = {cluster: sum(case.cluster_id == cluster for case in first) for cluster in REQUIRED_CLUSTER_IDS}
-    assert max(cluster_counts.values()) - min(cluster_counts.values()) <= 10
+    assert max(cluster_counts.values()) - min(cluster_counts.values()) <= 1
     assert {case.perturbation_kind for case in first} >= {
         "timing",
         "numeric_jitter",

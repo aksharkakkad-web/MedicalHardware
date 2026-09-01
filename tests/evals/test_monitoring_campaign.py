@@ -34,6 +34,19 @@ def test_mass_campaign_honors_case_count_times_passes(tmp_path: Path) -> None:
     assert checkpoint["next_index"] == 12
 
 
+def test_balanced_mass_campaign_uses_only_compatible_perturbations(tmp_path: Path) -> None:
+    result = run_campaign(
+        CampaignConfig(mode="mass", case_count=250, passes=2, chunk_size=100),
+        output_root=tmp_path,
+        run_id="mass_compatible",
+    )
+
+    assert result.attempted == 500
+    assert result.completed == 500
+    assert result.failed == 0
+    assert result.passed is True
+
+
 @pytest.mark.parametrize(
     "config",
     [

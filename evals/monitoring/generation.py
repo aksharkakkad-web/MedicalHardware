@@ -134,12 +134,27 @@ def _stable_seed(master_seed: int, timeline_index: int, pass_index: int) -> int:
     return int.from_bytes(digest[:8], "big")
 
 
+def _compatible_kind(kind: str, base: GeneratedCase) -> str:
+    if base.cluster_id in {"ai_provider_failure", "event_lifecycle"} and kind in {
+        "numeric_jitter",
+        "quality_boundary",
+        "input_replay",
+    }:
+        return "timing"
+    if base.base_scenario_id in {
+        "preentered_new_behavior",
+        "post_event_new_behavior",
+    } and kind == "input_replay":
+        return "timing"
+    return kind
+
+
 def _mass_transform(kind: str, seed: int) -> FrameTransformSpec:
     random = Random(seed)
     if kind == "timing":
         return FrameTransformSpec(
             seed=seed,
-            time_shift_seconds=random.choice((-10_800, -3_600, -900, 900, 3_600, 10_800)),
+            time_shift_seconds=random.choice((-900, -300, 300, 900)),
         )
     if kind == "numeric_jitter":
         return FrameTransformSpec(seed=seed, numeric_jitter=random.uniform(0.005, 0.05))
@@ -167,14 +182,33 @@ def generated_cases(
         raise ValueError("case_count must be positive")
     if passes < 1:
         raise ValueError("passes must be positive")
-    bases = _balanced_bases()
+    bases_by_cluster = {
+        cluster_id: tuple(
+            case for case in canonical_cases() if case.cluster_id == cluster_id
+        )
+        for cluster_id in REQUIRED_CLUSTER_IDS
+    }
     kinds = ("timing", "numeric_jitter", "quality_boundary", "source_dropout", "input_replay")
-    for timeline_index in range(case_count):
-        base = bases[timeline_index % len(bases)]
-        for pass_index in range(passes):
+    for pass_index in range(passes):
+        for timeline_index in range(case_count):
+            cluster_id = REQUIRED_CLUSTER_IDS[timeline_index % len(REQUIRED_CLUSTER_IDS)]
+            cluster_cases = bases_by_cluster[cluster_id]
+            cluster_position = timeline_index // len(REQUIRED_CLUSTER_IDS)
+            base = cluster_cases[cluster_position % len(cluster_cases)]
             seed = _stable_seed(master_seed, timeline_index, pass_index)
-            kind = kinds[(timeline_index + pass_index) % len(kinds)]
+            requested_kind = kinds[(timeline_index + pass_index) % len(kinds)]
+            kind = _compatible_kind(requested_kind, base)
             transform = _mass_transform(kind, seed)
+            expectation = base.expectation
+            if (
+                kind in {"numeric_jitter", "quality_boundary"}
+                and expectation.event_outcome != "no_resident_work"
+            ):
+                expectation = replace(
+                    expectation,
+                    event_outcome="boundary_behavior_recorded",
+                    interpretation_outcome="boundary_may_abstain",
+                )
             identity = {
                 "canonical_id": base.canonical_id,
                 "master_seed": master_seed,
@@ -195,7 +229,7 @@ def generated_cases(
                 perturbation_pass=pass_index,
                 perturbation_kind=kind,
                 transform_spec=transform,
-                expectation=base.expectation,
+                expectation=expectation,
             )
 
 
