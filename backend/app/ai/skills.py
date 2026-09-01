@@ -17,6 +17,11 @@ _SKILL_REGISTRY = {
     "monitoring_degraded": ("monitoring_degraded.md", "monitoring_degraded_v1"),
     "multi_person": ("multi_person.md", "multi_person_v1"),
     "unknown_anomaly": ("unknown_anomaly.md", "unknown_anomaly_v1"),
+    "feedback_agent": ("feedback_agent.md", "feedback_agent_v1"),
+    "resident_memory_updater": (
+        "resident_memory_updater.md",
+        "resident_memory_updater_v1",
+    ),
 }
 
 

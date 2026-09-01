@@ -94,8 +94,8 @@ class ScenarioExecution:
 
 **Files:**
 
-- Create: `backend/app/ai/prompts/monitoring/feedback_agent.md`
-- Create: `backend/app/ai/prompts/monitoring/resident_memory_updater.md`
+- Create: `prompts/monitoring/feedback_agent.md`
+- Create: `prompts/monitoring/resident_memory_updater.md`
 - Modify: `backend/app/ai/skills.py`
 - Test: `tests/ai/test_monitoring_skills.py`
 - Test: `tests/ai/test_feedback_memory_boundaries.py`
