@@ -16,6 +16,12 @@ from backend.app.ai.analysis_contracts import (
     StageStatus,
     StructuredAnalysisClient,
 )
+from backend.app.ai.analysis_skills import (
+    AnalysisSkill,
+    analysis_skill_registry,
+    fallback_specialists,
+    load_analysis_skill,
+)
 
 from backend.app.ai.client import (
     DeterministicFakeLLMClient,
@@ -42,6 +48,7 @@ __all__ = [
     "AnalysisRun",
     "AnalysisStage",
     "AnalysisState",
+    "AnalysisSkill",
     "ConfidenceBand",
     "DeterministicFakeLLMClient",
     "ExplanationCategory",
@@ -68,6 +75,9 @@ __all__ = [
     "UncertaintyCategory",
     "SkillBundle",
     "build_interpretation_request",
+    "analysis_skill_registry",
+    "fallback_specialists",
+    "load_analysis_skill",
     "select_skill_bundle",
     "parse_memory_update_proposal",
     "validate_interpretation",

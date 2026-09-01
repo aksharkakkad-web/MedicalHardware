@@ -172,27 +172,27 @@ git commit -m "feat: define multi-agent analysis contracts"
 - Consumes: `AnalysisStage` and stable specialist names from Task 2.
 - Produces: `AnalysisSkill`, `load_analysis_skill(name)`, `analysis_skill_registry()`, and deterministic fallback routing by measured anomaly family.
 
-- [ ] **Step 1: Write failing registry and behavior tests**
+- [x] **Step 1: Write failing registry and behavior tests**
 
 Assert that every declared specialist resolves to one versioned file, recall instructions require broad plausible coverage, specialist instructions require evidence for/against, and final instructions require combination, multiple retained possibilities, completeness review, and no hallucinated facts.
 
-- [ ] **Step 2: Verify failure**
+- [x] **Step 2: Verify failure**
 
 ```bash
 pytest tests/ai/test_analysis_skills.py -q
 ```
 
-- [ ] **Step 3: Implement the focused skill registry and files**
+- [x] **Step 3: Implement the focused skill registry and files**
 
 Each skill must declare purpose, bounded inputs, structured outputs, forbidden behavior, uncertainty rules, evidence-reference rules, and concise non-diagnostic language. The final skill performs synthesis and neutral review in one call.
 
-- [ ] **Step 4: Run focused tests**
+- [x] **Step 4: Run focused tests**
 
 ```bash
 pytest tests/ai/test_analysis_skills.py -q
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add prompts/monitoring backend/app/ai/analysis_skills.py tests/ai/test_analysis_skills.py
