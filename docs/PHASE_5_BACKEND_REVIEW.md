@@ -209,3 +209,13 @@ Still open:
 
 Phase 6 must consume the same normalized boundary and must not move raw stream
 or transport responsibilities into this Phase 5 replay.
+
+## September 1 evaluation-lab extension
+
+The original 24-case gate above remains unchanged. A separate evaluation layer
+now expands those behaviors into a 12-cluster, 120-case review set and lazy
+mass campaigns, grades zero-tolerance safety failures, saves redacted and
+checksummed evidence, and can run bounded live interpretations through Gemini
+3.7 Flash. This extension does not revise the Phase 5 clinical or hardware
+limitations. Its workflow and later Terra/Sol release gate are documented in
+`docs/MONITORING_INTELLIGENCE_LAB.md`.

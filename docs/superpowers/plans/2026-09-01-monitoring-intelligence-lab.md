@@ -281,8 +281,9 @@ python -m evals.monitoring.cli compare --run-a <id> --run-b <id>
 **Files:**
 
 - Create: `docs/MONITORING_INTELLIGENCE_LAB.md`
-- Modify: `docs/BACKEND_IMPLEMENTATION_STATUS.md`
-- Modify: `docs/PHASED_EXECUTION_ROADMAP.md`
+- Modify: `docs/CURRENT_STAGE.md`
+- Modify: `docs/PHASE_GATES.md`
+- Modify: `docs/PHASE_5_BACKEND_REVIEW.md`
 - Test: `tests/evals/test_monitoring_docs_commands.py`
 
 ### Steps

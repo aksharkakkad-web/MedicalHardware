@@ -24,6 +24,7 @@ All three tracks work in parallel. A phase is not a rule that Akshar, Rishit, or
 | Phase 1 — product-logic foundation | **Complete** | The agreed monitoring, calibration, event, feedback, recurrence, and resident-memory behavior runs with deterministic toy data. |
 | Phase 2 — first complete event experience | **In progress** | The durable event slice and backend Checkpoints A–D are complete. Rishit's remaining clinic/home mock experiences, the real-client connection, and hardware's real device work remain open. |
 | Phase 5 — monitoring intelligence | **Backend lane complete; shared gate open** | The 24-scenario normalized-fixture backend replay passes with zero contamination and duplicate events. Frontend presentation and hardware quality validation remain open, so the whole shared phase is not marked complete. |
+| Phase 8 — evaluation and learning | **Backend lab implemented; campaigns in progress** | The repeatable 120-case and mass/live-model evaluation machinery exists. Synthetic and Gemini campaign evidence must be reviewed before this backend evaluation checkpoint closes. |
 
 ### Phase 5 backend lane evidence
 
@@ -133,3 +134,4 @@ The output is one of three outcomes: **approved and advance**, **revise this pha
 - Ownership and integration boundaries: `docs/TEAM_OWNERSHIP.md`
 - Plain-language founder roadmap: `docs/AKSHAR_START_HERE.md`
 - Phase 5 backend monitoring review: `docs/PHASE_5_BACKEND_REVIEW.md`
+- Monitoring intelligence lab and commands: `docs/MONITORING_INTELLIGENCE_LAB.md`

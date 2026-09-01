@@ -1,6 +1,6 @@
 # Current Project Stage
 
-**Updated:** August 28, 2026
+**Updated:** September 1, 2026
 
 **Operating status:** Phase 1 product logic is complete. Phase 2 remains **In
 progress**: its backend Checkpoints A through D are complete, while Rishit's
@@ -25,6 +25,13 @@ device health, notification/awareness preference history, correctable resident
 memory, tenant isolation, idempotency, audit history, and restart proofs. The
 frontend connection, the complete user-facing experiences, and real hardware
 remain unfinished.
+
+Akshar's next independent backend layer is now implemented as the Monitoring
+Intelligence Lab: a 12-cluster taxonomy, 120-case canonical set, deterministic
+mass-case generator, strict Gemini 3.7 Flash adapter, feedback/memory skill
+boundaries, hard safety grading, resumable redacted artifacts, and model
+comparison/release gates. Campaign evidence is recorded separately from the
+original 24-case Phase 5 proof. See `docs/MONITORING_INTELLIGENCE_LAB.md`.
 
 The tested journey is:
 
@@ -152,4 +159,5 @@ Real hardware later replaces the simulator as the telemetry producer. It should 
 - Checkpoint D evidence: `docs/PHASE_2_CHECKPOINT_D_REVIEW.md`
 - Frontend API map: `docs/PHASE_2_FRONTEND_API_HANDOFF.md`
 - Phase 5 backend intelligence evidence: `docs/PHASE_5_BACKEND_REVIEW.md`
+- Monitoring intelligence evaluation workflow: `docs/MONITORING_INTELLIGENCE_LAB.md`
 - Generated Product API: `docs/openapi/product-api-v1.json`
