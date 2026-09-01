@@ -10,6 +10,7 @@ from backend.app.db.repositories import (
     FeedbackRepository,
     ResidentRepository,
 )
+from backend.app.db.intelligence_repositories import IntelligenceRepository
 from backend.app.db.device_repositories import (
     DeviceHealthRepository,
     DeviceRepository,
@@ -64,13 +65,17 @@ def query_service(
         ResidentRepository(session),
         EventRepository(session),
         FeedbackRepository(session),
+        IntelligenceRepository(session),
     )
 
 
 def event_queue_query_service(
     session: Annotated[Session, Depends(database_session)],
 ) -> ProductEventQueueQueryService:
-    return ProductEventQueueQueryService(EventRepository(session))
+    return ProductEventQueueQueryService(
+        EventRepository(session),
+        IntelligenceRepository(session),
+    )
 
 
 def device_query_service(

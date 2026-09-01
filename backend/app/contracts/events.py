@@ -9,6 +9,13 @@ from backend.app.domain.events import (
     EventStatus,
     ResolutionOutcome,
 )
+from backend.app.ai.analysis_contracts import (
+    AnalysisState,
+    AttributionScope,
+    ConfidenceBand,
+    Severity,
+)
+from backend.app.ai.client import RecommendedDisposition
 
 
 class ClinicEventStatus(StrEnum):
@@ -42,6 +49,47 @@ class EventPriorityHistoryResponse(ContractModel):
     changed_at: UTCDateTime
 
 
+class AnalysisPossibilityResponse(ContractModel):
+    possibility_id: str
+    label: str
+    confidence: ConfidenceBand
+    supporting_evidence_refs: list[str]
+    contradicting_evidence_refs: list[str]
+    missing_information: list[str]
+
+
+class EventAnalysisResponse(ContractModel):
+    analysis_id: str
+    packet_revision: int
+    state: AnalysisState
+    possibilities: list[AnalysisPossibilityResponse]
+    severity: Severity | None
+    recommended_disposition: RecommendedDisposition | None
+    attribution_scope: AttributionScope | None
+    caregiver_summary: str | None
+    next_step: str | None
+    missing_information: list[str]
+    specialist_disagreements: list[str]
+    evidence_refs: list[str]
+    unavailable_specialists: list[str]
+    errors: list[str]
+    model_id: str | None
+    model_version: str | None
+    skill_versions: list[str]
+
+
+class ResidentAnalysisResponse(ContractModel):
+    anomaly_id: str
+    resident_id: str
+    room_id: str
+    observed_at: UTCDateTime
+    analysis: EventAnalysisResponse
+
+
+class ResidentAnalysisListResponse(ContractModel):
+    items: list[ResidentAnalysisResponse]
+
+
 class EventResponse(ContractModel):
     event_id: str
     episode_id: str
@@ -63,6 +111,7 @@ class EventResponse(ContractModel):
     priority_history: list[EventPriorityHistoryResponse]
     resident_memory_version: int | None
     resident_memory_entry_ids: list[str]
+    analysis: EventAnalysisResponse | None = None
     version: int
 
 

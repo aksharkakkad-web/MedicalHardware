@@ -2,7 +2,7 @@
 
 **Status:** Pre-build source of truth
 **Audience:** Founders, Codex, engineering collaborators, future research/clinical advisors
-**Version:** 1.5
+**Version:** 1.6
 **Purpose:** Define what the product is, what V1 must do, and what is intentionally left flexible until hardware testing and customer discovery.
 
 ---
@@ -21,7 +21,15 @@ The embedded device is intentionally **small and efficient, not dumb**. It perfo
 
 The device does **not** perform the main intelligence pipeline: no cross-sensor fusion, personal baseline modeling, anomaly/event decisions, LLM reasoning, or feedback learning. Those remain in the cloud.
 
-The cloud combines the compact edge telemetry into useful resident-level measurements and events. Python-based processing validates and fuses the modalities, learns a personal baseline, detects anomalies and hard warning conditions, and assigns confidence. For non-urgent anomalies, an LLM is called selectively on a rich structured evidence packet before deterministic policy decides whether caregiver work is warranted. Strong urgent deterministic evidence may create a provisional event first and receive LLM enrichment afterward. Caregivers or families can then provide quick feedback, which improves resident context and later detection quality in a controlled way.
+The cloud combines compact edge telemetry into useful resident-level evidence.
+Python processing validates and fuses the modalities, learns a personal
+baseline, and detects meaningful anomaly episodes. A selective three-stage AI
+team then considers broad possibilities, routes the case to relevant precision
+specialists, and combines their findings into severity and a recommended
+caregiver response. Deterministic code validates that result and applies it
+through auditable event-lifecycle mechanics. Caregivers or families provide
+the real-world decision and feedback, which improves resident context and
+later detection quality in a controlled way.
 
 ### One-line product thesis
 
@@ -317,14 +325,15 @@ The system should:
 4. validate/standardize edge telemetry and derive normalized measurements/features;
 5. synchronize and fuse sensor evidence for the resident assigned to the monitored room;
 6. compare against individual baselines;
-7. create anomaly candidates and deterministic warning candidates;
-8. immediately create a provisional event when strong urgent deterministic policy requires it;
-9. selectively invoke the LLM on rich anomaly evidence for non-urgent interpretation or urgent-event enrichment;
-10. apply deterministic product policy to choose no action, continued observation, awareness, or caregiver work;
-11. surface approved events in the relevant product;
-12. capture human outcome/feedback;
-13. update resident memory and eligible baseline data;
-14. use accumulated labeled events for future system improvements.
+7. create and measure anomaly episodes;
+8. package bounded evidence and relevant resident context;
+9. invoke the recall router and selected precision specialists;
+10. use the final AI integrator/reviewer to set operational severity and recommend no action, observation, awareness, or caregiver work;
+11. validate that every AI claim is grounded in supplied evidence;
+12. apply the trusted result through deterministic event-lifecycle mechanics and surface it in the relevant product;
+13. capture human outcome/feedback;
+14. update resident memory and eligible baseline data;
+15. use accumulated labeled events for future system improvements.
 
 Exact processed-history and optional raw/debug retention durations are intentionally configurable and not locked yet. Continuous raw upload/storage is not a production requirement.
 
@@ -405,7 +414,13 @@ Calibration should depend on sufficient valid data, not a hard-coded number of c
 
 ## 12. Anomaly and Event System
 
-Python/numerical processing decides whether something is sufficiently unusual to become an anomaly episode and whether a strong deterministic warning condition requires immediate provisional caregiver work. Non-urgent anomaly episodes are interpreted from structured evidence before deterministic product policy chooses whether to create an event.
+Python/numerical processing decides whether something is sufficiently unusual
+to become an anomaly episode and measures the change. For ordinary anomalies,
+it does not decide the real-world cause, operational severity, or caregiver
+response; those decisions come from trusted final AI analysis. The narrow
+exception is the explicit urgent safety state machine, which may create
+provisional critical caregiver work that later AI interpretation cannot
+suppress.
 
 ### Event evidence may include
 
@@ -436,17 +451,23 @@ Priority and confidence are separate. Priority may consider objective severity, 
 - `critical` needs immediate staff attention and cannot be hidden in the dashboard;
 - administrators configure notification delivery channels and low-priority noise controls.
 
-### LLM-independent warning path
+### Analysis-pending path
 
-Certain deterministic warnings can create/raise events without relying on the LLM. The LLM may explain such an event but cannot suppress it.
-
-This is LLM-independent, not necessarily internet-independent. True on-device/offline safety logic is future scope unless explicitly added later.
+Every anomaly episode remains durable even when AI is slow, invalid, or
+unavailable. Until trusted final analysis exists, the product shows
+`analysis_pending` or `needs_staff_review` with measured evidence and does not
+silently invent severity, action, or reassuring wording. If the separate urgent
+safety state machine has already qualified a fall-like pattern, its provisional
+critical caregiver work remains active while analysis is pending.
 
 ---
 
 ## 13. LLM Interpretation Layer
 
-The LLM is called only for meaningful anomaly episodes, event enrichment, or scheduled context-maintenance tasks, not continuously for raw sensor streams.
+AI is called only for meaningful anomaly episodes or scheduled
+context-maintenance tasks, not continuously for raw sensor streams. Monitoring
+analysis uses a recall router, selected precision specialists running in
+parallel, and one final integrator/reviewer.
 
 ### Inputs
 
@@ -466,10 +487,16 @@ The LLM is called only for meaningful anomaly episodes, event enrichment, or sch
 - caregiver-facing reason for why the event matters;
 - optional recommended verification step such as "check resident" when policy allows;
 - no fabricated sensor values.
+- operational severity and recommended action;
+- retained credible possibilities when the evidence is ambiguous;
+- missing information and what new evidence could change the result.
 
 The LLM must be allowed to output `unknown` / `insufficient evidence`.
 
-If the LLM is unavailable, urgent deterministic events still exist and non-urgent deterministic policy can still use objective evidence and fallback wording. No safety path depends on a successful LLM call.
+If trusted final AI analysis is unavailable, the anomaly remains visible with
+its measured evidence and an honest pending/staff-review state. Background
+retry may continue, and staff may inspect the evidence without waiting. The
+system does not guess final severity from anomaly magnitude alone.
 
 ---
 
@@ -718,9 +745,9 @@ V1 must demonstrate:
 6. multi-sensor fusion;
 7. personal baseline/calibration;
 8. general anomaly detection, including an `unknown_anomaly` path;
-9. deterministic configurable warning path;
+9. visible analysis-pending/staff-review path when AI is unavailable;
 10. event lifecycle and confidence;
-11. selective LLM interpretation;
+11. selective recall-router, precision-specialist, and final-review AI interpretation;
 12. clinic dashboard workflow;
 13. home/family product workflow at least at functional MVP level or behind the shared API, depending on build sequencing;
 14. human feedback with AI follow-ups;

@@ -934,6 +934,16 @@ The LLM must be allowed to return:
 }
 ```
 
+The V1.9 multi-agent contract supersedes this one-shot V1.8 shape for new
+analysis runs. It preserves the legacy interpretation envelope for replay and
+migration only. A new run contains a recall routing plan, independent selected
+specialist assessments, and one final integrated analysis. The consolidated
+frontend output includes analysis state, multiple retained possibilities,
+confidence bands, operational severity, recommended disposition, concise
+caregiver summary, next step, uncertainty, missing information, specialist
+disagreement, and exact evidence references. Raw agent transcripts and private
+chain-of-thought are never part of the contract.
+
 ---
 
 ## 16. Feedback Record
@@ -1594,6 +1604,17 @@ deterministic event disposition. Strong urgent deterministic evidence may
 still create a provisional event before LLM enrichment. Resident routines and
 expected changes are flexible semantic context, while numerical baseline
 adoption remains controlled and versioned.
+
+### V1.9 multi-agent interpretation ownership
+
+V1.9 keeps numerical anomaly detection deterministic but moves explanation,
+operational severity, and recommended action into a three-stage AI pipeline:
+recall routing, selected parallel precision specialists, and final integration
+plus neutral quality review. Deterministic code validates grounding and applies
+trusted disposition through event mechanics without a numerical severity
+floor. Invalid or unavailable final analysis preserves the anomaly as
+`analysis_pending` or `needs_staff_review`; it never silently deletes the
+anomaly or fabricates fallback meaning.
 
 When changing any domain object:
 

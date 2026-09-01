@@ -7,6 +7,11 @@ normalized fixtures. This does not complete the shared frontend/hardware phase
 gate and does not establish clinical, real-device, or production-provider
 performance.
 
+**Historical status:** This document records the V1.8 one-shot interpretation
+and deterministic-disposition checkpoint. The approved V1.9 multi-agent design
+supersedes those ownership semantics for new implementation; prior measurements
+remain valid only as regression evidence for anomaly and lifecycle foundations.
+
 ## Founder summary
 
 One command now replays 24 stable scenarios through the implemented Phase 5
@@ -209,3 +214,13 @@ Still open:
 
 Phase 6 must consume the same normalized boundary and must not move raw stream
 or transport responsibilities into this Phase 5 replay.
+
+## September 1 evaluation-lab extension
+
+The original 24-case gate above remains unchanged. A separate evaluation layer
+now expands those behaviors into a 12-cluster, 120-case review set and lazy
+mass campaigns, grades zero-tolerance safety failures, saves redacted and
+checksummed evidence, and can run bounded live interpretations through Gemini
+3.5 Flash. This extension does not revise the Phase 5 clinical or hardware
+limitations. Its workflow and later Terra/Sol release gate are documented in
+`docs/MONITORING_INTELLIGENCE_LAB.md`.

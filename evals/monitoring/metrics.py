@@ -145,6 +145,130 @@ def calculate_metrics(records: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def calculate_multi_agent_metrics(
+    records: list[dict[str, Any]],
+) -> dict[str, Any]:
+    if not records:
+        raise ValueError("multi-agent records must not be empty")
+
+    def normalized(values: object) -> set[str]:
+        return {str(value).strip().casefold() for value in values or ()}
+
+    expected_possibilities = sum(
+        len(normalized(record["expected_possibility_labels"])) for record in records
+    )
+    recalled_possibilities = sum(
+        len(
+            normalized(record["expected_possibility_labels"])
+            & normalized(record["routed_possibility_labels"])
+        )
+        for record in records
+    )
+    routed_total = sum(len(normalized(record["routed_specialists"])) for record in records)
+    routed_correct = sum(
+        len(
+            normalized(record["expected_specialists"])
+            & normalized(record["routed_specialists"])
+        )
+        for record in records
+    )
+    specialist_total = sum(
+        len(normalized(record["specialist_possibility_labels"])) for record in records
+    )
+    specialist_correct = sum(
+        len(
+            normalized(record["expected_possibility_labels"])
+            & normalized(record["specialist_possibility_labels"])
+        )
+        for record in records
+    )
+    alternatives_expected = sum(
+        max(0, len(normalized(record["expected_possibility_labels"])) - 1)
+        for record in records
+    )
+    alternatives_retained = sum(
+        max(
+            0,
+            len(
+                normalized(record["expected_possibility_labels"])
+                & normalized(record["final_possibility_labels"])
+            )
+            - 1,
+        )
+        for record in records
+    )
+    latency_values: dict[str, list[float]] = {}
+    calls: Counter[str] = Counter()
+    for record in records:
+        for stage, value in record.get("stage_latencies_ms", {}).items():
+            latency_values.setdefault(str(stage), []).append(float(value))
+        calls.update(
+            {
+                str(stage): int(count)
+                for stage, count in record.get("stage_call_counts", {}).items()
+            }
+        )
+    return {
+        "case_count": len(records),
+        "cluster_count": len({record["cluster_id"] for record in records}),
+        "possibility_recall": {
+            "recalled": recalled_possibilities,
+            "expected": expected_possibilities,
+            "rate": _rate(recalled_possibilities, expected_possibilities),
+        },
+        "routing_accuracy": {
+            "correct": routed_correct,
+            "routed": routed_total,
+            "rate": _rate(routed_correct, routed_total),
+        },
+        "specialist_precision": {
+            "supported": specialist_correct,
+            "returned": specialist_total,
+            "rate": _rate(specialist_correct, specialist_total),
+        },
+        "alternative_preservation": {
+            "retained": alternatives_retained,
+            "expected": alternatives_expected,
+            "rate": _rate(alternatives_retained, alternatives_expected),
+        },
+        "hallucination_count": sum(
+            len(record["hallucinated_evidence_refs"]) for record in records
+        ),
+        "final_action_agreement": _rate(
+            sum(
+                record["actual_disposition"] == record["expected_disposition"]
+                for record in records
+            ),
+            len(records),
+        ),
+        "final_severity_agreement": _rate(
+            sum(
+                record["actual_severity"] == record["expected_severity"]
+                for record in records
+            ),
+            len(records),
+        ),
+        "repair_rate": _rate(
+            sum(int(record["repair_count"]) > 0 for record in records),
+            len(records),
+        ),
+        "unavailable_stage_cases": sum(
+            bool(record["unavailable_specialists"])
+            or record["analysis_state"] != "analyzed"
+            for record in records
+        ),
+        "stage_latency_ms": {
+            stage: {
+                "count": len(values),
+                "mean": round(mean(values), 6),
+                "maximum": max(values),
+            }
+            for stage, values in sorted(latency_values.items())
+        },
+        "stage_calls": dict(sorted(calls.items())),
+    }
+
+
 def safety_gates(
     records: list[dict[str, Any]],
     aggregate: dict[str, Any],
@@ -294,4 +418,4 @@ def safety_gates(
     }
 
 
-__all__ = ["calculate_metrics", "safety_gates"]
+__all__ = ["calculate_metrics", "calculate_multi_agent_metrics", "safety_gates"]

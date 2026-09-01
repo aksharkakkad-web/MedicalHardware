@@ -8,7 +8,17 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.app.db.base import Base
+from backend.app.db.seed import seed_synthetic_story
 from backend.app.db.repositories import FeedbackRepository
+from backend.app.ai.analysis_orchestration import MultiAgentAnalysisOrchestrator
+from backend.app.intelligence.orchestration import MonitoringIntelligenceEngine
+from backend.app.services.monitoring_processing import PersistentMonitoringService
+from evals.monitoring.scripted_analysis import ScriptedAnalysisClient
+from tests.intelligence.test_policy_orchestration import (
+    _baseline,
+    _fall_sequence,
+    _memory,
+)
 
 
 EXPECTED_TABLES = {
@@ -38,6 +48,7 @@ EXPECTED_TABLES = {
     "llm_interpretations",
     "disposition_decisions",
     "event_bridge_records",
+    "multi_agent_analysis_runs",
 }
 
 EXPECTED_COLUMNS = {
@@ -311,6 +322,23 @@ EXPECTED_COLUMNS = {
         "request_json": False,
         "result_json": False,
     },
+    "multi_agent_analysis_runs": {
+        "analysis_id": False,
+        "tenant_id": False,
+        "anomaly_id": False,
+        "packet_revision": False,
+        "resident_id": False,
+        "room_id": False,
+        "input_fingerprint": False,
+        "attempt_number": False,
+        "state": False,
+        "recorded_at": False,
+        "final_model_id": True,
+        "final_model_version": True,
+        "schema_version": False,
+        "evidence_json": False,
+        "payload_json": False,
+    },
     "disposition_decisions": {
         "disposition_id": False,
         "tenant_id": False,
@@ -321,6 +349,7 @@ EXPECTED_COLUMNS = {
         "evidence_revision": False,
         "packet_revision": True,
         "interpretation_id": True,
+        "analysis_id": True,
         "event_id": True,
         "status": False,
         "decided_at": False,
@@ -368,6 +397,7 @@ EXPECTED_PRIMARY_KEYS = {
     "baseline_dimensions": ("baseline_dimension_id",),
     "anomaly_revisions": ("anomaly_revision_id",),
     "llm_interpretations": ("tenant_id", "interpretation_id"),
+    "multi_agent_analysis_runs": ("tenant_id", "analysis_id"),
     "disposition_decisions": ("tenant_id", "disposition_id"),
     "event_bridge_records": ("event_bridge_record_id",),
 }
@@ -472,12 +502,17 @@ EXPECTED_FOREIGN_KEYS = {
         ("tenant_id", "tenants", "tenant_id"),
         ("tenant_id", "anomaly_revisions", "tenant_id"),
     },
+    "multi_agent_analysis_runs": {
+        ("tenant_id", "tenants", "tenant_id"),
+        ("tenant_id", "residents", "tenant_id"),
+        ("tenant_id", "rooms", "tenant_id"),
+    },
     "disposition_decisions": {
         ("tenant_id", "tenants", "tenant_id"),
         ("tenant_id", "residents", "tenant_id"),
         ("tenant_id", "rooms", "tenant_id"),
-        ("tenant_id", "anomaly_revisions", "tenant_id"),
         ("tenant_id", "llm_interpretations", "tenant_id"),
+        ("tenant_id", "multi_agent_analysis_runs", "tenant_id"),
         ("tenant_id", "monitoring_events", "tenant_id"),
         ("resident_id", "residents", "resident_id"),
         ("room_id", "rooms", "room_id"),
@@ -520,6 +555,7 @@ EXPECTED_UNIQUES = {
     },
     "anomaly_revisions": {("tenant_id", "anomaly_id", "packet_revision")},
     "llm_interpretations": set(),
+    "multi_agent_analysis_runs": set(),
     "disposition_decisions": set(),
     "event_bridge_records": {("tenant_id", "idempotency_key")},
 }
@@ -577,6 +613,14 @@ EXPECTED_INDEXES = {
         ("tenant_id",),
         ("anomaly_id", "packet_revision"),
         ("request_fingerprint",),
+    },
+    "multi_agent_analysis_runs": {
+        ("tenant_id",),
+        ("resident_id",),
+        ("room_id",),
+        ("input_fingerprint",),
+        ("state",),
+        ("anomaly_id", "packet_revision"),
     },
     "disposition_decisions": {
         ("tenant_id",),
@@ -668,14 +712,14 @@ EXPECTED_COMPOSITE_OWNERSHIP_FOREIGN_KEYS = {
             ("tenant_id", "anomaly_id", "packet_revision"),
         ),
     },
+    "multi_agent_analysis_runs": {
+        (("tenant_id", "resident_id"), "residents", ("tenant_id", "resident_id")),
+        (("tenant_id", "room_id"), "rooms", ("tenant_id", "room_id")),
+    },
     "disposition_decisions": {
         (("tenant_id", "resident_id"), "residents", ("tenant_id", "resident_id")),
         (("tenant_id", "room_id"), "rooms", ("tenant_id", "room_id")),
-        (
-            ("tenant_id", "anomaly_id", "packet_revision"),
-            "anomaly_revisions",
-            ("tenant_id", "anomaly_id", "packet_revision"),
-        ),
+        (("tenant_id", "analysis_id"), "multi_agent_analysis_runs", ("tenant_id", "analysis_id")),
     },
     "event_bridge_records": {
         (("tenant_id", "event_id"), "monitoring_events", ("tenant_id", "event_id")),
@@ -860,10 +904,62 @@ def test_flexible_context_migration_defaults_old_memory_to_general_context(
         )
         revision = session.scalar(text("SELECT version_num FROM alembic_version"))
 
-    assert revision == "0006_monitoring_intelligence"
+    assert revision == "0007_multi_agent_analysis"
     assert restored.entries[0].context_kind == "general_context"
     assert restored.entries[0].effective_from is None
     assert restored.entries[0].effective_until is None
+    engine.dispose()
+
+
+def test_multi_agent_downgrade_refuses_to_orphan_fall_only_history(
+    tmp_path: Path,
+) -> None:
+    database_url = f"sqlite+pysqlite:///{tmp_path / 'analysis-safe-downgrade.db'}"
+    config = Config("alembic.ini")
+    config.set_main_option("sqlalchemy.url", database_url)
+    command.upgrade(config, "head")
+    engine = create_engine(database_url)
+
+    with Session(engine) as session:
+        seed_synthetic_story(session)
+        unavailable = ScriptedAnalysisClient("final_unavailable")
+        service = PersistentMonitoringService(
+            session,
+            MonitoringIntelligenceEngine(
+                analysis_orchestrator=MultiAgentAnalysisOrchestrator(
+                    recall_client=unavailable,
+                    precision_client=unavailable,
+                    final_client=unavailable,
+                )
+            ),
+        )
+        for frame in _fall_sequence():
+            service.process_frame(
+                frame,
+                baseline=_baseline(feature_name="unused"),
+                context_key="resident_global",
+                anomaly_id="fall_downgrade_guard",
+                tenant_id="tenant_demo",
+                resident_id="resident_demo_a",
+                room_id="room_214",
+                config_version="test_config_v1",
+                unknowns=("cause",),
+                resident_memory=_memory("resident_demo_a"),
+            )
+        session.commit()
+
+    with pytest.raises(RuntimeError, match="multi-agent analysis history"):
+        command.downgrade(config, "0006_monitoring_intelligence")
+
+    with engine.connect() as connection:
+        assert connection.scalar(
+            text("SELECT COUNT(*) FROM multi_agent_analysis_runs")
+        ) == 1
+        assert connection.scalar(
+            text("SELECT COUNT(*) FROM disposition_decisions")
+        ) == 1
+        assert connection.scalar(text("SELECT COUNT(*) FROM anomaly_revisions")) == 0
+        assert connection.execute(text("PRAGMA foreign_key_check")).all() == []
     engine.dispose()
 
 

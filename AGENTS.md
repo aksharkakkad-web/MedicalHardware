@@ -52,13 +52,16 @@ Agents should stay inside the requesting founder's owned areas unless the task e
 - Cross-sensor fusion, resident baselines, anomaly detection, confidence/event logic, LLM interpretation, and feedback learning live in the cloud.
 - Data collection is continuous while the device is operating.
 - Sensor fusion is preferred over adding redundant core sensors.
-- Edge firmware handles lightweight per-sensor decoding/filtering/feature reduction. Cloud Python handles telemetry validation, cross-sensor fusion, baselines, anomaly detection, confidence, device health, and deterministic warnings.
-- For non-urgent anomalies, the LLM interprets a rich anomaly evidence packet
-  before deterministic policy decides whether to create caregiver work. Strong
-  urgent deterministic evidence may create a provisional event first and be
-  enriched afterward. The LLM never monitors telemetry streams or suppresses
-  deterministic events/warnings.
-- The LLM cannot suppress deterministic events/warnings.
+- Edge firmware handles lightweight per-sensor decoding/filtering/feature reduction. Cloud Python handles telemetry validation, cross-sensor fusion, baselines, anomaly detection, confidence, device health, and AI orchestration.
+- Deterministic monitoring code detects and measures meaningful anomaly
+  episodes. A recall router, selected precision specialists, and a final AI
+  integrator/reviewer own plausible explanations, operational severity, and
+  recommended action. Deterministic code validates grounding and owns event
+  lifecycle mechanics. Trusted AI owns disposition for ordinary anomaly
+  episodes; the explicit urgent safety state machine may still create
+  provisional critical caregiver work that AI cannot suppress.
+- If final AI analysis is unavailable or invalid, the anomaly remains visible
+  as analysis pending or needing staff review. It is never silently discarded.
 - Low-quality data must be shown as low-confidence/unavailable, not as fake precision.
 - Resident-away and possible-multi-person periods pause resident-specific baseline learning.
 - Material room/device/sensor setup changes create a new setup version and recalibrate affected baseline dimensions without deleting resident history or semantic memory.

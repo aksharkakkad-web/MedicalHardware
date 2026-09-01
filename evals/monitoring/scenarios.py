@@ -4,11 +4,14 @@ from dataclasses import dataclass, replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any
+from typing import Any, Callable
 
 from backend.app.ai.client import (
     DeterministicFakeLLMClient,
+    InterpretationRequest,
+    InterpretationResult,
     InterpretationStatus,
+    LLMClient,
     RecommendedDisposition,
     render_caregiver_wording,
 )
@@ -106,6 +109,15 @@ class ScenarioDefinition:
     fixture_shortcut: str | None = None
 
 
+@dataclass(frozen=True)
+class ScenarioExecution:
+    scenario_id: str
+    record: dict[str, Any]
+    interpretation_requests: tuple[InterpretationRequest, ...]
+    interpretation_results: tuple[InterpretationResult, ...]
+    provider_errors: tuple[str, ...]
+
+
 SCENARIOS = (
     ScenarioDefinition("normal_variation", "ordinary movement around the personal baseline", "ordinary", quiet_resident_work_required=True),
     ScenarioDefinition("random_bathroom_away", "ordinary bathroom/away interval", "routine", quiet_resident_work_required=True),
@@ -165,6 +177,29 @@ class ScenarioLLMClient:
             result = replace(result, status=InterpretationStatus.UNAVAILABLE)
         self.raw_results.append(result)
         return result
+
+
+class RecordingLLMClient:
+    """Capture an injected provider exchange without changing its result."""
+
+    def __init__(self, client: LLMClient) -> None:
+        self.client = client
+        self.requests: list[InterpretationRequest] = []
+        self.raw_results: list[InterpretationResult] = []
+        self.errors: list[str] = []
+
+    def interpret(self, request: InterpretationRequest) -> InterpretationResult:
+        self.requests.append(request)
+        try:
+            result = self.client.interpret(request)
+        except Exception as exc:
+            self.errors.append(f"{type(exc).__name__}: {exc}")
+            raise
+        self.raw_results.append(result)
+        return result
+
+
+FrameTransform = Callable[[tuple[AlignedFrame, ...]], tuple[AlignedFrame, ...]]
 
 
 FeatureSpec = tuple[
@@ -409,9 +444,28 @@ def _memory(
     )
 
 
-def _engine(mode: str | None) -> tuple[MonitoringIntelligenceEngine, ScenarioLLMClient | None]:
-    client = None if mode is None else ScenarioLLMClient(mode)
-    return MonitoringIntelligenceEngine(llm_client=client), client
+def _engine(
+    mode: str | None,
+    llm_client: LLMClient | None = None,
+) -> tuple[
+    MonitoringIntelligenceEngine,
+    ScenarioLLMClient | RecordingLLMClient | None,
+]:
+    client: ScenarioLLMClient | RecordingLLMClient | None
+    if llm_client is not None:
+        client = RecordingLLMClient(llm_client)
+    else:
+        client = None if mode is None else ScenarioLLMClient(mode)
+    provider = llm_client
+    while isinstance(provider, RecordingLLMClient):
+        provider = provider.client
+    provider_model = getattr(provider, "model", None)
+    engine_options = (
+        {"model_id": "gemini", "model_version": provider_model}
+        if isinstance(provider_model, str) and provider_model
+        else {}
+    )
+    return MonitoringIntelligenceEngine(llm_client=client, **engine_options), client
 
 
 def _process(
@@ -487,7 +541,7 @@ def _finalize(
     start: datetime,
     results: list[IntelligenceResult],
     learning_records: list[tuple[object, bool]],
-    client: ScenarioLLMClient | None,
+    client: ScenarioLLMClient | RecordingLLMClient | None,
     monitoring_state: MonitoringState,
     *,
     extras: dict[str, Any] | None = None,
@@ -538,7 +592,7 @@ def _finalize(
         for attempted_result, raw_result in zip(
             attempted_results,
             (client.raw_results if client else ()),
-            strict=True,
+            strict=False,
         )
         if attempted_result in rejected_results
     )
@@ -682,12 +736,25 @@ def _run_frames(
     setup_change: bool = False,
     purpose: FeaturePurpose = FeaturePurpose.MOVEMENT,
     relevant_context_entry_ids: tuple[str, ...] = (),
-) -> tuple[MonitoringIntelligenceEngine, list[IntelligenceResult], list[tuple[object, bool]], ScenarioLLMClient | None]:
-    engine, client = _engine(provider_mode)
+    llm_client: LLMClient | None = None,
+    frame_transform: FrameTransform | None = None,
+) -> tuple[
+    MonitoringIntelligenceEngine,
+    list[IntelligenceResult],
+    list[tuple[object, bool]],
+    ScenarioLLMClient | RecordingLLMClient | None,
+]:
+    engine, client = _engine(provider_mode, llm_client)
+    if frame_transform is not None:
+        frames = frame_transform(frames)
+        if not isinstance(frames, tuple) or not frames:
+            raise ValueError("frame_transform must return a non-empty tuple")
     memory = memory or _memory(start=start)
     monitoring = _monitoring_for(definition.scenario_id)
     results: list[IntelligenceResult] = []
     learning: list[tuple[object, bool]] = []
+    if anomaly_ids is not None and len(anomaly_ids) != len(frames):
+        raise ValueError("anomaly_ids must match the transformed frame count")
     ids = anomaly_ids or tuple(f"{definition.scenario_id}_anomaly_1" for _ in frames)
     for frame, anomaly_id in zip(frames, ids, strict=True):
         result = _process(
@@ -713,7 +780,13 @@ def _run_frames(
     return engine, results, learning, client
 
 
-def _simple_scenario(definition: ScenarioDefinition, start: datetime) -> dict[str, Any]:
+def _simple_scenario(
+    definition: ScenarioDefinition,
+    start: datetime,
+    *,
+    llm_client: LLMClient | None = None,
+    frame_transform: FrameTransform | None = None,
+) -> dict[str, Any]:
     scenario_id = definition.scenario_id
     monitoring = _monitoring_for(scenario_id)
     feature_name = "movement_energy"
@@ -830,6 +903,8 @@ def _simple_scenario(definition: ScenarioDefinition, start: datetime) -> dict[st
             if scenario_id == "sustained_movement_change"
             else ()
         ),
+        llm_client=llm_client,
+        frame_transform=frame_transform,
     )
     extra_values: dict[str, Any] = {}
     if scenario_id in {"flexible_routine", "temporary_change"}:
@@ -857,22 +932,29 @@ def _simple_scenario(definition: ScenarioDefinition, start: datetime) -> dict[st
         extra_values["setup_version_changed"] = recalibrated.setup_version != progress.setup_version
         extra_values["affected_dimensions"] = list(recalibrated.setup_change_history[-1].affected_dimensions)
     if scenario_id == "sustained_movement_change":
-        if client is None or not client.requests or not client.raw_results:
+        if client is None or not client.requests:
             raise RuntimeError("synthetic selected-context scenario did not invoke AI")
         request = client.requests[-1]
-        raw_result = client.raw_results[-1]
+        raw_result = client.raw_results[-1] if client.raw_results else None
         extra_values["context_provenance"] = {
             "explicit_selection": True,
             "selected_entry_ids": ["sustained_movement_context"],
             "retrieved_context_refs": list(request.retrieved_context_refs),
             "result_request_fingerprint_matches": (
-                raw_result.request_fingerprint == request.request_fingerprint
+                raw_result is not None
+                and raw_result.request_fingerprint == request.request_fingerprint
             ),
         }
     return _finalize(definition, start, results, learning, client, monitoring.state, extras=extra_values)
 
 
-def _fall_scenario(definition: ScenarioDefinition, start: datetime) -> dict[str, Any]:
+def _fall_scenario(
+    definition: ScenarioDefinition,
+    start: datetime,
+    *,
+    llm_client: LLMClient | None = None,
+    frame_transform: FrameTransform | None = None,
+) -> dict[str, Any]:
     baseline = _baseline(definition.scenario_id, start, feature_name="unused_feature")
     frames = _fall_sequence(definition.scenario_id, start)
     _engine_value, results, learning, client = _run_frames(
@@ -881,11 +963,19 @@ def _fall_scenario(definition: ScenarioDefinition, start: datetime) -> dict[str,
         frames,
         baseline=baseline,
         provider_mode=None,
+        llm_client=llm_client,
+        frame_transform=frame_transform,
     )
     return _finalize(definition, start, results, learning, client, MonitoringState.ACTIVE)
 
 
-def _fall_confounder(definition: ScenarioDefinition, start: datetime) -> dict[str, Any]:
+def _fall_confounder(
+    definition: ScenarioDefinition,
+    start: datetime,
+    *,
+    llm_client: LLMClient | None = None,
+    frame_transform: FrameTransform | None = None,
+) -> dict[str, Any]:
     baseline = _baseline(definition.scenario_id, start, feature_name="unused_feature")
     values = (
         (1.7, 0.0, "upright_like", 0.4),
@@ -910,11 +1000,19 @@ def _fall_confounder(definition: ScenarioDefinition, start: datetime) -> dict[st
         frames,
         baseline=baseline,
         provider_mode=None,
+        llm_client=llm_client,
+        frame_transform=frame_transform,
     )
     return _finalize(definition, start, results, learning, client, MonitoringState.ACTIVE)
 
 
-def _contradictory(definition: ScenarioDefinition, start: datetime) -> dict[str, Any]:
+def _contradictory(
+    definition: ScenarioDefinition,
+    start: datetime,
+    *,
+    llm_client: LLMClient | None = None,
+    frame_transform: FrameTransform | None = None,
+) -> dict[str, Any]:
     baseline = _baseline(definition.scenario_id, start, feature_name="unused_feature")
     frame = _fall_frame(
         definition.scenario_id,
@@ -932,6 +1030,8 @@ def _contradictory(definition: ScenarioDefinition, start: datetime) -> dict[str,
         (frame,),
         baseline=baseline,
         provider_mode=None,
+        llm_client=llm_client,
+        frame_transform=frame_transform,
     )
     return _finalize(definition, start, results, learning, client, MonitoringState.LIMITED)
 
@@ -946,6 +1046,8 @@ def _adoption_scenario(
     start: datetime,
     *,
     values: tuple[float, ...],
+    llm_client: LLMClient | None = None,
+    frame_transform: FrameTransform | None = None,
 ) -> dict[str, Any]:
     baseline = _baseline(definition.scenario_id, start)
     expected_behavior, memory = _expected_behavior(start)
@@ -960,6 +1062,8 @@ def _adoption_scenario(
         baseline=baseline,
         provider_mode=None,
         memory=memory,
+        llm_client=llm_client,
+        frame_transform=frame_transform,
     )
     candidate = NewNormalCandidate(
         candidate_id=f"{definition.scenario_id}_candidate",
@@ -1004,7 +1108,13 @@ def _adoption_scenario(
     )
 
 
-def _acknowledgment_scenario(definition: ScenarioDefinition, start: datetime) -> dict[str, Any]:
+def _acknowledgment_scenario(
+    definition: ScenarioDefinition,
+    start: datetime,
+    *,
+    llm_client: LLMClient | None = None,
+    frame_transform: FrameTransform | None = None,
+) -> dict[str, Any]:
     baseline = _baseline(definition.scenario_id, start)
     frames = tuple(_numeric_frame(definition.scenario_id, start, second, 0.5) for second in range(3))
     engine, results, learning, client = _run_frames(
@@ -1013,19 +1123,33 @@ def _acknowledgment_scenario(definition: ScenarioDefinition, start: datetime) ->
         frames,
         baseline=baseline,
         provider_mode="caregiver_event",
+        llm_client=llm_client,
+        frame_transform=frame_transform,
     )
     opened = results[-1].event
     if opened is None:
         raise RuntimeError("synthetic acknowledgment scenario did not open an event")
-    engine.acknowledge_event(opened.event_id, actor_id="operator_synthetic", at=start + timedelta(seconds=4))
+    engine.acknowledge_event(
+        opened.event_id,
+        actor_id="operator_synthetic",
+        at=results[-1].observation.window_end + timedelta(seconds=1),
+    )
     continuation = _numeric_frame(definition.scenario_id, start, 4, 0.5)
+    if frame_transform is not None:
+        continuation = frame_transform((continuation,))[0]
     continued = _process(engine, continuation, baseline=baseline, anomaly_id=f"{definition.scenario_id}_anomaly_1", memory=_memory(start=start))
     results.append(continued)
     learning.append(_learning_record(continuation, continued, _active_monitoring()))
     return _finalize(definition, start, results, learning, client, MonitoringState.ACTIVE)
 
 
-def _recurrence_scenario(definition: ScenarioDefinition, start: datetime) -> dict[str, Any]:
+def _recurrence_scenario(
+    definition: ScenarioDefinition,
+    start: datetime,
+    *,
+    llm_client: LLMClient | None = None,
+    frame_transform: FrameTransform | None = None,
+) -> dict[str, Any]:
     baseline = _baseline(definition.scenario_id, start)
     frames = tuple(
         _numeric_frame(definition.scenario_id, start, second, value)
@@ -1042,6 +1166,8 @@ def _recurrence_scenario(definition: ScenarioDefinition, start: datetime) -> dic
         baseline=baseline,
         provider_mode="caregiver_event",
         anomaly_ids=anomaly_ids,
+        llm_client=llm_client,
+        frame_transform=frame_transform,
     )
     return _finalize(definition, start, results, learning, client, MonitoringState.ACTIVE)
 
@@ -1198,37 +1324,65 @@ def run_repository_restart_story() -> dict[str, bool]:
     }
 
 
+def run_scenario(
+    scenario_id: str,
+    *,
+    llm_client: LLMClient | None = None,
+    frame_transform: FrameTransform | None = None,
+) -> ScenarioExecution:
+    """Run one stable fixture and optionally capture an injected provider exchange."""
+
+    definitions = {definition.scenario_id: definition for definition in SCENARIOS}
+    if scenario_id not in definitions:
+        raise ValueError(f"unknown scenario_id: {scenario_id}")
+    definition = definitions[scenario_id]
+    index = REQUIRED_SCENARIO_IDS.index(scenario_id)
+    start = SUITE_START + timedelta(minutes=index * 5)
+    capture = RecordingLLMClient(llm_client) if llm_client is not None else None
+    options = {"llm_client": capture, "frame_transform": frame_transform}
+    if scenario_id == "fall_like":
+        record = _fall_scenario(definition, start, **options)
+    elif scenario_id == "fall_like_confounder":
+        record = _fall_confounder(definition, start, **options)
+    elif scenario_id == "contradictory_sensors":
+        record = _contradictory(definition, start, **options)
+    elif scenario_id == "preentered_new_behavior":
+        record = _adoption_scenario(definition, start, values=(0.2,), **options)
+    elif scenario_id == "post_event_new_behavior":
+        record = _adoption_scenario(
+            definition,
+            start,
+            values=(0.2, 0.21, 0.22, 0.23, 0.24),
+            **options,
+        )
+    elif scenario_id == "continuing_acknowledged_anomaly":
+        record = _acknowledgment_scenario(definition, start, **options)
+    elif scenario_id == "recurrence_after_recovery":
+        record = _recurrence_scenario(definition, start, **options)
+    else:
+        record = _simple_scenario(definition, start, **options)
+    return ScenarioExecution(
+        scenario_id=scenario_id,
+        record=record,
+        interpretation_requests=tuple(capture.requests) if capture else (),
+        interpretation_results=tuple(capture.raw_results) if capture else (),
+        provider_errors=tuple(capture.errors) if capture else (),
+    )
+
+
 def run_scenarios() -> list[dict[str, Any]]:
     """Run each stable fixture through actual Phase 5 components."""
 
-    records: list[dict[str, Any]] = []
-    for index, definition in enumerate(SCENARIOS):
-        start = SUITE_START + timedelta(minutes=index * 5)
-        if definition.scenario_id == "fall_like":
-            record = _fall_scenario(definition, start)
-        elif definition.scenario_id == "fall_like_confounder":
-            record = _fall_confounder(definition, start)
-        elif definition.scenario_id == "contradictory_sensors":
-            record = _contradictory(definition, start)
-        elif definition.scenario_id == "preentered_new_behavior":
-            record = _adoption_scenario(definition, start, values=(0.2,))
-        elif definition.scenario_id == "post_event_new_behavior":
-            record = _adoption_scenario(definition, start, values=(0.2, 0.21, 0.22, 0.23, 0.24))
-        elif definition.scenario_id == "continuing_acknowledged_anomaly":
-            record = _acknowledgment_scenario(definition, start)
-        elif definition.scenario_id == "recurrence_after_recovery":
-            record = _recurrence_scenario(definition, start)
-        else:
-            record = _simple_scenario(definition, start)
-        records.append(record)
-    return records
+    return [run_scenario(definition.scenario_id).record for definition in SCENARIOS]
 
 
 __all__ = [
     "REQUIRED_SCENARIO_IDS",
     "SCENARIOS",
     "ScenarioDefinition",
+    "ScenarioExecution",
     "run_repository_restart_story",
+    "run_scenario",
     "run_scenarios",
     "scenario_definitions",
 ]

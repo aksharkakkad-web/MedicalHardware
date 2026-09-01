@@ -1,11 +1,17 @@
 # Cofounder Backend Review
 
-**Review date:** August 28, 2026
+**Review date:** September 1, 2026
 **Audience:** Founders and product reviewers
 **Current decision:** The Phase 2 backend runway remains complete and ready for
 frontend connection. The Phase 5 backend monitoring-intelligence lane is also
 complete on deterministic synthetic normalized fixtures. The shared frontend,
 hardware, Phase 6 ingestion, and real-world product gates remain open.
+
+**Latest intelligence update:** the three-stage recall → parallel specialists
+→ final review layer is now implemented, durably saved, exposed to the
+dashboard, mass-tested on 120 staged cases, and checked once end-to-end with
+live Gemini 3.5 Flash. See `docs/MULTI_AGENT_BACKEND_REVIEW.md` for the exact
+scope, evidence, and remaining limits.
 
 ## Executive verdict
 

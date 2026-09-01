@@ -33,6 +33,23 @@ def test_openapi_operation_ids_are_present_and_unique() -> None:
     )
 
 
+def test_event_contract_publishes_additive_multi_agent_analysis() -> None:
+    document = generate_openapi_document()
+    event_schema = document["components"]["schemas"]["EventResponse"]
+    analysis_schema = document["components"]["schemas"]["EventAnalysisResponse"]
+
+    assert "analysis" in event_schema["properties"]
+    assert {
+        "state",
+        "possibilities",
+        "severity",
+        "recommended_disposition",
+        "caregiver_summary",
+        "next_step",
+        "evidence_refs",
+    } <= set(analysis_schema["properties"])
+
+
 def test_every_v1_operation_documents_development_access_headers() -> None:
     document = generate_openapi_document()
     for route, path in document["paths"].items():

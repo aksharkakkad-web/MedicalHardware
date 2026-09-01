@@ -28,6 +28,11 @@ coverage/
 # Local tooling and editor state
 *.log
 *.local
+eval-results/
 .worktrees/
 .idea/
 .vscode/
+
+# Regenerable Graphify cache and timestamped backups
+graphify-out/cache/ast/
+graphify-out/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/

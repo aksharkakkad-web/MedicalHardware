@@ -3,6 +3,8 @@
 from dataclasses import dataclass, replace
 from datetime import datetime
 
+from backend.app.ai.analysis_contracts import AnalysisRun, AnalysisState
+from backend.app.ai.analysis_orchestration import MultiAgentAnalysisOrchestrator
 from backend.app.ai.client import (
     InterpretationResult,
     InterpretationStatus,
@@ -32,7 +34,11 @@ from backend.app.intelligence.degradation import (
     DegradationAssessment,
     assess_monitoring_degradation,
 )
-from backend.app.intelligence.evidence import EvidencePacket, build_evidence_packet
+from backend.app.intelligence.evidence import (
+    EvidencePacket,
+    build_evidence_packet,
+    build_fall_evidence_packet,
+)
 from backend.app.intelligence.fall_detection import (
     FallLikeAssessment,
     SyntheticFallPolicy,
@@ -42,6 +48,7 @@ from backend.app.intelligence.fusion import AlignedFrame
 from backend.app.intelligence.policy import (
     DispositionDecision,
     EventAttentionPolicy,
+    MultiAgentDispositionPolicy,
     PolicyDisposition,
     SyntheticDispositionPolicy,
 )
@@ -55,6 +62,8 @@ class IntelligenceResult:
     evidence: EvidencePacket | None
     interpretation: InterpretationResult | None
     interpretation_error: tuple[str, ...]
+    analysis: AnalysisRun | None
+    analysis_error: tuple[str, ...]
     decision: DispositionDecision
     event: MonitoringEvent | None
     event_bridge_idempotency_key: str | None
@@ -82,6 +91,7 @@ class _ProcessBinding:
     possible_multiple_people: bool
     relevant_context_entry_ids: tuple[str, ...]
     disposition_policy: SyntheticDispositionPolicy
+    analysis_policy: MultiAgentDispositionPolicy
     attention_policy: EventAttentionPolicy
     anomaly_policy: SyntheticAnomalyPolicy
     fall_policy: SyntheticFallPolicy
@@ -89,6 +99,7 @@ class _ProcessBinding:
     model_id: str
     model_version: str
     llm_boundary: str
+    analysis_boundary: str
 
 
 @dataclass(frozen=True)
@@ -107,7 +118,9 @@ class MonitoringIntelligenceEngine:
         *,
         event_store: EventStore | None = None,
         llm_client: LLMClient | None = None,
+        analysis_orchestrator: MultiAgentAnalysisOrchestrator | None = None,
         disposition_policy: SyntheticDispositionPolicy | None = None,
+        analysis_policy: MultiAgentDispositionPolicy | None = None,
         attention_policy: EventAttentionPolicy | None = None,
         anomaly_policy: SyntheticAnomalyPolicy | None = None,
         fall_policy: SyntheticFallPolicy | None = None,
@@ -117,7 +130,9 @@ class MonitoringIntelligenceEngine:
         self.event_store = event_store or EventStore()
         self._event_stores: dict[str, EventStore] = {}
         self.llm_client = llm_client
+        self.analysis_orchestrator = analysis_orchestrator
         self.disposition_policy = disposition_policy or SyntheticDispositionPolicy()
+        self.analysis_policy = analysis_policy or MultiAgentDispositionPolicy()
         self.attention_policy = attention_policy or EventAttentionPolicy()
         self.anomaly_policy = anomaly_policy or SyntheticAnomalyPolicy()
         self.fall_policy = fall_policy or SyntheticFallPolicy()
@@ -130,6 +145,7 @@ class MonitoringIntelligenceEngine:
             _ProcessedFrame,
         ] = {}
         self._urgent_revisions: dict[tuple[LaneKey, str], int] = {}
+        self._fall_packet_revisions: dict[tuple[LaneKey, str], int] = {}
         self._event_ids_by_anomaly: dict[tuple[LaneKey, str], str] = {}
 
     def process_frame(
@@ -172,6 +188,7 @@ class MonitoringIntelligenceEngine:
             possible_multiple_people=possible_multiple_people,
             relevant_context_entry_ids=relevant_context_entry_ids,
             disposition_policy=self.disposition_policy,
+            analysis_policy=self.analysis_policy,
             attention_policy=self.attention_policy,
             anomaly_policy=self.anomaly_policy,
             fall_policy=self.fall_policy,
@@ -184,6 +201,14 @@ class MonitoringIntelligenceEngine:
                 else (
                     f"{type(self.llm_client).__module__}."
                     f"{type(self.llm_client).__qualname__}"
+                )
+            ),
+            analysis_boundary=(
+                "unavailable"
+                if self.analysis_orchestrator is None
+                else (
+                    f"{type(self.analysis_orchestrator).__module__}."
+                    f"{type(self.analysis_orchestrator).__qualname__}"
                 )
             ),
         )
@@ -217,7 +242,14 @@ class MonitoringIntelligenceEngine:
             self._fall_assessments[lane] = fall_assessment
 
         anomaly: AnomalyUpdate | None = None
-        if not degradation.degraded and not resident_away and not possible_multiple_people:
+        if (
+            not degradation.degraded
+            and not resident_away
+            and (
+                not possible_multiple_people
+                or self.analysis_orchestrator is not None
+            )
+        ):
             anomaly = advance_episode(
                 self._episodes.get(lane),
                 frame=frame,
@@ -234,28 +266,134 @@ class MonitoringIntelligenceEngine:
                 self._episodes[lane] = anomaly.episode
 
         evidence = self._packet(anomaly)
+        if evidence is not None and possible_multiple_people:
+            evidence = replace(
+                evidence,
+                evidence_limited=True,
+                limitations=tuple(
+                    dict.fromkeys(
+                        (*evidence.limitations, "resident_attribution_ambiguous")
+                    )
+                ),
+                unknowns=tuple(
+                    dict.fromkeys(
+                        (*evidence.unknowns, "which person produced the measured change")
+                    )
+                ),
+            )
+        if (
+            evidence is None
+            and fall_assessment.urgent_triggered
+            and self.analysis_orchestrator is not None
+        ):
+            fall_key = (lane, anomaly_id)
+            fall_revision = self._fall_packet_revisions.get(fall_key, 0) + 1
+            evidence = build_fall_evidence_packet(
+                fall_assessment,
+                frame=frame,
+                baseline=baseline,
+                anomaly_id=anomaly_id,
+                packet_revision=fall_revision,
+                config_version=config_version,
+                unknowns=unknowns,
+            )
+            self._fall_packet_revisions[fall_key] = fall_revision
         interpretation = None
         interpretation_error: tuple[str, ...] = ()
+        analysis = None
+        analysis_error: tuple[str, ...] = ()
         if (
             evidence is not None
             and evidence.lifecycle_state != AnomalyState.CLOSED
-            and not fall_assessment.urgent_triggered
         ):
-            interpretation, interpretation_error = self._interpret(
-                evidence,
-                resident_memory,
-                relevant_context_entry_ids,
-            )
+            if self.analysis_orchestrator is not None:
+                if resident_memory is None:
+                    analysis_error = ("resident_memory_unavailable",)
+                else:
+                    try:
+                        analysis = self.analysis_orchestrator.analyze(
+                            evidence,
+                            resident_memory,
+                            relevant_context_entry_ids,
+                            tenant_id=tenant_id,
+                        )
+                    except Exception as exc:
+                        analysis_error = (
+                            f"analysis_unavailable:{type(exc).__name__}",
+                        )
+            elif not fall_assessment.urgent_triggered:
+                interpretation, interpretation_error = self._interpret(
+                    evidence,
+                    resident_memory,
+                    relevant_context_entry_ids,
+                )
 
-        decision = self.disposition_policy.decide(
-            packet=evidence,
-            interpretation=interpretation,
-            interpretation_failed=bool(interpretation_error),
-            fall_assessment=fall_assessment,
-            degradation=degradation,
-            resident_away=resident_away,
-            possible_multiple_people=possible_multiple_people,
-        )
+        if self.analysis_orchestrator is not None and (
+            degradation.degraded
+            or resident_away
+        ):
+            decision = self.disposition_policy.decide(
+                packet=None,
+                interpretation=None,
+                interpretation_failed=False,
+                fall_assessment=fall_assessment,
+                degradation=degradation,
+                resident_away=resident_away,
+                possible_multiple_people=possible_multiple_people,
+            )
+        elif self.analysis_orchestrator is not None:
+            decision = self.analysis_policy.decide(
+                packet=evidence,
+                analysis_run=analysis,
+            )
+            if analysis_error and decision.confidence == "analysis_pending":
+                decision = replace(
+                    decision,
+                    reasons=tuple(
+                        dict.fromkeys((*decision.reasons, *analysis_error))
+                    ),
+                )
+            if fall_assessment.urgent_triggered:
+                # AI owns interpretation, but it cannot erase caregiver work
+                # already justified by the explicit urgent safety state machine.
+                urgent_fallback = self.disposition_policy.decide(
+                    packet=evidence,
+                    interpretation=None,
+                    interpretation_failed=True,
+                    fall_assessment=fall_assessment,
+                    degradation=degradation,
+                    resident_away=resident_away,
+                    possible_multiple_people=possible_multiple_people,
+                )
+                decision = replace(
+                    urgent_fallback,
+                    analysis_id=None if analysis is None else analysis.analysis_id,
+                    reasons=tuple(
+                        dict.fromkeys(
+                            (
+                                *urgent_fallback.reasons,
+                                (
+                                    "analysis_did_not_suppress_urgent_signal"
+                                    if analysis is not None
+                                    and analysis.state is AnalysisState.ANALYZED
+                                    else "analysis_pending_did_not_suppress_urgent_signal"
+                                ),
+                                *analysis_error,
+                            )
+                        )
+                    ),
+                    fallback_used=True,
+                )
+        else:
+            decision = self.disposition_policy.decide(
+                packet=evidence,
+                interpretation=interpretation,
+                interpretation_failed=bool(interpretation_error),
+                fall_assessment=fall_assessment,
+                degradation=degradation,
+                resident_away=resident_away,
+                possible_multiple_people=possible_multiple_people,
+            )
 
         event = self._existing_event(lane, anomaly_id)
         bridge_key = None
@@ -273,7 +411,7 @@ class MonitoringIntelligenceEngine:
                 (
                     anomaly_id,
                     revision_component,
-                    self.disposition_policy.policy_version,
+                    decision.policy_version,
                 )
             )
             if decision.priority is None:
@@ -309,6 +447,8 @@ class MonitoringIntelligenceEngine:
             evidence=evidence,
             interpretation=interpretation,
             interpretation_error=interpretation_error,
+            analysis=analysis,
+            analysis_error=analysis_error,
             decision=decision,
             event=event,
             event_bridge_idempotency_key=bridge_key,

@@ -1,7 +1,7 @@
 # Contactless Adaptive Care Platform — Technical Architecture
 
 **Status:** Pre-build architecture source of truth
-**Version:** 1.5
+**Version:** 1.6
 **Companion docs:** `PRD.md`, `DATA_CONTRACT.md`, `BUILD_PLAN.md`, root `AGENTS.md`
 
 ---
@@ -17,9 +17,9 @@ The architecture must support:
 - replaceable hardware/edge adapters;
 - personal baselines;
 - general anomaly/event detection;
-- selective LLM interpretation of rich anomaly evidence before final policy
-  for non-urgent paths, with urgent deterministic event creation independent
-  of the LLM;
+- selective multi-agent interpretation of rich anomaly evidence, with AI-owned
+  operational severity and recommended action plus deterministic grounding and
+  lifecycle enforcement;
 - separate clinic and home product surfaces;
 - fast human feedback;
 - controlled personalization/learning;
@@ -35,11 +35,12 @@ The architecture must support:
 - Suspected multi-person presence makes resident-specific monitoring ambiguous or unavailable; V1 does not identify or separate multiple people.
 - Embedded device does not perform cross-sensor fusion, personal baselines, anomaly/event decisions, LLM reasoning, or feedback learning.
 - Cloud is the intelligence layer.
-- Python handles filtering, feature extraction, fusion, baseline, anomaly detection, confidence, device health, and deterministic warnings.
-- For non-urgent paths, LLM interprets an active anomaly evidence packet before
-  deterministic policy chooses whether to create caregiver work. Strong urgent
-  deterministic evidence may create a provisional event first. LLM does not
-  monitor continuous telemetry or suppress deterministic events.
+- Python handles filtering, feature extraction, fusion, baseline, anomaly detection, confidence, device health, AI orchestration, validation, and event lifecycle mechanics.
+- Deterministic code detects and measures active anomaly episodes. A recall
+  router, selected precision specialists, and a final integrator/reviewer own
+  interpretation, operational severity, and recommended action. The LLM does
+  not monitor continuous telemetry, perform sensor math, or directly mutate
+  event or resident-memory state.
 - Data collection is continuous.
 - Vendor/raw hardware formats are hidden behind edge adapters; the cloud primarily receives compact edge telemetry.
 - A versioned normalized internal contract is the stable software boundary.
@@ -102,7 +103,7 @@ WIFI CSI ────┘      • per-sensor raw→usable conversion
               |                      |
               +----------+-----------+
                          v
-               deterministic policy
+          final AI integration/review
                          |
                          v
                     Event engine
@@ -198,7 +199,7 @@ The edge exists to make sensor data **small, usable, and reliable to transport**
 
 ### Cloud
 
-The cloud owns the intelligence that depends on history or multiple inputs: modality validation, radar+thermal+CSI fusion, room/resident assignment, personal baselines, anomaly/confidence/event logic, deterministic warning policies, resident memory, LLM interpretation, feedback, and learning/evaluation.
+The cloud owns the intelligence that depends on history or multiple inputs: modality validation, radar+thermal+CSI fusion, room/resident assignment, personal baselines, anomaly detection, AI interpretation and disposition, deterministic validation/event mechanics, resident memory, feedback, and learning/evaluation.
 
 This boundary is deliberate: **edge makes data manageable; cloud makes it intelligent.**
 
@@ -395,7 +396,7 @@ Outputs:
 - duration/rate-of-change facts;
 - confidence;
 - evidence list;
-- possible deterministic warning matches.
+- objective anomaly-family hints for specialist routing.
 
 The engine should start with simple configurable statistical/rule-based methods and remain replaceable by better models when labeled data exists.
 
@@ -407,26 +408,33 @@ Do not hard-code the codebase around one event type.
 
 ---
 
-## 12. Layer 9 — Anomaly Disposition, Event, and Policy Engine
+## 12. Layer 9 — Anomaly Analysis, Event, and Policy Engine
 
 An anomaly candidate is not automatically a user-facing alert. Numerical
 anomaly episodes use their own `candidate → active → recovering → closed`
 lifecycle, separate from caregiver acknowledgment and resolution.
 
-The event engine decides when evidence becomes a durable domain `MonitoringEvent`.
+For ordinary anomaly evidence, the final trusted AI analysis decides whether
+evidence should remain an observation, become awareness, or create caregiver
+work. The explicit urgent safety state machine may create provisional critical
+caregiver work before or despite AI enrichment; AI cannot suppress that
+already-qualified urgent signal. The event engine applies these decisions
+through the durable `MonitoringEvent` lifecycle.
 
 Responsibilities:
 
 - anomaly persistence/hysteresis and evidence-packet revision;
-- deterministic disposition to no action, observe, awareness, or event;
+- apply trusted AI disposition to no action, observe, awareness, or event for
+  ordinary anomaly evidence;
+- preserve provisional critical caregiver work from the explicit urgent safety
+  state machine even if AI is pending or recommends a lower action;
 - event creation/deduplication;
-- priority assignment;
+- apply AI operational severity to product priority;
 - event lifecycle state;
 - merge/update related anomaly windows;
 - attach evidence and baseline version;
-- trigger deterministic/LLM-independent warning policy;
-- trigger non-urgent LLM interpretation before final disposition and urgent
-  event enrichment afterward;
+- trigger recall routing, selected specialists, and final integration/review;
+- preserve pending/staff-review states when trusted analysis is unavailable;
 - route event to product surfaces.
 
 Episode and recurrence rules:
@@ -441,11 +449,13 @@ Episode and recurrence rules:
 - repeated linked events expose recurrence/pattern information;
 - watch items may auto-close into history, while high/critical events become overdue and never silently expire.
 
-### Deterministic warning policy
+### Deterministic validation and lifecycle policy
 
-Hard-warning rules are configurable and versioned. They may raise priority/create an event without the LLM. The LLM cannot downgrade, hide, or cancel that event.
-
-The initial repo must not invent unvalidated medical thresholds. Use simulator/demo rules labeled as synthetic/test-only until validated.
+Deterministic policy validates schema, provenance, evidence references,
+idempotency, duplicate control, acknowledgment, cooldown, recurrence, and
+resolution. It does not infer the cause or impose a minimum operational
+severity from numerical anomaly strength. Synthetic detector thresholds remain
+test-only until validated.
 
 ---
 
@@ -467,7 +477,7 @@ Do not dump full raw sensor history or entire resident records into the LLM.
 
 ---
 
-## 14. Layer 11 — Situation-Specific LLM Interpreter
+## 14. Layer 11 — Multi-Agent Interpretation Orchestrator
 
 The interpreter is behind a provider-neutral interface.
 
@@ -488,11 +498,12 @@ as:
 - `prompts/feedback_agent.md`
 - `prompts/resident_memory_updater.md`
 
-One primary structured interpretation transaction assembles only the relevant
-skills and may use narrow read-only retrieval tools. Separate skill files do
-not imply a chain of many independent LLM calls.
+One recall-focused transaction creates a broad possibility map and routes
+relevant specialist skills. Selected specialists run independently in one
+parallel wave. One final integrator/reviewer combines their evidence,
+confidence, disagreement, and context into the trusted result.
 
-### Event interpreter outputs
+### Final analysis outputs
 
 Strict structured response:
 
@@ -503,21 +514,21 @@ Strict structured response:
 - evidence references;
 - no invented measurements;
 - `unknown` supported.
+- operational severity and recommended action;
+- retained credible and serious unresolved possibilities;
+- missing information and what would change the result.
 
 Every non-unknown factual explanation and every recommendation other than
 `no_action` must cite at least one valid supporting evidence reference.
-Evidence-free structured output is invalid and takes the deterministic
-fallback path.
+Evidence-free structured output is invalid and takes one targeted AI repair
+path before becoming `needs_staff_review`.
 
 ### Failure behavior
 
-If LLM invocation fails:
-
-- urgent deterministic events remain valid;
-- non-urgent policy can continue with objective evidence and template wording;
-- interpretation status is `unavailable`;
-- retry policy may run asynchronously;
-- no missing interpretation is treated as evidence of normality.
+If AI invocation fails, the anomaly remains durable and visible with
+`analysis_pending` or `needs_staff_review`. Retry may continue asynchronously,
+completed stages are checkpointed, and no missing analysis is treated as
+evidence of normality or assigned a guessed severity.
 
 ---
 

@@ -12,6 +12,15 @@ from backend.app.ai.client import (
     InterpretationRequest,
     InterpretationResult,
 )
+from backend.app.ai.analysis_contracts import (
+    AnalysisRun,
+    FinalAnalysis,
+    Possibility,
+    RoutingPlan,
+    SpecialistAssessment,
+    SpecialistAssignment,
+    StageResponse,
+)
 from backend.app.ai.context import (
     validate_interpretation_request_payload,
     validate_interpretation_request_shape,
@@ -24,6 +33,7 @@ from backend.app.db.models import (
     DispositionDecisionRow,
     EventBridgeRecordRow,
     LLMInterpretationRow,
+    MultiAgentAnalysisRow,
 )
 from backend.app.domain.events import (
     BridgeEvidenceKind,
@@ -57,6 +67,230 @@ def canonical_json(value: object) -> str:
         separators=(",", ":"),
         ensure_ascii=True,
         allow_nan=False,
+    )
+
+
+def _possibility_data(item: Possibility) -> dict[str, object]:
+    return {
+        "possibility_id": item.possibility_id,
+        "label": item.label,
+        "confidence": item.confidence.value,
+        "supporting_evidence_refs": list(item.supporting_evidence_refs),
+        "contradicting_evidence_refs": list(item.contradicting_evidence_refs),
+        "missing_information": list(item.missing_information),
+        "rationale": item.rationale,
+        "schema_version": item.schema_version,
+    }
+
+
+def _possibility_from_data(data: dict[str, Any]) -> Possibility:
+    return Possibility(
+        possibility_id=data["possibility_id"],
+        label=data["label"],
+        confidence=data["confidence"],
+        supporting_evidence_refs=tuple(data["supporting_evidence_refs"]),
+        contradicting_evidence_refs=tuple(data["contradicting_evidence_refs"]),
+        missing_information=tuple(data["missing_information"]),
+        rationale=data["rationale"],
+        schema_version=data["schema_version"],
+    )
+
+
+def _assignment_data(item: SpecialistAssignment) -> dict[str, object]:
+    return {
+        "specialist": item.specialist,
+        "possibility_ids": list(item.possibility_ids),
+        "reason": item.reason,
+        "schema_version": item.schema_version,
+    }
+
+
+def _assignment_from_data(data: dict[str, Any]) -> SpecialistAssignment:
+    return SpecialistAssignment(
+        specialist=data["specialist"],
+        possibility_ids=tuple(data["possibility_ids"]),
+        reason=data["reason"],
+        schema_version=data["schema_version"],
+    )
+
+
+def _routing_data(item: RoutingPlan) -> dict[str, object]:
+    return {
+        "routing_id": item.routing_id,
+        "anomaly_id": item.anomaly_id,
+        "packet_revision": item.packet_revision,
+        "possibilities": [_possibility_data(value) for value in item.possibilities],
+        "assignments": [_assignment_data(value) for value in item.assignments],
+        "missing_information": list(item.missing_information),
+        "evidence_refs": list(item.evidence_refs),
+        "model_id": item.model_id,
+        "model_version": item.model_version,
+        "skill_version": item.skill_version,
+        "schema_version": item.schema_version,
+    }
+
+
+def _routing_from_data(data: dict[str, Any]) -> RoutingPlan:
+    return RoutingPlan(
+        routing_id=data["routing_id"],
+        anomaly_id=data["anomaly_id"],
+        packet_revision=data["packet_revision"],
+        possibilities=tuple(_possibility_from_data(value) for value in data["possibilities"]),
+        assignments=tuple(_assignment_from_data(value) for value in data["assignments"]),
+        missing_information=tuple(data["missing_information"]),
+        evidence_refs=tuple(data["evidence_refs"]),
+        model_id=data["model_id"],
+        model_version=data["model_version"],
+        skill_version=data["skill_version"],
+        schema_version=data["schema_version"],
+    )
+
+
+def _assessment_data(item: SpecialistAssessment) -> dict[str, object]:
+    return {
+        "assessment_id": item.assessment_id,
+        "specialist": item.specialist,
+        "anomaly_id": item.anomaly_id,
+        "packet_revision": item.packet_revision,
+        "assessed_possibility_ids": list(item.assessed_possibility_ids),
+        "possibilities": [_possibility_data(value) for value in item.possibilities],
+        "severity": item.severity.value,
+        "recommended_disposition": item.recommended_disposition.value,
+        "missing_information": list(item.missing_information),
+        "contradictions": list(item.contradictions),
+        "evidence_refs": list(item.evidence_refs),
+        "model_id": item.model_id,
+        "model_version": item.model_version,
+        "skill_version": item.skill_version,
+        "schema_version": item.schema_version,
+    }
+
+
+def _assessment_from_data(data: dict[str, Any]) -> SpecialistAssessment:
+    return SpecialistAssessment(
+        assessment_id=data["assessment_id"],
+        specialist=data["specialist"],
+        anomaly_id=data["anomaly_id"],
+        packet_revision=data["packet_revision"],
+        assessed_possibility_ids=tuple(data["assessed_possibility_ids"]),
+        possibilities=tuple(_possibility_from_data(value) for value in data["possibilities"]),
+        severity=data["severity"],
+        recommended_disposition=data["recommended_disposition"],
+        missing_information=tuple(data["missing_information"]),
+        contradictions=tuple(data["contradictions"]),
+        evidence_refs=tuple(data["evidence_refs"]),
+        model_id=data["model_id"],
+        model_version=data["model_version"],
+        skill_version=data["skill_version"],
+        schema_version=data["schema_version"],
+    )
+
+
+def _final_data(item: FinalAnalysis) -> dict[str, object]:
+    return {
+        "analysis_id": item.analysis_id,
+        "anomaly_id": item.anomaly_id,
+        "packet_revision": item.packet_revision,
+        "possibilities": [_possibility_data(value) for value in item.possibilities],
+        "severity": item.severity.value,
+        "recommended_disposition": item.recommended_disposition.value,
+        "attribution_scope": item.attribution_scope.value,
+        "caregiver_summary": item.caregiver_summary,
+        "next_step": item.next_step,
+        "missing_information": list(item.missing_information),
+        "specialist_disagreements": list(item.specialist_disagreements),
+        "evidence_refs": list(item.evidence_refs),
+        "considered_possibility_ids": list(item.considered_possibility_ids),
+        "coverage_complete": item.coverage_complete,
+        "model_id": item.model_id,
+        "model_version": item.model_version,
+        "skill_versions": list(item.skill_versions),
+        "schema_version": item.schema_version,
+    }
+
+
+def _final_from_data(data: dict[str, Any]) -> FinalAnalysis:
+    return FinalAnalysis(
+        analysis_id=data["analysis_id"],
+        anomaly_id=data["anomaly_id"],
+        packet_revision=data["packet_revision"],
+        possibilities=tuple(_possibility_from_data(value) for value in data["possibilities"]),
+        severity=data["severity"],
+        recommended_disposition=data["recommended_disposition"],
+        attribution_scope=data["attribution_scope"],
+        caregiver_summary=data["caregiver_summary"],
+        next_step=data["next_step"],
+        missing_information=tuple(data["missing_information"]),
+        specialist_disagreements=tuple(data["specialist_disagreements"]),
+        evidence_refs=tuple(data["evidence_refs"]),
+        considered_possibility_ids=tuple(data["considered_possibility_ids"]),
+        coverage_complete=data["coverage_complete"],
+        model_id=data["model_id"],
+        model_version=data["model_version"],
+        skill_versions=tuple(data["skill_versions"]),
+        schema_version=data["schema_version"],
+    )
+
+
+def analysis_run_data(run: AnalysisRun) -> dict[str, object]:
+    return {
+        "analysis_id": run.analysis_id,
+        "anomaly_id": run.anomaly_id,
+        "packet_revision": run.packet_revision,
+        "state": run.state.value,
+        "routing_plan": None if run.routing_plan is None else _routing_data(run.routing_plan),
+        "specialist_assessments": [_assessment_data(value) for value in run.specialist_assessments],
+        "unavailable_specialists": list(run.unavailable_specialists),
+        "final_analysis": None if run.final_analysis is None else _final_data(run.final_analysis),
+        "errors": list(run.errors),
+        "repair_count": run.repair_count,
+        "input_fingerprint": run.input_fingerprint,
+        "attempt_number": run.attempt_number,
+        "stage_responses": [
+            {
+                "stage": item.stage.value,
+                "status": item.status.value,
+                "request_fingerprint": item.request_fingerprint,
+                # Store operational provenance, never raw model reasoning/output.
+                "payload_json": "{}" if item.status.value == "complete" else None,
+                "model_id": item.model_id,
+                "model_version": item.model_version,
+                "latency_ms": item.latency_ms,
+                "input_tokens": item.input_tokens,
+                "output_tokens": item.output_tokens,
+                "error": item.error,
+                "schema_version": item.schema_version,
+            }
+            for item in run.stage_responses
+        ],
+        "resident_memory_version": run.resident_memory_version,
+        "relevant_context_entry_ids": list(run.relevant_context_entry_ids),
+        "schema_version": run.schema_version,
+    }
+
+
+def analysis_run_from_data(data: dict[str, Any]) -> AnalysisRun:
+    return AnalysisRun(
+        analysis_id=data["analysis_id"],
+        anomaly_id=data["anomaly_id"],
+        packet_revision=data["packet_revision"],
+        state=data["state"],
+        routing_plan=None if data["routing_plan"] is None else _routing_from_data(data["routing_plan"]),
+        specialist_assessments=tuple(_assessment_from_data(value) for value in data["specialist_assessments"]),
+        unavailable_specialists=tuple(data["unavailable_specialists"]),
+        final_analysis=None if data["final_analysis"] is None else _final_from_data(data["final_analysis"]),
+        errors=tuple(data["errors"]),
+        repair_count=data["repair_count"],
+        input_fingerprint=data["input_fingerprint"],
+        attempt_number=data["attempt_number"],
+        stage_responses=tuple(
+            StageResponse(**value) for value in data.get("stage_responses", [])
+        ),
+        resident_memory_version=data.get("resident_memory_version", 0),
+        relevant_context_entry_ids=tuple(
+            data.get("relevant_context_entry_ids", [])
+        ),
+        schema_version=data["schema_version"],
     )
 
 
@@ -535,6 +769,14 @@ def _packet(data: dict[str, Any]) -> EvidencePacket:
     )
 
 
+def evidence_packet_data(packet: EvidencePacket) -> dict[str, object]:
+    return _packet_data(packet)
+
+
+def evidence_packet_from_data(data: dict[str, Any]) -> EvidencePacket:
+    return _packet(data)
+
+
 @dataclass(frozen=True)
 class StoredAnomalyRevision:
     update: AnomalyUpdate
@@ -821,6 +1063,7 @@ def _decision_data(decision: DispositionDecision) -> dict[str, object]:
         "fallback_used": decision.fallback_used,
         "headline": decision.headline,
         "interpretation_id": decision.interpretation_id,
+        "analysis_id": decision.analysis_id,
         "objective_family": decision.objective_family,
         "policy_version": decision.policy_version,
         "priority": None if decision.priority is None else decision.priority.value,
@@ -843,6 +1086,7 @@ def _decision(data: dict[str, Any]) -> DispositionDecision:
         fallback_used=data["fallback_used"],
         room_level_only=data["room_level_only"],
         interpretation_id=data["interpretation_id"],
+        analysis_id=data.get("analysis_id"),
         provisional_urgent=data["provisional_urgent"],
         attention_suppressed=data["attention_suppressed"],
         schema_version=data["schema_version"],
@@ -861,6 +1105,7 @@ class DispositionRecord:
     decided_at: datetime
     decision: DispositionDecision
     interpretation_id: str | None = None
+    analysis_id: str | None = None
     event_id: str | None = None
 
     def __post_init__(self) -> None:
@@ -906,7 +1151,7 @@ class DispositionRecord:
         )
         if not isinstance(self.decision, DispositionDecision):
             raise ValueError("decision must be a DispositionDecision")
-        for field in ("interpretation_id", "event_id"):
+        for field in ("interpretation_id", "analysis_id", "event_id"):
             value = getattr(self, field)
             if value is not None:
                 object.__setattr__(
@@ -918,6 +1163,8 @@ class DispositionRecord:
             raise ValueError(
                 "interpretation_id must match decision.interpretation_id"
             )
+        if self.analysis_id != self.decision.analysis_id:
+            raise ValueError("analysis_id must match decision.analysis_id")
 
 
 def disposition_to_row(
@@ -933,6 +1180,7 @@ def disposition_to_row(
         "evidence_kind": record.evidence_kind.value,
         "evidence_revision": record.evidence_revision,
         "interpretation_id": record.interpretation_id,
+        "analysis_id": record.analysis_id,
         "packet_revision": record.packet_revision,
         "resident_id": record.resident_id,
         "room_id": record.room_id,
@@ -948,6 +1196,7 @@ def disposition_to_row(
         evidence_revision=record.evidence_revision,
         packet_revision=record.packet_revision,
         interpretation_id=record.interpretation_id,
+        analysis_id=record.analysis_id,
         event_id=record.event_id,
         status=record.decision.disposition.value,
         decided_at=_utc(record.decided_at),
@@ -970,6 +1219,7 @@ def disposition_from_row(row: DispositionDecisionRow) -> DispositionRecord:
         decided_at=_parse_time(payload["decided_at"]),
         decision=_decision(payload["decision"]),
         interpretation_id=payload["interpretation_id"],
+        analysis_id=payload.get("analysis_id"),
         event_id=payload["event_id"],
     )
     for field, expected in (
@@ -981,6 +1231,7 @@ def disposition_from_row(row: DispositionDecisionRow) -> DispositionRecord:
         ("evidence_revision", record.evidence_revision),
         ("packet_revision", record.packet_revision),
         ("interpretation_id", record.interpretation_id),
+        ("analysis_id", record.analysis_id),
         ("event_id", record.event_id),
         ("status", record.decision.disposition.value),
         ("decided_at", record.decided_at),
@@ -1099,6 +1350,91 @@ def event_bridge_from_row(row: EventBridgeRecordRow) -> StoredEventBridge:
     return stored
 
 
+def analysis_run_to_row(
+    tenant_id: str,
+    run: AnalysisRun,
+    packet: EvidencePacket,
+    recorded_at: datetime,
+) -> MultiAgentAnalysisRow:
+    if (run.anomaly_id, run.packet_revision) != (
+        packet.anomaly_id,
+        packet.packet_revision,
+    ):
+        raise ValueError("analysis run identity must match evidence packet")
+    final = run.final_analysis
+    return MultiAgentAnalysisRow(
+        tenant_id=require_nonblank_text(tenant_id, "tenant_id"),
+        analysis_id=run.analysis_id,
+        anomaly_id=run.anomaly_id,
+        packet_revision=run.packet_revision,
+        resident_id=packet.resident_id,
+        room_id=packet.room_id,
+        input_fingerprint=run.input_fingerprint,
+        attempt_number=run.attempt_number,
+        state=run.state.value,
+        recorded_at=_utc(recorded_at),
+        final_model_id=None if final is None else final.model_id,
+        final_model_version=None if final is None else final.model_version,
+        schema_version=run.schema_version,
+        evidence_json=canonical_json(
+            {"packet": evidence_packet_data(packet), "tenant_id": tenant_id}
+        ),
+        payload_json=canonical_json(
+            {
+                "analysis_run": analysis_run_data(run),
+                "recorded_at": _time(recorded_at),
+                "tenant_id": tenant_id,
+            }
+        ),
+    )
+
+
+def analysis_run_from_row(row: MultiAgentAnalysisRow) -> AnalysisRun:
+    payload = _parse_canonical_json(row.payload_json, "multi-agent analysis")
+    _require_shadow("analysis.tenant_id", row.tenant_id, payload["tenant_id"])
+    _require_shadow("analysis.recorded_at", row.recorded_at, _parse_time(payload["recorded_at"]))
+    run = analysis_run_from_data(payload["analysis_run"])
+    packet = analysis_packet_from_row(row)
+    final = run.final_analysis
+    for field, expected in (
+        ("analysis_id", run.analysis_id),
+        ("anomaly_id", run.anomaly_id),
+        ("packet_revision", run.packet_revision),
+        ("resident_id", packet.resident_id),
+        ("room_id", packet.room_id),
+        ("input_fingerprint", run.input_fingerprint),
+        ("attempt_number", run.attempt_number),
+        ("state", run.state.value),
+        ("final_model_id", None if final is None else final.model_id),
+        ("final_model_version", None if final is None else final.model_version),
+        ("schema_version", run.schema_version),
+    ):
+        _require_shadow(f"analysis.{field}", getattr(row, field), expected)
+    regenerated = analysis_run_to_row(row.tenant_id, run, packet, row.recorded_at)
+    if (
+        regenerated.payload_json != row.payload_json
+        or regenerated.evidence_json != row.evidence_json
+    ):
+        raise ConcurrentUpdateError(
+            "Stored multi-agent analysis JSON is not canonical domain data"
+        )
+    return run
+
+
+def analysis_packet_from_row(row: MultiAgentAnalysisRow) -> EvidencePacket:
+    payload = _parse_canonical_json(row.evidence_json, "analysis evidence")
+    _require_shadow("analysis.evidence_tenant_id", row.tenant_id, payload["tenant_id"])
+    packet = evidence_packet_from_data(payload["packet"])
+    for field, expected in (
+        ("anomaly_id", packet.anomaly_id),
+        ("packet_revision", packet.packet_revision),
+        ("resident_id", packet.resident_id),
+        ("room_id", packet.room_id),
+    ):
+        _require_shadow(f"analysis.{field}", getattr(row, field), expected)
+    return packet
+
+
 __all__ = [
     "DispositionRecord",
     "StoredAnomalyRevision",
@@ -1106,6 +1442,11 @@ __all__ = [
     "StoredInterpretation",
     "anomaly_from_row",
     "anomaly_to_row",
+    "analysis_run_data",
+    "analysis_run_from_data",
+    "analysis_run_from_row",
+    "analysis_run_to_row",
+    "analysis_packet_from_row",
     "baseline_from_rows",
     "baseline_to_rows",
     "canonical_json",
@@ -1115,6 +1456,8 @@ __all__ = [
     "event_bridge_from_data",
     "event_bridge_from_row",
     "event_bridge_to_row",
+    "evidence_packet_data",
+    "evidence_packet_from_data",
     "interpretation_from_row",
     "interpretation_to_row",
 ]
