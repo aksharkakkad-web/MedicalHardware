@@ -2,7 +2,7 @@
 
 **Status:** Execution plan
 **Strategy:** Contract-first, UI/UX-first, back-to-front, simulator-backed
-**Version:** 1.6
+**Version:** 1.7
 
 ---
 
@@ -105,8 +105,10 @@ Use parallel agents only when work has clear file/module ownership.
 
 **AI Agent (normally run by Akshar)**
 - owns LLM interfaces, structured outputs, context builder, feedback backend, and resident-memory updater;
-- interprets rich anomaly evidence for deterministic disposition policy;
-- cannot suppress urgent deterministic warnings or directly control event state.
+- owns recall routing, precision-specialist analysis, and final
+  integration/review of rich anomaly evidence;
+- owns operational severity and recommended action but cannot perform sensor
+  math or directly mutate event state.
 
 **Reviewer / Verifier Agent**
 - reviews against docs;
@@ -337,8 +339,9 @@ client connection against the published Product API.
 
 ### Goal
 
-Interpret meaningful anomaly evidence without giving the LLM authority over
-sensor math, urgent warnings, or final event disposition.
+Interpret meaningful anomaly evidence without giving AI authority over sensor
+math or direct event mutation. Trusted final AI analysis owns operational
+severity and recommended action.
 
 ### Deliverables
 
@@ -356,8 +359,8 @@ sensor math, urgent warnings, or final event disposition.
 - given an anomaly evidence packet + resident context, returns valid structured interpretation;
 - no raw sensor arrays are sent to the LLM;
 - invalid LLM output is rejected/retried safely;
-- non-urgent LLM outage falls back to deterministic policy and honest wording;
-- urgent deterministic events remain visible and cannot be lowered/deleted by the interpreter.
+- AI outage preserves the anomaly as pending/staff-review-needed with honest wording;
+- deterministic validation never overrides a trusted `observe` result because of anomaly strength.
 
 ---
 
@@ -393,10 +396,10 @@ Close the user feedback loop before real sensors exist.
 
 ### Goal
 
-Build the complete Phase 5 intelligence path without waiting for real edge
+Build the complete monitoring-intelligence path without waiting for real edge
 firmware/preprocessors: quality, personal baselines, anomaly episodes, rich
-evidence, selective AI interpretation, deterministic disposition, and the
-existing durable event lifecycle.
+evidence, multi-agent AI interpretation/disposition, and the existing durable
+event lifecycle.
 
 ### Deliverables
 
@@ -404,7 +407,7 @@ existing durable event lifecycle.
 - explicit `good` / `limited` / `unusable` quality and purpose eligibility;
 - baseline engine;
 - general anomaly-episode engine with candidate, active, recovering, and closed states;
-- configurable urgent-warning and final-disposition policy;
+- configurable anomaly filter and deterministic lifecycle policy;
 - rich revisioned anomaly evidence packets;
 - provider-neutral LLM interpreter with situation-specific skills;
 - event bridge into the existing creation/deduplication lifecycle;
@@ -428,8 +431,8 @@ Do not prematurely build a trained event classifier.
 
 - normal scenario produces low event rate;
 - scripted anomaly produces an episode and evidence packet;
-- meaningful non-urgent evidence is interpreted before deterministic policy decides whether an event is warranted;
-- strong urgent deterministic evidence creates a provisional event immediately and may be enriched afterward;
+- every meaningful anomaly receives recall routing, selected specialist analysis, and final integration/review before AI-owned disposition;
+- AI-unavailable anomalies remain visible as pending or needing staff review;
 - clearly unusual but unclassified evidence can remain `unknown` without fabricated certainty;
 - low-quality data can suppress/qualify derived features without inventing values;
 - warning-policy demo rules are explicitly synthetic/test-only;
@@ -437,7 +440,7 @@ Do not prematurely build a trained event classifier.
 - calibration behavior is exercised across `new`, `calibrating`, `partial`, and `established`;
 - away, possible-multi-person, poor-quality, and unresolved-event windows do not update the baseline;
 - setup changes return affected baseline dimensions to calibration while preserving resident memory;
-- flexible routines and expected changes reduce avoidable alerts but never suppress urgent physical evidence;
+- flexible routines and expected changes inform the AI without rigidly treating normal human variation as anomalous meaning;
 - acknowledgment/cooldown reduces duplicate caregiver interruption without falsely closing the numerical anomaly;
 
 ---

@@ -8,13 +8,21 @@
 The system follows one controlled path:
 
 ```text
-signals → aligned evidence → anomaly filter → deterministic event →
-AI explanation → dashboard action → feedback → guarded resident memory
+signals → aligned evidence → anomaly filter → recall router →
+parallel precision specialists → final AI integration/review →
+deterministic validation/event mechanics → dashboard action → feedback →
+guarded resident memory
 ```
 
 The filter does the numerical work. It asks whether a change is strong enough, persistent enough, supported by usable sensors, and meaningfully different from that resident's flexible baseline. Ordinary variation, a bathroom trip, a visitor, or poor sensor quality should not be turned into a confident resident warning.
 
-The AI receives a bounded JSON evidence packet only after a meaningful non-urgent anomaly exists. It can classify likely patterns, explain uncertainty, and recommend how to present the situation. It cannot invent measurements, identify a person, diagnose a condition, suppress an urgent event, or directly change memory. A corroborated urgent fall-like signal creates provisional caregiver work without waiting for AI.
+AI receives a bounded JSON evidence packet only after a meaningful anomaly
+exists. The recall router keeps plausible explanations broad, selected
+specialists focus on precision in parallel, and the final integrator/reviewer
+combines their findings into severity and recommended action. Deterministic
+validation prevents invented evidence but does not override trusted AI based on
+anomaly strength. An invalid or unavailable result leaves the anomaly visible
+as pending/staff-review-needed.
 
 Acknowledgment quiets repeated attention but does not erase the anomaly. Explicit operator feedback is separate. Feedback may create a small, reversible resident-memory proposal—such as a flexible habit or temporary behavior—but one observation does not become a permanent normal.
 
@@ -28,7 +36,7 @@ The lab adds:
 - deterministic timing, numeric, quality, source-loss, and replay perturbations;
 - strict grading and zero-tolerance safety gates;
 - redacted, compressed, checksummed run evidence;
-- a pinned Gemini 3.7 Flash development adapter with low thinking and structured JSON;
+- a pinned Gemini 3.5 Flash development adapter with low thinking and structured JSON;
 - exact paired-run comparison for later model or prompt changes; and
 - a separately approved production gate of 5,000 Terra cases and 1,000 Sol critical/fallback cases.
 
@@ -76,7 +84,11 @@ Terra and Sol are not dispatched by the free-development command. Before any pai
 
 ## What automatically stops a campaign
 
-A run is not ready if it suppresses urgent work, accepts invented measurements or evidence, guesses resident attribution, contaminates a baseline, creates duplicate open events, trusts invalid AI, lets AI failure block the deterministic path, teaches memory without explicit feedback, or treats acknowledgment as anomaly resolution.
+A run is not ready if it loses an anomaly, accepts invented measurements or
+evidence, guesses resident attribution, skips important routed possibilities,
+contaminates a baseline, creates duplicate open events, trusts invalid AI,
+hides pending analysis, teaches memory without explicit feedback, or treats
+acknowledgment as anomaly resolution.
 
 The run saves its completed chunks and failure evidence before reporting the stop.
 

@@ -5,6 +5,12 @@
 **Owner:** Akshar — backend intelligence and evaluation  
 **Related foundation:** `2026-08-28-phase5-monitoring-intelligence-design.md`
 
+> **V1.9 ownership update:** The multi-agent design in
+> `2026-09-01-multi-agent-monitoring-interpretation-design.md` supersedes this
+> document wherever this earlier evaluation design assigns final disposition
+> or urgent-event ownership to deterministic policy. Existing results remain
+> useful as anomaly, lifecycle, provider, and evaluation regression evidence.
+
 ## Product decision
 
 Build one repeatable evaluation lab around the monitoring-intelligence system
@@ -14,7 +20,7 @@ system.
 The lab uses:
 
 - the deterministic fake provider for very large, exact software testing;
-- Gemini 3.7 Flash for broad, free development-time interpretation testing;
+- Gemini 3.5 Flash for broad, free development-time interpretation testing;
 - Terra as the intended production primary model;
 - Sol as the intended production fallback model;
 - the same evidence packet, skill files, output contract, validator, policy,
@@ -209,7 +215,10 @@ boundary. The monitoring engine must not contain Gemini-specific logic.
 
 The client must:
 
-- pin `gemini-3.7-flash`, never use a drifting `latest` alias;
+- pin `gemini-3.5-flash`, never use a drifting `latest` alias. The originally
+  selected 3.7 endpoint and latest alias repeatedly returned provider
+  high-demand errors during the September 1 live gate, while the identical
+  strict request succeeded on 3.5;
 - request strict structured JSON matching the existing interpretation schema;
 - use low or disabled thinking for bulk classification unless a named
   experiment explicitly changes it;
@@ -479,7 +488,7 @@ The current intelligence-lab phase is complete when:
 2. one command can run and resume every declared campaign mode;
 3. at least 120 canonical timelines and all 12 clusters are represented;
 4. the one-million-execution deterministic campaign completes with artifacts;
-5. Gemini 3.7 Flash produces strictly validated interpretations through the
+5. Gemini 3.5 Flash produces strictly validated interpretations through the
    existing engine without controlling urgent safety policy;
 6. the first 25,000 balanced Gemini checkpoint completes, or the free quota is
    transparently documented with a resumable campaign still in progress;
@@ -489,4 +498,3 @@ The current intelligence-lab phase is complete when:
    telemetry, hardware, field, and production-model validation;
 10. Terra/Sol release-gate requirements are ready but cannot be marked passed
     until those models themselves are run.
-

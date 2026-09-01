@@ -47,7 +47,7 @@ evals/
 - cross-sensor fusion
 - personal baseline engine
 - anomaly detection
-- deterministic warning/event logic
+- anomaly detection, multi-agent AI disposition, and deterministic event-lifecycle logic
 - confidence and data-quality logic
 - device-health logic
 - event lifecycle backend

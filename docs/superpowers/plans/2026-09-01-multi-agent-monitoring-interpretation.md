@@ -45,19 +45,19 @@
 - Consumes: founder-approved design in the linked spec.
 - Produces: source-of-truth V1.9 semantics used by every later task.
 
-- [ ] **Step 1: Update product ownership language**
+- [x] **Step 1: Update product ownership language**
 
 Replace statements saying deterministic policy owns urgent/final disposition with this exact semantic split: deterministic code detects and measures anomaly episodes; AI owns explanations, operational severity, and recommended action; deterministic code owns validation and lifecycle mechanics; caregivers own real-world action.
 
-- [ ] **Step 2: Publish the three-stage data flow and failure behavior**
+- [x] **Step 2: Publish the three-stage data flow and failure behavior**
 
 Document `recall_router → parallel_precision_specialists → final_integrator_reviewer`, one optional targeted repair, and visible `analysis_pending` / `needs_staff_review` behavior.
 
-- [ ] **Step 3: Version the shared contract**
+- [x] **Step 3: Version the shared contract**
 
 Add a V1.9 contract note and exact stage/final-analysis shapes matching Task 2. Make clear that this is a breaking intelligence-ownership change but not a frontend route removal.
 
-- [ ] **Step 4: Check documentation consistency**
+- [x] **Step 4: Check documentation consistency**
 
 Run:
 
@@ -67,7 +67,7 @@ rg -n "urgent deterministic|LLM-independent|deterministic policy.*disposition|ca
 
 Expected: historical research may retain old wording; active source-of-truth docs do not contradict V1.9.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add AGENTS.md docs/PRD.md docs/ARCHITECTURE.md docs/DATA_CONTRACT.md docs/BUILD_PLAN.md docs/TEAM_OWNERSHIP.md docs/CURRENT_STAGE.md docs/MONITORING_INTELLIGENCE_LAB.md docs/PHASE_5_BACKEND_REVIEW.md docs/superpowers/specs/2026-09-01-monitoring-intelligence-lab-design.md

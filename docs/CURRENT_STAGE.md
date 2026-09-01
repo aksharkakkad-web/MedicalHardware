@@ -28,10 +28,17 @@ remain unfinished.
 
 Akshar's next independent backend layer is now implemented as the Monitoring
 Intelligence Lab: a 12-cluster taxonomy, 120-case canonical set, deterministic
-mass-case generator, strict Gemini 3.7 Flash adapter, feedback/memory skill
+mass-case generator, strict Gemini 3.5 Flash adapter, feedback/memory skill
 boundaries, hard safety grading, resumable redacted artifacts, and model
 comparison/release gates. Campaign evidence is recorded separately from the
 original 24-case Phase 5 proof. See `docs/MONITORING_INTELLIGENCE_LAB.md`.
+
+The next approved backend change is now in implementation: deterministic code
+will retain anomaly detection and evidence measurement, while a recall router,
+selected precision specialists, and one final integrator/reviewer will own
+explanation, operational severity, and recommended action. Existing one-shot
+and deterministic-disposition results are prior-phase evidence, not proof of
+the new AI architecture.
 
 The tested journey is:
 
@@ -139,9 +146,11 @@ Real hardware later replaces the simulator as the telemetry producer. It should 
 - Synthetic thresholds are test-only, not clinical or production policy.
 - Resolved events remain immutable; recurrences create new linked history.
 - Resident memory and the numerical baseline are separate.
-- Routine context can reduce avoidable non-urgent alerts, but never suppresses urgent physical evidence.
+- Routine context and normal human variation are evaluated by the AI alongside measured evidence.
 - Acknowledgment quiets duplicate attention; it does not falsely end an active anomaly.
-- AI interprets meaningful evidence, while deterministic policy owns the final disposition.
+- AI owns interpretation, operational severity, and recommended action;
+  deterministic code owns anomaly detection, grounding validation, and event
+  lifecycle mechanics.
 
 ## Source-of-truth handoff
 
