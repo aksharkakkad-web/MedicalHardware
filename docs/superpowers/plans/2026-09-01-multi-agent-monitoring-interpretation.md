@@ -338,31 +338,31 @@ git commit -m "feat: add Gemini multi-stage analysis provider"
 - Consumes: trusted `AnalysisRun.final_analysis` from Task 5.
 - Produces: anomaly-first processing, pending analysis states, AI-owned severity/action, and existing idempotent event mechanics.
 
-- [ ] **Step 1: Replace the obsolete regression expectation**
+- [x] **Step 1: Replace the obsolete regression expectation**
 
 Write failing tests proving a strong anomaly plus trusted `observe` remains observation/history without creating caregiver work, and proving AI unavailability yields visible pending/staff-review state rather than an objective severity guess.
 
-- [ ] **Step 2: Write failing end-to-end monitoring tests**
+- [x] **Step 2: Write failing end-to-end monitoring tests**
 
 Cover a routine bathroom explanation, ambiguous movement retaining two possibilities, high action creating one event, urgent action setting critical priority, duplicate frame replay, provider recovery, acknowledgment/cooldown, recurrence, and multi-person room-level uncertainty.
 
-- [ ] **Step 3: Verify the new tests fail against the old policy**
+- [x] **Step 3: Verify the new tests fail against the old policy**
 
 ```bash
 pytest tests/intelligence/test_policy_orchestration.py tests/intelligence/test_multi_agent_monitoring_flow.py -q
 ```
 
-- [ ] **Step 4: Implement AI-owned disposition**
+- [x] **Step 4: Implement AI-owned disposition**
 
 Add a final-analysis policy path that maps the AI's trusted action and severity into existing event mechanics without comparing anomaly strength. Keep operational device-health warnings separate from resident interpretation. Retain legacy one-shot mode only for migration/evaluation compatibility and mark it as legacy.
 
-- [ ] **Step 5: Run intelligence regression tests**
+- [x] **Step 5: Run intelligence regression tests**
 
 ```bash
 pytest tests/intelligence tests/event_domain -q
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/app/intelligence backend/app/ai tests/intelligence

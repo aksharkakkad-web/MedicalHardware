@@ -126,7 +126,11 @@ class MultiAgentAnalysisOrchestrator:
         key = (packet.anomaly_id, packet.packet_revision)
         with self._checkpoint_lock:
             cached = self._checkpoints.get(key)
-        if cached is not None:
+        if cached is not None and cached.state in (
+            AnalysisState.ANALYZED,
+            AnalysisState.NEEDS_STAFF_REVIEW,
+            AnalysisState.ANALYSIS_REJECTED,
+        ):
             return cached
 
         errors: list[str] = []
@@ -153,8 +157,15 @@ class MultiAgentAnalysisOrchestrator:
             errors,
         )
         with self._checkpoint_lock:
-            winner = self._checkpoints.setdefault(key, result)
-        return winner
+            current = self._checkpoints.get(key)
+            if current is not None and current.state in (
+                AnalysisState.ANALYZED,
+                AnalysisState.NEEDS_STAFF_REVIEW,
+                AnalysisState.ANALYSIS_REJECTED,
+            ):
+                return current
+            self._checkpoints[key] = result
+        return result
 
     def _recall(
         self,

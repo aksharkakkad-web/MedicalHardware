@@ -91,6 +91,8 @@ class ScriptedAnalysisClient:
                 with self._lock:
                     self._active_specialists -= 1
         if request.stage.value in {"final", "repair"}:
+            if self.mode == "final_unavailable":
+                return self._response(request, None, status=StageStatus.UNAVAILABLE)
             request_payload = json.loads(request.payload_json)
             routed = request_payload["routing_plan"]["possibilities"]
             required_ids = request_payload["output_contract"][
@@ -216,3 +218,17 @@ def test_completed_checkpoint_is_reused_without_repeating_model_calls() -> None:
 
     assert replay == first
     assert len(client.calls) == call_count
+
+
+def test_pending_checkpoint_is_retried_and_can_recover() -> None:
+    client = ScriptedAnalysisClient("final_unavailable")
+    orchestrator = _orchestrator(client)
+
+    pending = orchestrator.analyze(_packet(), _memory())
+    first_call_count = len(client.calls)
+    client.mode = "complete"
+    recovered = orchestrator.analyze(_packet(), _memory())
+
+    assert pending.state is AnalysisState.ANALYSIS_PENDING
+    assert recovered.state is AnalysisState.ANALYZED
+    assert len(client.calls) > first_call_count

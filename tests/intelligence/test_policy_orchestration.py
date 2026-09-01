@@ -269,6 +269,8 @@ class RecordingClient:
             return replace(result, anomaly_id="forged_anomaly")
         if self.mode == "unavailable":
             return replace(result, status=InterpretationStatus.UNAVAILABLE)
+        if self.mode == "observe":
+            return result
         if self.mode == "unsupported_no_action":
             category = ExplanationCategory.ROUTINE_MOVEMENT
             disposition = RecommendedDisposition.NO_ACTION
@@ -395,6 +397,23 @@ def test_sustained_nonurgent_anomaly_is_validated_before_policy_consumes_it() ->
     assert result.interpretation is not None
     assert result.decision.interpretation_id == result.interpretation.interpretation_id
     assert result.decision.disposition is PolicyDisposition.CAREGIVER_EVENT
+    assert result.event is not None
+
+
+def test_legacy_one_shot_mode_retains_historical_objective_safety_floor() -> None:
+    # Migration compatibility only; the multi-agent path trusts validated final action.
+    client = RecordingClient("observe")
+    engine = MonitoringIntelligenceEngine(llm_client=client)
+
+    result = _activate(engine)
+
+    assert result.interpretation is not None
+    assert result.interpretation.recommended_disposition is RecommendedDisposition.OBSERVE
+    assert result.decision.disposition is PolicyDisposition.CAREGIVER_EVENT
+    assert result.decision.reasons == (
+        "validated_interpretation",
+        "objective_strength_requires_caregiver_event",
+    )
     assert result.event is not None
 
 
