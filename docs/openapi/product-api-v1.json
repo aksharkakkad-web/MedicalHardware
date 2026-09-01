@@ -113,6 +113,82 @@
         "title": "AddMemoryEntryRequest",
         "type": "object"
       },
+      "AnalysisPossibilityResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "confidence": {
+            "$ref": "#/components/schemas/ConfidenceBand"
+          },
+          "contradicting_evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Contradicting Evidence Refs",
+            "type": "array"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "missing_information": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Information",
+            "type": "array"
+          },
+          "possibility_id": {
+            "title": "Possibility Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "supporting_evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Supporting Evidence Refs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "possibility_id",
+          "label",
+          "confidence",
+          "supporting_evidence_refs",
+          "contradicting_evidence_refs",
+          "missing_information"
+        ],
+        "title": "AnalysisPossibilityResponse",
+        "type": "object"
+      },
+      "AnalysisState": {
+        "enum": [
+          "detected",
+          "recall_in_progress",
+          "specialists_in_progress",
+          "final_analysis_in_progress",
+          "analyzed",
+          "analysis_pending",
+          "needs_staff_review",
+          "analysis_rejected"
+        ],
+        "title": "AnalysisState",
+        "type": "string"
+      },
+      "AttributionScope": {
+        "enum": [
+          "resident",
+          "room",
+          "unknown"
+        ],
+        "title": "AttributionScope",
+        "type": "string"
+      },
       "AwarenessDeliveryPreferences": {
         "additionalProperties": false,
         "properties": {
@@ -346,6 +422,15 @@
           "resolved"
         ],
         "title": "ClinicEventStatus",
+        "type": "string"
+      },
+      "ConfidenceBand": {
+        "enum": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "title": "ConfidenceBand",
         "type": "string"
       },
       "CorrectMemoryEntryRequest": {
@@ -867,6 +952,172 @@
         "title": "EventActionType",
         "type": "string"
       },
+      "EventAnalysisResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "analysis_id": {
+            "title": "Analysis Id",
+            "type": "string"
+          },
+          "attribution_scope": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AttributionScope"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "caregiver_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Caregiver Summary"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Refs",
+            "type": "array"
+          },
+          "missing_information": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Information",
+            "type": "array"
+          },
+          "model_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Id"
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version"
+          },
+          "next_step": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Step"
+          },
+          "packet_revision": {
+            "title": "Packet Revision",
+            "type": "integer"
+          },
+          "possibilities": {
+            "items": {
+              "$ref": "#/components/schemas/AnalysisPossibilityResponse"
+            },
+            "title": "Possibilities",
+            "type": "array"
+          },
+          "recommended_disposition": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecommendedDisposition"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Severity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "skill_versions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Skill Versions",
+            "type": "array"
+          },
+          "specialist_disagreements": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Specialist Disagreements",
+            "type": "array"
+          },
+          "state": {
+            "$ref": "#/components/schemas/AnalysisState"
+          },
+          "unavailable_specialists": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unavailable Specialists",
+            "type": "array"
+          }
+        },
+        "required": [
+          "analysis_id",
+          "packet_revision",
+          "state",
+          "possibilities",
+          "severity",
+          "recommended_disposition",
+          "attribution_scope",
+          "caregiver_summary",
+          "next_step",
+          "missing_information",
+          "specialist_disagreements",
+          "evidence_refs",
+          "unavailable_specialists",
+          "errors",
+          "model_id",
+          "model_version",
+          "skill_versions"
+        ],
+        "title": "EventAnalysisResponse",
+        "type": "object"
+      },
       "EventDeliveryPreferences": {
         "additionalProperties": false,
         "properties": {
@@ -973,6 +1224,16 @@
             },
             "title": "Action History",
             "type": "array"
+          },
+          "analysis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EventAnalysisResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "created_at": {
             "format": "date-time",
@@ -1542,6 +1803,16 @@
         "title": "PresenceState",
         "type": "string"
       },
+      "RecommendedDisposition": {
+        "enum": [
+          "no_action",
+          "observe",
+          "awareness",
+          "caregiver_event"
+        ],
+        "title": "RecommendedDisposition",
+        "type": "string"
+      },
       "ResidentListResponse": {
         "additionalProperties": false,
         "properties": {
@@ -1980,6 +2251,16 @@
         ],
         "title": "SetupChangeResponse",
         "type": "object"
+      },
+      "Severity": {
+        "enum": [
+          "observation",
+          "watch",
+          "high",
+          "critical"
+        ],
+        "title": "Severity",
+        "type": "string"
       },
       "SubmitFeedbackRequest": {
         "additionalProperties": false,

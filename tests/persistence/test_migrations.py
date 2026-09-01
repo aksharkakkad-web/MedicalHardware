@@ -38,6 +38,7 @@ EXPECTED_TABLES = {
     "llm_interpretations",
     "disposition_decisions",
     "event_bridge_records",
+    "multi_agent_analysis_runs",
 }
 
 EXPECTED_COLUMNS = {
@@ -311,6 +312,18 @@ EXPECTED_COLUMNS = {
         "request_json": False,
         "result_json": False,
     },
+    "multi_agent_analysis_runs": {
+        "analysis_id": False,
+        "tenant_id": False,
+        "anomaly_id": False,
+        "packet_revision": False,
+        "state": False,
+        "recorded_at": False,
+        "final_model_id": True,
+        "final_model_version": True,
+        "schema_version": False,
+        "payload_json": False,
+    },
     "disposition_decisions": {
         "disposition_id": False,
         "tenant_id": False,
@@ -368,6 +381,7 @@ EXPECTED_PRIMARY_KEYS = {
     "baseline_dimensions": ("baseline_dimension_id",),
     "anomaly_revisions": ("anomaly_revision_id",),
     "llm_interpretations": ("tenant_id", "interpretation_id"),
+    "multi_agent_analysis_runs": ("tenant_id", "analysis_id"),
     "disposition_decisions": ("tenant_id", "disposition_id"),
     "event_bridge_records": ("event_bridge_record_id",),
 }
@@ -472,6 +486,10 @@ EXPECTED_FOREIGN_KEYS = {
         ("tenant_id", "tenants", "tenant_id"),
         ("tenant_id", "anomaly_revisions", "tenant_id"),
     },
+    "multi_agent_analysis_runs": {
+        ("tenant_id", "tenants", "tenant_id"),
+        ("tenant_id", "anomaly_revisions", "tenant_id"),
+    },
     "disposition_decisions": {
         ("tenant_id", "tenants", "tenant_id"),
         ("tenant_id", "residents", "tenant_id"),
@@ -520,6 +538,9 @@ EXPECTED_UNIQUES = {
     },
     "anomaly_revisions": {("tenant_id", "anomaly_id", "packet_revision")},
     "llm_interpretations": set(),
+    "multi_agent_analysis_runs": {
+        ("tenant_id", "anomaly_id", "packet_revision")
+    },
     "disposition_decisions": set(),
     "event_bridge_records": {("tenant_id", "idempotency_key")},
 }
@@ -577,6 +598,11 @@ EXPECTED_INDEXES = {
         ("tenant_id",),
         ("anomaly_id", "packet_revision"),
         ("request_fingerprint",),
+    },
+    "multi_agent_analysis_runs": {
+        ("tenant_id",),
+        ("state",),
+        ("anomaly_id", "packet_revision"),
     },
     "disposition_decisions": {
         ("tenant_id",),
@@ -662,6 +688,13 @@ EXPECTED_COMPOSITE_OWNERSHIP_FOREIGN_KEYS = {
         (("tenant_id", "baseline_id"), "baseline_snapshots", ("tenant_id", "baseline_id")),
     },
     "llm_interpretations": {
+        (
+            ("tenant_id", "anomaly_id", "packet_revision"),
+            "anomaly_revisions",
+            ("tenant_id", "anomaly_id", "packet_revision"),
+        ),
+    },
+    "multi_agent_analysis_runs": {
         (
             ("tenant_id", "anomaly_id", "packet_revision"),
             "anomaly_revisions",
@@ -860,7 +893,7 @@ def test_flexible_context_migration_defaults_old_memory_to_general_context(
         )
         revision = session.scalar(text("SELECT version_num FROM alembic_version"))
 
-    assert revision == "0006_monitoring_intelligence"
+    assert revision == "0007_multi_agent_analysis"
     assert restored.entries[0].context_kind == "general_context"
     assert restored.entries[0].effective_from is None
     assert restored.entries[0].effective_until is None

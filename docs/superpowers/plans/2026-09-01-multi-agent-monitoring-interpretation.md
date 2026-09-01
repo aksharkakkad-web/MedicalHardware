@@ -387,25 +387,25 @@ git commit -m "feat: let trusted AI analysis own event disposition"
 - Consumes: canonical `AnalysisRun` and final analysis.
 - Produces: tenant-scoped, versioned persistence and a consolidated event-analysis read contract without exposing raw agent transcripts or chain-of-thought.
 
-- [ ] **Step 1: Write failing mapper/repository tests**
+- [x] **Step 1: Write failing mapper/repository tests**
 
 Prove tenant isolation, anomaly-revision binding, canonical round trip, idempotent save, exact stage provenance, rejected fabricated evidence, and resume from partial stage checkpoints.
 
-- [ ] **Step 2: Write failing API contract tests**
+- [x] **Step 2: Write failing API contract tests**
 
 Add response models for pending/final analysis, retained possibilities, confidence bands, uncertainty, next step, evidence references, and model/skill version metadata. Assert the existing event endpoint remains backward compatible while an analysis field is additive.
 
-- [ ] **Step 3: Verify failure**
+- [x] **Step 3: Verify failure**
 
 ```bash
 pytest tests/persistence/test_intelligence_repositories.py tests/api/test_read_api.py tests/api/test_openapi_contract.py -q
 ```
 
-- [ ] **Step 4: Implement migration, canonical persistence, and query mapping**
+- [x] **Step 4: Implement migration, canonical persistence, and query mapping**
 
 Use one tenant-scoped analysis-run row per anomaly revision with canonical JSON envelopes and shadow columns for IDs/state/version. Do not persist prompts containing unnecessary resident history or any credential.
 
-- [ ] **Step 5: Run persistence and API tests**
+- [x] **Step 5: Run persistence and API tests**
 
 ```bash
 pytest tests/persistence tests/api -q
@@ -414,7 +414,7 @@ alembic downgrade -1
 alembic upgrade head
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/app/db backend/app/contracts/events.py backend/app/api/v1/events.py backend/app/services/queries.py tests/persistence tests/api

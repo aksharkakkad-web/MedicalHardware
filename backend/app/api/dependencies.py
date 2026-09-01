@@ -10,6 +10,7 @@ from backend.app.db.repositories import (
     FeedbackRepository,
     ResidentRepository,
 )
+from backend.app.db.intelligence_repositories import IntelligenceRepository
 from backend.app.db.device_repositories import (
     DeviceHealthRepository,
     DeviceRepository,
@@ -64,6 +65,7 @@ def query_service(
         ResidentRepository(session),
         EventRepository(session),
         FeedbackRepository(session),
+        IntelligenceRepository(session),
     )
 
 

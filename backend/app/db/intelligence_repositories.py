@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from backend.app.ai.analysis_contracts import AnalysisRun
 from backend.app.ai.client import InterpretationRequest, InterpretationResult
 from backend.app.ai.context import (
     build_interpretation_request,
@@ -19,6 +20,8 @@ from backend.app.db.intelligence_mappers import (
     StoredInterpretation,
     anomaly_from_row,
     anomaly_to_row,
+    analysis_run_from_row,
+    analysis_run_to_row,
     baseline_from_rows,
     baseline_to_rows,
     disposition_from_row,
@@ -35,6 +38,7 @@ from backend.app.db.models import (
     DispositionDecisionRow,
     EventBridgeRecordRow,
     LLMInterpretationRow,
+    MultiAgentAnalysisRow,
     ResidentMemoryEntryRow,
     ResidentMemorySnapshotRow,
 )
@@ -237,6 +241,85 @@ class IntelligenceRepository:
         )
         return None if row is None else self._hydrate_interpretation(tenant_id, row)
 
+    def save_analysis_run(
+        self,
+        tenant_id: str,
+        run: AnalysisRun,
+        recorded_at: datetime,
+    ) -> AnalysisRun:
+        self._validate_analysis_links(tenant_id, run)
+        candidate = analysis_run_to_row(tenant_id, run, recorded_at)
+        existing = self._session.get(
+            MultiAgentAnalysisRow,
+            (tenant_id, run.analysis_id),
+        )
+        if existing is not None:
+            if not _same_row(existing, candidate):
+                raise ConcurrentUpdateError()
+            return analysis_run_from_row(existing)
+        revision_existing = self._session.scalar(
+            select(MultiAgentAnalysisRow).where(
+                MultiAgentAnalysisRow.tenant_id == tenant_id,
+                MultiAgentAnalysisRow.anomaly_id == run.anomaly_id,
+                MultiAgentAnalysisRow.packet_revision == run.packet_revision,
+            )
+        )
+        if revision_existing is not None:
+            if not _same_row(revision_existing, candidate):
+                raise ConcurrentUpdateError()
+            return analysis_run_from_row(revision_existing)
+        try:
+            with self._session.begin_nested():
+                self._session.add(candidate)
+                self._session.flush()
+        except IntegrityError as exc:
+            winner = self._session.scalar(
+                select(MultiAgentAnalysisRow).where(
+                    MultiAgentAnalysisRow.tenant_id == tenant_id,
+                    MultiAgentAnalysisRow.anomaly_id == run.anomaly_id,
+                    MultiAgentAnalysisRow.packet_revision == run.packet_revision,
+                )
+            )
+            if winner is None or not _same_row(winner, candidate):
+                raise ConcurrentUpdateError() from exc
+            return analysis_run_from_row(winner)
+        return analysis_run_from_row(candidate)
+
+    def find_analysis_run(
+        self,
+        tenant_id: str,
+        analysis_id: str,
+    ) -> AnalysisRun | None:
+        row = self._session.get(
+            MultiAgentAnalysisRow,
+            (tenant_id, analysis_id),
+        )
+        if row is None:
+            return None
+        run = analysis_run_from_row(row)
+        self._validate_analysis_links(tenant_id, run)
+        return run
+
+    def latest_analysis_run(
+        self,
+        tenant_id: str,
+        anomaly_id: str,
+    ) -> AnalysisRun | None:
+        row = self._session.scalar(
+            select(MultiAgentAnalysisRow)
+            .where(
+                MultiAgentAnalysisRow.tenant_id == tenant_id,
+                MultiAgentAnalysisRow.anomaly_id == anomaly_id,
+            )
+            .order_by(MultiAgentAnalysisRow.packet_revision.desc())
+            .limit(1)
+        )
+        if row is None:
+            return None
+        run = analysis_run_from_row(row)
+        self._validate_analysis_links(tenant_id, run)
+        return run
+
     def save_disposition(
         self,
         tenant_id: str,
@@ -363,6 +446,40 @@ class IntelligenceRepository:
         stored = interpretation_from_row(row)
         self._validate_interpretation_links(tenant_id, stored)
         return stored
+
+    def _validate_analysis_links(
+        self,
+        tenant_id: str,
+        run: AnalysisRun,
+    ) -> None:
+        row = self._anomaly_revision(
+            tenant_id,
+            run.anomaly_id,
+            run.packet_revision,
+        )
+        if row is None:
+            raise ValueError("analysis anomaly revision does not exist")
+        packet = anomaly_from_row(row).packet
+        allowed_refs = set(packet.evidence_refs)
+        used_refs: set[str] = set()
+        if run.routing_plan is not None:
+            if (
+                run.routing_plan.anomaly_id != run.anomaly_id
+                or run.routing_plan.packet_revision != run.packet_revision
+            ):
+                raise ValueError("analysis routing identity does not match run")
+            used_refs.update(run.routing_plan.evidence_refs)
+        for assessment in run.specialist_assessments:
+            if (
+                assessment.anomaly_id != run.anomaly_id
+                or assessment.packet_revision != run.packet_revision
+            ):
+                raise ValueError("analysis specialist identity does not match run")
+            used_refs.update(assessment.evidence_refs)
+        if run.final_analysis is not None:
+            used_refs.update(run.final_analysis.evidence_refs)
+        if not used_refs <= allowed_refs:
+            raise ValueError("analysis references evidence outside its anomaly packet")
 
     def _validate_interpretation_links(
         self,

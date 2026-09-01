@@ -496,6 +496,40 @@ class LLMInterpretationRow(Base):
     result_json: Mapped[str] = mapped_column(Text)
 
 
+class MultiAgentAnalysisRow(Base):
+    __tablename__ = "multi_agent_analysis_runs"
+    __table_args__ = (
+        PrimaryKeyConstraint("tenant_id", "analysis_id"),
+        UniqueConstraint("tenant_id", "anomaly_id", "packet_revision"),
+        ForeignKeyConstraint(
+            ("tenant_id", "anomaly_id", "packet_revision"),
+            (
+                "anomaly_revisions.tenant_id",
+                "anomaly_revisions.anomaly_id",
+                "anomaly_revisions.packet_revision",
+            ),
+        ),
+        Index(
+            "ix_multi_agent_analysis_anomaly_revision",
+            "anomaly_id",
+            "packet_revision",
+        ),
+    )
+
+    analysis_id: Mapped[str] = mapped_column(String(255))
+    tenant_id: Mapped[str] = mapped_column(
+        ForeignKey("tenants.tenant_id"), index=True
+    )
+    anomaly_id: Mapped[str] = mapped_column(String(255))
+    packet_revision: Mapped[int] = mapped_column(Integer)
+    state: Mapped[str] = mapped_column(String(64), index=True)
+    recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    final_model_id: Mapped[str | None] = mapped_column(String(255))
+    final_model_version: Mapped[str | None] = mapped_column(String(255))
+    schema_version: Mapped[str] = mapped_column(String(64))
+    payload_json: Mapped[str] = mapped_column(Text)
+
+
 class DispositionDecisionRow(Base):
     __tablename__ = "disposition_decisions"
     __table_args__ = (

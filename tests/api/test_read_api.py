@@ -105,9 +105,10 @@ def test_list_resident_events_returns_complete_versioned_history(
                         "changed_at": "2026-08-24T21:02:11Z",
                     }
                 ],
-                "resident_memory_version": None,
-                "resident_memory_entry_ids": [],
-                "version": 1,
+                    "resident_memory_version": None,
+                    "resident_memory_entry_ids": [],
+                    "analysis": None,
+                    "version": 1,
             }
         ],
     }
