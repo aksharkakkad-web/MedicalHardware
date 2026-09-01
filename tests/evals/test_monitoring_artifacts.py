@@ -59,3 +59,14 @@ def test_manifest_is_valid_json_and_contains_schema_version(tmp_path: Path) -> N
 
     assert manifest["schema_version"] == "1.0"
     assert manifest["run_id"] == "run_004"
+
+
+def test_checkpoint_is_immediately_resumable_and_ignores_uncheckpointed_chunk(tmp_path: Path) -> None:
+    run = ArtifactRun.create(tmp_path, run_id="run_005", manifest={"mode": "mass"})
+    run.append_chunk("cases", 0, [{"case_id": "case_1"}])
+    run.write_checkpoint({"completed_case_ids": ["case_1"], "completed": 1})
+    run.append_chunk("cases", 1, [{"case_id": "case_2"}])
+
+    resumed = open_artifact_run(tmp_path / "run_005")
+
+    assert resumed.completed_case_ids == {"case_1"}

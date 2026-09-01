@@ -137,6 +137,21 @@ class ArtifactRun:
 
     def write_checkpoint(self, checkpoint: Mapping[str, object]) -> None:
         self.write_json("checkpoint.json", dict(checkpoint))
+        self._write_checksums()
+
+    def _write_checksums(self) -> None:
+        lines = []
+        for file in sorted(
+            path
+            for path in self.path.rglob("*")
+            if path.is_file() and path.name != "checksums.sha256"
+        ):
+            digest = sha256(file.read_bytes()).hexdigest()
+            lines.append(f"{digest}  {file.relative_to(self.path).as_posix()}")
+        _atomic_write(
+            self.path / "checksums.sha256",
+            ("\n".join(lines) + "\n").encode(),
+        )
 
     def finalize(
         self,
@@ -150,11 +165,7 @@ class ArtifactRun:
         self.write_json("hard-gates.json", dict(hard_gates))
         self.write_json("comparison.json", dict(comparison or {}))
         _atomic_write(self.path / "report.md", (_redact_text(report).rstrip() + "\n").encode())
-        lines = []
-        for file in sorted(path for path in self.path.rglob("*") if path.is_file() and path.name != "checksums.sha256"):
-            digest = sha256(file.read_bytes()).hexdigest()
-            lines.append(f"{digest}  {file.relative_to(self.path).as_posix()}")
-        _atomic_write(self.path / "checksums.sha256", ("\n".join(lines) + "\n").encode())
+        self._write_checksums()
 
 
 def _validate_checksums(path: Path) -> None:

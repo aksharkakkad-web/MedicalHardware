@@ -1,0 +1,57 @@
+import json
+from pathlib import Path
+
+import pytest
+
+from evals.monitoring.campaign import CampaignConfig, run_campaign
+
+
+def test_smoke_campaign_runs_one_reference_case_per_cluster_and_saves_evidence(tmp_path: Path) -> None:
+    result = run_campaign(
+        CampaignConfig(mode="smoke", chunk_size=4, master_seed=7),
+        output_root=tmp_path,
+        run_id="smoke_test",
+    )
+
+    assert result.attempted == 12
+    assert result.completed == 12
+    assert result.passed is True
+    assert (result.artifact_path / "report.md").is_file()
+    metrics = json.loads((result.artifact_path / "metrics.json").read_text())
+    assert metrics["case_count"] == 12
+
+
+def test_mass_campaign_honors_case_count_times_passes(tmp_path: Path) -> None:
+    result = run_campaign(
+        CampaignConfig(mode="mass", case_count=6, passes=2, chunk_size=5, stop_on_hard_gate=False),
+        output_root=tmp_path,
+        run_id="mass_test",
+    )
+
+    assert result.attempted == 12
+    assert result.completed + result.failed == 12
+    checkpoint = json.loads((result.artifact_path / "checkpoint.json").read_text())
+    assert checkpoint["next_index"] == 12
+
+
+@pytest.mark.parametrize(
+    "config",
+    [
+        CampaignConfig(mode="not-real"),
+        CampaignConfig(mode="mass", case_count=0),
+        CampaignConfig(mode="smoke", chunk_size=0),
+        CampaignConfig(mode="gemini", case_count=1, live_concurrency=9),
+    ],
+)
+def test_campaign_rejects_unsafe_or_unbounded_configuration(config: CampaignConfig) -> None:
+    with pytest.raises(ValueError):
+        config.validate()
+
+
+def test_gemini_mode_requires_an_explicit_provider(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="provider"):
+        run_campaign(
+            CampaignConfig(mode="gemini", case_count=1),
+            output_root=tmp_path,
+            run_id="gemini_missing",
+        )
