@@ -222,6 +222,8 @@ def test_analysis_run_requires_final_result_only_in_analyzed_state() -> None:
         final_analysis=None,
         errors=("provider unavailable",),
         repair_count=0,
+        input_fingerprint="test-input-fingerprint",
+        attempt_number=1,
     )
     assert pending.final_analysis is None
 

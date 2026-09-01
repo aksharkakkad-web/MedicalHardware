@@ -72,7 +72,10 @@ def query_service(
 def event_queue_query_service(
     session: Annotated[Session, Depends(database_session)],
 ) -> ProductEventQueueQueryService:
-    return ProductEventQueueQueryService(EventRepository(session))
+    return ProductEventQueueQueryService(
+        EventRepository(session),
+        IntelligenceRepository(session),
+    )
 
 
 def device_query_service(

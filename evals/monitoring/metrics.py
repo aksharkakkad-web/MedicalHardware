@@ -68,6 +68,81 @@ def calculate_metrics(records: list[dict[str, Any]]) -> dict[str, Any]:
         key: sum(int(record["interpretation"][key]) for record in records)
         for key in ("attempted", "valid", "rejected", "unavailable")
     }
+    diagnostics = {
+        key: sum(int(record["ai_diagnostics"][key]) for record in records)
+        for key in (
+            "validation_reason_count",
+            "validated_evidence_reference_count",
+            "rejected_result_evidence_reference_count",
+            "explicit_unsupported_conclusion_count",
+        )
+    }
+    duration_errors = [
+        abs(
+            float(record["actual_event_duration_seconds"])
+            - float(record["expected_event_duration_seconds"])
+        )
+        for record in records
+        if record["expected_event_duration_seconds"] is not None
+        and record["actual_event_duration_seconds"] is not None
+    ]
+    return {
+        "scenario_count": len(records),
+        "declared_exposure_units": exposure_units,
+        "meaningful_anomaly_recall": {
+            "captured": len(captured),
+            "expected": len(meaningful),
+            "rate": _rate(len(captured), len(meaningful)),
+        },
+        "false_packets_per_declared_exposure_unit": {
+            "count": false_packets,
+            "declared_exposure_units": exposure_units,
+            "rate": _rate(false_packets, exposure_units),
+        },
+        "false_caregiver_events_per_declared_exposure_unit": {
+            "count": false_events,
+            "declared_exposure_units": exposure_units,
+            "rate": _rate(false_events, exposure_units),
+        },
+        "missed_meaningful_events": missed,
+        "latency": {
+            "candidate": _latency(records, "candidate_latency_seconds"),
+            "packet": _latency(records, "packet_latency_seconds"),
+            "event": _latency(records, "event_latency_seconds"),
+        },
+        "duplicate_events": {
+            "duplicate_event_count": duplicate_events,
+            "event_signal_groups": event_signal_groups,
+            "rate": _rate(duplicate_events, event_signal_groups),
+        },
+        "event_duration_error": {
+            "available": len(duration_errors),
+            "unavailable": len(records) - len(duration_errors),
+            "mean_absolute_seconds": (
+                round(mean(duration_errors), 6) if duration_errors else None
+            ),
+            "maximum_absolute_seconds": max(duration_errors) if duration_errors else None,
+        },
+        "baseline_contamination": {
+            "contaminated_learning_windows": contaminated,
+            "eligible_learning_windows": eligible_learning,
+            "evaluated_learning_windows": evaluated_learning,
+            "rate": _rate(contaminated, evaluated_learning),
+        },
+        "monitoring_states": {
+            "counts": {
+                state: monitoring_counts.get(state, 0)
+                for state in ("active", "limited", "paused", "unavailable")
+            },
+            "durations_seconds": {
+                state: monitoring_durations.get(state, 0.0)
+                for state in ("active", "limited", "paused", "unavailable")
+            },
+        },
+        "interpretation": interpretation,
+        "ai_diagnostics": diagnostics,
+        "replay_reproducible": False,
+    }
 
 
 def calculate_multi_agent_metrics(
@@ -191,81 +266,6 @@ def calculate_multi_agent_metrics(
             for stage, values in sorted(latency_values.items())
         },
         "stage_calls": dict(sorted(calls.items())),
-    }
-    diagnostics = {
-        key: sum(int(record["ai_diagnostics"][key]) for record in records)
-        for key in (
-            "validation_reason_count",
-            "validated_evidence_reference_count",
-            "rejected_result_evidence_reference_count",
-            "explicit_unsupported_conclusion_count",
-        )
-    }
-    duration_errors = [
-        abs(
-            float(record["actual_event_duration_seconds"])
-            - float(record["expected_event_duration_seconds"])
-        )
-        for record in records
-        if record["expected_event_duration_seconds"] is not None
-        and record["actual_event_duration_seconds"] is not None
-    ]
-    return {
-        "scenario_count": len(records),
-        "declared_exposure_units": exposure_units,
-        "meaningful_anomaly_recall": {
-            "captured": len(captured),
-            "expected": len(meaningful),
-            "rate": _rate(len(captured), len(meaningful)),
-        },
-        "false_packets_per_declared_exposure_unit": {
-            "count": false_packets,
-            "declared_exposure_units": exposure_units,
-            "rate": _rate(false_packets, exposure_units),
-        },
-        "false_caregiver_events_per_declared_exposure_unit": {
-            "count": false_events,
-            "declared_exposure_units": exposure_units,
-            "rate": _rate(false_events, exposure_units),
-        },
-        "missed_meaningful_events": missed,
-        "latency": {
-            "candidate": _latency(records, "candidate_latency_seconds"),
-            "packet": _latency(records, "packet_latency_seconds"),
-            "event": _latency(records, "event_latency_seconds"),
-        },
-        "duplicate_events": {
-            "duplicate_event_count": duplicate_events,
-            "event_signal_groups": event_signal_groups,
-            "rate": _rate(duplicate_events, event_signal_groups),
-        },
-        "event_duration_error": {
-            "available": len(duration_errors),
-            "unavailable": len(records) - len(duration_errors),
-            "mean_absolute_seconds": (
-                round(mean(duration_errors), 6) if duration_errors else None
-            ),
-            "maximum_absolute_seconds": max(duration_errors) if duration_errors else None,
-        },
-        "baseline_contamination": {
-            "contaminated_learning_windows": contaminated,
-            "eligible_learning_windows": eligible_learning,
-            "evaluated_learning_windows": evaluated_learning,
-            "rate": _rate(contaminated, evaluated_learning),
-        },
-        "monitoring_states": {
-            "counts": {
-                state: monitoring_counts.get(state, 0)
-                for state in ("active", "limited", "paused", "unavailable")
-            },
-            "durations_seconds": {
-                state: monitoring_durations.get(state, 0.0)
-                for state in ("active", "limited", "paused", "unavailable")
-            },
-        },
-        "interpretation": interpretation,
-        "ai_diagnostics": diagnostics,
-        "replay_reproducible": False,
     }
 
 

@@ -10,6 +10,9 @@ from backend.app.intelligence.anomaly import (
     FeatureDeviation,
 )
 from backend.app.intelligence.observations import _normalize_text_tuple, _require_utc
+from backend.app.intelligence.baseline import BaselineSnapshot
+from backend.app.intelligence.fall_detection import FallLikeAssessment
+from backend.app.intelligence.fusion import AlignedFrame
 
 
 def _normalize_ordered_texts(value: object, field: str) -> tuple[str, ...]:
@@ -194,4 +197,68 @@ def build_evidence_packet(update: AnomalyUpdate) -> EvidencePacket:
     )
 
 
-__all__ = ["EvidencePacket", "build_evidence_packet"]
+def build_fall_evidence_packet(
+    assessment: FallLikeAssessment,
+    *,
+    frame: AlignedFrame,
+    baseline: BaselineSnapshot,
+    anomaly_id: str,
+    packet_revision: int,
+    config_version: str,
+    unknowns: tuple[str, ...],
+) -> EvidencePacket:
+    """Project a confirmed deterministic fall-like pattern into AI evidence."""
+
+    if not assessment.urgent_triggered or assessment.transition_started_at is None:
+        raise ValueError("fall evidence requires a confirmed fall-like assessment")
+    if frame.resident_id != baseline.resident_id:
+        raise ValueError("fall evidence baseline resident does not match frame")
+    refs = tuple(
+        f"evidence://{anomaly_id}/{packet_revision}/fall-like/{index}"
+        for index, _ in enumerate(assessment.evidence, start=1)
+    )
+    if not refs:
+        refs = (f"evidence://{anomaly_id}/{packet_revision}/fall-like/state",)
+    return EvidencePacket(
+        anomaly_id=anomaly_id,
+        packet_revision=packet_revision,
+        lifecycle_state=AnomalyState.ACTIVE,
+        resident_id=frame.resident_id,
+        room_id=frame.room_id,
+        candidate_started_at=assessment.transition_started_at,
+        activated_at=assessment.assessed_at,
+        current_time=assessment.assessed_at,
+        overall_strength=None,
+        strength_scale="fall_like_state_machine",
+        progression="activated",
+        changed_features=(),
+        agreements=assessment.evidence,
+        contradictions=assessment.contradictions,
+        missing_modalities=assessment.missing_sources,
+        missing_initiating_features=(),
+        evidence_limited=bool(assessment.limitations),
+        limitations=tuple(
+            dict.fromkeys(
+                (
+                    *assessment.limitations,
+                    "synthetic fall-like policy; not a clinical diagnosis",
+                )
+            )
+        ),
+        baseline_id=baseline.baseline_id,
+        baseline_policy_version=baseline.policy_version,
+        monitoring_setup_version=baseline.monitoring_setup_version,
+        filter_version=assessment.policy_version,
+        config_version=config_version,
+        feature_contract_version="1.0",
+        frame_id=frame.frame_id,
+        unknowns=unknowns,
+        evidence_refs=refs,
+    )
+
+
+__all__ = [
+    "EvidencePacket",
+    "build_evidence_packet",
+    "build_fall_evidence_packet",
+]

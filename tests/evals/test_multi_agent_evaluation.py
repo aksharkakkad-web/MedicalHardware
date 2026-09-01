@@ -8,6 +8,8 @@ from evals.monitoring.grading import (
     multi_agent_evaluation_record,
 )
 from evals.monitoring.metrics import calculate_multi_agent_metrics
+from evals.monitoring.multi_agent_campaign import run_multi_agent_campaign
+from evals.monitoring.scripted_analysis import ScriptedAnalysisClient as CampaignClient
 from tests.ai.test_analysis_context import _memory, _packet
 from tests.ai.test_analysis_orchestration import ScriptedAnalysisClient
 
@@ -18,11 +20,13 @@ def _run(mode: str = "complete"):
         recall_client=client,
         precision_client=client,
         final_client=client,
-    ).analyze(_packet(), _memory())
+    ).analyze(_packet(), _memory(), tenant_id="tenant_demo")
     latencies = {
         stage: sum(
-            request.stage.value == stage for request in client.calls
-        ) * 2.0
+            response.latency_ms
+            for response in run.stage_responses
+            if response.stage.value == stage
+        )
         for stage in ("recall", "specialist", "final", "repair")
     }
     calls = {
@@ -130,3 +134,33 @@ def test_stage_artifacts_are_redacted_checksummed_and_counted(tmp_path) -> None:
     assert manifest["provider_api_key"] == "[REDACTED]"
     assert "AIzaThisWouldBeSecret" not in saved
     assert (artifact.path / "checksums.sha256").is_file()
+
+
+def test_campaign_reports_pending_provider_result_as_failed(tmp_path) -> None:
+    result = run_multi_agent_campaign(
+        case_count=1,
+        output_root=tmp_path,
+        run_id="pending_provider",
+        client=CampaignClient("final_unavailable"),
+    )
+
+    assert result.completed == 1
+    assert result.failed == 1
+    assert not result.passed
+
+
+def test_campaign_pass_requires_every_quality_gate(tmp_path) -> None:
+    result = run_multi_agent_campaign(
+        case_count=3,
+        output_root=tmp_path,
+        run_id="complete_provider",
+        client=CampaignClient(),
+    )
+
+    gates = json.loads((result.path / "hard-gates.json").read_text())
+    assert result.passed
+    assert gates == {
+        "all_quality_rates_perfect": True,
+        "passed": True,
+        "zero_hallucinated_evidence": True,
+    }

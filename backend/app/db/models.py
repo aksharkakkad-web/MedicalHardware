@@ -500,14 +500,13 @@ class MultiAgentAnalysisRow(Base):
     __tablename__ = "multi_agent_analysis_runs"
     __table_args__ = (
         PrimaryKeyConstraint("tenant_id", "analysis_id"),
-        UniqueConstraint("tenant_id", "anomaly_id", "packet_revision"),
         ForeignKeyConstraint(
-            ("tenant_id", "anomaly_id", "packet_revision"),
-            (
-                "anomaly_revisions.tenant_id",
-                "anomaly_revisions.anomaly_id",
-                "anomaly_revisions.packet_revision",
-            ),
+            ("tenant_id", "resident_id"),
+            ("residents.tenant_id", "residents.resident_id"),
+        ),
+        ForeignKeyConstraint(
+            ("tenant_id", "room_id"),
+            ("rooms.tenant_id", "rooms.room_id"),
         ),
         Index(
             "ix_multi_agent_analysis_anomaly_revision",
@@ -522,11 +521,16 @@ class MultiAgentAnalysisRow(Base):
     )
     anomaly_id: Mapped[str] = mapped_column(String(255))
     packet_revision: Mapped[int] = mapped_column(Integer)
+    resident_id: Mapped[str] = mapped_column(String(255), index=True)
+    room_id: Mapped[str] = mapped_column(String(255), index=True)
+    input_fingerprint: Mapped[str] = mapped_column(String(64), index=True)
+    attempt_number: Mapped[int] = mapped_column(Integer)
     state: Mapped[str] = mapped_column(String(64), index=True)
     recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     final_model_id: Mapped[str | None] = mapped_column(String(255))
     final_model_version: Mapped[str | None] = mapped_column(String(255))
     schema_version: Mapped[str] = mapped_column(String(64))
+    evidence_json: Mapped[str] = mapped_column(Text)
     payload_json: Mapped[str] = mapped_column(Text)
 
 
@@ -543,16 +547,12 @@ class DispositionDecisionRow(Base):
             ("rooms.tenant_id", "rooms.room_id"),
         ),
         ForeignKeyConstraint(
-            ("tenant_id", "anomaly_id", "packet_revision"),
-            (
-                "anomaly_revisions.tenant_id",
-                "anomaly_revisions.anomaly_id",
-                "anomaly_revisions.packet_revision",
-            ),
-        ),
-        ForeignKeyConstraint(
             ("tenant_id", "interpretation_id"),
             ("llm_interpretations.tenant_id", "llm_interpretations.interpretation_id"),
+        ),
+        ForeignKeyConstraint(
+            ("tenant_id", "analysis_id"),
+            ("multi_agent_analysis_runs.tenant_id", "multi_agent_analysis_runs.analysis_id"),
         ),
         ForeignKeyConstraint(
             ("tenant_id", "event_id"),
@@ -581,6 +581,7 @@ class DispositionDecisionRow(Base):
     evidence_revision: Mapped[int] = mapped_column(Integer)
     packet_revision: Mapped[int | None] = mapped_column(Integer)
     interpretation_id: Mapped[str | None] = mapped_column(String(255))
+    analysis_id: Mapped[str | None] = mapped_column(String(255))
     event_id: Mapped[str | None] = mapped_column(String(255), index=True)
     status: Mapped[str] = mapped_column(String(64))
     decided_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

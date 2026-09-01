@@ -39,7 +39,9 @@ def test_loading_a_skill_returns_versioned_bounded_instructions() -> None:
 
     assert skill.version == "1.0"
     assert skill.path.is_file()
-    assert skill.path.is_relative_to(Path("prompts/monitoring"))
+    assert skill.path.is_relative_to(
+        Path(__file__).resolve().parents[2] / "prompts" / "monitoring"
+    )
     assert len(skill.instructions) > 300
     assert "raw sensor streams" in skill.instructions.lower()
     assert "evidence" in skill.instructions.lower()

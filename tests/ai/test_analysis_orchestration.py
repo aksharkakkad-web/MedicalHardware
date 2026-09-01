@@ -95,7 +95,8 @@ class ScriptedAnalysisClient:
                 return self._response(request, None, status=StageStatus.UNAVAILABLE)
             request_payload = json.loads(request.payload_json)
             routed = request_payload["routing_plan"]["possibilities"]
-            required_ids = request_payload["output_contract"][
+            output_contract = request_payload["output_contract"]
+            required_ids = output_contract[
                 "required_considered_possibility_ids"
             ]
             invalid = self.mode == "invalid_twice" or (
@@ -103,15 +104,15 @@ class ScriptedAnalysisClient:
             )
             considered = ["possibility_skipped"] if invalid else required_ids
             payload = {
-                "analysis_id": "analysis_final_1",
+                "analysis_id": output_contract["required_analysis_id"],
                 "anomaly_id": request.anomaly_id,
                 "packet_revision": request.packet_revision,
                 "possibilities": routed,
                 "severity": "watch",
                 "recommended_disposition": "observe",
                 "attribution_scope": "resident",
-                "caregiver_summary": "Routine activity is plausible, with a sensor issue also possible.",
-                "next_step": "Observe and review if the pattern continues.",
+                "caregiver_summary": output_contract["required_caregiver_summary"],
+                "next_step": output_contract["required_next_step_by_disposition"]["observe"],
                 "missing_information": ["direct confirmation"],
                 "specialist_disagreements": [],
                 "evidence_refs": [EVIDENCE_REF],
@@ -150,7 +151,7 @@ def _orchestrator(client: ScriptedAnalysisClient) -> MultiAgentAnalysisOrchestra
 
 def test_happy_path_runs_recall_parallel_specialists_and_one_final_combination() -> None:
     client = ScriptedAnalysisClient()
-    result = _orchestrator(client).analyze(_packet(), _memory())
+    result = _orchestrator(client).analyze(_packet(), _memory(), tenant_id="tenant_demo")
 
     assert result.state is AnalysisState.ANALYZED
     assert result.final_analysis is not None
@@ -167,7 +168,7 @@ def test_happy_path_runs_recall_parallel_specialists_and_one_final_combination()
 
 def test_recall_failure_uses_family_routing_only_and_still_reaches_final_analysis() -> None:
     client = ScriptedAnalysisClient("recall_unavailable")
-    result = _orchestrator(client).analyze(_packet(), _memory())
+    result = _orchestrator(client).analyze(_packet(), _memory(), tenant_id="tenant_demo")
 
     assert result.state is AnalysisState.ANALYZED
     assert result.routing_plan is not None
@@ -177,10 +178,17 @@ def test_recall_failure_uses_family_routing_only_and_still_reaches_final_analysi
 
 def test_missing_specialist_is_explicit_and_final_stage_can_preserve_uncertainty() -> None:
     client = ScriptedAnalysisClient("one_specialist_unavailable")
-    result = _orchestrator(client).analyze(_packet(), _memory())
+    result = _orchestrator(client).analyze(_packet(), _memory(), tenant_id="tenant_demo")
 
     assert result.state is AnalysisState.ANALYZED
     assert result.unavailable_specialists == ("signal_integrity",)
+    specialist_responses = tuple(
+        item for item in result.stage_responses if item.stage.value == "specialist"
+    )
+    assert len(specialist_responses) == 2
+    assert sum(
+        item.status is StageStatus.UNAVAILABLE for item in specialist_responses
+    ) == 1
     final_request = next(item for item in client.calls if item.stage.value == "final")
     assert json.loads(final_request.payload_json)["unavailable_specialists"] == [
         "signal_integrity"
@@ -189,7 +197,7 @@ def test_missing_specialist_is_explicit_and_final_stage_can_preserve_uncertainty
 
 def test_invalid_final_result_gets_exactly_one_targeted_repair() -> None:
     client = ScriptedAnalysisClient("repair_once")
-    result = _orchestrator(client).analyze(_packet(), _memory())
+    result = _orchestrator(client).analyze(_packet(), _memory(), tenant_id="tenant_demo")
 
     assert result.state is AnalysisState.ANALYZED
     assert result.repair_count == 1
@@ -200,7 +208,7 @@ def test_invalid_final_result_gets_exactly_one_targeted_repair() -> None:
 
 def test_second_invalid_result_becomes_staff_review_without_an_endless_loop() -> None:
     client = ScriptedAnalysisClient("invalid_twice")
-    result = _orchestrator(client).analyze(_packet(), _memory())
+    result = _orchestrator(client).analyze(_packet(), _memory(), tenant_id="tenant_demo")
 
     assert result.state is AnalysisState.NEEDS_STAFF_REVIEW
     assert result.final_analysis is None
@@ -211,10 +219,10 @@ def test_second_invalid_result_becomes_staff_review_without_an_endless_loop() ->
 def test_completed_checkpoint_is_reused_without_repeating_model_calls() -> None:
     client = ScriptedAnalysisClient()
     orchestrator = _orchestrator(client)
-    first = orchestrator.analyze(_packet(), _memory())
+    first = orchestrator.analyze(_packet(), _memory(), tenant_id="tenant_demo")
     call_count = len(client.calls)
 
-    replay = orchestrator.analyze(_packet(), _memory())
+    replay = orchestrator.analyze(_packet(), _memory(), tenant_id="tenant_demo")
 
     assert replay == first
     assert len(client.calls) == call_count
@@ -224,11 +232,26 @@ def test_pending_checkpoint_is_retried_and_can_recover() -> None:
     client = ScriptedAnalysisClient("final_unavailable")
     orchestrator = _orchestrator(client)
 
-    pending = orchestrator.analyze(_packet(), _memory())
+    pending = orchestrator.analyze(_packet(), _memory(), tenant_id="tenant_demo")
     first_call_count = len(client.calls)
     client.mode = "complete"
-    recovered = orchestrator.analyze(_packet(), _memory())
+    recovered = orchestrator.analyze(_packet(), _memory(), tenant_id="tenant_demo")
 
     assert pending.state is AnalysisState.ANALYSIS_PENDING
     assert recovered.state is AnalysisState.ANALYZED
+    assert pending.analysis_id != recovered.analysis_id
+    assert pending.attempt_number == 1
+    assert recovered.attempt_number == 2
     assert len(client.calls) > first_call_count
+
+
+def test_same_anomaly_identity_is_isolated_across_tenants() -> None:
+    client = ScriptedAnalysisClient()
+    orchestrator = _orchestrator(client)
+
+    first = orchestrator.analyze(_packet(), _memory(), tenant_id="tenant_one")
+    second = orchestrator.analyze(_packet(), _memory(), tenant_id="tenant_two")
+
+    assert first.input_fingerprint != second.input_fingerprint
+    assert first.analysis_id != second.analysis_id
+    assert [request.stage.value for request in client.calls].count("recall") == 2

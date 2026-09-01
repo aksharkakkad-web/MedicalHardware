@@ -12,7 +12,7 @@ from backend.app.api.dependencies import (
     request_idempotency_key,
 )
 from backend.app.api.errors import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
-from backend.app.contracts.events import EventListResponse
+from backend.app.contracts.events import EventListResponse, ResidentAnalysisListResponse
 from backend.app.contracts.feedback import (
     AddMemoryEntryRequest,
     CorrectMemoryEntryRequest,
@@ -128,6 +128,19 @@ def list_resident_events(
     service: Annotated[ProductQueryService, Depends(query_service)],
 ) -> EventListResponse:
     return service.list_resident_events(context, resident_id)
+
+
+@router.get(
+    "/{resident_id}/analyses",
+    response_model=ResidentAnalysisListResponse,
+    responses=READ_ERROR_RESPONSES,
+)
+def list_resident_analyses(
+    resident_id: str,
+    context: Annotated[AccessContext, Depends(access_context)],
+    service: Annotated[ProductQueryService, Depends(query_service)],
+) -> ResidentAnalysisListResponse:
+    return service.list_resident_analyses(context, resident_id)
 
 
 @router.get(

@@ -117,6 +117,12 @@ def test_gemini_retries_transient_errors_but_not_invalid_output() -> None:
 
 def test_gemini_respects_provider_retry_delay_for_rate_limits() -> None:
     sleeps: list[float] = []
+    now = [0.0]
+
+    def sleep(seconds: float) -> None:
+        sleeps.append(seconds)
+        now[0] += seconds
+
     limited = GeminiTransportError(
         "rate limited",
         status_code=429,
@@ -124,11 +130,16 @@ def test_gemini_respects_provider_retry_delay_for_rate_limits() -> None:
         retry_after_seconds=2.5,
     )
     transport = RecordingTransport([limited, _response()])
-    client = GeminiLLMClient(api_key="test-secret", transport=transport, sleep=sleeps.append)
+    client = GeminiLLMClient(
+        api_key="test-secret",
+        transport=transport,
+        sleep=sleep,
+        monotonic=lambda: now[0],
+    )
 
     client.interpret(_request())
 
-    assert sleeps == [2.5]
+    assert sleeps == pytest.approx([2.5, 10.0])
 
 
 def test_provider_errors_never_include_the_api_key() -> None:

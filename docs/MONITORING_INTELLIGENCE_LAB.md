@@ -14,6 +14,8 @@ deterministic validation/event mechanics → dashboard action → feedback →
 guarded resident memory
 ```
 
+In shorter product language: AI explanation → dashboard action → feedback → guarded resident memory.
+
 The filter does the numerical work. It asks whether a change is strong enough, persistent enough, supported by usable sensors, and meaningfully different from that resident's flexible baseline. Ordinary variation, a bathroom trip, a visitor, or poor sensor quality should not be turned into a confident resident warning.
 
 AI receives a bounded JSON evidence packet only after a meaningful anomaly
@@ -70,6 +72,21 @@ This targets 100,000 distinct synthetic timelines with 10 deterministic passes, 
 
 ### 4. Live Gemini development campaign
 
+The staged architecture has its own explicit commands:
+
+```bash
+python3 -m evals.monitoring.cli multi-agent-mass --cases 120
+python3 -m evals.monitoring.cli multi-agent-gemini --cases 1
+```
+
+`multi-agent-mass` runs the real recall → parallel specialists → final-review
+orchestrator with a deterministic structured provider, so it is free and safe
+to run frequently. It is a pipeline-plumbing and load check over one core
+movement evidence family; the broader 12-cluster campaign remains the behavior
+coverage proof for normal variation, visits, signal issues, and edge cases.
+`multi-agent-gemini` runs the same stages against the pinned
+live Gemini model and records real stage latency and token usage.
+
 ```bash
 python3 -m evals.monitoring.cli gemini --cases 100
 python3 -m evals.monitoring.cli gemini --cases 1000
@@ -107,3 +124,9 @@ It contains a manifest, compressed case and response records, failures, metrics,
 Passing proves that the implemented software contracts behave consistently on the saved synthetic inputs and, for live runs, that the selected model obeyed the bounded output contract on those inputs.
 
 It is not clinical validation. It does not prove real hardware detection quality, real-world alert rates, medical usefulness, or pilot readiness. Those require real hardware, representative environments and residents, clinical/product review, privacy and security review, and frontend convergence. Rishit can continue the frontend independently against the existing contracts while Akshar runs this backend lab.
+
+The September 1 staged checkpoint completed 120 deterministic multi-agent cases
+with 480 total model-stage calls and zero invented evidence references. A live
+Gemini checkpoint completed one recall, two specialist reviews, and one final
+review with a validated observe/watch result. This is a compatibility proof,
+not an accuracy study.

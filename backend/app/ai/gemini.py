@@ -7,6 +7,7 @@ import json
 import os
 import re
 import time
+from threading import Lock
 from typing import Protocol
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -93,17 +94,26 @@ class _GeminiExecutor:
     sleep: Callable[[float], None]
     monotonic: Callable[[], float]
     _last_request_started_at: float | None = field(default=None, init=False)
+    _pacing_lock: Lock = field(default_factory=Lock, init=False, repr=False)
+
+    def _reserve_request_slot(self) -> float:
+        with self._pacing_lock:
+            if self._last_request_started_at is not None:
+                remaining = self.minimum_interval_seconds - (
+                    self.monotonic() - self._last_request_started_at
+                )
+                if remaining > 0:
+                    self.sleep(remaining)
+            started_at = self.monotonic()
+            self._last_request_started_at = started_at
+            return started_at
 
     def generate(self, body: bytes) -> tuple[bytes, float]:
-        if self._last_request_started_at is not None:
-            remaining = self.minimum_interval_seconds - (
-                self.monotonic() - self._last_request_started_at
-            )
-            if remaining > 0:
-                self.sleep(remaining)
-        started_at = self.monotonic()
-        self._last_request_started_at = started_at
+        started_at: float | None = None
         for attempt in range(1, self.max_attempts + 1):
+            attempt_started_at = self._reserve_request_slot()
+            if started_at is None:
+                started_at = attempt_started_at
             try:
                 return (
                     self.transport.generate(
@@ -456,12 +466,26 @@ def _structured_body(request: StageRequest) -> bytes:
                 "temperature": 0.1,
                 "maxOutputTokens": 8192,
                 "responseMimeType": "application/json",
-                "responseSchema": request.response_schema,
+                # Gemini accepts a subset of JSON Schema. Strict unknown-key
+                # rejection is still enforced locally after the response.
+                "responseSchema": _gemini_schema(request.response_schema),
             },
         },
         separators=(",", ":"),
         sort_keys=True,
     ).encode("utf-8")
+
+
+def _gemini_schema(value):
+    if isinstance(value, dict):
+        return {
+            key: _gemini_schema(item)
+            for key, item in value.items()
+            if key != "additionalProperties"
+        }
+    if isinstance(value, list):
+        return [_gemini_schema(item) for item in value]
+    return value
 
 
 def _structured_payload(response: bytes) -> tuple[str, str, int | None, int | None]:

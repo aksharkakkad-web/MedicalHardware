@@ -78,6 +78,18 @@ class EventAnalysisResponse(ContractModel):
     skill_versions: list[str]
 
 
+class ResidentAnalysisResponse(ContractModel):
+    anomaly_id: str
+    resident_id: str
+    room_id: str
+    observed_at: UTCDateTime
+    analysis: EventAnalysisResponse
+
+
+class ResidentAnalysisListResponse(ContractModel):
+    items: list[ResidentAnalysisResponse]
+
+
 class EventResponse(ContractModel):
     event_id: str
     episode_id: str

@@ -20,6 +20,7 @@ from backend.app.db.intelligence_mappers import (
     StoredInterpretation,
     anomaly_from_row,
     anomaly_to_row,
+    analysis_packet_from_row,
     analysis_run_from_row,
     analysis_run_to_row,
     baseline_from_rows,
@@ -30,6 +31,7 @@ from backend.app.db.intelligence_mappers import (
     interpretation_from_row,
     interpretation_to_row,
 )
+from backend.app.intelligence.evidence import EvidencePacket
 from backend.app.db.mappers import memory_from_rows
 from backend.app.db.models import (
     AnomalyRevisionRow,
@@ -246,9 +248,20 @@ class IntelligenceRepository:
         tenant_id: str,
         run: AnalysisRun,
         recorded_at: datetime,
+        *,
+        packet: EvidencePacket | None = None,
     ) -> AnalysisRun:
-        self._validate_analysis_links(tenant_id, run)
-        candidate = analysis_run_to_row(tenant_id, run, recorded_at)
+        if packet is None:
+            anomaly = self._anomaly_revision(
+                tenant_id,
+                run.anomaly_id,
+                run.packet_revision,
+            )
+            if anomaly is None:
+                raise ValueError("analysis evidence packet is required")
+            packet = anomaly_from_row(anomaly).packet
+        self._validate_analysis_links(run, packet)
+        candidate = analysis_run_to_row(tenant_id, run, packet, recorded_at)
         existing = self._session.get(
             MultiAgentAnalysisRow,
             (tenant_id, run.analysis_id),
@@ -257,28 +270,14 @@ class IntelligenceRepository:
             if not _same_row(existing, candidate):
                 raise ConcurrentUpdateError()
             return analysis_run_from_row(existing)
-        revision_existing = self._session.scalar(
-            select(MultiAgentAnalysisRow).where(
-                MultiAgentAnalysisRow.tenant_id == tenant_id,
-                MultiAgentAnalysisRow.anomaly_id == run.anomaly_id,
-                MultiAgentAnalysisRow.packet_revision == run.packet_revision,
-            )
-        )
-        if revision_existing is not None:
-            if not _same_row(revision_existing, candidate):
-                raise ConcurrentUpdateError()
-            return analysis_run_from_row(revision_existing)
         try:
             with self._session.begin_nested():
                 self._session.add(candidate)
                 self._session.flush()
         except IntegrityError as exc:
-            winner = self._session.scalar(
-                select(MultiAgentAnalysisRow).where(
-                    MultiAgentAnalysisRow.tenant_id == tenant_id,
-                    MultiAgentAnalysisRow.anomaly_id == run.anomaly_id,
-                    MultiAgentAnalysisRow.packet_revision == run.packet_revision,
-                )
+            winner = self._session.get(
+                MultiAgentAnalysisRow,
+                (tenant_id, run.analysis_id),
             )
             if winner is None or not _same_row(winner, candidate):
                 raise ConcurrentUpdateError() from exc
@@ -297,7 +296,33 @@ class IntelligenceRepository:
         if row is None:
             return None
         run = analysis_run_from_row(row)
-        self._validate_analysis_links(tenant_id, run)
+        self._validate_analysis_links(run, analysis_packet_from_row(row))
+        return run
+
+    def analysis_for_revision(
+        self,
+        tenant_id: str,
+        anomaly_id: str,
+        packet_revision: int,
+    ) -> AnalysisRun | None:
+        row = self._session.scalar(
+            select(MultiAgentAnalysisRow)
+            .where(
+                MultiAgentAnalysisRow.tenant_id == tenant_id,
+                MultiAgentAnalysisRow.anomaly_id == anomaly_id,
+                MultiAgentAnalysisRow.packet_revision == packet_revision,
+            )
+            .order_by(
+                MultiAgentAnalysisRow.recorded_at.desc(),
+                MultiAgentAnalysisRow.attempt_number.desc(),
+                MultiAgentAnalysisRow.analysis_id.desc(),
+            )
+            .limit(1)
+        )
+        if row is None:
+            return None
+        run = analysis_run_from_row(row)
+        self._validate_analysis_links(run, analysis_packet_from_row(row))
         return run
 
     def latest_analysis_run(
@@ -311,14 +336,78 @@ class IntelligenceRepository:
                 MultiAgentAnalysisRow.tenant_id == tenant_id,
                 MultiAgentAnalysisRow.anomaly_id == anomaly_id,
             )
-            .order_by(MultiAgentAnalysisRow.packet_revision.desc())
+            .order_by(
+                MultiAgentAnalysisRow.packet_revision.desc(),
+                MultiAgentAnalysisRow.recorded_at.desc(),
+                MultiAgentAnalysisRow.attempt_number.desc(),
+                MultiAgentAnalysisRow.analysis_id.desc(),
+            )
             .limit(1)
         )
         if row is None:
             return None
         run = analysis_run_from_row(row)
-        self._validate_analysis_links(tenant_id, run)
+        self._validate_analysis_links(run, analysis_packet_from_row(row))
         return run
+
+    def analysis_checkpoints_for_anomaly(
+        self,
+        tenant_id: str,
+        anomaly_id: str,
+    ) -> tuple[AnalysisRun, ...]:
+        """Return the latest durable attempt for every distinct model input."""
+
+        rows = self._session.scalars(
+            select(MultiAgentAnalysisRow)
+            .where(
+                MultiAgentAnalysisRow.tenant_id == tenant_id,
+                MultiAgentAnalysisRow.anomaly_id == anomaly_id,
+            )
+            .order_by(
+                MultiAgentAnalysisRow.packet_revision.desc(),
+                MultiAgentAnalysisRow.attempt_number.desc(),
+                MultiAgentAnalysisRow.recorded_at.desc(),
+                MultiAgentAnalysisRow.analysis_id.desc(),
+            )
+        ).all()
+        checkpoints: list[AnalysisRun] = []
+        seen_fingerprints: set[str] = set()
+        for row in rows:
+            run = analysis_run_from_row(row)
+            if run.input_fingerprint in seen_fingerprints:
+                continue
+            self._validate_analysis_links(run, analysis_packet_from_row(row))
+            seen_fingerprints.add(run.input_fingerprint)
+            checkpoints.append(run)
+        return tuple(checkpoints)
+
+    def list_analysis_runs_for_resident(
+        self,
+        tenant_id: str,
+        resident_id: str,
+        *,
+        limit: int = 100,
+    ) -> tuple[tuple[EvidencePacket, AnalysisRun], ...]:
+        rows = self._session.scalars(
+            select(MultiAgentAnalysisRow)
+            .where(
+                MultiAgentAnalysisRow.tenant_id == tenant_id,
+                MultiAgentAnalysisRow.resident_id == resident_id,
+            )
+            .order_by(
+                MultiAgentAnalysisRow.recorded_at.desc(),
+                MultiAgentAnalysisRow.packet_revision.desc(),
+                MultiAgentAnalysisRow.attempt_number.desc(),
+            )
+            .limit(limit)
+        ).all()
+        records = []
+        for row in rows:
+            packet = analysis_packet_from_row(row)
+            run = analysis_run_from_row(row)
+            self._validate_analysis_links(run, packet)
+            records.append((packet, run))
+        return tuple(records)
 
     def save_disposition(
         self,
@@ -449,17 +538,14 @@ class IntelligenceRepository:
 
     def _validate_analysis_links(
         self,
-        tenant_id: str,
         run: AnalysisRun,
+        packet: EvidencePacket,
     ) -> None:
-        row = self._anomaly_revision(
-            tenant_id,
-            run.anomaly_id,
-            run.packet_revision,
-        )
-        if row is None:
-            raise ValueError("analysis anomaly revision does not exist")
-        packet = anomaly_from_row(row).packet
+        if (run.anomaly_id, run.packet_revision) != (
+            packet.anomaly_id,
+            packet.packet_revision,
+        ):
+            raise ValueError("analysis identity does not match evidence packet")
         allowed_refs = set(packet.evidence_refs)
         used_refs: set[str] = set()
         if run.routing_plan is not None:
@@ -469,6 +555,8 @@ class IntelligenceRepository:
             ):
                 raise ValueError("analysis routing identity does not match run")
             used_refs.update(run.routing_plan.evidence_refs)
+            for possibility in run.routing_plan.possibilities:
+                used_refs.update(possibility.evidence_refs)
         for assessment in run.specialist_assessments:
             if (
                 assessment.anomaly_id != run.anomaly_id
@@ -476,8 +564,12 @@ class IntelligenceRepository:
             ):
                 raise ValueError("analysis specialist identity does not match run")
             used_refs.update(assessment.evidence_refs)
+            for possibility in assessment.possibilities:
+                used_refs.update(possibility.evidence_refs)
         if run.final_analysis is not None:
             used_refs.update(run.final_analysis.evidence_refs)
+            for possibility in run.final_analysis.possibilities:
+                used_refs.update(possibility.evidence_refs)
         if not used_refs <= allowed_refs:
             raise ValueError("analysis references evidence outside its anomaly packet")
 
@@ -557,19 +649,36 @@ class IntelligenceRepository:
         if record.evidence_kind.value == "provisional":
             self._validate_provisional_disposition(tenant_id, record)
             return
-        anomaly = self._anomaly_revision(
-            tenant_id,
-            record.anomaly_id,
-            record.packet_revision,
-        )
-        if anomaly is None:
-            raise ValueError("disposition anomaly revision does not exist")
-        if (anomaly.resident_id, anomaly.room_id) != (
+        if record.interpretation_id is not None and record.analysis_id is not None:
+            raise ValueError("disposition cannot link legacy and multi-agent analysis")
+        packet: EvidencePacket
+        if record.analysis_id is not None:
+            analysis_row = self._session.get(
+                MultiAgentAnalysisRow,
+                (tenant_id, record.analysis_id),
+            )
+            if analysis_row is None or (
+                analysis_row.anomaly_id,
+                analysis_row.packet_revision,
+            ) != (record.anomaly_id, record.packet_revision):
+                raise ValueError("disposition analysis does not match evidence revision")
+            packet = analysis_packet_from_row(analysis_row)
+            if _utc(record.decided_at) < _utc(analysis_row.recorded_at):
+                raise ValueError("disposition cannot precede analysis")
+        else:
+            anomaly = self._anomaly_revision(
+                tenant_id,
+                record.anomaly_id,
+                record.packet_revision,
+            )
+            if anomaly is None:
+                raise ValueError("disposition anomaly revision does not exist")
+            packet = anomaly_from_row(anomaly).packet
+        if (packet.resident_id, packet.room_id) != (
             record.resident_id,
             record.room_id,
         ):
             raise ValueError("disposition lane does not match anomaly revision")
-        packet = anomaly_from_row(anomaly).packet
         if _utc(record.decided_at) < _utc(packet.current_time):
             raise ValueError("disposition cannot precede packet evidence")
         if record.interpretation_id is not None:
@@ -606,6 +715,7 @@ class IntelligenceRepository:
             or not record.decision.provisional_urgent
             or record.event_id is None
             or record.interpretation_id is not None
+            or record.analysis_id is not None
         ):
             raise ValueError(
                 "provisional disposition requires urgent caregiver event without interpretation"

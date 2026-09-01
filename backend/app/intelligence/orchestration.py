@@ -34,7 +34,11 @@ from backend.app.intelligence.degradation import (
     DegradationAssessment,
     assess_monitoring_degradation,
 )
-from backend.app.intelligence.evidence import EvidencePacket, build_evidence_packet
+from backend.app.intelligence.evidence import (
+    EvidencePacket,
+    build_evidence_packet,
+    build_fall_evidence_packet,
+)
 from backend.app.intelligence.fall_detection import (
     FallLikeAssessment,
     SyntheticFallPolicy,
@@ -141,6 +145,7 @@ class MonitoringIntelligenceEngine:
             _ProcessedFrame,
         ] = {}
         self._urgent_revisions: dict[tuple[LaneKey, str], int] = {}
+        self._fall_packet_revisions: dict[tuple[LaneKey, str], int] = {}
         self._event_ids_by_anomaly: dict[tuple[LaneKey, str], str] = {}
 
     def process_frame(
@@ -237,7 +242,14 @@ class MonitoringIntelligenceEngine:
             self._fall_assessments[lane] = fall_assessment
 
         anomaly: AnomalyUpdate | None = None
-        if not degradation.degraded and not resident_away and not possible_multiple_people:
+        if (
+            not degradation.degraded
+            and not resident_away
+            and (
+                not possible_multiple_people
+                or self.analysis_orchestrator is not None
+            )
+        ):
             anomaly = advance_episode(
                 self._episodes.get(lane),
                 frame=frame,
@@ -254,6 +266,38 @@ class MonitoringIntelligenceEngine:
                 self._episodes[lane] = anomaly.episode
 
         evidence = self._packet(anomaly)
+        if evidence is not None and possible_multiple_people:
+            evidence = replace(
+                evidence,
+                evidence_limited=True,
+                limitations=tuple(
+                    dict.fromkeys(
+                        (*evidence.limitations, "resident_attribution_ambiguous")
+                    )
+                ),
+                unknowns=tuple(
+                    dict.fromkeys(
+                        (*evidence.unknowns, "which person produced the measured change")
+                    )
+                ),
+            )
+        if (
+            evidence is None
+            and fall_assessment.urgent_triggered
+            and self.analysis_orchestrator is not None
+        ):
+            fall_key = (lane, anomaly_id)
+            fall_revision = self._fall_packet_revisions.get(fall_key, 0) + 1
+            evidence = build_fall_evidence_packet(
+                fall_assessment,
+                frame=frame,
+                baseline=baseline,
+                anomaly_id=anomaly_id,
+                packet_revision=fall_revision,
+                config_version=config_version,
+                unknowns=unknowns,
+            )
+            self._fall_packet_revisions[fall_key] = fall_revision
         interpretation = None
         interpretation_error: tuple[str, ...] = ()
         analysis = None
@@ -271,6 +315,7 @@ class MonitoringIntelligenceEngine:
                             evidence,
                             resident_memory,
                             relevant_context_entry_ids,
+                            tenant_id=tenant_id,
                         )
                     except Exception as exc:
                         analysis_error = (
@@ -283,7 +328,20 @@ class MonitoringIntelligenceEngine:
                     relevant_context_entry_ids,
                 )
 
-        if self.analysis_orchestrator is not None:
+        if self.analysis_orchestrator is not None and (
+            degradation.degraded
+            or resident_away
+        ):
+            decision = self.disposition_policy.decide(
+                packet=None,
+                interpretation=None,
+                interpretation_failed=False,
+                fall_assessment=fall_assessment,
+                degradation=degradation,
+                resident_away=resident_away,
+                possible_multiple_people=possible_multiple_people,
+            )
+        elif self.analysis_orchestrator is not None:
             decision = self.analysis_policy.decide(
                 packet=evidence,
                 analysis_run=analysis,

@@ -7,6 +7,8 @@ from backend.app.contracts.events import (
     EventListResponse,
     EventPriorityHistoryResponse,
     EventResponse,
+    ResidentAnalysisListResponse,
+    ResidentAnalysisResponse,
 )
 from backend.app.ai.analysis_contracts import AnalysisRun
 from backend.app.db.intelligence_repositories import IntelligenceRepository
@@ -138,10 +140,15 @@ class ProductQueryService:
 
     def _event_response(self, context: AccessContext, stored: StoredEvent) -> EventResponse:
         anomaly_id = stored.event.source_anomaly_id
+        revision = stored.event.latest_evidence_revision
         analysis = (
             None
-            if self._intelligence is None or anomaly_id is None
-            else self._intelligence.latest_analysis_run(context.tenant_id, anomaly_id)
+            if self._intelligence is None or anomaly_id is None or revision is None
+            else self._intelligence.analysis_for_revision(
+                context.tenant_id,
+                anomaly_id,
+                revision,
+            )
         )
         return event_response(stored, analysis)
 
@@ -173,6 +180,30 @@ class ProductQueryService:
             items=[
                 self._event_response(context, stored)
                 for stored in self._events.list_for_resident(
+                    context.tenant_id,
+                    resident_id,
+                )
+            ]
+        )
+
+    def list_resident_analyses(
+        self,
+        context: AccessContext,
+        resident_id: str,
+    ) -> ResidentAnalysisListResponse:
+        self.get_resident(context, resident_id)
+        if self._intelligence is None:
+            return ResidentAnalysisListResponse(items=[])
+        return ResidentAnalysisListResponse(
+            items=[
+                ResidentAnalysisResponse(
+                    anomaly_id=packet.anomaly_id,
+                    resident_id=packet.resident_id,
+                    room_id=packet.room_id,
+                    observed_at=packet.current_time,
+                    analysis=analysis_response(run),
+                )
+                for packet, run in self._intelligence.list_analysis_runs_for_resident(
                     context.tenant_id,
                     resident_id,
                 )

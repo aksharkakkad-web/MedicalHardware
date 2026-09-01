@@ -45,6 +45,7 @@ class DispositionDecision:
     fallback_used: bool
     room_level_only: bool
     interpretation_id: str | None = None
+    analysis_id: str | None = None
     provisional_urgent: bool = False
     attention_suppressed: bool = False
     schema_version: str = "1.0"
@@ -344,6 +345,7 @@ class MultiAgentDispositionPolicy:
             return self._pending(
                 confidence,
                 tuple(dict.fromkeys((analysis_run.state.value, *analysis_run.errors))),
+                analysis_id=analysis_run.analysis_id,
             )
 
         final = analysis_run.final_analysis
@@ -351,6 +353,7 @@ class MultiAgentDispositionPolicy:
             return self._pending(
                 "needs_staff_review",
                 ("analyzed_result_missing_final_analysis",),
+                analysis_id=analysis_run.analysis_id,
             )
 
         disposition = PolicyDisposition(final.recommended_disposition.value)
@@ -372,14 +375,17 @@ class MultiAgentDispositionPolicy:
             reasons=("trusted_final_analysis",),
             room_level_only=(
                 final.attribution_scope is not AttributionScope.RESIDENT
+                or "resident_attribution_ambiguous" in packet.limitations
             ),
-            interpretation_id=final.analysis_id,
+            analysis_id=final.analysis_id,
         )
 
     def _pending(
         self,
         confidence: str,
         reasons: tuple[str, ...],
+        *,
+        analysis_id: str | None = None,
     ) -> DispositionDecision:
         return self._decision(
             PolicyDisposition.OBSERVE,
@@ -392,6 +398,7 @@ class MultiAgentDispositionPolicy:
             ),
             reasons=reasons,
             fallback_used=True,
+            analysis_id=analysis_id,
         )
 
     def _decision(
@@ -406,6 +413,7 @@ class MultiAgentDispositionPolicy:
         fallback_used: bool = False,
         room_level_only: bool = False,
         interpretation_id: str | None = None,
+        analysis_id: str | None = None,
     ) -> DispositionDecision:
         return DispositionDecision(
             disposition=disposition,
@@ -418,6 +426,7 @@ class MultiAgentDispositionPolicy:
             fallback_used=fallback_used,
             room_level_only=room_level_only,
             interpretation_id=interpretation_id,
+            analysis_id=analysis_id,
         )
 
 

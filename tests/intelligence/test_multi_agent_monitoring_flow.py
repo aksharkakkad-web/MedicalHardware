@@ -16,7 +16,13 @@ from backend.app.intelligence.policy import (
     PolicyDisposition,
 )
 from tests.ai.test_analysis_context import EVIDENCE_REF, _packet
-from tests.intelligence.test_policy_orchestration import _activate, _process
+from tests.intelligence.test_policy_orchestration import (
+    _activate,
+    _baseline,
+    _fall_sequence,
+    _movement_frame,
+    _process,
+)
 
 
 def _run(
@@ -25,13 +31,15 @@ def _run(
     *,
     state: AnalysisState | str = AnalysisState.ANALYZED,
     attribution_scope: AttributionScope | str = AttributionScope.RESIDENT,
+    packet=None,
 ) -> AnalysisRun:
-    packet = _packet()
+    packet = packet or _packet()
+    evidence_ref = packet.evidence_refs[0]
     possibility = Possibility(
         possibility_id="possibility_routine",
         label="routine bathroom movement",
         confidence=ConfidenceBand.MEDIUM,
-        supporting_evidence_refs=(EVIDENCE_REF,),
+        supporting_evidence_refs=(evidence_ref,),
         contradicting_evidence_refs=(),
         missing_information=("direct staff confirmation",),
         rationale="The measured movement is compatible with ordinary room activity.",
@@ -50,7 +58,7 @@ def _run(
             next_step="Observe and review if the pattern continues.",
             missing_information=("direct staff confirmation",),
             specialist_disagreements=(),
-            evidence_refs=(EVIDENCE_REF,),
+            evidence_refs=(evidence_ref,),
             considered_possibility_ids=(possibility.possibility_id,),
             coverage_complete=True,
             model_id="scripted-final",
@@ -68,6 +76,8 @@ def _run(
         final_analysis=final,
         errors=("final_unavailable",) if final is None else (),
         repair_count=0,
+        input_fingerprint="test-input-fingerprint",
+        attempt_number=1,
     )
 
 
@@ -85,19 +95,21 @@ def test_trusted_observe_remains_observation_even_for_strong_anomaly() -> None:
 
 
 def test_ai_unavailability_is_visible_pending_not_an_objective_severity_guess() -> None:
+    run = _run(
+        RecommendedDisposition.OBSERVE,
+        Severity.WATCH,
+        state=AnalysisState.ANALYSIS_PENDING,
+    )
     decision = MultiAgentDispositionPolicy().decide(
         packet=_packet(),
-        analysis_run=_run(
-            RecommendedDisposition.OBSERVE,
-            Severity.WATCH,
-            state=AnalysisState.ANALYSIS_PENDING,
-        ),
+        analysis_run=run,
     )
 
     assert decision.disposition is PolicyDisposition.OBSERVE
     assert decision.priority is None
     assert decision.confidence == "analysis_pending"
     assert decision.fallback_used
+    assert decision.analysis_id == run.analysis_id
 
 
 def test_final_high_action_creates_high_priority_mapping() -> None:
@@ -142,20 +154,21 @@ class _ScriptedOrchestrator:
         self.result = result
         self.calls = 0
 
-    def analyze(self, packet, resident_memory, relevant_context_entry_ids=()):
+    def analyze(
+        self,
+        packet,
+        resident_memory,
+        relevant_context_entry_ids=(),
+        *,
+        tenant_id,
+    ):
         self.calls += 1
-        final = self.result.final_analysis
-        if final is not None:
-            final = replace(
-                final,
-                anomaly_id=packet.anomaly_id,
-                packet_revision=packet.packet_revision,
-            )
-        return replace(
-            self.result,
-            anomaly_id=packet.anomaly_id,
-            packet_revision=packet.packet_revision,
-            final_analysis=final,
+        return _run(
+            self.result.final_analysis.recommended_disposition,
+            self.result.final_analysis.severity,
+            state=self.result.state,
+            attribution_scope=self.result.final_analysis.attribution_scope,
+            packet=packet,
         )
 
 
@@ -193,3 +206,51 @@ def test_monitoring_engine_keeps_trusted_observe_out_of_caregiver_queue() -> Non
     assert result.analysis is not None
     assert result.decision.disposition is PolicyDisposition.OBSERVE
     assert result.event is None
+
+
+def test_confirmed_fall_like_pattern_is_analyzed_before_critical_event() -> None:
+    from backend.app.intelligence.orchestration import MonitoringIntelligenceEngine
+
+    orchestrator = _ScriptedOrchestrator(
+        _run(RecommendedDisposition.CAREGIVER_EVENT, Severity.CRITICAL)
+    )
+    engine = MonitoringIntelligenceEngine(analysis_orchestrator=orchestrator)
+    result = None
+
+    for frame in _fall_sequence():
+        result = _process(engine, frame, baseline=_baseline(feature_name="unused"))
+
+    assert result is not None
+    assert result.fall_assessment.urgent_triggered
+    assert result.evidence is not None
+    assert result.analysis is not None
+    assert orchestrator.calls == 1
+    assert result.event is not None
+    assert result.event.priority is EventPriority.CRITICAL
+
+
+def test_multi_person_period_stays_room_level_operational_awareness() -> None:
+    from backend.app.intelligence.orchestration import MonitoringIntelligenceEngine
+
+    orchestrator = _ScriptedOrchestrator(
+        _run(
+            RecommendedDisposition.AWARENESS,
+            Severity.HIGH,
+            attribution_scope=AttributionScope.ROOM,
+        )
+    )
+    engine = MonitoringIntelligenceEngine(analysis_orchestrator=orchestrator)
+
+    result = None
+    for second in range(3):
+        result = _process(
+            engine,
+            _movement_frame(second, 0.5),
+            possible_multiple_people=True,
+        )
+
+    assert result is not None
+    assert result.decision.disposition is PolicyDisposition.AWARENESS
+    assert result.decision.room_level_only
+    assert result.event is None
+    assert orchestrator.calls == 1

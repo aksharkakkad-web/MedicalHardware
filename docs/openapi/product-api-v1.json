@@ -1813,6 +1813,69 @@
         "title": "RecommendedDisposition",
         "type": "string"
       },
+      "ResidentAnalysisListResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ResidentAnalysisResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ResidentAnalysisListResponse",
+        "type": "object"
+      },
+      "ResidentAnalysisResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "analysis": {
+            "$ref": "#/components/schemas/EventAnalysisResponse"
+          },
+          "anomaly_id": {
+            "title": "Anomaly Id",
+            "type": "string"
+          },
+          "observed_at": {
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "resident_id": {
+            "title": "Resident Id",
+            "type": "string"
+          },
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "anomaly_id",
+          "resident_id",
+          "room_id",
+          "observed_at",
+          "analysis"
+        ],
+        "title": "ResidentAnalysisResponse",
+        "type": "object"
+      },
       "ResidentListResponse": {
         "additionalProperties": false,
         "properties": {
@@ -3436,6 +3499,96 @@
           }
         },
         "summary": "Get Resident",
+        "tags": [
+          "residents"
+        ]
+      }
+    },
+    "/v1/residents/{resident_id}/analyses": {
+      "get": {
+        "operationId": "list_resident_analyses_v1_residents__resident_id__analyses_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "resident_id",
+            "required": true,
+            "schema": {
+              "title": "Resident Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Tenant-Id",
+            "required": true,
+            "schema": {
+              "title": "X-Tenant-Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Actor-Id",
+            "required": true,
+            "schema": {
+              "title": "X-Actor-Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentAnalysisListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "405": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Method Not Allowed"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "List Resident Analyses",
         "tags": [
           "residents"
         ]

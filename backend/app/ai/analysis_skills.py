@@ -6,7 +6,7 @@ from pathlib import Path
 from backend.app.ai.analysis_contracts import AnalysisStage
 
 
-_ROOT = Path("prompts/monitoring")
+_ROOT = Path(__file__).resolve().parents[3] / "prompts" / "monitoring"
 _DECLARATIONS = {
     "recall_router": (AnalysisStage.RECALL, "recall_router.md"),
     "signal_integrity": (AnalysisStage.SPECIALIST, "specialists/signal_integrity.md"),

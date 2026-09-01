@@ -1,5 +1,5 @@
 from dataclasses import replace
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from sqlalchemy.orm import Session
@@ -73,6 +73,8 @@ def _run(packet, *, evidence_ref: str | None = None) -> AnalysisRun:
         final_analysis=final,
         errors=(),
         repair_count=0,
+        input_fingerprint="test-input-fingerprint",
+        attempt_number=1,
     )
 
 
@@ -80,7 +82,7 @@ def test_analysis_mapper_round_trips_canonical_domain_record() -> None:
     _, packet = _anomaly_revision(_baseline())
     run = _run(packet)
 
-    row = analysis_run_to_row("tenant_demo", run, AT)
+    row = analysis_run_to_row("tenant_demo", run, packet, AT)
 
     assert analysis_run_from_row(row) == run
     assert "prompt" not in row.payload_json.casefold()
@@ -107,6 +109,9 @@ def test_repository_is_idempotent_and_tenant_scoped() -> None:
             assert repository.find_analysis_run("tenant_demo", run.analysis_id) == run
             assert repository.find_analysis_run("tenant_other", run.analysis_id) is None
             assert repository.latest_analysis_run("tenant_demo", packet.anomaly_id) == run
+            assert repository.analysis_checkpoints_for_anomaly(
+                "tenant_demo", packet.anomaly_id
+            ) == (run,)
     finally:
         engine.dispose()
 
@@ -133,7 +138,7 @@ def test_repository_rejects_fabricated_evidence_reference() -> None:
         engine.dispose()
 
 
-def test_same_anomaly_revision_cannot_be_overwritten_by_different_analysis() -> None:
+def test_same_anomaly_revision_keeps_append_only_attempts_and_returns_latest() -> None:
     engine = create_engine_for_url("sqlite+pysqlite:///:memory:")
     Base.metadata.create_all(engine)
     try:
@@ -147,18 +152,27 @@ def test_same_anomaly_revision_cannot_be_overwritten_by_different_analysis() -> 
             run = _run(packet)
             repository.save_analysis_run("tenant_demo", run, AT)
 
-            with pytest.raises(ConcurrentUpdateError):
-                repository.save_analysis_run(
-                    "tenant_demo",
-                    replace(
-                        run,
-                        analysis_id="analysis_conflict",
-                        final_analysis=replace(
-                            run.final_analysis,
-                            analysis_id="analysis_conflict",
-                        ),
-                    ),
-                    AT,
-                )
+            second = replace(
+                run,
+                analysis_id="analysis_attempt_2",
+                attempt_number=2,
+                final_analysis=replace(
+                    run.final_analysis,
+                    analysis_id="analysis_attempt_2",
+                ),
+            )
+            repository.save_analysis_run(
+                "tenant_demo",
+                second,
+                AT + timedelta(seconds=1),
+            )
+
+            assert repository.find_analysis_run("tenant_demo", run.analysis_id) == run
+            assert repository.analysis_for_revision(
+                "tenant_demo", packet.anomaly_id, packet.packet_revision
+            ) == second
+            assert repository.analysis_checkpoints_for_anomaly(
+                "tenant_demo", packet.anomaly_id
+            ) == (second,)
     finally:
         engine.dispose()

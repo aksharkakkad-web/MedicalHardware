@@ -368,6 +368,11 @@ class AnalysisRun:
     final_analysis: FinalAnalysis | None
     errors: tuple[str, ...]
     repair_count: int
+    input_fingerprint: str
+    attempt_number: int
+    stage_responses: tuple[StageResponse, ...] = ()
+    resident_memory_version: int = 0
+    relevant_context_entry_ids: tuple[str, ...] = ()
     schema_version: str = ANALYSIS_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
@@ -385,6 +390,22 @@ class AnalysisRun:
         object.__setattr__(self, "unavailable_specialists", _text_tuple(self.unavailable_specialists, "unavailable_specialists"))
         object.__setattr__(self, "errors", _text_tuple(self.errors, "errors"))
         object.__setattr__(self, "repair_count", _nonnegative_int(self.repair_count, "repair_count"))
+        object.__setattr__(self, "input_fingerprint", _text(self.input_fingerprint, "input_fingerprint"))
+        object.__setattr__(self, "attempt_number", _positive_int(self.attempt_number, "attempt_number"))
+        if not isinstance(self.stage_responses, tuple) or any(
+            not isinstance(item, StageResponse) for item in self.stage_responses
+        ):
+            raise ValueError("stage_responses must contain StageResponse records")
+        object.__setattr__(
+            self,
+            "resident_memory_version",
+            _nonnegative_int(self.resident_memory_version, "resident_memory_version"),
+        )
+        object.__setattr__(
+            self,
+            "relevant_context_entry_ids",
+            _text_tuple(self.relevant_context_entry_ids, "relevant_context_entry_ids"),
+        )
         object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.repair_count > 1:
             raise ValueError("repair_count cannot exceed one")

@@ -33,12 +33,13 @@ boundaries, hard safety grading, resumable redacted artifacts, and model
 comparison/release gates. Campaign evidence is recorded separately from the
 original 24-case Phase 5 proof. See `docs/MONITORING_INTELLIGENCE_LAB.md`.
 
-The next approved backend change is now in implementation: deterministic code
-will retain anomaly detection and evidence measurement, while a recall router,
-selected precision specialists, and one final integrator/reviewer will own
-explanation, operational severity, and recommended action. Existing one-shot
-and deterministic-disposition results are prior-phase evidence, not proof of
-the new AI architecture.
+The approved multi-agent backend change is now implemented and verified on toy
+evidence. Deterministic code retains anomaly detection and evidence
+measurement; a recall router, selected precision specialists, and one final
+integrator/reviewer own explanation, operational severity, and recommended
+action. Results and retries are saved against exact evidence revisions and are
+available to the dashboard even when no caregiver event is created. See
+`docs/MULTI_AGENT_BACKEND_REVIEW.md`.
 
 The tested journey is:
 
@@ -122,8 +123,10 @@ backend gate. The replay explicitly selects eligible resident context for a
 nonurgent AI request and proves anomaly, interpretation, disposition, bridge,
 and caregiver-event lineage across a repository restart. Akshar can support
 Rishit's frontend convergence and prepare the separate Phase 6 simulated
-edge-telemetry ingestion path. Phase 6, a real LLM provider, and real device
-data are not implemented by this milestone.
+edge-telemetry ingestion path. Phase 6 and real device data are not implemented
+by this milestone. Gemini 3.5 Flash has passed a small live staged
+compatibility proof; broader live-model, privacy, representative-data, and
+production Terra/Sol validation remain open.
 
 ## What the hardware track builds in parallel
 
@@ -169,4 +172,5 @@ Real hardware later replaces the simulator as the telemetry producer. It should 
 - Frontend API map: `docs/PHASE_2_FRONTEND_API_HANDOFF.md`
 - Phase 5 backend intelligence evidence: `docs/PHASE_5_BACKEND_REVIEW.md`
 - Monitoring intelligence evaluation workflow: `docs/MONITORING_INTELLIGENCE_LAB.md`
+- Staged AI backend review: `docs/MULTI_AGENT_BACKEND_REVIEW.md`
 - Generated Product API: `docs/openapi/product-api-v1.json`

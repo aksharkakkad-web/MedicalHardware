@@ -1,4 +1,6 @@
 import json
+from concurrent.futures import ThreadPoolExecutor
+import time
 
 import pytest
 
@@ -57,6 +59,20 @@ class RecordingTransport:
         if isinstance(self.response, Exception):
             raise self.response
         return self.response
+
+
+class SequenceTransport:
+    def __init__(self, responses) -> None:
+        self.responses = iter(responses)
+        self.started_at = []
+        self.clock = None
+
+    def generate(self, **kwargs):
+        self.started_at.append(self.clock())
+        response = next(self.responses)
+        if isinstance(response, Exception):
+            raise response
+        return response
 
 
 @pytest.mark.parametrize(
@@ -132,3 +148,61 @@ def test_structured_client_requires_pinned_supported_model_and_bounded_timeout()
         GeminiStructuredAnalysisClient(api_key="test", model="gemini-flash-latest")
     with pytest.raises(ValueError, match="180"):
         GeminiStructuredAnalysisClient(api_key="test", timeout_seconds=181)
+
+
+def test_parallel_stage_calls_share_one_thread_safe_rate_limiter() -> None:
+    transport = RecordingTransport(_envelope({"result": "ok"}))
+    original_generate = transport.generate
+    started = []
+
+    def timestamped_generate(**kwargs):
+        started.append(time.monotonic())
+        return original_generate(**kwargs)
+
+    transport.generate = timestamped_generate
+    client = GeminiStructuredAnalysisClient(
+        api_key="test-secret",
+        transport=transport,
+        minimum_interval_seconds=0.03,
+    )
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        tuple(
+            executor.map(
+                client.analyze,
+                (_request(AnalysisStage.SPECIALIST), _request(AnalysisStage.FINAL)),
+            )
+        )
+
+    assert len(started) == 2
+    assert abs(started[1] - started[0]) >= 0.025
+
+
+def test_retry_attempts_use_the_same_rate_limiter_as_first_attempts() -> None:
+    now = [0.0]
+
+    def monotonic() -> float:
+        return now[0]
+
+    def sleep(seconds: float) -> None:
+        now[0] += seconds
+
+    transport = SequenceTransport(
+        (
+            GeminiTransportError("retry", status_code=503, retryable=True),
+            _envelope({"result": "ok"}),
+        )
+    )
+    transport.clock = monotonic
+    client = GeminiStructuredAnalysisClient(
+        api_key="test-secret",
+        transport=transport,
+        minimum_interval_seconds=0.4,
+        max_attempts=2,
+        monotonic=monotonic,
+        sleep=sleep,
+    )
+
+    response = client.analyze(_request(AnalysisStage.RECALL))
+
+    assert response.status is StageStatus.COMPLETE
+    assert transport.started_at == pytest.approx([0.0, 0.4])

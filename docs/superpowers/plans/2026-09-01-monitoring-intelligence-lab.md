@@ -111,7 +111,7 @@ class ScenarioExecution:
 - [ ] Run focused tests and all AI tests.
 - [ ] Commit: `feat: add bounded feedback and resident memory skills`
 
-## Task 4: Add a strict Gemini 3.7 Flash provider
+## Task 4: Add a strict Gemini 3.5 Flash provider
 
 **Files:**
 

@@ -1,16 +1,18 @@
 """Command-line entry point for monitoring evaluation campaigns."""
 
 import argparse
+from datetime import datetime, timezone
 from pathlib import Path
 import sys
 
-from backend.app.ai.gemini import GeminiLLMClient
+from backend.app.ai.gemini import GeminiLLMClient, GeminiStructuredAnalysisClient
 from evals.monitoring.campaign import CampaignConfig, run_campaign
+from evals.monitoring.multi_agent_campaign import run_multi_agent_campaign
 
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="monitoring-intelligence-lab")
-    parser.add_argument("mode", choices=("smoke", "pr", "mass", "gemini", "compare", "release"))
+    parser.add_argument("mode", choices=("smoke", "pr", "mass", "gemini", "compare", "release", "multi-agent-mass", "multi-agent-gemini"))
     parser.add_argument("--cases", type=int)
     parser.add_argument("--passes", type=int, default=1)
     parser.add_argument("--seed", type=int, default=20260901)
@@ -37,6 +39,30 @@ def main(argv: list[str] | None = None) -> int:
     parser = _parser()
     try:
         args = parser.parse_args(argv)
+        if args.mode in {"multi-agent-mass", "multi-agent-gemini"}:
+            case_count = args.cases or (120 if args.mode == "multi-agent-mass" else 1)
+            provider = (
+                GeminiStructuredAnalysisClient(api_key=_local_key())
+                if args.mode == "multi-agent-gemini"
+                else None
+            )
+            run_id = args.run_id or (
+                args.mode.replace("-", "_")
+                + "_"
+                + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+            )
+            multi_result = run_multi_agent_campaign(
+                case_count=case_count,
+                output_root=args.output_root,
+                run_id=run_id,
+                client=provider,
+            )
+            print(
+                f"{run_id}: attempted={multi_result.attempted} "
+                f"completed={multi_result.completed} failed={multi_result.failed}"
+            )
+            print(multi_result.path)
+            return 0 if multi_result.passed else 1
         config = CampaignConfig(
             mode=args.mode,
             case_count=args.cases,

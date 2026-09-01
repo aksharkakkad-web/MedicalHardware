@@ -16,6 +16,7 @@ from backend.app.contracts.events import (
     ClinicEventStatus,
 )
 from backend.app.db.repositories import EventQueuePosition, EventRepository
+from backend.app.db.intelligence_repositories import IntelligenceRepository
 from backend.app.domain.events import EventPriority, EventStatus
 from backend.app.services.errors import InvalidInputError
 from backend.app.services.queries import AccessContext, event_response
@@ -177,8 +178,28 @@ def decode_event_queue_cursor(
 
 
 class ProductEventQueueQueryService:
-    def __init__(self, events: EventRepository) -> None:
+    def __init__(
+        self,
+        events: EventRepository,
+        intelligence: IntelligenceRepository | None = None,
+    ) -> None:
         self._events = events
+        self._intelligence = intelligence
+
+    def _response(self, context: AccessContext, stored):
+        event = stored.event
+        analysis = (
+            None
+            if self._intelligence is None
+            or event.source_anomaly_id is None
+            or event.latest_evidence_revision is None
+            else self._intelligence.analysis_for_revision(
+                context.tenant_id,
+                event.source_anomaly_id,
+                event.latest_evidence_revision,
+            )
+        )
+        return event_response(stored, analysis)
 
     def list_events(
         self,
@@ -205,7 +226,7 @@ class ProductEventQueueQueryService:
             after=after,
         )
         return ClinicEventQueueResponse(
-            items=[event_response(item) for item in page.items],
+            items=[self._response(context, item) for item in page.items],
             total_items=page.total_items,
             next_cursor=(
                 None
