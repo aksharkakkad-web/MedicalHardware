@@ -16,10 +16,11 @@ validated action → saved dashboard history → optional staff feedback/memory
 
 Deterministic software finds and measures unusual patterns. It does not guess what they mean. The first AI pass keeps plausible explanations broad, specialists review the relevant possibilities, and the final pass combines them into one operational severity and action. Invalid or unavailable AI stays visible as pending or staff-review-needed.
 
-One narrow safety fallback remains deterministic: if the fall-like state machine
-has already reached its test-only urgent trigger and AI is unavailable, the
-pending analysis stays visible but cannot suppress critical caregiver work.
-When final AI is valid, its controlled result remains the trusted interpretation.
+One narrow safety path remains deterministic: once the fall-like state machine
+has reached its test-only urgent trigger, critical caregiver work is provisional
+and cannot be suppressed by pending, unavailable, or lower-action AI output.
+The AI result remains the saved interpretation and can explain uncertainty, but
+it does not erase already-qualified urgent work.
 
 The final AI result is bound to the exact resident, room, evidence revision, memory version, and tenant that produced it. Persistent processing requires an explicit current memory snapshot—even when it is intentionally empty—so missing context cannot silently become a different model input. Retries are append-only, so a failed attempt and a later successful attempt both remain reviewable. Fall-like evidence has the same durable path without inventing a normal anomaly record.
 
@@ -34,7 +35,7 @@ Staff-facing summaries and next steps are rendered from controlled, non-diagnost
 
 ## Verification completed
 
-- Full local software suite: 858 tests plus 100 subtests.
+- Full local software suite: 859 tests plus 100 subtests.
 - New staged mass campaign: 120 cases, 120 recall calls, 240 specialist calls, and 120 final reviews.
 - Mass result: zero invented evidence references; 100% expected possibility routing, specialist support, final action, and final severity agreement for the deterministic staged provider.
 - Live Gemini 3.5 Flash proof: one complete recall → two specialists → final-review run, ending in a valid `observe/watch` result with no validation errors and no invented evidence references.

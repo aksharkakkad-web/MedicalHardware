@@ -57,7 +57,9 @@ Agents should stay inside the requesting founder's owned areas unless the task e
   episodes. A recall router, selected precision specialists, and a final AI
   integrator/reviewer own plausible explanations, operational severity, and
   recommended action. Deterministic code validates grounding and owns event
-  lifecycle mechanics; it does not impose a severity floor on trusted AI.
+  lifecycle mechanics. Trusted AI owns disposition for ordinary anomaly
+  episodes; the explicit urgent safety state machine may still create
+  provisional critical caregiver work that AI cannot suppress.
 - If final AI analysis is unavailable or invalid, the anomaly remains visible
   as analysis pending or needing staff review. It is never silently discarded.
 - Low-quality data must be shown as low-confidence/unavailable, not as fake precision.

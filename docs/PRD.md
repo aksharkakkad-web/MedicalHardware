@@ -415,9 +415,12 @@ Calibration should depend on sufficient valid data, not a hard-coded number of c
 ## 12. Anomaly and Event System
 
 Python/numerical processing decides whether something is sufficiently unusual
-to become an anomaly episode and measures the change. It does not decide the
-real-world cause, operational severity, or caregiver response. Those decisions
-come from trusted final AI analysis.
+to become an anomaly episode and measures the change. For ordinary anomalies,
+it does not decide the real-world cause, operational severity, or caregiver
+response; those decisions come from trusted final AI analysis. The narrow
+exception is the explicit urgent safety state machine, which may create
+provisional critical caregiver work that later AI interpretation cannot
+suppress.
 
 ### Event evidence may include
 
@@ -453,7 +456,9 @@ Priority and confidence are separate. Priority may consider objective severity, 
 Every anomaly episode remains durable even when AI is slow, invalid, or
 unavailable. Until trusted final analysis exists, the product shows
 `analysis_pending` or `needs_staff_review` with measured evidence and does not
-silently invent severity, action, or reassuring wording.
+silently invent severity, action, or reassuring wording. If the separate urgent
+safety state machine has already qualified a fall-like pattern, its provisional
+critical caregiver work remains active while analysis is pending.
 
 ---
 

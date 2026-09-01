@@ -353,11 +353,9 @@ class MonitoringIntelligenceEngine:
                         dict.fromkeys((*decision.reasons, *analysis_error))
                     ),
                 )
-            if fall_assessment.urgent_triggered and (
-                analysis is None or analysis.state is not AnalysisState.ANALYZED
-            ):
-                # An unavailable model may delay interpretation, but it must
-                # not erase an already-confirmed deterministic urgent signal.
+            if fall_assessment.urgent_triggered:
+                # AI owns interpretation, but it cannot erase caregiver work
+                # already justified by the explicit urgent safety state machine.
                 urgent_fallback = self.disposition_policy.decide(
                     packet=evidence,
                     interpretation=None,
@@ -374,7 +372,12 @@ class MonitoringIntelligenceEngine:
                         dict.fromkeys(
                             (
                                 *urgent_fallback.reasons,
-                                "analysis_pending_did_not_suppress_urgent_signal",
+                                (
+                                    "analysis_did_not_suppress_urgent_signal"
+                                    if analysis is not None
+                                    and analysis.state is AnalysisState.ANALYZED
+                                    else "analysis_pending_did_not_suppress_urgent_signal"
+                                ),
                                 *analysis_error,
                             )
                         )

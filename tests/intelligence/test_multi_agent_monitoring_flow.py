@@ -229,6 +229,29 @@ def test_confirmed_fall_like_pattern_is_analyzed_before_critical_event() -> None
     assert result.event.priority is EventPriority.CRITICAL
 
 
+def test_completed_observe_analysis_cannot_suppress_urgent_fall_work() -> None:
+    from backend.app.intelligence.orchestration import MonitoringIntelligenceEngine
+
+    orchestrator = _ScriptedOrchestrator(
+        _run(RecommendedDisposition.OBSERVE, Severity.WATCH)
+    )
+    engine = MonitoringIntelligenceEngine(analysis_orchestrator=orchestrator)
+    result = None
+
+    for frame in _fall_sequence():
+        result = _process(engine, frame, baseline=_baseline(feature_name="unused"))
+
+    assert result is not None and result.analysis is not None
+    assert result.analysis.final_analysis is not None
+    assert (
+        result.analysis.final_analysis.recommended_disposition
+        is RecommendedDisposition.OBSERVE
+    )
+    assert result.event is not None
+    assert result.event.priority is EventPriority.CRITICAL
+    assert "analysis_did_not_suppress_urgent_signal" in result.decision.reasons
+
+
 def test_multi_person_period_stays_room_level_operational_awareness() -> None:
     from backend.app.intelligence.orchestration import MonitoringIntelligenceEngine
 

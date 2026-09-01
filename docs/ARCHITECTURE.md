@@ -414,14 +414,20 @@ An anomaly candidate is not automatically a user-facing alert. Numerical
 anomaly episodes use their own `candidate → active → recovering → closed`
 lifecycle, separate from caregiver acknowledgment and resolution.
 
-The final trusted AI analysis decides whether evidence should remain an
-observation, become awareness, or create caregiver work. The event engine
-applies that decision through the durable `MonitoringEvent` lifecycle.
+For ordinary anomaly evidence, the final trusted AI analysis decides whether
+evidence should remain an observation, become awareness, or create caregiver
+work. The explicit urgent safety state machine may create provisional critical
+caregiver work before or despite AI enrichment; AI cannot suppress that
+already-qualified urgent signal. The event engine applies these decisions
+through the durable `MonitoringEvent` lifecycle.
 
 Responsibilities:
 
 - anomaly persistence/hysteresis and evidence-packet revision;
-- apply trusted AI disposition to no action, observe, awareness, or event;
+- apply trusted AI disposition to no action, observe, awareness, or event for
+  ordinary anomaly evidence;
+- preserve provisional critical caregiver work from the explicit urgent safety
+  state machine even if AI is pending or recommends a lower action;
 - event creation/deduplication;
 - apply AI operational severity to product priority;
 - event lifecycle state;
