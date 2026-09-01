@@ -211,31 +211,31 @@ git commit -m "feat: add recall specialist and final analysis skills"
 - Consumes: `EvidencePacket`, `ResidentMemory`, stage contracts, and skill registry.
 - Produces: `build_recall_request`, `build_specialist_request`, `build_final_request`, `validate_routing_plan`, `validate_specialist_assessment`, and `validate_final_analysis`.
 
-- [ ] **Step 1: Write failing bounded-context tests**
+- [x] **Step 1: Write failing bounded-context tests**
 
 Prove that requests contain exact evidence facts and relevant context, exclude unrelated resident entries, never include hidden expected labels, and give each stage only the previous structured results it needs.
 
-- [ ] **Step 2: Write failing grounding tests**
+- [x] **Step 2: Write failing grounding tests**
 
 Prove that nonexistent evidence references, skipped routed possibilities, unknown specialist names, invented measurements, unsupported resident attribution, and missing coverage declarations are rejected. Prove that `observe` remains valid for a strong anomaly.
 
-- [ ] **Step 3: Verify both files fail for missing behavior**
+- [x] **Step 3: Verify both files fail for missing behavior**
 
 ```bash
 pytest tests/ai/test_analysis_context.py tests/ai/test_analysis_validation.py -q
 ```
 
-- [ ] **Step 4: Implement canonical JSON builders and validators**
+- [x] **Step 4: Implement canonical JSON builders and validators**
 
 Fingerprint each request from canonical stage, packet revision, versions, skills, and payload. Validation may reject or request repair but must not alter severity or action.
 
-- [ ] **Step 5: Run focused tests**
+- [x] **Step 5: Run focused tests**
 
 ```bash
 pytest tests/ai/test_analysis_context.py tests/ai/test_analysis_validation.py -q
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/app/ai/analysis_context.py backend/app/ai/analysis_validation.py tests/ai/test_analysis_context.py tests/ai/test_analysis_validation.py

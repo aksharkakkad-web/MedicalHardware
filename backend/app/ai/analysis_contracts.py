@@ -42,6 +42,12 @@ class ConfidenceBand(StrEnum):
     HIGH = "high"
 
 
+class AttributionScope(StrEnum):
+    RESIDENT = "resident"
+    ROOM = "room"
+    UNKNOWN = "unknown"
+
+
 class Severity(StrEnum):
     OBSERVATION = "observation"
     WATCH = "watch"
@@ -240,11 +246,13 @@ class FinalAnalysis:
     possibilities: tuple[Possibility, ...]
     severity: Severity | str
     recommended_disposition: RecommendedDisposition | str
+    attribution_scope: AttributionScope | str
     caregiver_summary: str
     next_step: str
     missing_information: tuple[str, ...]
     specialist_disagreements: tuple[str, ...]
     evidence_refs: tuple[str, ...]
+    considered_possibility_ids: tuple[str, ...]
     coverage_complete: bool
     model_id: str
     model_version: str
@@ -261,6 +269,7 @@ class FinalAnalysis:
         if len(set(ids)) != len(ids):
             raise ValueError("possibility_id values must be unique")
         _normalize_action_severity(self)
+        object.__setattr__(self, "attribution_scope", _enum(self.attribution_scope, AttributionScope, "attribution_scope"))
         object.__setattr__(self, "caregiver_summary", _text(self.caregiver_summary, "caregiver_summary"))
         object.__setattr__(self, "next_step", _text(self.next_step, "next_step"))
         object.__setattr__(self, "missing_information", _text_tuple(self.missing_information, "missing_information"))
@@ -270,6 +279,7 @@ class FinalAnalysis:
         if not set(refs) <= possible_refs:
             raise ValueError("evidence_refs must be used by a retained possibility")
         object.__setattr__(self, "evidence_refs", refs)
+        object.__setattr__(self, "considered_possibility_ids", _text_tuple(self.considered_possibility_ids, "considered_possibility_ids", allow_empty=False))
         if not isinstance(self.coverage_complete, bool):
             raise ValueError("coverage_complete must be a boolean")
         for field in ("model_id", "model_version", "schema_version"):
@@ -397,6 +407,7 @@ __all__ = [
     "AnalysisRun",
     "AnalysisStage",
     "AnalysisState",
+    "AttributionScope",
     "ConfidenceBand",
     "FinalAnalysis",
     "Possibility",
