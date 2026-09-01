@@ -28,14 +28,14 @@
 
 **Files:**
 
-- Create: `backend/evals/monitoring/taxonomy.py`
-- Modify: `backend/evals/monitoring/scenarios.py`
-- Test: `backend/tests/evals/test_monitoring_taxonomy.py`
+- Create: `evals/monitoring/taxonomy.py`
+- Modify: `evals/monitoring/scenarios.py`
+- Test: `tests/evals/test_monitoring_taxonomy.py`
 
 ### Steps
 
 - [ ] Add a failing test asserting exactly 12 documented scenario clusters, stable identifiers, safety criticality, expected event behavior, expected interpretation behavior, and allowed feedback effects.
-- [ ] Run `pytest -q backend/tests/evals/test_monitoring_taxonomy.py` and confirm the missing-module failure.
+- [ ] Run `pytest -q tests/evals/test_monitoring_taxonomy.py` and confirm the missing-module failure.
 - [ ] Define immutable contracts such as:
 
 ```python
@@ -56,17 +56,17 @@ class ScenarioExpectation:
 
 - [ ] Cover normal routine, random timing variation, bathroom/temporary absence, guests/multiple people, sleep/inactivity, falls, respiration/vital concern, degraded sensing, new-but-benign behavior, repeated behavior, contradictory evidence, and provider/system failure.
 - [ ] Map every existing 24-case scenario to one cluster without changing its expected replay behavior.
-- [ ] Run the focused test and `pytest -q backend/tests/evals/test_monitoring_replay.py`.
+- [ ] Run the focused test and `pytest -q tests/evals/test_monitoring_replay.py`.
 - [ ] Commit: `test: lock monitoring evaluation taxonomy`
 
 ## Task 2: Make existing scenarios safely transformable and observable
 
 **Files:**
 
-- Modify: `backend/evals/monitoring/scenarios.py`
-- Create: `backend/evals/monitoring/transforms.py`
-- Test: `backend/tests/evals/test_monitoring_transforms.py`
-- Test: `backend/tests/evals/test_monitoring_execution_capture.py`
+- Modify: `evals/monitoring/scenarios.py`
+- Create: `evals/monitoring/transforms.py`
+- Test: `tests/evals/test_monitoring_transforms.py`
+- Test: `tests/evals/test_monitoring_execution_capture.py`
 
 ### Steps
 
@@ -87,7 +87,7 @@ class ScenarioExecution:
 - [ ] Implement deterministic transforms by reconstructing normalized observations and calling the real aligner: safe time shift, bounded numeric jitter, source dropout, quality downgrade, duplicated input, and bounded reordering.
 - [ ] Reject transforms that remove every source, create non-finite values, violate time ordering after normalization, or alter immutable identity fields.
 - [ ] Prove identical seed + case produces byte-identical records, while different seeds create distinct but contract-valid inputs.
-- [ ] Run focused tests, replay tests, and `pytest -q backend/tests/ai backend/tests/intelligence`.
+- [ ] Run focused tests, replay tests, and `pytest -q tests/ai tests/intelligence`.
 - [ ] Commit: `refactor: expose transformable monitoring scenario executions`
 
 ## Task 3: Complete feedback and resident-memory skill contracts
@@ -97,8 +97,8 @@ class ScenarioExecution:
 - Create: `backend/app/ai/prompts/monitoring/feedback_agent.md`
 - Create: `backend/app/ai/prompts/monitoring/resident_memory_updater.md`
 - Modify: `backend/app/ai/skills.py`
-- Test: `backend/tests/ai/test_monitoring_skills.py`
-- Test: `backend/tests/ai/test_feedback_memory_boundaries.py`
+- Test: `tests/ai/test_monitoring_skills.py`
+- Test: `tests/ai/test_feedback_memory_boundaries.py`
 
 ### Steps
 
@@ -117,8 +117,8 @@ class ScenarioExecution:
 
 - Create: `backend/app/ai/gemini.py`
 - Modify: `backend/app/ai/__init__.py`
-- Test: `backend/tests/ai/test_gemini_client.py`
-- Test: `backend/tests/ai/test_gemini_contract_fixtures.py`
+- Test: `tests/ai/test_gemini_client.py`
+- Test: `tests/ai/test_gemini_contract_fixtures.py`
 
 ### Steps
 
@@ -146,9 +146,9 @@ class GeminiLLMClient:
 
 **Files:**
 
-- Create: `backend/evals/monitoring/generation.py`
-- Modify: `backend/evals/monitoring/taxonomy.py`
-- Test: `backend/tests/evals/test_monitoring_generation.py`
+- Create: `evals/monitoring/generation.py`
+- Modify: `evals/monitoring/taxonomy.py`
+- Test: `tests/evals/test_monitoring_generation.py`
 
 ### Steps
 
@@ -178,10 +178,10 @@ class GeneratedCase:
 
 **Files:**
 
-- Create: `backend/evals/monitoring/grading.py`
-- Modify: `backend/evals/monitoring/metrics.py`
-- Test: `backend/tests/evals/test_monitoring_grading.py`
-- Test: `backend/tests/evals/test_monitoring_hard_gates.py`
+- Create: `evals/monitoring/grading.py`
+- Modify: `evals/monitoring/metrics.py`
+- Test: `tests/evals/test_monitoring_grading.py`
+- Test: `tests/evals/test_monitoring_hard_gates.py`
 
 ### Steps
 
@@ -209,9 +209,9 @@ class CaseGrade:
 
 **Files:**
 
-- Create: `backend/evals/monitoring/artifacts.py`
+- Create: `evals/monitoring/artifacts.py`
 - Modify: `.gitignore`
-- Test: `backend/tests/evals/test_monitoring_artifacts.py`
+- Test: `tests/evals/test_monitoring_artifacts.py`
 
 ### Steps
 
@@ -229,11 +229,11 @@ class CaseGrade:
 
 **Files:**
 
-- Create: `backend/evals/monitoring/campaign.py`
-- Create: `backend/evals/monitoring/cli.py`
-- Modify: `backend/pyproject.toml`
-- Test: `backend/tests/evals/test_monitoring_campaign.py`
-- Test: `backend/tests/evals/test_monitoring_cli.py`
+- Create: `evals/monitoring/campaign.py`
+- Create: `evals/monitoring/cli.py`
+- Modify: `pyproject.toml`
+- Test: `tests/evals/test_monitoring_campaign.py`
+- Test: `tests/evals/test_monitoring_cli.py`
 
 ### Steps
 
@@ -253,17 +253,17 @@ python -m evals.monitoring.cli compare --run-a <id> --run-b <id>
 - [ ] Stop dispatching new work on a hard safety failure while preserving completed evidence and a resumable checkpoint.
 - [ ] Report quota/rate limits honestly rather than marking unattempted calls as passes.
 - [ ] Add a console entry point only if it improves current project conventions; otherwise keep `python -m` as the stable interface.
-- [ ] Run focused tests and `pytest -q backend/tests/evals`.
+- [ ] Run focused tests and `pytest -q tests/evals`.
 - [ ] Commit: `feat: orchestrate monitoring evaluation campaigns`
 
 ## Task 9: Add model comparison and final release-gate logic
 
 **Files:**
 
-- Create: `backend/evals/monitoring/comparison.py`
-- Modify: `backend/evals/monitoring/campaign.py`
-- Test: `backend/tests/evals/test_monitoring_comparison.py`
-- Test: `backend/tests/evals/test_monitoring_release_gate.py`
+- Create: `evals/monitoring/comparison.py`
+- Modify: `evals/monitoring/campaign.py`
+- Test: `tests/evals/test_monitoring_comparison.py`
+- Test: `tests/evals/test_monitoring_release_gate.py`
 
 ### Steps
 
@@ -283,7 +283,7 @@ python -m evals.monitoring.cli compare --run-a <id> --run-b <id>
 - Create: `docs/MONITORING_INTELLIGENCE_LAB.md`
 - Modify: `docs/BACKEND_IMPLEMENTATION_STATUS.md`
 - Modify: `docs/PHASED_EXECUTION_ROADMAP.md`
-- Test: `backend/tests/evals/test_monitoring_docs_commands.py`
+- Test: `tests/evals/test_monitoring_docs_commands.py`
 
 ### Steps
 
