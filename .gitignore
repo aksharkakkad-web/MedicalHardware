@@ -28,6 +28,7 @@ coverage/
 # Local tooling and editor state
 *.log
 *.local
+eval-results/
 .worktrees/
 .idea/
 .vscode/
