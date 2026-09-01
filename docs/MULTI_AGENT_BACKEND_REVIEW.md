@@ -16,6 +16,11 @@ validated action → saved dashboard history → optional staff feedback/memory
 
 Deterministic software finds and measures unusual patterns. It does not guess what they mean. The first AI pass keeps plausible explanations broad, specialists review the relevant possibilities, and the final pass combines them into one operational severity and action. Invalid or unavailable AI stays visible as pending or staff-review-needed.
 
+One narrow safety fallback remains deterministic: if the fall-like state machine
+has already reached its test-only urgent trigger and AI is unavailable, the
+pending analysis stays visible but cannot suppress critical caregiver work.
+When final AI is valid, its controlled result remains the trusted interpretation.
+
 The final AI result is bound to the exact resident, room, evidence revision, memory version, and tenant that produced it. Persistent processing requires an explicit current memory snapshot—even when it is intentionally empty—so missing context cannot silently become a different model input. Retries are append-only, so a failed attempt and a later successful attempt both remain reviewable. Fall-like evidence has the same durable path without inventing a normal anomaly record.
 
 Staff-facing summaries and next steps are rendered from controlled, non-diagnostic labels and actions. Model text cannot directly become an alert headline. Unknown output fields, invented evidence references, changed IDs, changed labels, unsupported resident attribution, and prompt-like resident-memory text are rejected or contained.

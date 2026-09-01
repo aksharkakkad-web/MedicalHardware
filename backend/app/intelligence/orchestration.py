@@ -3,7 +3,7 @@
 from dataclasses import dataclass, replace
 from datetime import datetime
 
-from backend.app.ai.analysis_contracts import AnalysisRun
+from backend.app.ai.analysis_contracts import AnalysisRun, AnalysisState
 from backend.app.ai.analysis_orchestration import MultiAgentAnalysisOrchestrator
 from backend.app.ai.client import (
     InterpretationResult,
@@ -352,6 +352,34 @@ class MonitoringIntelligenceEngine:
                     reasons=tuple(
                         dict.fromkeys((*decision.reasons, *analysis_error))
                     ),
+                )
+            if fall_assessment.urgent_triggered and (
+                analysis is None or analysis.state is not AnalysisState.ANALYZED
+            ):
+                # An unavailable model may delay interpretation, but it must
+                # not erase an already-confirmed deterministic urgent signal.
+                urgent_fallback = self.disposition_policy.decide(
+                    packet=evidence,
+                    interpretation=None,
+                    interpretation_failed=True,
+                    fall_assessment=fall_assessment,
+                    degradation=degradation,
+                    resident_away=resident_away,
+                    possible_multiple_people=possible_multiple_people,
+                )
+                decision = replace(
+                    urgent_fallback,
+                    analysis_id=None if analysis is None else analysis.analysis_id,
+                    reasons=tuple(
+                        dict.fromkeys(
+                            (
+                                *urgent_fallback.reasons,
+                                "analysis_pending_did_not_suppress_urgent_signal",
+                                *analysis_error,
+                            )
+                        )
+                    ),
+                    fallback_used=True,
                 )
         else:
             decision = self.disposition_policy.decide(

@@ -328,6 +328,10 @@ def test_pending_fall_analysis_persists_without_a_normal_anomaly_revision() -> N
 
             assert result is not None and result.analysis is not None
             assert result.analysis.state is AnalysisState.ANALYSIS_PENDING
+            assert result.event is not None
+            assert result.event.priority.value == "critical"
+            assert result.decision.disposition.value == "caregiver_event"
+            assert result.decision.fallback_used
             disposition = session.scalar(select(DispositionDecisionRow))
             assert disposition is not None
             assert disposition.analysis_id == result.analysis.analysis_id
