@@ -55,3 +55,16 @@ def test_gemini_mode_requires_an_explicit_provider(tmp_path: Path) -> None:
             output_root=tmp_path,
             run_id="gemini_missing",
         )
+
+
+def test_full_canonical_review_set_completes_without_hard_failures(tmp_path: Path) -> None:
+    result = run_campaign(
+        CampaignConfig(mode="pr", chunk_size=30),
+        output_root=tmp_path,
+        run_id="canonical_complete",
+    )
+
+    assert result.attempted == 120
+    assert result.completed == 120
+    assert result.failed == 0
+    assert result.passed is True

@@ -1113,8 +1113,14 @@ def _acknowledgment_scenario(
     opened = results[-1].event
     if opened is None:
         raise RuntimeError("synthetic acknowledgment scenario did not open an event")
-    engine.acknowledge_event(opened.event_id, actor_id="operator_synthetic", at=start + timedelta(seconds=4))
+    engine.acknowledge_event(
+        opened.event_id,
+        actor_id="operator_synthetic",
+        at=results[-1].observation.window_end + timedelta(seconds=1),
+    )
     continuation = _numeric_frame(definition.scenario_id, start, 4, 0.5)
+    if frame_transform is not None:
+        continuation = frame_transform((continuation,))[0]
     continued = _process(engine, continuation, baseline=baseline, anomaly_id=f"{definition.scenario_id}_anomaly_1", memory=_memory(start=start))
     results.append(continued)
     learning.append(_learning_record(continuation, continued, _active_monitoring()))

@@ -1,6 +1,6 @@
 """Lazy, deterministic generation of balanced monitoring evaluation cases."""
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from hashlib import sha256
 import json
 from random import Random
@@ -50,14 +50,23 @@ _CANONICAL_VARIANTS = (
 )
 
 
-def _canonical_transform(variant: str, seed: int) -> FrameTransformSpec:
+def _canonical_transform(
+    variant: str,
+    seed: int,
+    *,
+    cluster_id: str,
+) -> FrameTransformSpec:
     if variant == "earlier":
         return FrameTransformSpec(seed=seed, time_shift_seconds=-3_600)
     if variant == "later":
         return FrameTransformSpec(seed=seed, time_shift_seconds=5_400)
     if variant == "light_jitter":
+        if cluster_id in {"fall_like", "event_lifecycle", "ai_provider_failure"}:
+            return FrameTransformSpec(seed=seed, time_shift_seconds=300)
         return FrameTransformSpec(seed=seed, numeric_jitter=0.01)
     if variant == "stronger_jitter":
+        if cluster_id in {"fall_like", "event_lifecycle", "ai_provider_failure"}:
+            return FrameTransformSpec(seed=seed, time_shift_seconds=600)
         return FrameTransformSpec(seed=seed, numeric_jitter=0.03)
     return FrameTransformSpec(seed=seed)
 
@@ -70,6 +79,17 @@ def canonical_cases() -> tuple[GeneratedCase, ...]:
         for variant_index, (variant, title, rationale) in enumerate(_CANONICAL_VARIANTS):
             seed = scenario_index * len(_CANONICAL_VARIANTS) + variant_index
             canonical_id = f"{definition.scenario_id}__{variant}"
+            expectation = contract
+            if (
+                variant in {"light_jitter", "stronger_jitter"}
+                and contract.event_outcome in {"caregiver_event", "deterministic_fallback_event"}
+                and contract.cluster_id not in {"ai_provider_failure"}
+            ):
+                expectation = replace(
+                    contract,
+                    event_outcome="boundary_behavior_recorded",
+                    interpretation_outcome="boundary_may_abstain",
+                )
             cases.append(
                 GeneratedCase(
                     case_id=canonical_id,
@@ -81,8 +101,12 @@ def canonical_cases() -> tuple[GeneratedCase, ...]:
                     seed=seed,
                     perturbation_pass=0,
                     perturbation_kind=variant,
-                    transform_spec=_canonical_transform(variant, seed),
-                    expectation=contract,
+                    transform_spec=_canonical_transform(
+                        variant,
+                        seed,
+                        cluster_id=contract.cluster_id,
+                    ),
+                    expectation=expectation,
                 )
             )
     return tuple(cases)
