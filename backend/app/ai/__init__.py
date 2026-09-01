@@ -1,5 +1,22 @@
 """Bounded, provider-neutral monitoring interpretation interfaces."""
 
+from backend.app.ai.analysis_contracts import (
+    AnalysisRun,
+    AnalysisStage,
+    AnalysisState,
+    ConfidenceBand,
+    FinalAnalysis,
+    Possibility,
+    RoutingPlan,
+    Severity,
+    SpecialistAssessment,
+    SpecialistAssignment,
+    StageRequest,
+    StageResponse,
+    StageStatus,
+    StructuredAnalysisClient,
+)
+
 from backend.app.ai.client import (
     DeterministicFakeLLMClient,
     ExplanationCategory,
@@ -22,8 +39,13 @@ from backend.app.ai.skills import SkillBundle, select_skill_bundle
 from backend.app.ai.validation import validate_interpretation
 
 __all__ = [
+    "AnalysisRun",
+    "AnalysisStage",
+    "AnalysisState",
+    "ConfidenceBand",
     "DeterministicFakeLLMClient",
     "ExplanationCategory",
+    "FinalAnalysis",
     "InterpretationAlternative",
     "InterpretationRequest",
     "InterpretationResult",
@@ -33,7 +55,16 @@ __all__ = [
     "GeminiProviderError",
     "MemoryUpdateAction",
     "MemoryUpdateProposal",
+    "Possibility",
     "RecommendedDisposition",
+    "RoutingPlan",
+    "Severity",
+    "SpecialistAssessment",
+    "SpecialistAssignment",
+    "StageRequest",
+    "StageResponse",
+    "StageStatus",
+    "StructuredAnalysisClient",
     "UncertaintyCategory",
     "SkillBundle",
     "build_interpretation_request",

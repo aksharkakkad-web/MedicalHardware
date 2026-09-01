@@ -85,11 +85,11 @@ git commit -m "docs: align product around multi-agent interpretation"
 - Consumes: existing `EvidencePacket`, controlled category/disposition enums, and exact evidence identifiers.
 - Produces: `AnalysisStage`, `AnalysisState`, `ConfidenceBand`, `Severity`, `Possibility`, `RoutingPlan`, `SpecialistAssessment`, `FinalAnalysis`, `AnalysisRun`, `StageRequest`, `StageResponse`, and `StructuredAnalysisClient`.
 
-- [ ] **Step 1: Write failing contract tests**
+- [x] **Step 1: Write failing contract tests**
 
 Cover normalization and rejection of blank IDs, duplicate specialists, duplicate possibility IDs, confidence outside the controlled bands, final claims with nonexistent evidence references, and inconsistent action/severity combinations. Use literal fixtures; do not compute expected values with production helpers.
 
-- [ ] **Step 2: Verify the tests fail for missing contracts**
+- [x] **Step 2: Verify the tests fail for missing contracts**
 
 Run:
 
@@ -99,7 +99,7 @@ pytest tests/ai/test_analysis_contracts.py -q
 
 Expected: import failure because `analysis_contracts.py` does not exist.
 
-- [ ] **Step 3: Implement immutable typed contracts**
+- [x] **Step 3: Implement immutable typed contracts**
 
 The public protocol is:
 
@@ -137,7 +137,7 @@ class FinalAnalysis:
 
 Do not add free-form medical diagnosis fields or chain-of-thought fields.
 
-- [ ] **Step 4: Run focused tests**
+- [x] **Step 4: Run focused tests**
 
 ```bash
 pytest tests/ai/test_analysis_contracts.py -q
@@ -145,7 +145,7 @@ pytest tests/ai/test_analysis_contracts.py -q
 
 Expected: all pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/app/ai/analysis_contracts.py backend/app/ai/__init__.py tests/ai/test_analysis_contracts.py
