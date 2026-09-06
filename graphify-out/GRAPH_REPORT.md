@@ -1,16 +1,16 @@
 # Graph Report - adaptive-care-ledger  (2026-09-05)
 
 ## Corpus Check
-- 584 files · ~759,152 words
+- 585 files · ~759,338 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 8072 nodes · 21274 edges · 448 communities (377 shown, 71 thin omitted)
+- 8073 nodes · 21274 edges · 446 communities (376 shown, 70 thin omitted)
 - Extraction: 92% EXTRACTED · 8% INFERRED · 0% AMBIGUOUS · INFERRED: 1780 edges (avg confidence: 0.54)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `5e4edb69`
+- Built from commit: `ab66c0d8`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -19,7 +19,7 @@
 - intelligence_mappers.py
 - SourceItem
 - timedelta
-- Cluster
+- Counter
 - last30days.py
 - perplexity.py
 - doctor.py
@@ -303,12 +303,12 @@
 - web_search_keyless.py
 - Clinic Dashboard Foundation Design
 - library.py
-- GeminiLLMClient
+- dependencies.py
 - amazon.py
 - resident-overview.tsx
 - test_feedback_api.py
 - Clinic Dashboard Foundation Implementation Plan
-- threads.py
+- extract_core_subject
 - Clinic Dashboard
 - clinic-dashboard/AGENTS.md
 - eslint.config.mjs
@@ -348,7 +348,7 @@
 - Clinic Overview Golden Screen Design
 - seed_synthetic_story
 - Resident Context and Preferences Design
-- test_analysis_contracts.py
+- analysis_run_to_row
 - Clinic Overview Golden Screen Implementation Plan
 - HomeStorage
 - design-system/page.tsx
@@ -360,10 +360,10 @@
 - ArtifactRun
 - Resident Context and Preferences Implementation Plan
 - campaign.py
-- _polymarket_top_markets
+- _build_source_footer_lines
 - home-app/AGENTS.md
 - home-app/next.config.ts
-- extract_core_subject
+- hackernews.py
 - analysis_contracts.py
 - multi_agent_campaign.py
 - test_product_backbone_story.py
@@ -386,7 +386,7 @@
 - resident-settings.ts
 - apply_vs_competitor_routing
 - Global Constraints
-- _format_web_line_sources
+- stocktwits.py
 - Phase 5 Backend Monitoring Intelligence Review
 - _build_nux_message
 - Clear Signal Productionization Implementation Plan
@@ -424,14 +424,11 @@
 - unknown_cross_domain.md
 - tests/evals/__init__.py
 - footer_entry
-- _format_volume_short
 - .end_web_only
 - .show_bird_auth_help
 - .show_web_only_complete
 - .start_web_only
 - home-review.md
-- test_setup_change_api.py
-- disposition_from_row
 
 ## God Nodes (most connected - your core abstractions)
 1. `AccessContext` - 124 edges
@@ -460,27 +457,27 @@
 ## Import Cycles
 - None detected.
 
-## Communities (448 total, 71 thin omitted)
+## Communities (446 total, 70 thin omitted)
 
 ### Community 0 - "event_queue.py"
-Cohesion: 0.12
-Nodes (33): list_clinic_events(), get, ClinicEventQueueResponse, ClinicEventStatus, field_validator, model_validator, StrEnum, InvalidInputError (+25 more)
+Cohesion: 0.25
+Nodes (19): InvalidInputError, decode_event_queue_cursor(), encode_event_queue_cursor(), EventQueueQuery, _filter_digest(), _normalize_enum_values(), normalize_event_queue_query(), NormalizedEventQueueQuery (+11 more)
 
 ### Community 1 - "intelligence_mappers.py"
-Cohesion: 0.12
-Nodes (39): SpecialistAssessment, _alternative_data(), analysis_run_data(), analysis_run_from_data(), analysis_run_to_row(), _assessment_data(), _assessment_from_data(), _assignment_data() (+31 more)
+Cohesion: 0.15
+Nodes (31): FinalAnalysis, SpecialistAssessment, _alternative_data(), analysis_run_data(), analysis_run_from_data(), _assessment_data(), _assessment_from_data(), _assignment_data() (+23 more)
 
 ### Community 2 - "SourceItem"
-Cohesion: 0.13
+Cohesion: 0.12
 Nodes (51): get_date_confidence(), Determine confidence level for a date. Args: date_str: The date to check (YYYY-…, _date_confidence(), _domain_from_url(), filter_by_date_range(), _first_present(), _join_comment_excerpts(), _normalize_amazon() (+43 more)
 
 ### Community 3 - "timedelta"
 Cohesion: 0.09
 Nodes (9): EventStore, Versioned toy-only quiet-gap policy; not a production threshold., Groups related synthetic signals and enforces the caregiver lifecycle., SyntheticEventEpisodePolicy, EventFlowTests, datetime, test_custom_attention_duration_requires_distinct_policy_version(), test_repository_rejects_a_stale_expected_version() (+1 more)
 
-### Community 4 - "Cluster"
-Cohesion: 0.08
-Nodes (34): entity_overlap(), extract_entities(), _extract_subreddits(), extract_text_entities(), _extract_x_handles(), _extract_x_hashtags(), has_anchor_signal(), Any (+26 more)
+### Community 4 - "Counter"
+Cohesion: 0.11
+Nodes (26): entity_overlap(), extract_entities(), _extract_subreddits(), extract_text_entities(), _extract_x_handles(), _extract_x_hashtags(), has_anchor_signal(), Any (+18 more)
 
 ### Community 5 - "last30days.py"
 Cohesion: 0.06
@@ -503,8 +500,8 @@ Cohesion: 0.06
 Nodes (65): Protocol leg 2: resume from the nominations bundle, apply the host judgments…, _run_discover_resume(), build_host_digest(), BundleNomination, _clamped_worthiness(), handoff_state_dir(), HandoffContractError, HostAngles (+57 more)
 
 ### Community 10 - "Candidate"
-Cohesion: 0.04
-Nodes (86): _apply_per_author_cap(), candidate_key(), _candidate_sort_key(), _diversify_pool(), _extract_author(), _normalize_url(), Weighted reciprocal rank fusion for per-(subquery, source) streams., Ensure at least *min_per_source* items per qualifying source survive… (+78 more)
+Cohesion: 0.05
+Nodes (82): _apply_per_author_cap(), candidate_key(), _candidate_sort_key(), _diversify_pool(), _extract_author(), _normalize_url(), Weighted reciprocal rank fusion for per-(subquery, source) streams., Ensure at least *min_per_source* items per qualifying source survive… (+74 more)
 
 ### Community 11 - "event-detail.tsx"
 Cohesion: 0.15
@@ -515,8 +512,8 @@ Cohesion: 0.08
 Nodes (56): apply_star_map(), _compute_relevance(), enrich_candidates_with_stars(), _enrich_external_repo(), _enrich_own_repo(), _enrich_project_repo(), _enrich_top_items(), enrich_with_comments() (+48 more)
 
 ### Community 13 - "test_analysis_context.py"
-Cohesion: 0.12
-Nodes (54): _assessment_payload(), _assignment_payload(), build_final_request(), build_recall_request(), build_specialist_request(), _canonical_json(), _case_payload(), final_response_schema() (+46 more)
+Cohesion: 0.13
+Nodes (50): _assessment_payload(), build_final_request(), build_recall_request(), build_specialist_request(), _canonical_json(), _case_payload(), final_response_schema(), _possibility_payload() (+42 more)
 
 ### Community 14 - "compilerOptions"
 Cohesion: 0.07
@@ -595,8 +592,8 @@ Cohesion: 0.14
 Nodes (44): advance_episode(), AnomalyEpisode, _baseline_for_evidence(), FeatureDeviation, _frame_deviations(), Transparent numerical anomaly gating with immutable episode revisions., Advance one numerical frame; caregiver event state is intentionally absent., Synthetic engineering policy; it carries no clinical authority. (+36 more)
 
 ### Community 33 - "test_status_repositories.py"
-Cohesion: 0.13
-Nodes (37): CalibrationSnapshotRow, MonitoringSetupChangeRow, MonitoringStatusSnapshotRow, calibration_from_rows(), calibration_to_row(), latest_setup_change_to_row(), monitoring_from_row(), monitoring_to_row() (+29 more)
+Cohesion: 0.10
+Nodes (48): CalibrationSnapshotRow, MonitoringSetupChangeRow, MonitoringStatusSnapshotRow, calibration_from_rows(), calibration_to_row(), latest_setup_change_to_row(), monitoring_from_row(), monitoring_to_row() (+40 more)
 
 ### Community 34 - "x-com/manifest.json"
 Cohesion: 0.06
@@ -628,7 +625,7 @@ Nodes (30): _epoch_to_date(), fetch_listings(), fetch_scores(), _log(), _normali
 
 ### Community 41 - "ConcurrentUpdateError"
 Cohesion: 0.14
-Nodes (28): analysis_packet_from_row(), analysis_run_from_row(), anomaly_from_row(), anomaly_to_row(), baseline_from_rows(), baseline_to_rows(), event_bridge_data(), event_bridge_from_row() (+20 more)
+Nodes (27): analysis_packet_from_row(), analysis_run_from_row(), anomaly_from_row(), anomaly_to_row(), _decision_data(), disposition_from_row(), disposition_to_row(), event_bridge_data() (+19 more)
 
 ### Community 42 - "freshness.py"
 Cohesion: 0.12
@@ -719,12 +716,12 @@ Cohesion: 0.07
 Nodes (26): 1. Maximize Real-graph (Follower Engagement), 2. Leverage SimClusters (Community Resonance), 3. Improve TwHIN Mapping (Content-User Fit), 4. Boost Tweepcred (Authority/Credibility), 5. Maximize Engagement Signals, 6. Prevent Negative Signals, Best Practices for Algorithm Optimization, Common Pitfalls to Avoid (+18 more)
 
 ### Community 64 - "test_monitoring_interpretation.py"
-Cohesion: 0.13
-Nodes (53): Return a fully supported result or reject it with deterministic reasons., _valid_confidence(), validate_interpretation(), _deviation(), _entry(), _memory(), _packet(), datetime (+45 more)
+Cohesion: 0.11
+Nodes (60): _append(), _category(), _enum_value(), Return a fully supported result or reject it with deterministic reasons., _required_text(), _text_tuple(), _valid_confidence(), _validate_exact_identifiers() (+52 more)
 
 ### Community 65 - "ContractModel"
-Cohesion: 0.07
-Nodes (42): device_query_service(), event_queue_query_service(), Depends, Request, Session, setup_mutation_services(), SetupMutationServices, FastAPI (+34 more)
+Cohesion: 0.09
+Nodes (24): FastAPI, register_error_handlers(), _status_code(), ContractModel, ErrorDetail, ErrorEnvelope, HealthResponse, BaseModel (+16 more)
 
 ### Community 66 - "cookie_extract.py"
 Cohesion: 0.14
@@ -779,8 +776,8 @@ Cohesion: 0.10
 Nodes (36): brave_search(), _domain(), _enrich_reddit_items(), exa_search(), _in_date_range(), _normalize_date(), parallel_search(), _parse_serper_date() (+28 more)
 
 ### Community 79 - "_baseline"
-Cohesion: 0.23
-Nodes (28): FinalAnalysis, Validate the complete outer request before downstream consumers use it., validate_interpretation_request_shape(), canonical_json(), interpretation_from_row(), interpretation_to_row(), _anomaly_revision(), _baseline() (+20 more)
+Cohesion: 0.24
+Nodes (27): Validate the complete outer request before downstream consumers use it., validate_interpretation_request_shape(), canonical_json(), interpretation_from_row(), interpretation_to_row(), _anomaly_revision(), _baseline(), _interpretation() (+19 more)
 
 ### Community 80 - "youtube_yt.py"
 Cohesion: 0.04
@@ -895,8 +892,8 @@ Cohesion: 0.12
 Nodes (15): 10. Data Quality and Confidence, 14. Event Lifecycle, 17. Active Learning, 19. Simulator-First Development, 1. Product Summary, 20. Privacy, Security, and Development Data, 22. V1 Requirements, 23. Non-Goals for Initial Build (+7 more)
 
 ### Community 109 - "AudienceRegister"
-Cohesion: 0.32
-Nodes (5): AudienceRegister, _preset(), Named audience registers for standard research brief synthesis., A bounded renderer/synthesis preset for one intended audience., SectionName
+Cohesion: 0.27
+Nodes (7): AudienceRegister, get_register(), _preset(), Named audience registers for standard research brief synthesis., Return a named register, rejecting unsupported/free-form templates., A bounded renderer/synthesis preset for one intended audience., SectionName
 
 ### Community 110 - "twitter-client-features.js"
 Cohesion: 0.30
@@ -907,8 +904,8 @@ Cohesion: 0.15
 Nodes (12): runtimeQueryIds, FALLBACK_QUERY_IDS, QUERY_IDS, SETTINGS_NAME_REGEX, SETTINGS_SCREEN_NAME_REGEX, SETTINGS_USER_ID_REGEX, TARGET_QUERY_ID_OPERATIONS, TWITTER_GRAPHQL_POST_URL (+4 more)
 
 ### Community 112 - "signals.py"
-Cohesion: 0.14
-Nodes (26): _best_community_comment(), The strongest verbatim community comment across a topic's evidence, formatted…, annotate_stream(), engagement_raw(), freshness(), _generic_engagement(), _instagram_engagement(), local_relevance() (+18 more)
+Cohesion: 0.13
+Nodes (28): _best_community_comment(), The strongest verbatim community comment across a topic's evidence, formatted…, _effective_fun_score(), LLM humor score plus a bounded, relevance-confidence-scaled crowd nudge.…, annotate_stream(), engagement_raw(), freshness(), _generic_engagement() (+20 more)
 
 ### Community 113 - "Final Fix Report — Backend Domain Toy Slice"
 Cohesion: 0.13
@@ -979,8 +976,8 @@ Cohesion: 0.27
 Nodes (3): GitHub (gh CLI), 开发工具, 选择指南
 
 ### Community 131 - "source_log"
-Cohesion: 0.06
-Nodes (47): _get_json(), _log(), parse_dripstack_response(), Any, DripStack source for last30days — premium financial newsletter search.…, Normalize DripStack search results into engine-style item dicts. Each item maps…, Search DripStack for articles matching the topic. Returns a list of raw item…, search_dripstack() (+39 more)
+Cohesion: 0.08
+Nodes (30): _get_json(), _log(), parse_dripstack_response(), Any, DripStack source for last30days — premium financial newsletter search.…, Normalize DripStack search results into engine-style item dicts. Each item maps…, Search DripStack for articles matching the topic. Returns a list of raw item…, search_dripstack() (+22 more)
 
 ### Community 132 - "home-monitoring/types.ts"
 Cohesion: 0.16
@@ -1011,8 +1008,8 @@ Cohesion: 0.07
 Nodes (28): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModules, jsx, lib, module (+20 more)
 
 ### Community 140 - "StageResponse"
-Cohesion: 0.17
-Nodes (21): Return the fixed staff action text for one controlled disposition., required_next_step(), Return one structured response for a bounded analysis stage., StageRequest, StageResponse, AnalysisValidationError, _ground(), _payload() (+13 more)
+Cohesion: 0.12
+Nodes (33): _assignment_payload(), Return the fixed staff action text for one controlled disposition., required_next_step(), Possibility, Return one structured response for a bounded analysis stage., SpecialistAssignment, StageRequest, StageResponse (+25 more)
 
 ### Community 141 - "EventRepository"
 Cohesion: 0.10
@@ -1059,8 +1056,8 @@ Cohesion: 0.11
 Nodes (42): checkpoint_failures(), main(), Any, Plain-language founder checkpoint for Phase 5 monitoring intelligence., walkthrough_lines(), calculate_metrics(), _latency(), Any (+34 more)
 
 ### Community 152 - "token_overlap_relevance"
-Cohesion: 0.05
-Nodes (54): _extract_core_subject(), _log(), _parse_items(), parse_pinterest_response(), Any, Pinterest search via ScrapeCreators API for /last30days. Uses ScrapeCreators…, Search Pinterest via ScrapeCreators API. Args: topic: Search topic from_date:…, Extract core subject from verbose query for Pinterest search. (+46 more)
+Cohesion: 0.07
+Nodes (43): _build_urls(), _fetch_feed(), _iso_to_date(), _iso_to_epoch(), _log(), _parse_feed(), Any, Keyless Reddit discovery via public RSS/Atom feeds. Reddit's ``.json`` search… (+35 more)
 
 ### Community 153 - "ui.py"
 Cohesion: 0.22
@@ -1143,8 +1140,8 @@ Cohesion: 0.29
 Nodes (6): Concerns, Files, Self-review, Task 1 Report: Monitoring Suitability State, TDD evidence, What changed
 
 ### Community 174 - "v1/events.py"
-Cohesion: 0.12
-Nodes (47): AnalysisState, AttributionScope, ConfidenceBand, StrEnum, Severity, event_mutation_services(), EventMutationServices, acknowledge_event() (+39 more)
+Cohesion: 0.09
+Nodes (59): AnalysisState, AttributionScope, ConfidenceBand, StrEnum, Severity, event_mutation_services(), EventMutationServices, acknowledge_event() (+51 more)
 
 ### Community 175 - "test_status_schema.py"
 Cohesion: 0.62
@@ -1259,8 +1256,8 @@ Cohesion: 0.40
 Nodes (5): 8. Monitoring Capabilities, Behavioral / physical monitoring targets, Event/anomaly families the product should support, Physiological monitoring targets, Specific medical-event research
 
 ### Community 206 - "RecommendedDisposition"
-Cohesion: 0.12
-Nodes (39): StageStatus, ExplanationCategory, InterpretationAlternative, InterpretationRequest, InterpretationResult, InterpretationStatus, StrEnum, Provider-neutral structured interpretation request and response types. (+31 more)
+Cohesion: 0.10
+Nodes (46): StageStatus, ExplanationCategory, InterpretationAlternative, InterpretationRequest, InterpretationResult, InterpretationStatus, StrEnum, Provider-neutral structured interpretation request and response types. (+38 more)
 
 ### Community 207 - "CLAUDE.md"
 Cohesion: 0.50
@@ -1440,7 +1437,7 @@ Nodes (21): get_x_source_with_method(), Return (source, method) for X search, wh
 
 ### Community 272 - "render.py"
 Cohesion: 0.04
-Nodes (139): emit_comparison_output(), emit_output(), get_register(), Return a named register, rejecting unsupported/free-form templates., _aggregate_engagement(), _amazon_footer_line(), _append_html_footer(), _assess_data_freshness() (+131 more)
+Nodes (137): emit_comparison_output(), emit_output(), _amazon_footer_line(), _append_html_footer(), _assess_data_freshness(), _assistant_safety_lines(), _best_take_relevance_ok(), _candidate_freshness_flag() (+129 more)
 
 ### Community 274 - "Adaptive Care Home Design System"
 Cohesion: 0.20
@@ -1470,9 +1467,9 @@ Nodes (16): Acceptance criteria, Clinic Dashboard Foundation Design, Error and u
 Cohesion: 0.19
 Nodes (21): _briefing_markdown(), _briefing_summary(), _clean_inline(), get_or_create_library_id(), is_generated_brief_name(), _keep_preferred(), _markdown_date(), _markdown_headline() (+13 more)
 
-### Community 301 - "GeminiLLMClient"
-Cohesion: 0.26
-Nodes (14): GeminiLLMClient, GeminiTransportError, RuntimeError, _model_output(), Exception, RecordingTransport, _request(), _response() (+6 more)
+### Community 301 - "dependencies.py"
+Cohesion: 0.14
+Nodes (20): device_query_service(), event_queue_query_service(), Depends, Request, Session, setup_mutation_services(), SetupMutationServices, get_device_health() (+12 more)
 
 ### Community 302 - "amazon.py"
 Cohesion: 0.17
@@ -1490,9 +1487,9 @@ Nodes (17): _feedback_audit_count(), _headers(), parametrize, TestClient, _resol
 Cohesion: 0.25
 Nodes (7): Clinic Dashboard Foundation Implementation Plan, Task 1: Bootstrap the clinic application, Task 2: Define the monitoring boundary and mock client, Task 3: Add the provider and honest asynchronous states, Task 4: Build the clinic shell and visual system, Task 5: Build the resident overview, Task 6: Browser verification and repository handoff
 
-### Community 306 - "threads.py"
-Cohesion: 0.22
-Nodes (13): _extract_core_subject(), _log(), _parse_date(), _parse_items(), parse_threads_response(), Any, Threads keyword search via ScrapeCreators API for /last30days. Uses…, Search Threads via ScrapeCreators API. Args: topic: Search topic from_date:… (+5 more)
+### Community 306 - "extract_core_subject"
+Cohesion: 0.07
+Nodes (39): _extract_core_subject(), _log(), _parse_items(), parse_pinterest_response(), Any, Pinterest search via ScrapeCreators API for /last30days. Uses ScrapeCreators…, Search Pinterest via ScrapeCreators API. Args: topic: Search topic from_date:…, Extract core subject from verbose query for Pinterest search. (+31 more)
 
 ### Community 311 - "models.py"
 Cohesion: 0.05
@@ -1531,8 +1528,8 @@ Cohesion: 0.14
 Nodes (13): Action hierarchy, Adaptive Care design system, AI and medical language, App shell, Care workflow patterns, Foundation, Independent status axes, Semantic color (+5 more)
 
 ### Community 327 - "analysis_skills.py"
-Cohesion: 0.24
-Nodes (11): analysis_skill_registry(), AnalysisSkill, fallback_specialists(), Versioned skill registry for multi-stage monitoring analysis., Route by measured family only; this function does not interpret meaning., parametrize, test_fallback_routing_combines_multiple_families_without_duplicates(), test_fallback_routing_uses_measured_families_without_assigning_meaning() (+3 more)
+Cohesion: 0.27
+Nodes (12): analysis_skill_registry(), AnalysisSkill, fallback_specialists(), load_analysis_skill(), Versioned skill registry for multi-stage monitoring analysis., Route by measured family only; this function does not interpret meaning., parametrize, test_fallback_routing_combines_multiple_families_without_duplicates() (+4 more)
 
 ### Community 328 - "generate_openapi_document"
 Cohesion: 0.27
@@ -1626,9 +1623,9 @@ Nodes (26): Session, seed_synthetic_story(), EventAction, EventBridgeRecord, Eve
 Cohesion: 0.25
 Nodes (7): Acceptance criteria, Goal, Implementation boundary, Information design, Product behavior, Resident Context and Preferences Design, States and safety rules
 
-### Community 353 - "test_analysis_contracts.py"
-Cohesion: 0.33
-Nodes (11): _final(), _possibility(), parametrize, test_analysis_run_requires_final_result_only_in_analyzed_state(), test_contracts_normalize_enum_strings_and_preserve_multiple_possibilities(), test_final_analysis_rejects_duplicate_possibilities(), test_final_analysis_rejects_evidence_not_used_by_any_possibility(), test_final_analysis_rejects_internally_inconsistent_action_and_severity() (+3 more)
+### Community 353 - "analysis_run_to_row"
+Cohesion: 0.20
+Nodes (15): analysis_run_to_row(), baseline_from_rows(), baseline_to_rows(), _deviation_data(), _episode_data(), evidence_packet_data(), _feature_baseline_data(), _packet_data() (+7 more)
 
 ### Community 354 - "Clinic Overview Golden Screen Implementation Plan"
 Cohesion: 0.29
@@ -1670,17 +1667,17 @@ Nodes (4): Resident Context and Preferences Implementation Plan, Task 1: Typed r
 Cohesion: 0.19
 Nodes (21): CampaignResult, _case_record(), _cases(), _live_cases(), Small-to-large orchestration for monitoring intelligence evaluation., _response_records(), _smoke_cases(), _balanced_bases() (+13 more)
 
-### Community 365 - "_polymarket_top_markets"
-Cohesion: 0.50
-Nodes (4): _polymarket_top_markets(), Strip boilerplate from a Polymarket question to produce a compact descriptor.…, Build short summary strings for the top Polymarket markets by volume. Returns…, _shorten_polymarket_title()
+### Community 365 - "_build_source_footer_lines"
+Cohesion: 0.11
+Nodes (20): _aggregate_engagement(), _build_source_footer_lines(), _fmt_pairs(), _footer_line_for_source(), _format_number(), _format_web_line_sources(), _polymarket_top_markets(), Strip boilerplate from a Polymarket question to produce a compact descriptor.… (+12 more)
 
-### Community 368 - "extract_core_subject"
-Cohesion: 0.08
-Nodes (40): _date_to_unix(), enrich_top_stories(), fetch_discovery_listings(), _fetch_item_comments(), _flatten_query_for_algolia(), _log(), parse_hackernews_response(), Any (+32 more)
+### Community 368 - "hackernews.py"
+Cohesion: 0.12
+Nodes (25): _date_to_unix(), enrich_top_stories(), fetch_discovery_listings(), _fetch_item_comments(), _flatten_query_for_algolia(), _log(), parse_hackernews_response(), Any (+17 more)
 
 ### Community 369 - "analysis_contracts.py"
-Cohesion: 0.32
-Nodes (7): _enum(), _nonnegative_int(), _normalize_action_severity(), _positive_int(), Provider-neutral contracts for staged monitoring analysis., _text(), _text_tuple()
+Cohesion: 0.20
+Nodes (9): _enum(), _nonnegative_int(), _normalize_action_severity(), _positive_int(), Provider-neutral contracts for staged monitoring analysis., _text(), _text_tuple(), _possibility() (+1 more)
 
 ### Community 370 - "multi_agent_campaign.py"
 Cohesion: 0.24
@@ -1762,9 +1759,9 @@ Nodes (4): apply_vs_competitor_routing(), Cap a vs-entity list at COMPARISON_ENT
 Cohesion: 0.17
 Nodes (11): Global Constraints, Phase 5 Monitoring Intelligence Implementation Plan, Task 1: Normalized observations, quality, and aligned fusion, Task 2: Flexible resident context and relevance retrieval, Task 3: Robust personal baseline and controlled new-normal adoption, Task 4: Anomaly episodes and rich evidence packets, Task 5: Monitoring degradation and urgent fall-like fast path, Task 6: Situation-specific AI skills, context, fake provider, and validation (+3 more)
 
-### Community 395 - "_format_web_line_sources"
-Cohesion: 0.50
-Nodes (4): _format_web_line_sources(), Return a clean publication name for a URL, or a bare domain fallback. Strips…, Return comma-separated clean publication names for the Web line. Deduplicates…, _site_name_for_url()
+### Community 395 - "stocktwits.py"
+Cohesion: 0.20
+Nodes (17): aggregate_sentiment(), detect_symbols(), _filter_by_date(), _get_json(), is_financial_topic(), _log(), parse_stocktwits_response(), Any (+9 more)
 
 ### Community 396 - "Phase 5 Backend Monitoring Intelligence Review"
 Cohesion: 0.18
@@ -1838,18 +1835,10 @@ Nodes (5): Evidence allowed, Objective, Operator feedback interpretation skill, 
 Cohesion: 0.33
 Nodes (5): Allowed actions, Boundaries, Objective, Output, Resident memory proposal skill
 
-### Community 446 - "test_setup_change_api.py"
-Cohesion: 0.47
-Nodes (11): _body(), _count(), _headers(), TestClient, test_setup_change_cannot_move_calibration_history_backward(), test_setup_change_conflicts_do_not_create_more_history(), test_setup_change_replay_returns_one_durable_effect(), test_setup_change_resets_only_selected_dimension_and_audits() (+3 more)
-
-### Community 447 - "disposition_from_row"
-Cohesion: 0.52
-Nodes (5): _decision_data(), disposition_from_row(), disposition_to_row(), DispositionDecisionRow, test_disposition_hydration_rejects_extra_json_key()
-
 ## Knowledge Gaps
 - **1499 isolated node(s):** `id`, `name`, `google.com`, `www.google.com`, `notes/overview.md` (+1494 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **71 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **70 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_

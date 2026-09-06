@@ -102,7 +102,7 @@
   .watchQueue { padding-bottom: 6px; }
   .columnLabels { display: none; }
 }
-@media (max-width: 720px) {
+@media (max-width: 768px) {
   .page { display: flex; flex-direction: column; }
   .pageHeader { margin-bottom: 24px; }
   .pageHeader { order: 0; }
