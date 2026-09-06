@@ -1,12 +1,13 @@
-import type { CSSProperties, ReactNode, SVGProps } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
-import { AttentionItem, type AttentionRecord } from "../../components/ui/attention-item";
+import { AlertIcon, ArrowIcon, CareMark, CheckIcon, DeviceIcon, EventIcon, MoreIcon, OverviewIcon, PanelRightIcon, ScenarioIcon, SearchIcon } from "../../components/icons/icons";
 import { Button, IconButton } from "../../components/ui/button";
 import { FormField, FormFieldset } from "../../components/ui/form-field";
 import { ResidentRecords, type ResidentRecord } from "../../components/ui/resident-records";
 import { StatusIndicator } from "../../components/ui/status-indicator";
 import { SystemFeedback, SystemLifecycle, SystemStateCatalog } from "../../components/ui/system-state";
 import { DesignSystemShell } from "./design-system-shell";
+import { ExportActions } from "./export-actions";
 import styles from "./page.module.css";
 
 const sections = [
@@ -14,38 +15,40 @@ const sections = [
   ["02", "Color"],
   ["03", "Typography"],
   ["04", "Space & shape"],
-  ["05", "Actions"],
-  ["06", "Forms"],
-  ["07", "Status"],
-  ["08", "Data"],
-  ["09", "Care patterns"],
+  ["05", "App shell"],
+  ["06", "Iconography"],
+  ["07", "Actions"],
+  ["08", "Forms"],
+  ["09", "Status"],
+  ["10", "Data"],
+  ["11", "Care patterns"],
 ] as const;
 
 const foundationColors = [
-  ["Canvas", "Page background", "App shell and section canvas", "canvasToken", "#FBFAF8"],
-  ["White", "Working surface", "Cards, forms, and tables", "paper0", "#FFFFFF"],
-  ["Mist 25", "Lifted surface", "Hover and quiet modules", "paper50", "#FBFCFF"],
-  ["Mist 50", "Cool support", "Informational section canvas", "paper100", "#F4F7FC"],
-  ["Mist 200", "Light border", "Card and table boundaries", "paper200", "#DDE4EF"],
-  ["Ink 600", "Secondary text", "Helper copy and metadata", "ink600", "#536174"],
-  ["Ink 950", "Primary text", "Headings and decisions", "ink950", "#111827"],
+  ["Canvas white", "Page canvas", "App shell and primary workspace", "canvasToken", "#FFFFFF"],
+  ["Surface white", "Working surface", "Primary content and controls", "paper0", "#FFFFFF"],
+  ["Neutral 50", "Quiet surface", "Hover and grouped secondary content", "paper50", "#FAFAFA"],
+  ["Neutral 100", "Alternate surface", "Nested panels and muted sections", "paper100", "#F5F5F5"],
+  ["Neutral 200", "Hairline", "Rows, controls, and surface edges", "paper200", "#E5E5E5"],
+  ["Neutral 500", "Secondary text", "Helper copy and metadata", "ink600", "#737373"],
+  ["Neutral 900", "Primary text", "Headings and decisions", "ink950", "#171717"],
 ] as const;
 
 const brandColors = [
-  ["Blue 50", "Selection wash", "Selected rows and active navigation", "cobalt50", "#EEF4FF"],
-  ["Blue 100", "Strong selection", "Focused information groups", "cobalt100", "#DCE9FF"],
-  ["Blue 600", "Brand and interaction", "Primary actions and focus", "cobalt600", "#175CD3"],
-  ["Blue 800", "Pressed interaction", "Pressed primary actions", "cobalt800", "#123E9A"],
-  ["Sky 400", "Informational accent", "Device and data information", "sky400", "#55ACFF"],
-  ["Violet 500", "Brand accent only", "Charts and brand moments, never severity", "violet500", "#7357D8"],
-  ["Mint 400", "Positive accent", "Positive highlights, not device health", "mint400", "#76D6B1"],
+  ["Blue 50", "Selection wash", "Selected rows and active navigation", "cobalt50", "#EFF6FF"],
+  ["Blue 100", "Strong selection", "Focused information groups", "cobalt100", "#DBEAFE"],
+  ["Blue 600", "Brand and interaction", "Primary actions and focus", "cobalt600", "#2563EB"],
+  ["Blue 800", "Pressed interaction", "Pressed primary actions", "cobalt800", "#1E40AF"],
+  ["Neutral 600", "Device information", "Device and data context", "sky400", "#525252"],
+  ["Electric blue", "Brand accent only", "Brand moments, never severity", "violet500", "#2563EB"],
+  ["Green 700", "Positive accent", "Healthy and available states", "mint400", "#15803D"],
 ] as const;
 
 const statusColors = [
-  ["Positive green", "Operationally positive", "Current monitoring and resolved workflow", "positive", "#147D5A"],
-  ["Watch amber", "Review support", "Limited coverage or investigation", "watch", "#A15C00"],
-  ["Risk red", "Resident attention", "Critical or high attention priority", "risk", "#C53B30"],
-  ["Unavailable gray", "Evidence limitation", "Missing, stale, or unavailable evidence", "unavailable", "#526172"],
+  ["Positive green", "Operationally positive", "Healthy, online, or current confirmation", "positive", "#15803D"],
+  ["Watch amber", "Review support", "Watch, limited, or delayed states", "watch", "#A16207"],
+  ["Risk red", "Resident attention", "Critical or high attention priority", "risk", "#B42318"],
+  ["Unavailable gray", "Evidence limitation", "Missing, stale, or unavailable evidence", "unavailable", "#737373"],
 ] as const;
 
 const spacing = [
@@ -60,10 +63,11 @@ const spacing = [
 ] as const;
 
 const radii = [
-  ["Small", "4px", "radiusSquare"],
-  ["Control", "8px", "radiusField"],
-  ["Specimen", "20px", "radiusControl"],
-  ["Feature", "24px", "radiusOverlay"],
+  ["Tiny detail", "4px", "radiusSquare"],
+  ["Input", "6px", "radiusField"],
+  ["Button", "8px", "radiusControl"],
+  ["Card", "12px", "radiusSurface"],
+  ["Floating", "12px", "radiusFloating"],
 ] as const;
 
 const residentRecords: ResidentRecord[] = [
@@ -78,7 +82,7 @@ const residentRecords: ResidentRecord[] = [
     freshness: { value: "current" },
     device: "healthy",
     workflow: "acknowledged",
-    primaryAction: { label: "Review record", href: "#section-09" },
+    primaryAction: { label: "Review record", href: "#section-11" },
     deviceDetails: "Radar, thermal, and Wi-Fi CSI sources are reporting.",
     lastObserved: "22 seconds ago",
   },
@@ -94,7 +98,7 @@ const residentRecords: ResidentRecord[] = [
     freshness: { value: "current" },
     device: "healthy",
     workflow: "acknowledged",
-    primaryAction: { label: "Open record", href: "#section-09" },
+    primaryAction: { label: "Open record", href: "#section-11" },
     deviceDetails: "All three room sources are reporting.",
     lastObserved: "38 seconds ago",
   },
@@ -110,7 +114,7 @@ const residentRecords: ResidentRecord[] = [
     freshness: { value: "unknown" },
     device: "healthy",
     workflow: "new",
-    primaryAction: { label: "Review record", href: "#section-09" },
+    primaryAction: { label: "Review record", href: "#section-11" },
     deviceDetails: "Room sources are reporting, but resident attribution is unavailable.",
     lastObserved: "Last current update unknown",
   },
@@ -125,7 +129,7 @@ const residentRecords: ResidentRecord[] = [
     freshness: { value: "stale", lastCurrentUpdate: "08:38:12" },
     device: "healthy",
     workflow: "acknowledged",
-    primaryAction: { label: "Review record", href: "#section-09" },
+    primaryAction: { label: "Review record", href: "#section-11" },
     deviceDetails: "All three room sources are reporting.",
     lastObserved: "4 minutes ago",
   },
@@ -140,28 +144,11 @@ const residentRecords: ResidentRecord[] = [
     freshness: { value: "delayed" },
     device: "degraded",
     workflow: "investigating",
-    primaryAction: { label: "Review record", href: "#section-09" },
+    primaryAction: { label: "Review record", href: "#section-11" },
     deviceDetails: "Radar and thermal are reporting; Wi-Fi CSI is delayed.",
     lastObserved: "1 minute ago",
   },
 ];
-
-const attentionRecord: AttentionRecord = {
-  id: "resident-b-room-214",
-  residentName: "Resident B",
-  room: "Room 214",
-  attentionReason: "Unexpected movement needs review",
-  attention: "high",
-  monitoring: "active",
-  confidence: "low",
-  freshness: { value: "current" },
-  device: "healthy",
-  workflow: "investigating",
-  elapsed: "12 min open",
-  observedContext: "Synthetic/test-only example. Review the available evidence before deciding what to do next.",
-  deviceDetails: "Radar, thermal, and Wi-Fi CSI sources are reporting.",
-  primaryAction: { label: "Review resident", href: "#section-08" },
-};
 
 function Section({
   number,
@@ -192,30 +179,6 @@ function SpecimenLabel({ children }: Readonly<{ children: ReactNode }>) {
   return <p className={styles.specimenLabel}>{children}</p>;
 }
 
-function CheckIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
-      <path d="m5 10.4 3.1 3.1L15.4 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function MoreIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" {...props}>
-      <circle cx="4" cy="10" r="1.5" /><circle cx="10" cy="10" r="1.5" /><circle cx="16" cy="10" r="1.5" />
-    </svg>
-  );
-}
-
-function ChevronRightIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
-      <path d="m7.5 4.5 5.5 5.5-5.5 5.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 export default function DesignSystemPage() {
   return (
     <DesignSystemShell>
@@ -226,7 +189,10 @@ export default function DesignSystemPage() {
             <span aria-hidden="true">AC</span>
             <strong>Adaptive Care</strong>
           </a>
-          <p>ADAPTIVE CARE · DESIGN SYSTEM V3.0</p>
+          <div className={styles.mastheadTools}>
+            <p>ADAPTIVE CARE · CARE LEDGER V2</p>
+            <ExportActions />
+          </div>
         </header>
 
         <div className={styles.pageGrid} id="top">
@@ -248,7 +214,7 @@ export default function DesignSystemPage() {
               <span className={styles.indexFade} data-design-system-nav-fade aria-hidden="true" hidden />
               <button className={styles.moreSections} type="button" data-design-system-more aria-label="More design system sections" hidden>
                 <span>More sections</span>
-                <ChevronRightIcon />
+                <ArrowIcon />
               </button>
             </div>
             <p className={styles.indexNote}>Quiet at rest.<br />Unmistakable when action is required.</p>
@@ -263,13 +229,13 @@ export default function DesignSystemPage() {
                 <div className={styles.heroCopy}>
                   <p className={styles.heroCopyLabel}>Product rule</p>
                   <p>Adaptive Care separates resident attention, device health, confidence, freshness, and workflow so staff can decide what to do next.</p>
-                  <p className={styles.heroTypeNote}>The brand can speak boldly here. Product UI typography stays compact and restrained.</p>
+                  <p className={styles.heroTypeNote}>Product typography stays strong, compact, and readable across every operational screen.</p>
                 </div>
                 <dl>
                   <div><dt>Product mode</dt><dd>Clinic operations</dd></div>
-                  <div><dt>Visual direction</dt><dd>Clear Signal V3.0</dd></div>
-                  <div><dt>Product type</dt><dd>Restrained Geist Sans</dd></div>
-                  <div><dt>Access floor</dt><dd>WCAG 2.2 AA</dd></div>
+                  <div><dt>Visual direction</dt><dd>Dub-derived neutral ledger</dd></div>
+                  <div><dt>Interface density</dt><dd>Compact operational</dd></div>
+                  <div><dt>Accessibility</dt><dd>WCAG 2.2 AA</dd></div>
                 </dl>
               </div>
             </section>
@@ -283,7 +249,7 @@ export default function DesignSystemPage() {
               <blockquote className={styles.foundationQuote}>“Which resident needs my attention right now?”<footer>The question every clinic screen should answer within two seconds.</footer></blockquote>
             </Section>
 
-            <Section number="02" title="Color" intro="Cobalt guides action. Supporting color stays explicit and useful.">
+            <Section number="02" title="Color" intro="Electric blue guides interaction. Operational color keeps its exact meaning.">
               <div className={styles.colorGroup}>
                 <SpecimenLabel>Foundation tokens</SpecimenLabel>
                 <div className={styles.swatchStrip}>
@@ -302,13 +268,13 @@ export default function DesignSystemPage() {
                   {statusColors.map(([name, role, use, className, value]) => <div className={styles[className]} key={name}><strong>{name}</strong><span>{role}</span><small>{use}</small><code>{value}</code></div>)}
                 </div>
               </div>
-              <p className={styles.ruleNote}><strong>Color rule</strong> Blue means brand or interaction. Sky means information. Violet is a brand accent and never severity. Green, amber, red, and gray carry operational status.</p>
+              <p className={styles.ruleNote}><strong>Color rule</strong> Blue means brand or interaction. Green, amber, red, and gray carry operational status. Device or data trouble never borrows resident-risk red.</p>
             </Section>
 
             <Section number="03" title="Typography" intro="Compact, direct language built for repeated scanning.">
               <div className={styles.typeSpecimens}>
-                <div><p>Display · 32 / 38 · 650</p><strong className={styles.displayType}>Care, without the noise.</strong></div>
-                <div><p>Page title · 28 / 34 · 650</p><strong className={styles.pageTitleType}>Residents needing attention</strong></div>
+                <div><p>Display · 36 / 40 · 650</p><strong className={styles.displayType}>Care, without the noise.</strong></div>
+                <div><p>Page title · 30 / 36 · 650</p><strong className={styles.pageTitleType}>Residents needing attention</strong></div>
                 <div><p>Major heading · 22 / 28 · 650</p><strong className={styles.majorType}>Morning care review</strong></div>
                 <div><p>Section heading · 18 / 24 · 650</p><strong className={styles.productSectionType}>Monitoring coverage</strong></div>
                 <div><p>Record title · 15 / 21 · 600</p><strong className={styles.recordType}>Resident B · Room 214</strong></div>
@@ -322,7 +288,7 @@ export default function DesignSystemPage() {
               <div className={styles.numericSpecimen}><span>Geist Mono · Operational readings</span><strong>08:42:18&nbsp;&nbsp; 12 MIN&nbsp;&nbsp; 04 / 06</strong><code>DEVICE AC-214-A<br />FRAME 00018472</code></div>
             </Section>
 
-            <Section number="04" title="Space & shape" intro="A four-pixel grid, open spacing, and soft geometry keep information approachable.">
+            <Section number="04" title="Space & shape" intro="A four-pixel grid and compact geometry make the interface precise without becoming cramped.">
               <div className={styles.spacingGrid}>
                 {spacing.map(([label, value]) => <div key={label}><span className={styles.spacingBar} style={{ "--specimen-size": value } as CSSProperties} /><strong>{label}</strong><small>{value}</small></div>)}
               </div>
@@ -331,14 +297,79 @@ export default function DesignSystemPage() {
                 <div><SpecimenLabel>Depth</SpecimenLabel><div className={styles.depthRow}><div className={styles.borderSurface}>Base surface<span>Hairline border</span></div><div className={styles.overlaySurface}>Popover<span>Overlap shadow</span></div></div></div>
               </div>
               <div className={styles.layoutSpacing}>
-                <article><strong>24px</strong><span>Default card padding</span><small>Use 16px on narrow screens.</small></article>
-                <article><strong>16px</strong><span>Related component gap</span><small>Use 24px between major modules.</small></article>
+                <article><strong>16–20px</strong><span>Standard surface padding</span><small>Use 12px in compact toolbars and rows.</small></article>
+                <article><strong>8–12px</strong><span>Related item gap</span><small>Use 24–32px between major modules.</small></article>
                 <article><strong>32px</strong><span>Desktop page gutter</span><small>Reduce to 16px below 768px.</small></article>
-                <article><strong>96px</strong><span>Section spacing</span><small>Keep reference groups distinct.</small></article>
+                <article><strong>24–32px</strong><span>Module rhythm</span><small>Precision, not empty space, creates quality.</small></article>
               </div>
             </Section>
 
-            <Section number="05" title="Actions" intro="Controls are restrained, stable, and explicit about outcome.">
+            <Section number="05" title="App shell" intro="Navigation stays quiet while the working surface carries the operational hierarchy.">
+              <div className={styles.shellSpecimen} aria-label="Adaptive Care clinic shell specimen">
+                <aside className={styles.shellSidebar}>
+                  <div className={styles.shellBrand}><CareMark /><strong>Adaptive Care</strong></div>
+                  <button className={styles.facilityControl} type="button"><span>NC</span><span><strong>Northstar Clinic</strong><small>Care operations</small></span><ArrowIcon /></button>
+                  <nav aria-label="Clinic shell specimen navigation">
+                    <p>Workspace</p>
+                    <a className={styles.shellActive} href="#section-05"><OverviewIcon />Overview</a>
+                    <a href="#section-10"><EventIcon />Events</a>
+                    <a href="#section-10"><DeviceIcon />Devices</a>
+                    <a href="#section-09"><ScenarioIcon />Scenario lab</a>
+                  </nav>
+                  <div className={styles.shellAccount}><span>MC</span><div><strong>Maya Chen</strong><small>Care coordinator</small></div><MoreIcon /></div>
+                </aside>
+                <div className={styles.shellWorkspace}>
+                  <header className={styles.shellTopbar}><span>Northstar Clinic / Residents</span><div><SearchIcon /><span>Search residents</span><kbd>⌘ K</kbd></div></header>
+                  <div className={styles.shellPage}>
+                    <header className={styles.shellPageHeader}>
+                      <div><p>Care operations</p><h3>Residents</h3><span>5 monitored rooms · updated just now</span></div>
+                      <div className={styles.shellToolbar}><button type="button">Filter</button><button type="button">Sort</button><button type="button">Add resident</button></div>
+                    </header>
+                    <div className={styles.shellWorkArea}>
+                      <section className={styles.shellMainSurface} aria-label="Resident working surface">
+                        <div className={styles.shellTableHead}><span>Resident</span><span>Attention</span><span>Monitoring</span><span>Updated</span><span /></div>
+                        <a href="#section-10"><span><strong>Mateo Brooks</strong><small>Room 305</small></span><span><b className={styles.riskDot} />Critical<small>Unexpected movement</small></span><span>Active<small>Low confidence</small></span><time>9:23 PM</time><ArrowIcon /></a>
+                        <a href="#section-10"><span><strong>Avery Chen</strong><small>Room 214</small></span><span>No priority<small>Monitoring current</small></span><span>Active</span><time>9:22 PM</time><ArrowIcon /></a>
+                        <a href="#section-10"><span><strong>Sam Rivera</strong><small>Room 302</small></span><span>No priority<small>Attribution unavailable</small></span><span><b className={styles.watchDot} />Limited<small>Multi-person possible</small></span><time>Unknown</time><ArrowIcon /></a>
+                      </section>
+                      <aside className={styles.shellRail}>
+                        <div><p>Selected resident</p><h4>Mateo Brooks</h4><span>Room 305</span></div>
+                        <dl><div><dt>Attention</dt><dd>Critical</dd></div><div><dt>Evidence</dt><dd>Low confidence</dd></div><div><dt>Device</dt><dd>Degraded</dd></div></dl>
+                        <button type="button">Review resident <ArrowIcon /></button>
+                      </aside>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className={styles.shellSpecs}>
+                <div><strong>208px</strong><span>Sidebar</span><small>58px collapsed</small></div>
+                <div><strong>56px</strong><span>Topbar</span><small>One quiet utility row</small></div>
+                <div><strong>32px</strong><span>Page gutter</span><small>24px at tablet widths</small></div>
+                <div><strong>320px</strong><span>Secondary rail</span><small>Moves into a sheet below 1100px</small></div>
+                <div><strong>400px</strong><span>Detail sheet</span><small>6px radius, floating shadow</small></div>
+                <div><strong>36px</strong><span>Navigation item</span><small>16px icon, restrained selection</small></div>
+                <div><strong>40px</strong><span>Toolbar</span><small>Directly above working content</small></div>
+                <div><strong>40px</strong><span>Tabs</span><small>Underline selection, never pill tabs</small></div>
+                <div><strong>480px</strong><span>Dialog</span><small>Maximum default width, floating only</small></div>
+              </div>
+              <p className={styles.ruleNote}><strong>Responsive rule</strong> Collapse the sidebar to icons at 1100px, move the secondary rail into a right sheet, and replace the sidebar with compact primary navigation below 768px. Main work remains first in the reading order.</p>
+            </Section>
+
+            <Section number="06" title="Iconography" intro="One internal line-icon family supports navigation and actions without competing with the words.">
+              <div className={styles.iconLibrary}>
+                <div><OverviewIcon /><strong>Overview</strong><span>18px navigation</span></div>
+                <div><EventIcon /><strong>Events</strong><span>18px navigation</span></div>
+                <div><DeviceIcon /><strong>Devices</strong><span>18px navigation</span></div>
+                <div><SearchIcon /><strong>Search</strong><span>16px control</span></div>
+                <div><PanelRightIcon /><strong>Detail panel</strong><span>16px control</span></div>
+                <div><MoreIcon /><strong>More</strong><span>16px control</span></div>
+                <div><CheckIcon /><strong>Complete</strong><span>20px important status</span></div>
+                <div><AlertIcon /><strong>Attention</strong><span>20px important status</span></div>
+              </div>
+              <div className={styles.iconRules}><p><strong>Stroke</strong><span>1.8px, round caps and joins, currentColor.</span></p><p><strong>Default</strong><span>16px controls, 18px navigation, 20px only for important status or action.</span></p><p><strong>Do not use</strong><span>When the label is already clear, for decoration, or as the only carrier of status meaning.</span></p></div>
+            </Section>
+
+            <Section number="07" title="Actions" intro="Controls are restrained, stable, and explicit about outcome.">
               <div className={styles.controlStage}>
                 <SpecimenLabel>Button hierarchy</SpecimenLabel>
                 <div className={styles.buttonRow}>
@@ -372,22 +403,23 @@ export default function DesignSystemPage() {
               <p className={styles.ruleNote}><strong>Action rule</strong> Disabled actions keep their label and explain the reason nearby. Loading never changes a button’s width.</p>
             </Section>
 
-            <Section number="06" title="Forms" intro="Visible labels, clear requirements, and local recovery.">
+            <Section number="08" title="Forms" intro="Visible labels, fixed control heights, and local recovery make forms boring in the best way.">
               <form className={styles.formStage}>
                 <FormField id="resident-search" label="Search residents" hint="Search by resident label or room." type="search" placeholder="Example: Room 214" />
                 <FormField id="room-search-focus" className={styles.focusField} label="Search focus state" hint="Visible focus uses the blue interaction ring." defaultValue="Room 214" />
                 <FormField id="workflow-state" label="Workflow state" as="select" defaultValue="acknowledged" options={[{ value: "new", label: "New" }, { value: "acknowledged", label: "Acknowledged" }, { value: "investigating", label: "Investigating" }, { value: "resolved", label: "Resolved" }]} />
+                <FormField id="room-disabled" label="Assigned room" hint="Room assignment is managed by an administrator." defaultValue="Room 214" disabled />
                 <FormFieldset legend="Follow-up timing">
                   <label><input type="radio" name="follow-up" defaultChecked /> This round</label>
                   <label><input type="radio" name="follow-up" /> Next round</label>
                 </FormFieldset>
                 <label className={styles.checkbox}><input type="checkbox" defaultChecked /><span>Record staff observation pending review</span></label>
-                <FormField id="care-note" label="Care note" hint="Record what staff observed." error="Add what staff observed before saving." as="textarea" defaultValue="Resident checked." required />
+                <FormField id="care-note" label="Care note · error state" hint="Required fields stay neutral until validation fails." error="Add what staff observed before saving." as="textarea" required />
                 <Button>Save observation</Button>
               </form>
             </Section>
 
-            <Section number="07" title="Status" intro="Six independent axes describe what is known, what is limited, and what staff should do next.">
+            <Section number="09" title="Status" intro="Six independent axes describe what is known, what is limited, and what staff should do next.">
               <p className={styles.ruleNote}><strong>Status rule</strong> Attention, monitoring, confidence, freshness, device, and workflow are separate facts. Their colors support the written meaning; they never replace it.</p>
               <div className={styles.statusAxisCatalog}>
                 <article className={styles.statusAxisCard}>
@@ -447,6 +479,18 @@ export default function DesignSystemPage() {
                   </div>
                 </article>
               </div>
+              <div className={styles.statusContext}>
+                <div><SpecimenLabel>Contextual display</SpecimenLabel><p>Show the status that changes the decision in this view. Do not render all six axes just because the data exists.</p></div>
+                <table aria-label="Contextual status display">
+                  <thead><tr><th scope="col">View</th><th scope="col">Default</th><th scope="col">Show only when it changes interpretation</th></tr></thead>
+                  <tbody>
+                    <tr><th scope="row">Dashboard queue</th><td>Attention + reason</td><td>Monitoring, confidence, or freshness when limited or unavailable</td></tr>
+                    <tr><th scope="row">Event detail</th><td>Attention, workflow, evidence quality</td><td>Monitoring when attribution is affected; device as secondary context</td></tr>
+                    <tr><th scope="row">Resident detail</th><td>Attention, monitoring, relevant evidence</td><td>Freshness, device, and workflow when they explain the current state</td></tr>
+                    <tr><th scope="row">Device views</th><td>Device health + freshness</td><td>Monitoring when source state limits resident attribution</td></tr>
+                  </tbody>
+                </table>
+              </div>
               <div className={styles.statusComposite}>
                 <div className={styles.statusCompositeHeader}><div><SpecimenLabel>Composite example · synthetic/test-only</SpecimenLabel><h3>Independent facts can coexist</h3></div><span className={styles.statusCompositeCode}>NO SINGLE SCORE</span></div>
                 <div className={styles.statusCompositeValues}>
@@ -468,28 +512,30 @@ export default function DesignSystemPage() {
               </div>
             </Section>
 
-            <Section number="08" title="Data" intro="Repeated records use tables. Missing values say what they mean.">
+            <Section number="10" title="Data" intro="A resident queue exposes only the facts needed to choose what to inspect next.">
               <SpecimenLabel>Resident records · synthetic/test-only</SpecimenLabel>
               <ResidentRecords records={residentRecords} />
-              <p className={styles.ruleNote}><strong>Responsive rule</strong> Desktop uses a scannable table; narrow screens use ordered records so the resident, reason, evidence, workflow, and action remain visible without horizontal panning.</p>
+              <p className={styles.ruleNote}><strong>Responsive rule</strong> Desktop uses a scannable table; narrow screens preserve the decision facts and move device and workflow detail into a native disclosure without horizontal panning.</p>
             </Section>
 
-            <Section number="09" title="Care patterns" intro="Operational components keep priority, truth, workflow, and action together.">
-              <SpecimenLabel>Attention queue item</SpecimenLabel>
-              <AttentionItem record={attentionRecord} />
-              <div className={styles.evidenceGrid}>
-                <article><span>Resident status</span><h3>Monitoring current</h3><p>High confidence. Latest evidence arrived 38 seconds ago.</p><small>Keep risk, confidence, and freshness separate.</small></article>
-                <article><span>Device status</span><h3>Healthy device</h3><p>Radar, thermal, and Wi-Fi sources are reporting.</p><small>Device health is separate from resident attention and confidence.</small></article>
-                <article><span>Attention hierarchy</span><ol className={styles.alertHierarchy}><li><b>1</b> High attention priority</li><li><b>2</b> Review workflow state</li><li><b>3</b> Device and data limits</li></ol><small>This synthetic example does not identify a medical cause.</small></article>
+            <Section number="11" title="Care patterns" intro="Semantic specification stays rigorous; actual care UI stays concise and task-focused.">
+              <SpecimenLabel>Operational manifestations · synthetic/test-only</SpecimenLabel>
+              <div className={styles.careManifestations}>
+                <article data-tone="risk"><div><span>Critical</span><strong>Unexpected movement</strong><p>Low-confidence evidence · updated 1 minute ago</p></div><a href="#section-10">Review resident <ArrowIcon /></a></article>
+                <article data-tone="watch"><div><span>Watch</span><strong>Resident-away period</strong><p>Current room sources · attribution paused</p></div><a href="#section-10">Open record <ArrowIcon /></a></article>
+                <article data-tone="neutral"><div><span>Unavailable</span><strong>Multiple people may be present</strong><p>Resident-specific attribution unavailable</p></div><a href="#section-10">View evidence <ArrowIcon /></a></article>
               </div>
               <div className={styles.operationalStates}>
-                <SpecimenLabel>Operational states · synthetic/test-only</SpecimenLabel>
-                <p className={styles.operationalStatesIntro}>One reusable catalog keeps known facts, limitations, why they matter, and the allowed next action together. Color supports the words; it never carries meaning alone.</p>
-                <SystemStateCatalog />
-                <SystemLifecycle />
-                <SystemFeedback />
+                <SpecimenLabel>Semantic specification · synthetic/test-only</SpecimenLabel>
+                <p className={styles.operationalStatesIntro}>The UI above shows the concise manifestation. The expandable specification below preserves what is known, limited, why it matters, and every allowed action for implementation and review.</p>
+                <details className={styles.semanticDocs}>
+                  <summary>Open complete care-state specification</summary>
+                  <SystemStateCatalog />
+                  <SystemLifecycle />
+                  <SystemFeedback />
+                </details>
               </div>
-              <footer className={styles.pageFooter}><span>Adaptive Care · Clear Signal V3.0</span><a href="#top">Back to top ↑</a></footer>
+              <footer className={styles.pageFooter}><span>Adaptive Care · Care Ledger V2</span><a href="#top">Back to top <ArrowIcon /></a></footer>
             </Section>
           </main>
         </div>

@@ -61,14 +61,15 @@ describe("ResidentRecords", () => {
     const table = screen.getByRole("table", { name: /synthetic resident monitoring records/i });
     expect(within(table).getAllByRole("row")).toHaveLength(records.length + 1);
     expect(within(table).getByRole("columnheader", { name: "Resident" })).toBeInTheDocument();
-    expect(within(table).getByRole("columnheader", { name: "Attention priority" })).toBeInTheDocument();
-    expect(within(table).getByRole("columnheader", { name: "Evidence" })).toBeInTheDocument();
-    expect(within(table).getByRole("columnheader", { name: "Operations" })).toBeInTheDocument();
+    expect(within(table).getByRole("columnheader", { name: "Attention" })).toBeInTheDocument();
+    expect(within(table).getByRole("columnheader", { name: "Monitoring" })).toBeInTheDocument();
+    expect(within(table).getByRole("columnheader", { name: "Updated" })).toBeInTheDocument();
+    expect(within(table).getByRole("columnheader", { name: "Open record" })).toBeInTheDocument();
     expect(within(table).getAllByRole("columnheader")).toHaveLength(5);
     expect(within(table).getAllByRole("link", { name: /for Avery Chen/i })).toHaveLength(1);
     const selectedRow = within(table).getAllByRole("row")[1];
-    expect(selectedRow).not.toHaveAttribute("aria-selected");
-    expect(selectedRow).toHaveTextContent("Selected record");
+    expect(selectedRow).toHaveAttribute("aria-selected", "true");
+    expect(selectedRow).not.toHaveTextContent("Selected record");
     expect(within(selectedRow).getByRole("link", { name: /for Avery Chen/i })).toBeInTheDocument();
   });
 
@@ -80,16 +81,46 @@ describe("ResidentRecords", () => {
     expect(css).not.toMatch(/\.desktopTable\s*\{[^}]*overflow-x\s*:\s*auto/);
     expect(css).not.toMatch(/\.desktopTable\s+table\s*\{[^}]*min-width\s*:\s*980px/);
     expect(css).toMatch(/\.actionColumn/);
-    expect(css).toMatch(/\.recordCard \.recordIdentity[^}]*min-width:\s*0/);
-    expect(css).toMatch(/\.recordCard \.primaryAction[^}]*white-space:\s*normal/);
-    expect(css).toMatch(/\.evidence \.indicator[^}]*overflow-wrap:\s*anywhere/);
-    expect(css).toMatch(/\.deviceDetails summary[^}]*white-space:\s*normal/);
-    expect(css).toMatch(/@media \(min-width:\s*768px\) and \(max-width:\s*980px\)/);
-    expect(css).toMatch(/\.desktopTable th,\s*\.desktopTable td\s*\{[^}]*padding-inline:\s*var\(--ac-space-2\)/);
-    expect(css).toMatch(/\.desktopTable thead th[^}]*overflow-wrap:\s*normal/);
-    expect(css).toMatch(/\.desktopTable thead th[^}]*word-break:\s*normal/);
-    expect(css).toMatch(/\.actionColumn \.primaryAction[^}]*max-width:\s*100%/);
-    expect(css).toMatch(/\.actionColumn \.primaryAction[^}]*white-space:\s*normal/);
+    expect(css).toMatch(/\.recordIdentity\s*\{[^}]*min-width:\s*0/);
+    expect(css).toMatch(/height:\s*60px/);
+    expect(css).toMatch(/\.rowAction\s*\{[^}]*width:\s*32px/);
+    expect(css).toMatch(/\.rowAction\s*\{[^}]*height:\s*32px/);
+    expect(css).toMatch(/\.desktopTable tbody tr:hover/);
+    expect(css).toMatch(/\.desktopTable tbody tr\[aria-selected="true"\]/);
+  });
+
+  it("keeps default facts neutral without adding positive markers", () => {
+    const css = readFileSync("src/components/ui/resident-records.module.css", "utf8");
+
+    expect(css).toMatch(/\.compactStatus\[data-emphasis="quiet"\] \{ color: var\(--ac-text-secondary\); \}/);
+    expect(css).toMatch(/\.compactStatus\[data-emphasis="quiet"\] \.statusDot \{ display: none; \}/);
+    expect(css).not.toMatch(/\[data-axis="monitoring"\]\[data-value="active"\] \.statusDot \{ background: var\(--ac-positive-text\); \}/);
+  });
+
+  it("omits default confidence and freshness from the decision row", () => {
+    const healthyRecord: ResidentRecord = {
+      ...records[0],
+      id: "healthy-default",
+      residentName: "Taylor Morgan",
+      attention: "none",
+      monitoring: "active",
+      confidence: "high",
+      freshness: { value: "current" },
+    };
+
+    render(<ResidentRecords records={[healthyRecord]} />);
+
+    const table = screen.getByRole("table", { name: /synthetic resident monitoring records/i });
+    expect(table).toHaveTextContent("No priority");
+    expect(table).toHaveTextContent("Monitoring active");
+    expect(table).not.toHaveTextContent("High confidence");
+    expect(table).not.toHaveTextContent("Current");
+    expect(within(table).getByLabelText(/attention: no attention priority/i)).toHaveAttribute("data-emphasis", "quiet");
+    expect(within(table).getByLabelText(/monitoring: monitoring active/i)).toHaveAttribute("data-emphasis", "quiet");
+
+    const mobile = screen.getByTestId("resident-records-mobile");
+    expect(mobile).not.toHaveTextContent("High confidence");
+    expect(mobile).not.toHaveTextContent("Current");
   });
 
   it("uses canonical StatusIndicator labels in compact table cells", () => {
@@ -105,28 +136,29 @@ describe("ResidentRecords", () => {
     expect(within(table).getByLabelText(`${getStatusAxisLabel("attention")}: ${getStatusLabel({ axis: "attention", value: "high" })}`)).toBeInTheDocument();
   });
 
-  it("names each mobile disclosure for its resident", () => {
+  it("names each mobile detail disclosure for its resident", () => {
     render(<ResidentRecords records={records} />);
 
-    const summaries = within(screen.getByTestId("resident-records-mobile")).getAllByText(/Device details for/i);
+    const summaries = within(screen.getByTestId("resident-records-mobile")).getAllByText(/More details for/i);
     expect(summaries).toHaveLength(records.length);
     records.forEach((record) => {
-      expect(screen.getByText(`Device details for ${record.residentName}`)).toBeInTheDocument();
+      expect(screen.getByText(`More details for ${record.residentName}`)).toBeInTheDocument();
     });
   });
 
-  it("shows the attribution limitation in the desktop Operations cell", () => {
+  it("keeps the desktop queue concise during possible multi-person presence", () => {
     render(<ResidentRecords records={records} />);
 
     const table = screen.getByRole("table", { name: /synthetic resident monitoring records/i });
     const samRow = within(table).getAllByRole("row").find((row) => row.textContent?.includes("Sam Rivera"));
     expect(samRow).toBeDefined();
-    expect(samRow).toHaveTextContent("Resident attribution unavailable");
-    expect(samRow).toHaveTextContent(/do not guess/i);
-    expect(within(samRow as HTMLElement).getByLabelText(/monitoring: monitoring possible multi-person; resident attribution unavailable/i)).toBeInTheDocument();
+    expect(samRow).toHaveTextContent("Multi-person possible");
+    expect(samRow).toHaveTextContent("Confidence unavailable");
+    expect(samRow).not.toHaveTextContent(/do not guess/i);
+    expect(within(samRow as HTMLElement).getByLabelText(/monitoring: monitoring possible multi-person/i)).toBeInTheDocument();
   });
 
-  it("keeps mobile record facts in the required reading order and discloses device details last", () => {
+  it("keeps mobile decision facts concise and discloses secondary detail last", () => {
     render(<ResidentRecords records={records} />);
 
     const mobileList = screen.getByTestId("resident-records-mobile");
@@ -140,9 +172,7 @@ describe("ResidentRecords", () => {
       const orderedParts = [
         card.querySelector("[data-record-identity]"),
         card.querySelector("[data-attention-reason]"),
-        card.querySelector("[data-attention-priority]"),
         card.querySelector("[data-evidence]"),
-        card.querySelector("[data-workflow]"),
         card.querySelector("[data-primary-action]"),
         card.querySelector("details"),
       ];
@@ -155,12 +185,12 @@ describe("ResidentRecords", () => {
 
     const selectedCard = cards.find((card) => card.textContent?.includes("Avery Chen"));
     expect(selectedCard).toHaveAttribute("data-interaction", "selected");
-    expect(selectedCard).toHaveTextContent("Selected record");
+    expect(selectedCard).not.toHaveTextContent("Selected record");
 
     const evidence = cards[0].querySelector("[data-evidence]");
-    expect(evidence).toHaveTextContent("Monitoring");
-    expect(evidence).toHaveTextContent("Confidence");
-    expect(evidence).toHaveTextContent("Freshness");
+    expect(evidence).toHaveTextContent("Monitoring active");
+    expect(evidence).toHaveTextContent("Low confidence");
+    expect(evidence).toHaveTextContent("Delayed");
     expect(Array.from(evidence?.querySelectorAll("[data-axis]") ?? []).map((status) => status.getAttribute("data-axis"))).toEqual([
       "monitoring",
       "confidence",
@@ -176,7 +206,7 @@ describe("ResidentRecords", () => {
 
     const samCards = screen.getAllByRole("article").filter((card) => card.textContent?.includes("Sam Rivera"));
     expect(samCards).toHaveLength(1);
-    expect(samCards[0]).toHaveTextContent(/resident-specific attribution is unavailable/i);
+    expect(samCards[0]).toHaveTextContent(/multi-person possible/i);
     expect(within(samCards[0]).getByLabelText(/confidence: confidence unavailable/i)).toBeInTheDocument();
     expect(samCards[0]).not.toHaveTextContent(/monitoring active/i);
   });

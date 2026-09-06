@@ -17,6 +17,7 @@ const destinations = [
 
 export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
   const pathname = usePathname();
+  const isOverview = pathname === "/";
 
   if (pathname.startsWith("/design-system")) return children;
 
@@ -28,14 +29,6 @@ export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
           <span>
             <strong className={styles.brandName}>Adaptive Care</strong>
             <span className={styles.brandSubtitle}>Clinic console</span>
-          </span>
-        </div>
-
-        <div className={styles.workspaceCard} aria-label="Current clinic workspace">
-          <span className={styles.workspaceMonogram} aria-hidden="true">N</span>
-          <span className={styles.workspaceDetails}>
-            <strong>Northstar Clinic</strong>
-            <span>Care operations</span>
           </span>
         </div>
 
@@ -63,14 +56,13 @@ export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
       </header>
 
       <section className={styles.workspace}>
-        <div className={styles.topbar}>
+        <div className={styles.topbar} aria-label="Current clinic workspace">
           <div>
             <p className={styles.workspaceName}>Northstar Clinic</p>
             <p className={styles.workspaceMeta}>Care operations workspace</p>
           </div>
-          <span className={styles.demoBadge}>Synthetic demo data</span>
         </div>
-        <main className={styles.main}>{children}</main>
+        <main className={isOverview ? `${styles.main} ${styles.overviewMain}` : styles.main}>{children}</main>
       </section>
     </div>
   );

@@ -17,6 +17,7 @@ export type StatusValue<Axis extends StatusAxis> = (typeof statusValues)[Axis][n
 type SharedStatusIndicatorProps = Readonly<{
   announce?: boolean;
   className?: string;
+  showDescription?: boolean;
 }>;
 
 type NonFreshnessStatusIndicatorProps = {
@@ -175,7 +176,7 @@ export function getStatusLabel(props: StatusIndicatorProps): string {
 }
 
 export function StatusIndicator(props: StatusIndicatorProps) {
-  const { announce = false, axis, value, className } = props;
+  const { announce = false, axis, value, className, showDescription = true } = props;
   const id = useId();
   const descriptionId = `${id}-description`;
   const label = getStatusLabel(props);
@@ -190,7 +191,7 @@ export function StatusIndicator(props: StatusIndicatorProps) {
       data-semantic={semanticTreatment}
       role={announce ? "status" : undefined}
       aria-label={`${getStatusAxisLabel(axis)}: ${label}`}
-      aria-describedby={descriptionId}
+      aria-describedby={showDescription ? descriptionId : undefined}
     >
       <span className={styles.marker} aria-hidden="true" />
       <span className={styles.content}>
@@ -198,9 +199,7 @@ export function StatusIndicator(props: StatusIndicatorProps) {
         <span className={styles.label}>
           {label}
         </span>
-        <span className={styles.description} id={descriptionId}>
-          {description}
-        </span>
+        {showDescription ? <span className={styles.description} id={descriptionId}>{description}</span> : null}
       </span>
     </span>
   );

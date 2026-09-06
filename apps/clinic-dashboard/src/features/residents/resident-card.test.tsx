@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import type { DeviceStatus, ResidentOverviewItem } from "@/lib/monitoring";
@@ -38,8 +38,8 @@ describe("ResidentCard device health", () => {
       />,
     );
 
-    expect(screen.getByText("Device degraded")).toBeVisible();
-    expect(screen.queryByText("Device offline")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Device: Degraded")).toHaveAttribute("data-device-status", "degraded");
+    expect(screen.queryByLabelText("Device: Offline")).not.toBeInTheDocument();
   });
 
   it("keeps an unknown device status unknown", () => {
@@ -49,8 +49,38 @@ describe("ResidentCard device health", () => {
       />,
     );
 
-    expect(screen.getByText("Device status unknown")).toBeVisible();
-    expect(screen.queryByText("Device offline")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Device: Unknown")).toHaveAttribute("data-device-status", "unknown");
+    expect(screen.queryByLabelText("Device: Offline")).not.toBeInTheDocument();
+  });
+
+  it("keeps attention, monitoring, and device as separate facts", () => {
+    render(
+      <ResidentCard
+        resident={residentWithDevice("offline", "Room sensor offline")}
+      />,
+    );
+
+    const card = screen.getByRole("article");
+    const statusFacts = within(card)
+      .getAllByLabelText(/^(Attention|Monitoring|Device):/)
+      .map((element) => element.getAttribute("aria-label"));
+
+    expect(statusFacts).toEqual([
+      "Attention: Watch item",
+      "Monitoring: Limited",
+      "Device: Offline",
+    ]);
+  });
+
+  it("shows a healthy online device as a quiet, separate fact", () => {
+    render(
+      <ResidentCard
+        resident={residentWithDevice("online", "Room sensor online")}
+      />,
+    );
+
+    expect(screen.getByLabelText("Device: Online")).toHaveAttribute("data-device-status", "online");
+    expect(screen.queryByText("Room sensor online")).not.toBeInTheDocument();
   });
 });
 

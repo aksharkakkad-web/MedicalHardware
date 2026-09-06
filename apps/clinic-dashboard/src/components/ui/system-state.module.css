@@ -1,8 +1,9 @@
 .catalog {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--ac-space-4);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
   margin-top: var(--ac-space-6);
+  border-block: 1px solid var(--ac-border-subtle);
 }
 
 .state {
@@ -11,13 +12,15 @@
   align-content: start;
   gap: var(--ac-space-3);
   padding: var(--ac-space-5);
-  border: 1px solid var(--ac-border-subtle);
-  border-left: 4px solid var(--ac-action);
-  border-radius: var(--ac-radius-card);
+  border: 0;
+  border-bottom: 1px solid var(--ac-border-subtle);
+  border-left: 3px solid var(--ac-action);
+  border-radius: 0;
   color: var(--ac-text-primary);
   background: var(--ac-surface);
-  box-shadow: var(--ac-shadow-card);
 }
+
+.state:nth-child(odd) { border-right: 1px solid var(--ac-border-subtle); }
 
 .state[data-semantic="positive"] { border-left-color: var(--ac-positive-text); }
 .state[data-semantic="info"] { border-left-color: var(--ac-action); }
@@ -55,9 +58,9 @@
 
 .semantic {
   flex: 0 0 auto;
-  padding: var(--ac-space-1) var(--ac-space-2);
-  border: 1px solid currentColor;
-  border-radius: var(--ac-radius-pill);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
   color: var(--ac-text-secondary);
   font-size: var(--ac-font-size-metadata);
   font-weight: 650;
@@ -156,10 +159,10 @@
   display: grid;
   gap: var(--ac-space-5);
   margin-top: var(--ac-space-10);
-  padding: var(--ac-space-6);
-  border: 1px solid var(--ac-border-subtle);
-  border-radius: var(--ac-radius-card);
-  background: var(--ac-surface-raised);
+  padding: var(--ac-space-5) 0 0;
+  border-top: 1px solid var(--ac-border-subtle);
+  border-radius: 0;
+  background: transparent;
 }
 
 .lifecycle > header,
@@ -191,9 +194,9 @@
   gap: var(--ac-space-3);
   min-width: 0;
   padding: var(--ac-space-4);
-  border: 1px solid var(--ac-border-subtle);
-  border-radius: var(--ac-radius-sm);
-  background: var(--ac-surface);
+  border-left: 1px solid var(--ac-border-subtle);
+  border-radius: 0;
+  background: transparent;
 }
 
 .lifecycleStep {
@@ -228,8 +231,8 @@
 
 .feedbackGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--ac-space-4);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
 }
 
 @media (max-width: 1100px) {

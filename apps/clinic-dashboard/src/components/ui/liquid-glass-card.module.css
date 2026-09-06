@@ -1,0 +1,20 @@
+.card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--ac-border-subtle);
+  border-radius: var(--ac-radius-card);
+  background: var(--ac-surface);
+}
+
+.card[data-size="small"] .content { padding: 16px; }
+.card[data-size="default"] .content { padding: 24px; }
+.filterDefinition, .refraction, .highlight { display: none; }
+.content { position: relative; z-index: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .card { transition: none; }
+}
+
+@media (forced-colors: active) {
+  .card { border-color: CanvasText; }
+}

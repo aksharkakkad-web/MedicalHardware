@@ -36,21 +36,21 @@ export type AttentionRecord = AttentionRecordBase &
       }>
   );
 
-export type AttentionItemProps = Readonly<{ record: AttentionRecord; className?: string }>;
+export type AttentionItemProps = Readonly<{ record: AttentionRecord; className?: string; compact?: boolean }>;
 
-function FreshnessStatus({ record }: Readonly<{ record: AttentionRecord }>) {
+function FreshnessStatus({ record, compact }: Readonly<{ record: AttentionRecord; compact?: boolean }>) {
   if (record.freshness.value === "stale") {
-    return <StatusIndicator axis="freshness" value="stale" lastCurrentUpdate={record.freshness.lastCurrentUpdate} />;
+    return <StatusIndicator axis="freshness" value="stale" lastCurrentUpdate={record.freshness.lastCurrentUpdate} showDescription={!compact} />;
   }
 
-  return <StatusIndicator axis="freshness" value={record.freshness.value} />;
+  return <StatusIndicator axis="freshness" value={record.freshness.value} showDescription={!compact} />;
 }
 
 function StatusAxis({ axis, children }: Readonly<{ axis: string; children: ReactNode }>) {
   return <div className={styles.axis} data-testid={`attention-item-axis-${axis}`} data-axis={axis}>{children}</div>;
 }
 
-export function AttentionItem({ record, className }: AttentionItemProps) {
+export function AttentionItem({ record, className, compact = false }: AttentionItemProps) {
   const actionLabel = `${record.primaryAction.label} for ${record.residentName}`;
   const action = "href" in record.primaryAction ? (
     <a className={`${buttonStyles.button} ${buttonStyles.primary}`} href={record.primaryAction.href} aria-label={actionLabel} data-primary-action>
@@ -65,7 +65,7 @@ export function AttentionItem({ record, className }: AttentionItemProps) {
   const confidence = multiPerson ? "unavailable" : record.confidence;
 
   return (
-    <article className={[styles.item, className].filter(Boolean).join(" ")} data-attention-item data-record-id={record.id} aria-label={`${record.residentName}, ${record.room}`}>
+    <article className={[styles.item, className].filter(Boolean).join(" ")} data-attention-item data-density={compact ? "compact" : undefined} data-record-id={record.id} aria-label={`${record.residentName}, ${record.room}`}>
       <div className={styles.topline}>
         <div className={styles.identity}>
           <strong>{record.residentName}</strong>
@@ -80,13 +80,13 @@ export function AttentionItem({ record, className }: AttentionItemProps) {
       </div>
 
       <div className={styles.statuses} aria-label="Monitoring facts">
-        <StatusAxis axis="attention"><StatusIndicator axis="attention" value={record.attention} /></StatusAxis>
-        <StatusAxis axis="monitoring"><StatusIndicator axis="monitoring" value={record.monitoring} /></StatusAxis>
+        <StatusAxis axis="attention"><StatusIndicator axis="attention" value={record.attention} showDescription={!compact} /></StatusAxis>
+        <StatusAxis axis="monitoring"><StatusIndicator axis="monitoring" value={record.monitoring} showDescription={!compact} /></StatusAxis>
         {multiPerson ? <p className={styles.attributionLimit}>Resident-specific attribution is unavailable while multiple people may be present. Do not guess which person caused this signal.</p> : null}
-        <StatusAxis axis="confidence"><StatusIndicator axis="confidence" value={confidence} /></StatusAxis>
-        <StatusAxis axis="freshness"><FreshnessStatus record={record} /></StatusAxis>
-        <StatusAxis axis="device"><StatusIndicator axis="device" value={record.device} /></StatusAxis>
-        <StatusAxis axis="workflow"><StatusIndicator axis="workflow" value={record.workflow} /></StatusAxis>
+        <StatusAxis axis="confidence"><StatusIndicator axis="confidence" value={confidence} showDescription={!compact} /></StatusAxis>
+        <StatusAxis axis="freshness"><FreshnessStatus record={record} compact={compact} /></StatusAxis>
+        <StatusAxis axis="device"><StatusIndicator axis="device" value={record.device} showDescription={!compact} /></StatusAxis>
+        <StatusAxis axis="workflow"><StatusIndicator axis="workflow" value={record.workflow} showDescription={!compact} /></StatusAxis>
       </div>
 
       {record.observedContext ? <p className={styles.context}><strong>Observed context</strong>{record.observedContext}</p> : null}

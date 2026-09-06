@@ -1,12 +1,24 @@
+/* Adaptive Care: Dub-derived visual tokens. Match the clinic system roles. */
 :root {
-  --canvas: #f7f5ef; --surface: #fffefa; --text: #242522; --muted: #686a64; --border: #dfdfd8;
-  --action: #2467d6; --action-soft: #e8f0fd; --steady: #256c58; --steady-soft: #e2f2eb;
-  --attention: #8a5710; --attention-soft: #fff0d3; --important: #9c3d35; --important-soft: #fde9e5;
+  color-scheme: light;
+  --canvas: #ffffff; --surface: #ffffff; --surface-muted: #f5f5f5;
+  --text: #171717; --text-strong: #0a0a0a; --muted: #737373; --border: #e5e5e5; --border-strong: #d4d4d4;
+  --action: #2563eb; --action-hover: #1e40af; --action-soft: #eff6ff;
+  --steady: #16a34a; --steady-soft: #f0fdf4;
+  --attention: #d97706; --attention-soft: #fffbeb;
+  --important: #dc2626; --important-soft: #fef2f2;
+  --unavailable: #737373; --unavailable-soft: #f5f5f5;
+  --radius-input: 6px; --radius-button: 8px; --radius-card: 12px; --radius-pill: 9999px; --page-width: 1200px;
+  --space-1: 8px; --space-2: 16px; --space-3: 24px; --space-4: 32px; --space-6: 48px;
 }
 * { box-sizing: border-box; }
 html { background: var(--canvas); }
-body { margin: 0; background: var(--canvas); color: var(--text); font-family: var(--font-geist-sans), Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+body { margin: 0; background: var(--canvas); color: var(--text); font-family: var(--font-inter), Inter, Arial, sans-serif; font-size: 14px; font-weight: 400; line-height: 1.5; letter-spacing: -.01em; font-feature-settings: "ss01" on, "tnum" on; -webkit-font-smoothing: antialiased; }
+h1, h2, h3 { color: var(--text-strong); font-weight: 500; }
 button, input, textarea { font: inherit; }
-button, a, input, textarea { outline: none; }
-:focus-visible { outline: 3px solid rgba(36, 103, 214, .38); outline-offset: 3px; }
-::selection { background: #cfe0fb; }
+button { cursor: pointer; }
+button:disabled { cursor: wait; opacity: .6; }
+input, textarea { accent-color: var(--action); }
+a { text-underline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--action); outline-offset: 3px; }
+::selection { background: #dbeafe; color: var(--text); }

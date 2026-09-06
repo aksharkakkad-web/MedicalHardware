@@ -5,9 +5,8 @@
   overflow: hidden;
   padding: var(--ac-space-5);
   border: 1px solid var(--ac-border-subtle);
-  border-radius: var(--ac-radius-popover);
+  border-radius: var(--ac-radius-card);
   background: var(--ac-surface);
-  box-shadow: var(--ac-shadow-card);
 }
 
 .topline,
@@ -34,10 +33,8 @@
 .reason > span,
 .context strong {
   color: var(--ac-text-secondary);
-  font-family: var(--ac-font-mono);
   font-size: var(--ac-font-size-overline);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .reason h3 { font-size: var(--ac-font-size-section-heading); line-height: 1.35; }
@@ -85,6 +82,11 @@
 }
 
 .deviceDetails p { padding-top: var(--ac-space-2); }
+
+.item[data-density="compact"] { gap: var(--ac-space-3); padding: var(--ac-space-4); }
+.item[data-density="compact"] .reason { padding-block: var(--ac-space-1); }
+.item[data-density="compact"] .statuses { padding-block: var(--ac-space-3); }
+.item[data-density="compact"] .context { grid-template-columns: auto 1fr; align-items: baseline; gap: var(--ac-space-3); }
 
 @media (max-width: 600px) {
   .item { padding: var(--ac-space-4); }

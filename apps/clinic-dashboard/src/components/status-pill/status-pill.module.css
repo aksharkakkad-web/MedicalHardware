@@ -1,52 +1,24 @@
 .pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.375rem;
-  width: fit-content;
-  min-height: 1.5rem;
-  padding: 0 0.5rem;
-  border: 1px solid;
-  border-radius: var(--radius-pill);
-  font-size: 0.75rem;
+  gap: 7px;
+  color: var(--ac-text-secondary);
+  font-size: 12px;
   font-weight: 500;
-  line-height: 1.25rem;
+  line-height: 1.25;
+  text-transform: capitalize;
   white-space: nowrap;
 }
 
 .dot {
-  width: 0.375rem;
-  height: 0.375rem;
-  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: currentColor;
+  flex: 0 0 auto;
 }
 
-.neutral {
-  color: var(--neutral-status-strong);
-  border-color: var(--neutral-status-border);
-  background: var(--neutral-status-bg);
-}
-
-.healthy {
-  color: var(--success-strong);
-  border-color: var(--success-border);
-  background: var(--success-bg);
-}
-
-.attention {
-  color: var(--warning-strong);
-  border-color: var(--warning-border);
-  background: var(--warning-bg);
-}
-
-.critical {
-  color: var(--danger-strong);
-  border-color: var(--danger-border);
-  background: var(--danger-bg);
-}
-
-.unavailable {
-  color: var(--neutral-status);
-  border-color: var(--neutral-status-border);
-  background: var(--neutral-status-bg);
-}
+.healthy { color: var(--ac-positive-text); }
+.attention { color: var(--ac-watch-text); }
+.critical { color: var(--ac-risk-text); }
+.neutral { color: var(--ac-text-secondary); }

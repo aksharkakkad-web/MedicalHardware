@@ -44,6 +44,18 @@ export function ArrowIcon(props: IconProps) {
   return <Icon {...props}><path d="m9 18 6-6-6-6" /></Icon>;
 }
 
+export function CheckIcon(props: IconProps) {
+  return <Icon {...props}><path d="m5 12 4 4L19 6" /></Icon>;
+}
+
+export function MoreIcon(props: IconProps) {
+  return <Icon {...props}><circle cx="5" cy="12" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /></Icon>;
+}
+
+export function PanelRightIcon(props: IconProps) {
+  return <Icon {...props}><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M15 4v16" /></Icon>;
+}
+
 export function SearchIcon(props: IconProps) {
   return <Icon {...props}><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></Icon>;
 }
