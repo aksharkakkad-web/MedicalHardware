@@ -1,6 +1,6 @@
 .button {
   display: inline-flex;
-  min-height: 44px;
+  min-height: 40px;
   align-items: center;
   justify-content: center;
   gap: var(--ac-space-2);
@@ -11,8 +11,8 @@
   background: var(--ac-surface);
   cursor: pointer;
   font-size: var(--ac-font-size-label);
-  font-weight: 650;
-  line-height: 1.25;
+  font-weight: 550;
+  line-height: 18px;
   text-align: center;
   transition: color var(--ac-duration-fast) var(--ac-ease-standard), background-color var(--ac-duration-fast) var(--ac-ease-standard), border-color var(--ac-duration-fast) var(--ac-ease-standard);
 }
@@ -31,13 +31,14 @@
 .primary {
   color: var(--ac-text-inverse);
   background: var(--ac-action);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
 }
 
 .primary:hover:not(:disabled) { background: var(--ac-action-hover); }
 .primary:active:not(:disabled) { background: var(--ac-action-pressed); }
 
 .secondary {
-  border-color: var(--ac-border-strong);
+  border-color: var(--ac-border-subtle);
   background: var(--ac-surface);
 }
 
@@ -67,9 +68,9 @@
 }
 
 .iconButton {
-  width: 44px;
-  height: 44px;
-  flex: 0 0 44px;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
   padding: 0;
   border-color: var(--ac-border-subtle);
   color: var(--ac-text-secondary);
@@ -154,6 +155,11 @@
 @media (prefers-reduced-motion: reduce) {
   .button { transition-duration: 0.01ms; }
   .spinner { animation: none; }
+}
+
+@media (pointer: coarse) {
+  .button { min-height: 44px; }
+  .iconButton { width: 44px; height: 44px; flex-basis: 44px; }
 }
 
 @media (forced-colors: active) {

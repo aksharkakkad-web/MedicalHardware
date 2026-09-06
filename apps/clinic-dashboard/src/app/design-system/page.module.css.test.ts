@@ -31,3 +31,18 @@ describe("design-system print stylesheet", () => {
     expect(printRules).not.toMatch(/\.viewport\s*\{[^}]*overflow(?:-y)?\s*:\s*(?:hidden|clip)/);
   });
 });
+
+describe("design-system freeze rules", () => {
+  it("documents exact radius roles without oversized or mislabeled geometry", () => {
+    expect(stylesheet).toContain(".radiusControl { border-radius: var(--signal-radius-control); }");
+    expect(stylesheet).toContain(".radiusSurface { border-radius: var(--signal-radius-card); }");
+    expect(stylesheet).toContain(".radiusFloating { border-radius: var(--signal-radius-popover); }");
+  });
+
+  it("organizes reference specimens with rules instead of rounded wrapper cards", () => {
+    expect(stylesheet).toMatch(/\.typeSpecimens \{[^}]*border-block:/);
+    expect(stylesheet).toMatch(/\.controlStage,[\s\S]*\.formStage \{[^}]*border-block:/);
+    expect(stylesheet).toMatch(/\.statusAxisCatalog \{[^}]*border-block:/);
+    expect(stylesheet).toMatch(/\.iconLibrary \{[^}]*border-block:/);
+  });
+});

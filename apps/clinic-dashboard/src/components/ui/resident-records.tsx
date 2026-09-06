@@ -1,3 +1,4 @@
+import { ArrowIcon } from "../icons/icons";
 import { getStatusAxisLabel, getStatusLabel, StatusIndicator, type StatusValue } from "./status-indicator";
 
 import styles from "./resident-records.module.css";
@@ -23,33 +24,31 @@ export type ResidentRecord = Readonly<{
   lastObserved: string;
 }>;
 
-export type ResidentRecordsProps = Readonly<{
-  records: readonly ResidentRecord[];
-}>;
+export type ResidentRecordsProps = Readonly<{ records: readonly ResidentRecord[] }>;
 
-function FreshnessStatus({ record }: Readonly<{ record: ResidentRecord }>) {
-  if (record.freshness.value === "stale") {
-    return (
-      <StatusIndicator
-        axis="freshness"
-        value="stale"
-        lastCurrentUpdate={record.freshness.lastCurrentUpdate}
-      />
-    );
-  }
+const shortLabels = {
+  attention: { critical: "Critical", high: "High", watch: "Watch", none: "No priority" },
+  monitoring: {
+    active: "Monitoring active",
+    away: "Resident away",
+    possible_multi_person: "Multi-person possible",
+    paused: "Monitoring paused",
+    calibrating: "Calibrating",
+    unavailable: "Unavailable",
+  },
+  confidence: { high: "High confidence", medium: "Medium confidence", low: "Low confidence", unavailable: "Confidence unavailable" },
+  freshness: { current: "Current", delayed: "Delayed", stale: "Stale", unknown: "Update unknown" },
+} as const;
 
-  return <StatusIndicator axis="freshness" value={record.freshness.value} />;
-}
-
-function ResidentAction({ record }: Readonly<{ record: ResidentRecord }>) {
+function ResidentAction({ record, compact = false }: Readonly<{ record: ResidentRecord; compact?: boolean }>) {
   return (
     <a
-      className={styles.primaryAction}
+      className={compact ? styles.rowAction : styles.primaryAction}
       data-primary-action
       href={record.primaryAction.href}
       aria-label={`${record.primaryAction.label} for ${record.residentName}`}
     >
-      {record.primaryAction.label}
+      {compact ? <ArrowIcon /> : record.primaryAction.label}
     </a>
   );
 }
@@ -57,13 +56,11 @@ function ResidentAction({ record }: Readonly<{ record: ResidentRecord }>) {
 function DeviceDetails({ record }: Readonly<{ record: ResidentRecord }>) {
   return (
     <details className={styles.deviceDetails}>
-      <summary>Device details for {record.residentName}</summary>
+      <summary>More details for {record.residentName}</summary>
       <div>
         <StatusIndicator axis="device" value={record.device} />
+        <StatusIndicator axis="workflow" value={record.workflow} />
         <p>{record.deviceDetails}</p>
-        <p>
-          Last observed <time>{record.lastObserved}</time>
-        </p>
       </div>
     </details>
   );
@@ -79,46 +76,26 @@ function ResidentIdentity({ record }: Readonly<{ record: ResidentRecord }>) {
 }
 
 type CompactStatusProps =
-  | Readonly<{ axis: "attention"; value: StatusValue<"attention">; detail?: string }>
-  | Readonly<{ axis: "monitoring"; value: StatusValue<"monitoring">; detail?: string }>
-  | Readonly<{ axis: "confidence"; value: StatusValue<"confidence">; detail?: string }>
-  | Readonly<{ axis: "freshness"; value: StatusValue<"freshness">; detail?: string }>
-  | Readonly<{ axis: "device"; value: StatusValue<"device">; detail?: string }>
-  | Readonly<{ axis: "workflow"; value: StatusValue<"workflow">; detail?: string }>;
+  | Readonly<{ axis: "attention"; value: StatusValue<"attention"> }>
+  | Readonly<{ axis: "monitoring"; value: StatusValue<"monitoring"> }>
+  | Readonly<{ axis: "confidence"; value: StatusValue<"confidence"> }>
+  | Readonly<{ axis: "freshness"; value: StatusValue<"freshness"> }>;
 
 function CompactStatus(props: CompactStatusProps) {
-  const label = getStatusLabel(props);
-  const { axis, value, detail } = props;
-  const axisLabel = getStatusAxisLabel(axis);
-  const accessibleLabel = detail ? `${axisLabel}: ${label}; ${detail}` : `${axisLabel}: ${label}`;
+  const canonicalLabel = getStatusLabel(props);
+  const axisLabel = getStatusAxisLabel(props.axis);
+  const axisLabels = shortLabels[props.axis] as Record<string, string>;
+  const isQuietDefault =
+    (props.axis === "attention" && props.value === "none") ||
+    (props.axis === "monitoring" && props.value === "active") ||
+    (props.axis === "confidence" && props.value === "high") ||
+    (props.axis === "freshness" && props.value === "current");
 
   return (
-    <span className={styles.compactStatus} data-axis={axis} data-value={value} aria-label={accessibleLabel}>
-      <span>{axisLabel}</span>
-      <strong>{label}</strong>
-      {detail ? <small>{detail}</small> : null}
+    <span className={styles.compactStatus} data-axis={props.axis} data-value={props.value} data-emphasis={isQuietDefault ? "quiet" : "semantic"} aria-label={`${axisLabel}: ${canonicalLabel}`}>
+      <span className={styles.statusDot} aria-hidden="true" />
+      <span>{axisLabels[props.value]}</span>
     </span>
-  );
-}
-
-function InteractionCue({ interaction }: Readonly<{ interaction?: ResidentInteraction }>) {
-  if (!interaction) return null;
-  return <span className={styles.selectedCue}>{interaction === "hover" ? "Hover example" : "Selected record"}</span>;
-}
-
-function RecordEvidence({ record }: Readonly<{ record: ResidentRecord }>) {
-  return (
-    <div className={styles.evidence} data-evidence>
-      <div>
-        <StatusIndicator axis="monitoring" value={record.monitoring} />
-      </div>
-      <div>
-        <StatusIndicator axis="confidence" value={record.confidence} />
-      </div>
-      <div>
-        <FreshnessStatus record={record} />
-      </div>
-    </div>
   );
 }
 
@@ -126,19 +103,21 @@ function MobileRecord({ record }: Readonly<{ record: ResidentRecord }>) {
   return (
     <article className={styles.recordCard} data-interaction={record.interaction} aria-label={`${record.residentName}, ${record.room}`}>
       <ResidentIdentity record={record} />
-      <InteractionCue interaction={record.interaction} />
-      <div className={styles.attentionReason} data-attention-reason>
-        <span>Attention reason</span>
+      <div className={styles.attentionReason} data-attention-reason data-attention-priority>
+        <CompactStatus axis="attention" value={record.attention} />
         <p>{record.attentionReason}</p>
       </div>
-      <div className={styles.attentionPriority} data-attention-priority>
-        <StatusIndicator axis="attention" value={record.attention} />
+      <div className={styles.mobileEvidence} data-evidence>
+        <div>
+          <CompactStatus axis="monitoring" value={record.monitoring} />
+          {record.confidence !== "high" ? <CompactStatus axis="confidence" value={record.confidence} /> : null}
+        </div>
+        <div>
+          <time>{record.lastObserved}</time>
+          {record.freshness.value !== "current" ? <CompactStatus axis="freshness" value={record.freshness.value} /> : null}
+        </div>
       </div>
-      <RecordEvidence record={record} />
-      <div className={styles.workflow} data-workflow>
-        <StatusIndicator axis="workflow" value={record.workflow} />
-      </div>
-      <ResidentAction record={record} />
+      <ResidentAction record={record} compact />
       <DeviceDetails record={record} />
     </article>
   );
@@ -147,47 +126,41 @@ function MobileRecord({ record }: Readonly<{ record: ResidentRecord }>) {
 function DesktopTable({ records }: ResidentRecordsProps) {
   return (
     <div className={styles.desktopTable}>
+      <div className={styles.tableToolbar}>
+        <div><strong>Resident records</strong><span>{records.length} monitored rooms</span></div>
+        <div className={styles.toolbarActions} aria-label="Resident table tools">
+          <button type="button">Search</button>
+          <button type="button">Filter</button>
+        </div>
+      </div>
       <table>
-        <caption>Synthetic resident monitoring records</caption>
+        <caption className={styles.visuallyHidden}>Synthetic resident monitoring records</caption>
         <thead>
           <tr>
             <th className={styles.residentColumn} scope="col">Resident</th>
-            <th className={styles.attentionColumn} scope="col">Attention priority</th>
-            <th className={styles.evidenceColumn} scope="col">Evidence</th>
-            <th className={styles.operationsColumn} scope="col">Operations</th>
-            <th className={styles.actionColumn} scope="col"><span className={styles.visuallyHidden}>Action</span></th>
+            <th className={styles.attentionColumn} scope="col">Attention</th>
+            <th className={styles.monitoringColumn} scope="col">Monitoring</th>
+            <th className={styles.updatedColumn} scope="col">Updated</th>
+            <th className={styles.actionColumn} scope="col"><span className={styles.visuallyHidden}>Open record</span></th>
           </tr>
         </thead>
         <tbody>
           {records.map((record) => (
-            <tr key={record.id} data-interaction={record.interaction}>
-              <th className={styles.residentColumn} scope="row">
-                <ResidentIdentity record={record} />
-                <div className={styles.tableResidentReason}>
-                  <span>Attention reason</span>
-                  <p>{record.attentionReason}</p>
-                </div>
-                <InteractionCue interaction={record.interaction} />
-              </th>
-              <td className={styles.attentionColumn}><CompactStatus axis="attention" value={record.attention} /></td>
-              <td className={styles.evidenceColumn}>
-                <div className={styles.compactGroup}>
-                  <CompactStatus axis="confidence" value={record.confidence} />
-                  <CompactStatus axis="freshness" value={record.freshness.value} detail={record.freshness.value === "stale" && record.freshness.lastCurrentUpdate ? `last current update ${record.freshness.lastCurrentUpdate}` : undefined} />
-                </div>
+            <tr key={record.id} data-interaction={record.interaction} aria-selected={record.interaction === "selected" || undefined}>
+              <th className={styles.residentColumn} scope="row"><ResidentIdentity record={record} /></th>
+              <td className={styles.attentionColumn}>
+                <CompactStatus axis="attention" value={record.attention} />
+                <span className={styles.secondaryLine}>{record.attentionReason}</span>
               </td>
-              <td className={styles.operationsColumn}>
-                <div className={styles.compactGroup}>
-                  <CompactStatus
-                    axis="monitoring"
-                    value={record.monitoring}
-                    detail={record.monitoring === "possible_multi_person" ? "Resident attribution unavailable; do not guess which resident caused this signal." : undefined}
-                  />
-                  <CompactStatus axis="device" value={record.device} />
-                  <CompactStatus axis="workflow" value={record.workflow} />
-                </div>
+              <td className={styles.monitoringColumn}>
+                <CompactStatus axis="monitoring" value={record.monitoring} />
+                {record.confidence !== "high" ? <CompactStatus axis="confidence" value={record.confidence} /> : null}
               </td>
-              <td className={styles.actionColumn}><ResidentAction record={record} /></td>
+              <td className={styles.updatedColumn}>
+                <time>{record.lastObserved}</time>
+                {record.freshness.value !== "current" ? <CompactStatus axis="freshness" value={record.freshness.value} /> : null}
+              </td>
+              <td className={styles.actionColumn}><ResidentAction record={record} compact /></td>
             </tr>
           ))}
         </tbody>

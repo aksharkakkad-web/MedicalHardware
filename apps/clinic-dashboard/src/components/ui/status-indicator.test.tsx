@@ -82,14 +82,14 @@ describe("StatusIndicator", () => {
     expect(indicator).toHaveAttribute("data-semantic", "neutral");
   });
 
-  it("keeps no-attention styling on general neutral roles", () => {
+  it("keeps no-attention styling quiet and distinct from unavailable", () => {
     const neutralRule =
       statusStyles.match(/\.indicator\[data-semantic="neutral"\]\s*\{([^}]*)\}/)?.[1] ?? "";
 
-    expect(neutralRule).toContain("--ac-border-subtle");
     expect(neutralRule).toContain("--ac-text-primary");
-    expect(neutralRule).toContain("--ac-surface");
     expect(neutralRule).not.toContain("--ac-unavailable");
+    expect(neutralRule).not.toContain("background");
+    expect(neutralRule).not.toContain("border");
   });
 
   it("keeps reusable descriptions free of specimen-only wording", () => {

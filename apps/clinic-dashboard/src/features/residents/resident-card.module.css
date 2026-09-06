@@ -1,182 +1,34 @@
-.card {
-  display: grid;
-  grid-template-columns: minmax(9rem, 1.05fr) minmax(11rem, 1.35fr) minmax(11rem, 1.25fr) minmax(8rem, 0.9fr) 4.5rem 7.5rem;
-  min-height: 4rem;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
-  transition: background-color var(--duration-fast) ease-out;
-}
-
-.card[data-priority="critical"],
-.card[data-priority="high"] {
-  background: rgb(254 243 242 / 60%);
-}
-
-.card:hover {
-  background: var(--surface-subtle);
-}
-
-.identity,
-.monitoring,
-.attention,
-.device {
-  min-width: 0;
-}
-
-.name,
-.room,
-.monitoring small,
-.attention small,
-.device strong,
-.device small {
-  display: block;
-}
-
-.name {
-  color: var(--text-primary);
-  font-size: 0.875rem;
-  font-weight: 500;
-  line-height: 1.25rem;
-}
-
-.room {
-  margin-top: var(--space-1);
-  color: var(--text-secondary);
-  font-size: 0.75rem;
-  line-height: 1rem;
-}
-
-.identity:hover .name {
-  color: var(--primary);
-}
-
-.monitoring small,
-.attention small,
-.device small {
-  margin-top: var(--space-1);
-  overflow: hidden;
-  color: var(--text-secondary);
-  font-size: 0.75rem;
-  line-height: 1rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.device strong {
-  color: var(--gray-700);
-  font-size: 0.75rem;
-  font-weight: 500;
-  line-height: 1rem;
-}
-
-.updated {
-  color: var(--text-secondary);
-  font-size: 0.75rem;
-  line-height: 1rem;
-}
-
-.actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--space-2);
-}
-
-.reviewLink {
-  color: var(--primary);
-  font-size: 0.75rem;
-  font-weight: 500;
-  line-height: 1rem;
-  white-space: nowrap;
-}
-
-.reviewLink:hover {
-  color: var(--primary-hover);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.detailLink {
-  display: grid;
-  width: 2.25rem;
-  height: 2.25rem;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: var(--radius-md);
-  color: var(--gray-500);
-  transition: color var(--duration-fast) ease-out, background-color var(--duration-fast) ease-out;
-}
-
-.detailLink:hover {
-  color: var(--primary);
-  background: var(--brand-50);
-}
-
-.detailLink svg {
-  width: 1rem;
-}
-
-@media (max-width: 1280px) {
-  .card {
-    grid-template-columns: minmax(9rem, 1fr) minmax(10rem, 1.25fr) minmax(10rem, 1.2fr) 4.5rem 7rem;
-  }
-
-  .device {
-    display: none;
-  }
-}
+.card { position: relative; display: grid; min-width: 0; min-height: 60px; align-items: center; gap: 12px; padding: 10px 12px; border-bottom: 1px solid var(--ac-border-subtle); background: var(--ac-surface); transition: background-color var(--ac-duration-fast); }
+.card:last-child { border-bottom: 0; }
+.card:hover { background: var(--ac-surface-hover); }
+.card[data-priority="critical"], .card[data-priority="high"] { box-shadow: inset 2px 0 0 var(--ac-risk-text); }
+.card[data-priority="watch"] { box-shadow: inset 2px 0 0 var(--ac-watch-text); }
+.identity { min-width: 0; }
+.name, .room { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.name { font-size: 12px; font-weight: 600; }
+.room, .factLabel, .updatedLabel { color: var(--ac-text-secondary); font-size: 11px; }
+.attention, .monitoring, .device { min-width: 0; }
+.factLabel { display: none; }
+.attention small, .monitoring small, .device small { display: block; margin-top: 2px; overflow: hidden; color: var(--ac-text-secondary); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.statusText, .deviceContext { display: inline-flex; max-width: 100%; align-items: center; gap: 6px; color: var(--ac-text-secondary); font-size: 11px; }
+.statusDot, .deviceDot { width: 5px; height: 5px; flex: 0 0 auto; border-radius: 50%; background: currentColor; }
+.statusText[data-emphasis="quiet"] .statusDot { display: none; }
+.statusText[data-axis="attention"][data-value="high"], .statusText[data-axis="attention"][data-value="critical"] { color: var(--ac-risk-text); }
+.statusText[data-axis="attention"][data-value="watch"], .statusText[data-axis="monitoring"][data-value="limited"] { color: var(--ac-watch-text); }
+.statusText[data-axis="monitoring"][data-value="paused"] { color: var(--ac-action); }
+.statusText[data-axis="monitoring"][data-value="unavailable"], .deviceContext[data-device-status="offline"], .deviceContext[data-device-status="unknown"] { color: var(--ac-unavailable-text); }
+.deviceContext[data-device-status="degraded"] { color: var(--ac-watch-text); }
+.updated { justify-self: end; color: var(--ac-text-secondary); font-family: var(--ac-font-mono); font-size: 11px; white-space: nowrap; }
+.recordAction { display: grid; width: 32px; height: 32px; place-items: center; justify-self: end; border-radius: var(--ac-radius-control); color: var(--ac-text-secondary); }
+.recordAction:hover { color: var(--ac-action); background: var(--ac-action-soft); }
+.recordAction svg { width: 14px; height: 14px; }
+.actionLabel { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
 @media (max-width: 768px) {
-  .card {
-    grid-template-columns: minmax(0, 1fr) auto;
-    min-height: 0;
-    align-items: start;
-    gap: var(--space-3);
-    padding: var(--space-4);
-  }
-
-  .identity {
-    padding-right: var(--space-2);
-  }
-
-  .monitoring,
-  .attention {
-    grid-column: 1 / -1;
-  }
-
-  .monitoring small,
-  .attention small {
-    overflow: visible;
-    text-overflow: clip;
-    white-space: normal;
-  }
-
-  .device,
-  .updated {
-    display: block;
-    grid-column: 1 / -1;
-  }
-
-  .updated {
-    padding-top: var(--space-3);
-    border-top: 1px solid var(--border);
-  }
-
-  .actions {
-    grid-column: 2;
-    grid-row: 1;
-    align-self: center;
-  }
-
-  .reviewLink {
-    display: none;
-  }
-
-  .detailLink {
-    width: 2.5rem;
-    height: 2.5rem;
-  }
+  .card { grid-template-columns: minmax(0, 1fr) 32px; gap: 12px; padding: 16px; border: 1px solid var(--ac-border-subtle); border-radius: var(--ac-radius-card); }
+  .identity, .attention, .monitoring, .device, .updated { grid-column: 1; }
+  .recordAction { position: absolute; top: 12px; right: 12px; }
+  .factLabel { display: block; margin-bottom: 2px; }
+  .attention small, .monitoring small, .device small { white-space: normal; }
+  .updated { justify-self: start; }
 }
