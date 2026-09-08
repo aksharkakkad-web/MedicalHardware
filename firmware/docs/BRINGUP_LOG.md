@@ -206,3 +206,58 @@ iteration. That caps throughput but cannot explain an RSSI of −91.
 
 **Not yet resolved.** CSI is proven working end to end — frames parse, 64
 subcarriers, zero CRC errors — but not yet locked to the TX node.
+
+## 2026-09-08 — CSI vitals, and where the processing lives
+
+**Split: the node streams, the Mac thinks.** Confirmed and kept deliberately.
+
+On the device: vendor UART decode for the radar (has to happen where the UART
+is), CRC framing, and a validity bitmask. Nothing else. The CSI callback copies
+`info->buf` verbatim and returns; thermal ships all 768 raw float32 pixels; lux
+ships raw. No filtering, no feature extraction, no inference.
+
+On the host: thermal blob detection, sensor corroboration, and all vitals DSP.
+
+For the cloud later, note the distinction the data contract already draws
+(`docs/DATA_CONTRACT.md` §4): raw streaming is a *local* development path over
+USB or LAN. What goes to the cloud is the compact `EdgeTelemetryEnvelope` —
+a few hundred bytes/sec — because raw CSI at 25 Hz x 64 subcarriers is not
+something to pay for over WAN. Those are two different sinks, not a migration.
+
+**CSI vitals implemented on the host**, following the method ruvnet/ruview
+settled on: biquad bandpass into breathing (0.1–0.5 Hz) and cardiac
+(0.8–2.0 Hz), then autocorrelation with breathing-harmonic rejection.
+
+Three bugs, all caught by testing against synthetic signals with known answers:
+
+1. A single biquad section leaked breathing into the cardiac band, producing a
+   confident **120 bpm** for a true 72. Cascaded the section.
+2. Taking the largest autocorrelation value cannot distinguish a real period
+   from monotonic decay caused by a slower rhythm. Now requires a true local
+   maximum.
+3. The harmonic guard at ruview's ±8% rejected *every* real heart rate: at
+   0.25 Hz breathing, harmonics k=4,5,6 land on 60, 75 and 90 bpm and the guard
+   bands blanket the whole cardiac range. Narrowed to ±3%, which keeps 72 bpm
+   while still rejecting a candidate sitting exactly on 75.
+
+Decimation is per band. At 10 Hz a 1.2 Hz pulse is 8.3 samples per cycle, so
+adjacent lags land ~8 bpm apart; the cardiac band now runs near the native rate
+with parabolic interpolation around the peak.
+
+Regression tests in `firmware/host/tests/test_vitals.py`, 5 passing, including
+two that assert the estimator reports **nothing** — for pure noise, and for a
+"heart rate" sitting on the 5th breathing harmonic.
+
+**On real hardware it currently declines to report.** With a person at 0.75 m
+it returns `breathing: subcarriers disagree` and `heart: no periodicity`. That
+is the intended behaviour rather than a fabricated number, but it means the
+thresholds need tuning against real recordings with a deliberately still
+subject. Synthetic ground truth is satisfied; real-world is not yet.
+
+**No validated accuracy exists for CSI vitals anywhere, including ruview.**
+Their ADR-293 states plainly that for vitals "MEASURED is currently
+unreachable" — they have no reference-sensor ground truth either. Their
+published measured numbers cover presence (82.3% temporal-triplet) and MM-Fi
+pose (82.69% torso-PCK), not vitals. Producing a trustworthy number here needs
+a chest strap or pulse oximeter recorded alongside a session. Until then these
+are unvalidated estimates and the dashboard says so.

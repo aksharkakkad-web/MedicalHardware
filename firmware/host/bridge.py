@@ -27,6 +27,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import stream.frames as F
+from vitals import VitalsEstimator
 
 DASHBOARD = Path(__file__).parent / "dashboard" / "index.html"
 
@@ -122,6 +123,10 @@ class State:
         self.csi_amps: list[float] | None = None
         self.csi_rssi: int | None = None
         self.lux: float | None = None
+        # All vitals DSP runs here on the host, not on the node. The device
+        # streams raw CSI and does no analysis.
+        self.vitals = VitalsEstimator()
+        self.vitals_out: dict | None = None
         self.rate = {
             "thermal": RateMeter(), "radar": RateMeter(),
             "csi": RateMeter(), "ambient": RateMeter(),
@@ -139,9 +144,11 @@ class State:
                 self.radar = frame
                 self.rate["radar"].tick()
             elif isinstance(frame, F.CsiFrame):
-                self.csi_amps = frame.amplitudes
+                amps = frame.amplitudes
+                self.csi_amps = amps
                 self.csi_rssi = frame.rssi
                 self.rate["csi"].tick()
+                self.vitals.add(time.monotonic(), amps)
             elif isinstance(frame, F.AmbientFrame):
                 self.lux = frame.lux
                 self.rate["ambient"].tick()
@@ -153,6 +160,7 @@ class State:
             amps = self.csi_amps
             rssi = self.csi_rssi
             lux = self.lux
+            vout = self.vitals_out
             rates = {k: (m.hz, m.age) for k, m in self.rate.items()}
             stats = self.parser_stats
 
@@ -232,6 +240,16 @@ class State:
         else:
             agree, verdict = True, "empty"
 
+        # Vitals are only meaningful for a person who is actually there and
+        # nearly still. Reporting a rate for an empty room would be the CSI
+        # equivalent of the radar's 119 bpm off a desk.
+        present = bool(radar and radar.presence) or blob is not None
+        if vout is not None:
+            out["csi_vitals"] = vout if present else {
+                "breathing_rpm": None, "heart_rate_bpm": None,
+                "reason": "nobody detected",
+            }
+
         out["fusion"] = {
             "verdict": verdict,
             "agree": agree,
@@ -242,6 +260,29 @@ class State:
 
 
 # ------------------------------------------------------------------ sources ---
+
+def vitals_worker(state: State) -> None:
+    """Run the estimator off the request path.
+
+    A pass is O(lags x samples) in pure Python and takes a fair fraction of a
+    second, which would stall the event stream if it ran inside snapshot().
+    """
+    while True:
+        try:
+            breath, heart = state.vitals.estimate()
+            with state.lock:
+                state.vitals_out = {
+                    "breathing_rpm": None if breath.rate is None else round(breath.rate, 1),
+                    "breathing_confidence": round(breath.confidence, 2),
+                    "heart_rate_bpm": None if heart.rate is None else round(heart.rate, 1),
+                    "heart_confidence": round(heart.confidence, 2),
+                    "reason": heart.reason if heart.rate is None else "ok",
+                    "breathing_reason": breath.reason,
+                }
+        except Exception:
+            pass
+        time.sleep(1.0)
+
 
 def serial_reader(state: State, port: str) -> None:
     import serial  # imported lazily so the fake source needs no dependency
@@ -390,10 +431,12 @@ def main() -> None:
             return
         state = State(simulated=False)
         threading.Thread(target=serial_reader, args=(state, port), daemon=True).start()
+        threading.Thread(target=vitals_worker, args=(state,), daemon=True).start()
         print(f"Reading {port}")
     else:
         state = State(simulated=True)
         threading.Thread(target=fake_reader, args=(state,), daemon=True).start()
+        threading.Thread(target=vitals_worker, args=(state,), daemon=True).start()
         print("Synthetic source - output is labelled DEMO in the dashboard")
 
     srv = ThreadingHTTPServer(("127.0.0.1", args.http_port), make_handler(state))

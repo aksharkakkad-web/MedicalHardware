@@ -158,12 +158,17 @@
         <div><div class="k">Distance</div><div class="v" id="vDist">–</div></div>
         <div><div class="k">Breathing</div><div class="v" id="vResp">–</div></div>
         <div><div class="k">Heart rate</div><div class="v" id="vHr">–</div></div>
+        <div><div class="k">Breathing (Wi-Fi)</div><div class="v" id="vcResp">–</div></div>
+        <div><div class="k">Heart rate (Wi-Fi)</div><div class="v" id="vcHr">–</div></div>
         <div><div class="k">Room light</div><div class="v" id="vLux">–</div></div>
         <div><div class="k">Link</div><div class="v" id="vRssi">–</div></div>
       </div>
       <p class="note"><b>These are estimates, not measurements.</b> They need a nearly
       still person within about 1.5&nbsp;m. A blank field means the sensor reported
-      nothing usable &mdash; it is never filled in with a guess.</p>
+      nothing usable &mdash; it is never filled in with a guess.
+      The Wi-Fi rows are derived from CSI on this machine and have
+      <b>never been checked against a reference device</b>, so treat them as
+      unvalidated.</p>
     </div>
 
     <div class="card">
@@ -415,6 +420,10 @@ es.onmessage=e=>{
   document.getElementById('vDist').innerHTML = fmt(r.distance_m,'m',2);
   document.getElementById('vResp').innerHTML = fmt(r.respiration_rpm,'breaths/min',0);
   document.getElementById('vHr').innerHTML   = fmt(r.heart_rate_bpm,'bpm',0);
+
+  const cv=s.csi_vitals||{};
+  document.getElementById('vcResp').innerHTML = fmt(cv.breathing_rpm,'breaths/min',0);
+  document.getElementById('vcHr').innerHTML   = fmt(cv.heart_rate_bpm,'bpm',0);
 
   const amb=s.ambient;
   document.getElementById('vLux').innerHTML = amb
