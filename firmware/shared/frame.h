@@ -53,7 +53,8 @@ typedef enum {
   SENSE_FRAME_CSI = 1,
   SENSE_FRAME_THERMAL = 2,
   SENSE_FRAME_RADAR = 3,
-  SENSE_FRAME_AMBIENT = 4
+  SENSE_FRAME_AMBIENT = 4,
+  SENSE_FRAME_RADAR_RAW = 5
 } sense_frame_type_t;
 
 typedef struct __attribute__((packed)) {
@@ -149,6 +150,22 @@ typedef struct __attribute__((packed)) {
   uint8_t valid;
   float lux;
 } sense_ambient_payload_t;
+
+/*
+ * Type 5 - RADAR_RAW.
+ *
+ * Undecoded bytes straight off the radar UART, forwarded in whatever chunks
+ * arrive. The payload has no structure at this layer: the host reassembles the
+ * vendor protocol.
+ *
+ * This replaces on-device parsing (type 3). Decoding on the node meant blocking
+ * UART reads inside the same loop as a thermal frame read that occupies over
+ * 100 ms, which starved the radar down to 0.7 Hz from 8 Hz. Forwarding bytes
+ * costs nothing and keeps every interpretation decision on the host, where it
+ * can be changed without reflashing.
+ *
+ * Type 3 stays defined so older recordings still parse.
+ */
 
 /*
  * CRC16-CCITT (poly 0x1021, init 0xFFFF, no input/output reflection, no final

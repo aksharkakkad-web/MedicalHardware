@@ -28,6 +28,7 @@ from pathlib import Path
 
 import stream.frames as F
 from vitals import VitalsEstimator
+from radar_decode import RadarDecoder
 
 DASHBOARD = Path(__file__).parent / "dashboard" / "index.html"
 
@@ -120,6 +121,7 @@ class State:
         self.simulated = simulated
         self.thermal: list[float] | None = None
         self.radar: F.RadarFrame | None = None
+        self.radar_decoder = RadarDecoder()
         self.csi_amps: list[float] | None = None
         self.csi_rssi: int | None = None
         self.lux: float | None = None
@@ -141,7 +143,19 @@ class State:
                 self.thermal = frame.pixels
                 self.rate["thermal"].tick()
             elif isinstance(frame, F.RadarFrame):
-                self.radar = frame
+                self.radar = frame          # legacy on-device decode
+                self.rate["radar"].tick()
+            elif isinstance(frame, F.RadarRawFrame):
+                # Vendor protocol decoded here, not on the node.
+                self.radar_decoder.feed(frame.data)
+                st = self.radar_decoder.state
+                self.radar = F.RadarFrame(
+                    t_us=frame.t_us,
+                    presence=st.presence,
+                    distance_m=st.distance_m,
+                    respiration_rpm=st.respiration_rpm,
+                    heart_rate_bpm=st.heart_rate_bpm,
+                )
                 self.rate["radar"].tick()
             elif isinstance(frame, F.CsiFrame):
                 amps = frame.amplitudes

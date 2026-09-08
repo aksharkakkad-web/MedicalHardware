@@ -261,3 +261,52 @@ published measured numbers cover presence (82.3% temporal-triplet) and MM-Fi
 pose (82.69% torso-PCK), not vitals. Producing a trustworthy number here needs
 a chest strap or pulse oximeter recorded alongside a session. Until then these
 are unvalidated estimates and the dashboard says so.
+
+## 2026-09-08 — all processing off the node, and full rates
+
+**The node no longer interprets anything.** Radar decoding moved to the host as
+`firmware/host/radar_decode.py`; the device forwards raw UART bytes as a new
+frame type. What remains on the S3 is copying bytes and framing them:
+
+| Modality | On device |
+|---|---|
+| CSI | copy `info->buf` out of the callback, forward |
+| Thermal | 768 raw float32 pixels, forwarded |
+| Radar | raw UART bytes, no parsing |
+| Ambient | raw lux |
+
+Nothing is filtered, thresholded, or inferred there. The C6 only transmits.
+
+**Task layout.** Core 0 runs the CSI drain (priority 6) and the radar UART
+drain (priority 4). Core 1 runs the Arduino loop, which owns both I2C devices.
+The radar UART buffer is 4096 bytes, deep enough to cover a thermal read.
+
+**Two bugs found and fixed on the way:**
+
+*Radar starvation.* Parsing inline in `loop()` used blocking reads, sharing a
+thread with a thermal frame read that occupies over 100 ms. Radar ran at
+**0.7 Hz**. Forwarding raw bytes from a dedicated task took it to **23.8 Hz**,
+a 34x improvement, and the decode quality is unchanged because the same
+checksum-validated parser now runs on the host.
+
+*I2C is not thread-safe.* Moving the BH1750 onto its own task let it interleave
+with a thermal transaction mid-read. Thermal went to **0 Hz** while the light
+sensor kept happily reporting — a failure that looks like a broken thermal
+sensor rather than a concurrency bug. Both I2C devices are now driven from one
+thread. CSI and radar have no bus to contend for and stay on their own tasks.
+
+**Rates, all four running simultaneously:**
+
+| Modality | Before | Now |
+|---|---|---|
+| Wi-Fi CSI | 27 Hz | **39 Hz** |
+| Radar | 0.7 Hz | **23.8 Hz** |
+| Thermal | 7.9 Hz | **8.1 Hz** |
+| Ambient | 2.0 Hz | 2.0 Hz |
+
+CRC errors and resyncs occur only during USB enumeration and stop accumulating
+once the link settles (6 and 8 across the whole session).
+
+Thermal is capped by the sensor: chess mode reads two subpages per full frame,
+so a 16 Hz refresh yields ~8 Hz complete frames. Raising it further needs
+1 MHz I2C, which previously failed under Wi-Fi load.

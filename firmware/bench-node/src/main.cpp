@@ -248,143 +248,30 @@ static void on_espnow_recv(const uint8_t *mac, const uint8_t *data, int len) {
 
 // ----------------------------------------------------------------- radar ---
 
-static int radar_read(uint32_t deadline_ms) {
-  while ((int32_t)(millis() - deadline_ms) < 0) {
-    if (Serial1.available()) return Serial1.read();
-  }
-  return -1;
-}
-
-// Latest value per confirmed message id, with an explicit validity flag each.
-static float rv_distance_cm = NAN, rv_breath = NAN, rv_heart = NAN;
-static float rv_x = NAN, rv_y = NAN;
-static uint32_t rv_count = 0, rv_presence = 0;
-static bool rv_dirty = false;
-
-static void radar_poll() {
-  if (!Serial1.available()) return;
-  if ((uint8_t)Serial1.read() != 0x01) return;
-
-  uint8_t hdr[6];
-  const uint32_t deadline = millis() + 30;
-  for (int i = 0; i < 6; i++) {
-    const int v = radar_read(deadline);
-    if (v < 0) return;
-    hdr[i] = (uint8_t)v;
-  }
-  const uint16_t len = ((uint16_t)hdr[2] << 8) | hdr[3];
-  const uint16_t id = ((uint16_t)hdr[4] << 8) | hdr[5];
-  if (len > 64) return;
-
-  const int tok = radar_read(deadline);
-  if (tok < 0) return;
-  uint8_t data[64];
-  for (uint16_t i = 0; i < len; i++) {
-    const int v = radar_read(deadline);
-    if (v < 0) return;
-    data[i] = (uint8_t)v;
-  }
-  const int crc_rx = radar_read(deadline);
-  if (crc_rx < 0) return;
-
-  uint8_t crc = 0x01;
-  for (int i = 0; i < 6; i++) crc ^= hdr[i];
-  crc ^= (uint8_t)tok;
-  for (uint16_t i = 0; i < len; i++) crc ^= data[i];
-  if (crc != (uint8_t)crc_rx) return;
-
-  float f;
-  switch (id) {
-    case 0x0A14:  // breathing rate, rpm
-      if (len >= 4) {
-        memcpy(&f, data, 4);
-        // 0 is the module's "no valid estimate" marker, not a measurement.
-        rv_breath = (f > 0.5f) ? f : NAN;
-        rv_dirty = true;
-      }
-      break;
-    case 0x0A15:  // heart rate, bpm
-      if (len >= 4) {
-        memcpy(&f, data, 4);
-        rv_heart = (f > 0.5f) ? f : NAN;
-        rv_dirty = true;
-      }
-      break;
-    case 0x0A16:  // target distance, cm
-      if (len >= 8) {
-        memcpy(&f, data + 4, 4);
-        rv_distance_cm = f;
-        rv_dirty = true;
-      }
-      break;
-    case 0x0A17:  // target position, metres
-      if (len >= 8) {
-        memcpy(&rv_x, data, 4);
-        memcpy(&rv_y, data + 4, 4);
-        rv_dirty = true;
-      }
-      break;
-    case 0x0A04:  // point cloud: target count first
-      if (len >= 4) {
-        rv_count = (uint32_t)data[0] | ((uint32_t)data[1] << 8) |
-                   ((uint32_t)data[2] << 16) | ((uint32_t)data[3] << 24);
-        rv_dirty = true;
-      }
-      break;
-    case 0x0A29:  // presence / target state
-      if (len >= 2) {
-        rv_presence = (uint32_t)(data[0] | (data[1] << 8));
-        rv_dirty = true;
-      }
-      break;
-    default:
-      break;
-  }
-}
-
-static void emit_radar() {
-  if (!rv_dirty) return;
-  rv_dirty = false;
-
-  sense_radar_payload_t pl;
-  pl.valid = 0;
-  pl.presence = SENSE_RADAR_PRESENCE_ABSENT;
-  pl.quality = SENSE_RADAR_QUALITY_ABSENT;
-  pl.distance_m = NAN;
-  pl.respiration_rpm = NAN;
-  pl.heart_rate_bpm = NAN;
-
-  // Presence gates everything else. With no target the module still reports a
-  // distance of 0.0, which is not a measurement of anything - forwarding it
-  // would put a confident "0.00 m" on the dashboard for an empty room. The
-  // contract's rule against zero-filling applies to a zero the sensor itself
-  // volunteers, not just to one we would invent.
-  const bool target = rv_count > 0;
-
-  pl.valid |= SENSE_RADAR_VALID_PRESENCE;
-  pl.presence = target ? 1 : 0;
-
-  if (target) {
-    if (!isnan(rv_distance_cm) && rv_distance_cm > 1.0f) {
-      pl.valid |= SENSE_RADAR_VALID_DISTANCE;
-      pl.distance_m = rv_distance_cm / 100.0f;
+/*
+ * No decoding here. Bytes are drained from the UART and forwarded verbatim as
+ * SENSE_FRAME_RADAR_RAW; the host reassembles the vendor protocol.
+ *
+ * The previous version parsed frames inline in loop(), using blocking reads
+ * with deadlines. Sharing that loop with a thermal read that blocks for over
+ * 100 ms starved the radar to 0.7 Hz. Draining on its own task, with a UART
+ * buffer deep enough to cover a thermal read, removes the coupling entirely.
+ */
+static void radar_task(void *arg) {
+  (void)arg;
+  static uint8_t chunk[256];
+  for (;;) {
+    size_t n = 0;
+    while (Serial1.available() && n < sizeof(chunk)) {
+      chunk[n++] = (uint8_t)Serial1.read();
     }
-    if (!isnan(rv_breath)) {
-      pl.valid |= SENSE_RADAR_VALID_RESPIRATION;
-      pl.respiration_rpm = rv_breath;
+    if (n > 0) {
+      send_frame(SENSE_FRAME_RADAR_RAW, (uint64_t)esp_timer_get_time(), chunk,
+                 (uint16_t)n);
+      stat_radar++;
     }
-    if (!isnan(rv_heart)) {
-      pl.valid |= SENSE_RADAR_VALID_HEART_RATE;
-      pl.heart_rate_bpm = rv_heart;
-    }
-  } else {
-    // Drop stale vitals rather than letting the last live reading linger after
-    // the person leaves.
-    rv_breath = rv_heart = NAN;
+    vTaskDelay(pdMS_TO_TICKS(5));
   }
-
-  send_frame(SENSE_FRAME_RADAR, (uint64_t)esp_timer_get_time(), &pl, sizeof(pl));
-  stat_radar++;
 }
 
 // ------------------------------------------------------------------ setup ---
@@ -405,6 +292,10 @@ void setup() {
 
   lux_ok = bh1750_begin();
 
+  // 115200 baud fills the default 128-byte FIFO in about 11 ms, far less than
+  // one thermal read. A deeper buffer means nothing is lost while the other
+  // core is busy.
+  Serial1.setRxBufferSize(4096);
   Serial1.begin(RADAR_BAUD, SERIAL_8N1, PIN_RADAR_RX, PIN_RADAR_TX);
 
   WiFi.mode(WIFI_STA);
@@ -454,7 +345,8 @@ void setup() {
   tx_mutex = xSemaphoreCreateMutex();
 
   // Core 0 alongside the Wi-Fi driver; the sensor loop keeps core 1.
-  xTaskCreatePinnedToCore(csi_drain_task, "csi_drain", 4096, nullptr, 5, nullptr, 0);
+  xTaskCreatePinnedToCore(csi_drain_task, "csi_drain", 4096, nullptr, 6, nullptr, 0);
+  xTaskCreatePinnedToCore(radar_task, "radar", 3072, nullptr, 4, nullptr, 0);
 
   last_stat_ms = millis();
 }
@@ -462,20 +354,19 @@ void setup() {
 // ------------------------------------------------------------------- loop ---
 
 void loop() {
-  radar_poll();
-  emit_radar();
-
-  // Light changes slowly; 2 Hz is plenty and keeps the I2C bus free for
-  // thermal, which is the sensitive one under Wi-Fi load.
-  if (millis() - last_lux_ms >= 500) {
-    last_lux_ms = millis();
+  // Thermal and light share this loop deliberately. Wire is not thread-safe,
+  // and putting the BH1750 on its own task let it interleave with a thermal
+  // read mid-transaction - which killed thermal outright while the light
+  // sensor kept reporting. Both I2C devices are therefore driven from one
+  // thread. CSI and radar have no bus to contend for and stay on their own
+  // tasks.
+  static uint32_t last_lux = 0;
+  if (millis() - last_lux >= 500) {
+    last_lux = millis();
     sense_ambient_payload_t amb;
     const float lux = lux_ok ? bh1750_read() : NAN;
     amb.valid = isnan(lux) ? 0 : 1;
     amb.lux = lux;
-    if (mlx_recoveries != last_reported_recoveries) {
-      last_reported_recoveries = mlx_recoveries;
-    }
     send_frame(SENSE_FRAME_AMBIENT, (uint64_t)esp_timer_get_time(), &amb,
                sizeof(amb));
   }
@@ -490,14 +381,7 @@ void loop() {
     } else if (++mlx_fail_streak >= MLX_FAIL_LIMIT) {
       thermal_recover();
     }
-  }
-
-  // Counters ride in a radar-shaped frame? No - they would pollute the data.
-  // Rates are derived host-side from frame arrival times instead, so the
-  // stream carries only measurements.
-  const uint32_t now = millis();
-  if (now - last_stat_ms >= 5000) {
-    last_stat_ms = now;
-    stat_thermal = stat_radar = stat_csi = 0;
+  } else {
+    delay(20);
   }
 }

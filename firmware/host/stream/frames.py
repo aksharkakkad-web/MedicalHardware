@@ -26,6 +26,7 @@ TYPE_CSI = 1
 TYPE_THERMAL = 2
 TYPE_RADAR = 3
 TYPE_AMBIENT = 4
+TYPE_RADAR_RAW = 5
 
 THERMAL_COLS = 32
 THERMAL_ROWS = 24
@@ -108,6 +109,14 @@ class AmbientFrame:
 
 
 @dataclass
+class RadarRawFrame:
+    """Undecoded bytes from the radar UART. See host/radar_decode.py."""
+
+    t_us: int
+    data: bytes
+
+
+@dataclass
 class Stats:
     frames_ok: int = 0
     crc_errors: int = 0
@@ -181,6 +190,9 @@ class FrameParser:
             if len(payload) != _THERMAL.size:
                 return None
             return ThermalFrame(t_us=t_us, pixels=list(_THERMAL.unpack(payload)))
+
+        if ftype == TYPE_RADAR_RAW:
+            return RadarRawFrame(t_us=t_us, data=payload)
 
         if ftype == TYPE_AMBIENT:
             if len(payload) != _AMBIENT.size:
