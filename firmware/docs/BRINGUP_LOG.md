@@ -115,3 +115,50 @@ DATA_CONTRACT rule against zero-filling or inventing a value.
 
 **Not yet measured:** CSI rate (M4) — blocked on the C6 TX node, which is not
 on the bench.
+
+## 2026-09-07 — aiming aid: thermal + lux corroboration (unverified on wire)
+
+The M3 aiming sketch now also samples the BH1750 (0x23) and a compact MLX90640
+feature set on the same 4 Hz report. This is **bench corroboration**, not
+product fusion and not a clinical reading:
+
+- Radar still owns presence and distance. Frozen range still gates vitals.
+- Thermal reports scene min/median/max, a count of pixels ≥ median + 2 °C, a
+  centroid, and a 16×6 relative-contrast map. That 2 °C cut is a relative
+  contrast heuristic, not a body-temperature threshold.
+- Lux only flags a covered node (hand / face-down carrier). Ambient light
+  cannot detect a person.
+- Heart and breath print as `n/a` on a frozen, covered, or thermally flat
+  scene so a desk cannot keep showing ~118 bpm.
+
+Not yet captured on the bench after this change. Re-flash, RESET after
+re-aiming, and log whether STATIC REFLECTOR still fires on the desk while
+THERMAL WARM / THERMAL FLAT track a hand-wave.
+
+## 2026-09-08 — M4 TX node
+
+**Toolchain blocker resolved.** The official `espressif32` platform reports
+"This board doesn't support arduino framework" for `seeed_xiao_esp32c6` at both
+7.0.1 and 7.1.2 — its board manifest predates C6 Arduino support, so no version
+bump fixes it. Switched the TX env to the pioarduino platform fork
+(`55.03.311`, Arduino 3.3.11 / ESP-IDF 5.5.5), which does support it. The bench
+node stays on the official platform; only the TX env moved.
+
+**ESP32-C6 identified:** ESP32-C6FH4 (QFN32) rev v0.2, Wi-Fi 6, 4 MB embedded
+flash, MAC `10:bd:a3:96:47:d8`.
+
+**TX rate PASS: 499 Hz sustained**, against a 500 Hz target (2000 µs interval).
+Zero queue failures and zero NACKs across 7,697 packets. ESP-NOW broadcast,
+channel 6 locked, power save disabled.
+
+Flash usage is 73.7% — the Arduino 3.x core is much larger than the 2.x core
+used on the bench node. Fine here, but worth knowing before adding much to this
+sketch.
+
+Pacing is done on `micros()` rather than `delay()`, which cannot resolve 2 ms
+reliably once the radio competes for time. The first report reads 0 Hz because
+the window opens before the radio finishes bringing up; it settles within two
+seconds.
+
+**Still to measure:** CSI callback rate at the RX end. A 499 Hz transmit rate is
+the ceiling for it, not a guarantee.
