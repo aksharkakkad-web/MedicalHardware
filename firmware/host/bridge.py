@@ -31,6 +31,7 @@ from vitals import VitalsEstimator
 from radar_decode import RadarDecoder
 
 DASHBOARD = Path(__file__).parent / "dashboard" / "index.html"
+BODY_VIEW = Path(__file__).parent / "dashboard" / "body.html"
 
 
 class RateMeter:
@@ -64,6 +65,17 @@ class RateMeter:
 # radar distance describe the same point in the room.
 THERMAL_FOV_H_DEG = 55.0
 THERMAL_FOV_V_DEG = 35.0
+
+# The sensor is mounted rotated 180 degrees on the carrier, so the frame is
+# rotated rather than merely flipped: correcting only the vertical axis would
+# mirror left and right, which would silently invert the bearing that the room
+# plan depends on. Applied once here so blob detection, bearing and the
+# rendered image all share one orientation.
+THERMAL_ROTATE_180 = True
+
+
+def orient(px: list[float]) -> list[float]:
+    return list(reversed(px)) if THERMAL_ROTATE_180 else px
 
 
 def thermal_blob(px: list[float]) -> dict | None:
@@ -113,6 +125,86 @@ def thermal_blob(px: list[float]) -> dict | None:
     }
 
 
+def body_geometry(px: list[float], blob: dict | None, distance_m: float | None) -> dict | None:
+    """Anatomical landmarks measured from the thermal silhouette.
+
+    These are *measured* from real pixels, not inferred by a model. That is the
+    whole reason they exist: a person at 1 m covers roughly 20 thermal pixels,
+    which supports a head, a shoulder line, a torso centroid and a base - and
+    does not support 17 COCO keypoints. Anything finer would be invention.
+    """
+    if blob is None:
+        return None
+
+    ordered = sorted(px)
+    ambient = ordered[len(ordered) // 2]
+    cut = ambient + (ordered[-1] - ambient) * 0.55
+
+    # Width profile: for each row, the horizontal span of warm pixels.
+    rows: dict[int, list[int]] = {}
+    for i, v in enumerate(px):
+        if v >= cut:
+            rows.setdefault(i // F.THERMAL_COLS, []).append(i % F.THERMAL_COLS)
+    if not rows:
+        return None
+
+    ys = sorted(rows)
+    top, base = ys[0], ys[-1]
+    height_px = max(1, base - top + 1)
+
+    def span(r):
+        cols = rows[r]
+        return min(cols), max(cols)
+
+    # Head: centroid of the top ~20% of the silhouette.
+    head_rows = [r for r in ys if r <= top + max(1, height_px * 0.2)]
+    head_cols = [c for r in head_rows for c in rows[r]]
+    head = (sum(head_cols) / len(head_cols), sum(head_rows) / len(head_rows))
+
+    # Shoulders: the widest row in the upper half.
+    upper = [r for r in ys if r <= top + height_px * 0.5]
+    sh_row = max(upper, key=lambda r: span(r)[1] - span(r)[0]) if upper else top
+    sh_lo, sh_hi = span(sh_row)
+
+    all_cols = [c for r in ys for c in rows[r]]
+    centroid = (sum(all_cols) / len(all_cols), sum(r for r in ys for _ in rows[r]) / len(all_cols))
+    base_cols = rows[base]
+    base_pt = (sum(base_cols) / len(base_cols), float(base))
+
+    width_px = max(1, max(span(r)[1] - span(r)[0] + 1 for r in ys))
+    aspect = height_px / width_px
+
+    # Real scale, when the radar has a distance. The MLX90640's 35 degree
+    # vertical field of view spans 2*d*tan(17.5) metres across 24 pixels.
+    height_m = None
+    if distance_m:
+        m_per_px = (2.0 * distance_m * math.tan(math.radians(THERMAL_FOV_V_DEG / 2))) / F.THERMAL_ROWS
+        height_m = round(height_px * m_per_px, 2)
+
+    # Posture from the extent ratio. Coarse on purpose - this is a shape
+    # measurement, not a classifier, and it is reported with its evidence.
+    if aspect >= 1.6:
+        posture = "upright"
+    elif aspect >= 0.9:
+        posture = "seated or partly turned"
+    else:
+        posture = "horizontal"
+
+    return {
+        "head": [round(head[0], 2), round(head[1], 2)],
+        "shoulder_l": [float(sh_lo), float(sh_row)],
+        "shoulder_r": [float(sh_hi), float(sh_row)],
+        "torso": [round(centroid[0], 2), round(centroid[1], 2)],
+        "base": [round(base_pt[0], 2), round(base_pt[1], 2)],
+        "height_px": height_px,
+        "width_px": width_px,
+        "aspect": round(aspect, 2),
+        "height_m": height_m,
+        "posture": posture,
+        "source": "thermal",
+    }
+
+
 class State:
     """Latest value per modality, plus liveness."""
 
@@ -129,6 +221,10 @@ class State:
         # streams raw CSI and does no analysis.
         self.vitals = VitalsEstimator()
         self.vitals_out: dict | None = None
+        # Short history of CSI amplitude for a motion-energy readout. CSI
+        # cannot give body landmarks from a single antenna, but it does
+        # genuinely report whether the channel is being disturbed.
+        self.csi_hist: list[list[float]] = []
         self.rate = {
             "thermal": RateMeter(), "radar": RateMeter(),
             "csi": RateMeter(), "ambient": RateMeter(),
@@ -140,7 +236,7 @@ class State:
     def apply(self, frame) -> None:
         with self.lock:
             if isinstance(frame, F.ThermalFrame):
-                self.thermal = frame.pixels
+                self.thermal = orient(frame.pixels)
                 self.rate["thermal"].tick()
             elif isinstance(frame, F.RadarFrame):
                 self.radar = frame          # legacy on-device decode
@@ -163,6 +259,9 @@ class State:
                 self.csi_rssi = frame.rssi
                 self.rate["csi"].tick()
                 self.vitals.add(time.monotonic(), amps)
+                self.csi_hist.append(amps)
+                if len(self.csi_hist) > 40:
+                    self.csi_hist.pop(0)
             elif isinstance(frame, F.AmbientFrame):
                 self.lux = frame.lux
                 self.rate["ambient"].tick()
@@ -175,6 +274,7 @@ class State:
             rssi = self.csi_rssi
             lux = self.lux
             vout = self.vitals_out
+            hist = list(self.csi_hist)
             rates = {k: (m.hz, m.age) for k, m in self.rate.items()}
             stats = self.parser_stats
 
@@ -263,6 +363,30 @@ class State:
                 "breathing_rpm": None, "heart_rate_bpm": None,
                 "reason": "nobody detected",
             }
+
+        # CSI motion energy: mean per-subcarrier standard deviation over the
+        # recent window. This is a real, directly measured quantity. It is not
+        # a skeleton and is not labelled as one.
+        if len(hist) >= 8:
+            n_sub = min(len(hist[0]), 64)
+            tot = 0.0
+            for k in range(n_sub):
+                col = [h[k] for h in hist if k < len(h)]
+                m = sum(col) / len(col)
+                tot += (sum((c - m) ** 2 for c in col) / len(col)) ** 0.5
+            energy = tot / n_sub
+            if energy < 0.8:
+                motion = "still"
+            elif energy < 2.5:
+                motion = "slight movement"
+            else:
+                motion = "active"
+            out["csi_motion"] = {"energy": round(energy, 2), "state": motion}
+
+        if thermal and blob:
+            out["body"] = body_geometry(
+                thermal, blob, radar.distance_m if radar else None
+            )
 
         out["fusion"] = {
             "verdict": verdict,
@@ -412,8 +536,8 @@ def make_handler(state: State):
                         time.sleep(1 / 15)
                 except (BrokenPipeError, ConnectionResetError):
                     return
-            elif self.path in ("/", "/index.html"):
-                body = DASHBOARD.read_bytes()
+            elif self.path in ("/", "/index.html", "/body"):
+                body = (BODY_VIEW if self.path == "/body" else DASHBOARD).read_bytes()
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html; charset=utf-8")
                 self.send_header("Content-Length", str(len(body)))

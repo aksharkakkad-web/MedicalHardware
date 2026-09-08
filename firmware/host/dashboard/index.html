@@ -118,7 +118,8 @@
     <h1>Bench node</h1>
     <span class="badge" id="srcBadge">connecting</span>
   </header>
-  <p class="sub">Live view of what the sensors actually see. Not a medical device.</p>
+  <p class="sub">Live view of what the sensors actually see. Not a medical device.
+     &middot; <a href="/body" target="_blank" style="color:var(--action)">Open body view</a></p>
 
   <div class="strip" id="strip"></div>
 
@@ -257,11 +258,31 @@ function drawCsi(amps){
 
 // ---- fused scene: thermal image with the detected body outlined ----------
 const sCan=document.getElementById('scene'), sCtx=sCan.getContext('2d');
-function drawScene(t,blob,radar){
+function drawSkeleton(ctx,body,W,H){
+  if(!body) return;
+  const sx=W/COLS, sy=H/ROWS;
+  const P=p=>[(p[0]+0.5)*sx,(p[1]+0.5)*sy];
+  const head=P(body.head), sl=P(body.shoulder_l), sr=P(body.shoulder_r),
+        torso=P(body.torso), base=P(body.base);
+  const mid=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2];
+  const line=(a,b)=>{ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();};
+  ctx.lineCap='round';
+  for(const [col,w] of [['rgba(0,0,0,.55)',6],['rgba(255,255,255,.95)',2.5]]){
+    ctx.strokeStyle=col; ctx.lineWidth=w;
+    line(sl,sr); line(mid(sl,sr),head); line(mid(sl,sr),torso); line(torso,base);
+  }
+  for(const [p,r] of [[head,7],[sl,4],[sr,4],[torso,5],[base,4]]){
+    ctx.fillStyle='rgba(0,0,0,.55)';ctx.beginPath();ctx.arc(p[0],p[1],r+2,0,7);ctx.fill();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(p[0],p[1],r,0,7);ctx.fill();
+  }
+}
+
+function drawScene(t,blob,radar,body){
   const W=sCan.width,H=sCan.height;
   sCtx.clearRect(0,0,W,H);
   if(!t){ sCtx.fillStyle=css('--quiet'); sCtx.fillRect(0,0,W,H); return; }
   drawThermalTo(sCtx,t.pixels,t.min,t.max,W,H);
+  drawSkeleton(sCtx,body,W,H);
   if(!blob) return;
 
   // Outline the warm region and pin the radar's numbers to it. The box comes
@@ -402,7 +423,7 @@ es.onmessage=e=>{
     document.getElementById('tmax').textContent=s.thermal.max.toFixed(1)+'°C';
   }
   const blob=s.thermal&&s.thermal.blob;
-  drawScene(s.thermal,blob,s.radar);
+  drawScene(s.thermal,blob,s.radar,s.body);
   drawPlan(s.fusion,blob);
   if(s.fusion){
     const [cls,txt,sub]=VERDICTS[s.fusion.verdict]||['empty','—',''];

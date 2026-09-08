@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Body View</title>
+<style>
+  :root{
+    --canvas:#fff; --surface:#fff; --quiet:#f5f5f5;
+    --ink:#171717; --ink-2:#737373; --ink-3:#a3a3a3;
+    --line:#e5e5e5; --line-strong:#d4d4d4; --action:#2563eb;
+    --ok:#16a34a; --warn:#d97706; --bad:#dc2626;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--canvas:#0a0a0a;--surface:#141414;--quiet:#1c1c1c;--ink:#f5f5f5;
+      --ink-2:#a3a3a3;--ink-3:#737373;--line:#262626;--line-strong:#333;
+      --action:#3b82f6;--ok:#22c55e;--warn:#f59e0b;--bad:#ef4444}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--canvas);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;font-size:14px}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 32px 56px}
+  h1{font-size:28px;font-weight:650;letter-spacing:-.02em;margin:0 0 3px}
+  .sub{color:var(--ink-2);margin:0 0 22px;font-size:13px}
+  .cols{display:grid;grid-template-columns:1fr 320px;gap:20px}
+  @media (max-width:860px){.cols{grid-template-columns:1fr}.wrap{padding:20px 16px}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .canvasWrap{position:relative}
+  canvas{display:block;width:100%;border-radius:8px;background:var(--quiet)}
+  .lost{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+    flex-direction:column;gap:4px;border-radius:8px;
+    background:color-mix(in srgb,var(--canvas) 78%,transparent)}
+  .canvasWrap.stale .lost{display:flex}
+  .lost b{font-size:15px}.lost span{font-size:12px;color:var(--ink-2)}
+  .rows{display:flex;flex-direction:column;gap:1px;background:var(--line);
+    border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .row{background:var(--surface);padding:10px 13px;display:flex;justify-content:space-between;
+    align-items:baseline;gap:12px}
+  .row .k{font-size:12px;color:var(--ink-2)}
+  .row .v{font-family:var(--mono);font-size:15px;font-weight:550}
+  .row .v.none{color:var(--ink-3);font-weight:400;font-size:13px}
+  h2{font-size:14px;font-weight:600;margin:0 0 4px}
+  .hint{font-size:12px;color:var(--ink-2);margin:0 0 13px}
+  .note{font-size:12px;color:var(--ink-2);line-height:1.5;margin-top:14px;
+    padding-top:13px;border-top:1px solid var(--line)}
+  .note b{color:var(--ink)}
+  .tag{display:inline-block;font-size:10px;font-weight:650;letter-spacing:.05em;
+    text-transform:uppercase;padding:3px 7px;border-radius:5px;
+    background:var(--quiet);border:1px solid var(--line-strong);color:var(--ink-2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Body view</h1>
+  <p class="sub">Landmarks measured from the thermal silhouette. <span class="tag" id="src">connecting</span></p>
+
+  <div class="cols">
+    <div class="card">
+      <h2>Silhouette and landmarks</h2>
+      <p class="hint">Each marker is a position measured from warm pixels, not a model prediction.</p>
+      <div class="canvasWrap" id="wrap"><canvas id="c" width="720" height="540"></canvas>
+        <div class="lost"><b>No data</b><span>thermal feed stopped</span></div></div>
+    </div>
+
+    <div>
+      <div class="card" style="margin-bottom:16px">
+        <h2>Measurements</h2>
+        <p class="hint">From thermal geometry and radar range.</p>
+        <div class="rows">
+          <div class="row"><span class="k">Posture</span><span class="v" id="posture">–</span></div>
+          <div class="row"><span class="k">Visible height</span><span class="v" id="hm">–</span></div>
+          <div class="row"><span class="k">Distance</span><span class="v" id="dist">–</span></div>
+          <div class="row"><span class="k">Height / width</span><span class="v" id="aspect">–</span></div>
+          <div class="row"><span class="k">Silhouette</span><span class="v" id="px">–</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Wi-Fi CSI</h2>
+        <p class="hint">What CSI can actually contribute here.</p>
+        <div class="rows">
+          <div class="row"><span class="k">Movement</span><span class="v" id="motion">–</span></div>
+          <div class="row"><span class="k">Channel energy</span><span class="v" id="energy">–</span></div>
+          <div class="row"><span class="k">Skeleton</span><span class="v none" id="skel">not available</span></div>
+        </div>
+        <p class="note"><b>CSI contributes movement, not body landmarks.</b>
+        Keypoint estimation from Wi-Fi needs several receive antennas to
+        separate directions. This bench has one transmitter and one receiver,
+        which is a single spatial path &mdash; enough to detect that the channel
+        was disturbed, not enough to say where a limb is. The markers on the
+        left are all thermal.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const RAMP=[[8,10,40],[70,20,110],[160,35,105],[220,80,60],[250,160,50],[255,245,220]];
+function heat(t){t=Math.max(0,Math.min(1,t));const x=t*(RAMP.length-1),i=Math.floor(x),f=x-i;
+  const a=RAMP[i],b=RAMP[Math.min(i+1,RAMP.length-1)];
+  return [a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f,a[2]+(b[2]-a[2])*f];}
+const COLS=32,ROWS=24;
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+const off=document.createElement('canvas');off.width=COLS;off.height=ROWS;
+const octx=off.getContext('2d');
+
+function draw(t,body){
+  const W=cv.width,H=cv.height;
+  if(!t){ctx.fillStyle='#111';ctx.fillRect(0,0,W,H);return;}
+  const img=octx.createImageData(COLS,ROWS),span=Math.max(t.max-t.min,2);
+  for(let i=0;i<COLS*ROWS;i++){
+    const [r,g,b]=heat((t.pixels[i]-t.min)/span);
+    img.data[i*4]=r;img.data[i*4+1]=g;img.data[i*4+2]=b;img.data[i*4+3]=255;
+  }
+  octx.putImageData(img,0,0);
+  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+  ctx.drawImage(off,0,0,W,H);
+  if(!body) return;
+
+  const sx=W/COLS, sy=H/ROWS;
+  const P=p=>[ (p[0]+0.5)*sx, (p[1]+0.5)*sy ];
+  const head=P(body.head), sl=P(body.shoulder_l), sr=P(body.shoulder_r),
+        torso=P(body.torso), base=P(body.base);
+
+  ctx.lineCap='round';
+  ctx.strokeStyle='rgba(0,0,0,.55)'; ctx.lineWidth=8;
+  seg(); ctx.strokeStyle='rgba(255,255,255,.97)'; ctx.lineWidth=3.5; seg();
+  function seg(){
+    line(sl,sr); line(mid(sl,sr),head); line(mid(sl,sr),torso); line(torso,base);
+  }
+  function mid(a,b){return [(a[0]+b[0])/2,(a[1]+b[1])/2];}
+  function line(a,b){ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();}
+
+  for(const [p,r,lbl] of [[head,11,'head'],[sl,6,''],[sr,6,''],[torso,8,'torso'],[base,6,'base']]){
+    ctx.fillStyle='rgba(0,0,0,.55)';ctx.beginPath();ctx.arc(p[0],p[1],r+2.5,0,7);ctx.fill();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(p[0],p[1],r,0,7);ctx.fill();
+    if(lbl){ctx.fillStyle='rgba(0,0,0,.6)';ctx.font='600 12px -apple-system,sans-serif';
+      ctx.textAlign='center';ctx.fillText(lbl,p[0],p[1]-r-7);
+      ctx.fillStyle='#fff';ctx.fillText(lbl,p[0],p[1]-r-8);}
+  }
+}
+
+const fmt=(v,u,d=1)=>v==null?'<span class="v none">not available</span>':v.toFixed(d)+' '+u;
+let last=Date.now();
+setInterval(()=>{if(Date.now()-last>4000)
+  document.getElementById('wrap').classList.add('stale');},1000);
+
+new EventSource('/stream').onmessage=e=>{
+  last=Date.now();
+  const s=JSON.parse(e.data);
+  document.getElementById('wrap').classList.toggle('stale', s.health.thermal.status==='offline');
+  const b=document.getElementById('src');
+  b.textContent = s.simulated ? 'demo data' : 'live';
+
+  draw(s.thermal, s.body);
+  const bd=s.body||{}, r=s.radar||{};
+  document.getElementById('posture').textContent = bd.posture || '–';
+  document.getElementById('hm').innerHTML  = fmt(bd.height_m,'m',2);
+  document.getElementById('dist').innerHTML= fmt(r.distance_m,'m',2);
+  document.getElementById('aspect').textContent = bd.aspect!=null?bd.aspect.toFixed(2):'–';
+  document.getElementById('px').textContent = bd.height_px!=null
+    ? bd.height_px+' x '+bd.width_px+' px' : '–';
+
+  const m=s.csi_motion;
+  document.getElementById('motion').textContent = m?m.state:'–';
+  document.getElementById('energy').textContent = m?m.energy.toFixed(2):'–';
+};
+</script>
+</body>
+</html>
