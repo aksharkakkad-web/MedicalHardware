@@ -1,0 +1,53 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-09-08T01:13:41.500Z",
+  "phase": "hardware-lane",
+  "phase_name": "Hardware Track Bring-Up M0-M8",
+  "phase_dir": "firmware/",
+  "plan": 1,
+  "task": 4,
+  "total_tasks": 9,
+  "status": "paused",
+  "completed_tasks": [
+    {"id": 0, "name": "Repo + brief analysis, plan approved", "status": "done", "commit": "-"},
+    {"id": 1, "name": "frame.h cross-lane binary wire contract", "status": "done", "commit": "fef60e6"},
+    {"id": 2, "name": "M0 toolchain + M1 I2C scan (S3 only)", "status": "done", "commit": "fef60e6"},
+    {"id": 3, "name": "M2 thermal frames, 7.8 Hz, 0 errors", "status": "done", "commit": "767b230"},
+    {"id": 4, "name": "M3 radar protocol reverse-engineered and decoded", "status": "done", "commit": "767b230"},
+    {"id": 5, "name": "M3 aiming aid with static-reflector detection", "status": "done", "commit": "6da5736"},
+    {"id": 6, "name": "M4 TX beacon sketch for C6", "status": "in_progress", "progress": "code written at firmware/tx-node/, does not build - board rejects arduino framework on espressif32 7.0.1"}
+  ],
+  "remaining_tasks": [
+    {"id": 7, "name": "M4 CSI RX on S3 + measure sustained callback rate", "status": "not_started"},
+    {"id": 8, "name": "M5 unified binary stream over USB CDC per frame.h", "status": "not_started"},
+    {"id": 9, "name": "M6 live viewer, M7 recording, M8 edge telemetry + capability report", "status": "not_started"}
+  ],
+  "blockers": [
+    {"description": "espressif32 7.0.1 reports 'This board doesn't support arduino framework' for seeed_xiao_esp32c6. Upgrading the platform to 7.1.2 was proposed and the user rejected the tool call, so the approach needs their decision before retrying.", "type": "technical", "workaround": "Options: (a) pin espressif32@^7.1.2 for the tx env only, (b) use the pioarduino platform fork which supports C6 with Arduino core 3.x, (c) write the TX node against ESP-IDF instead of Arduino."},
+    {"description": "The Cursor/Groq agent did not build firmware/host/ at all. It instead edited firmware/bench-node/src/main.cpp and firmware/docs/BRINGUP_LOG.md, which are outside its assigned lane. Work is uncommitted in the working tree.", "type": "external", "workaround": "Diff and file copy preserved in the session scratchpad as groq-agent-uncommitted.patch and groq-agent-main.cpp."},
+    {"description": "Radar is physically aimed at the desk and reports a frozen target at 51.7 cm. Needs reorientation and a RESET before M3 can be signed off against a live subject.", "type": "human_action", "workaround": "Aiming aid prints STATIC REFLECTOR verdict so the fix is observable."},
+    {"description": "Only one board can be connected at a time on the observed setup. The S3 was unplugged to connect the C6, so bench-node work is paused while the C6 is attached.", "type": "human_action", "workaround": "Use a powered hub to attach both, or swap deliberately between milestones."}
+  ],
+  "human_actions_pending": [
+    {"action": "Decide the C6 platform approach (7.1.2 upgrade, pioarduino fork, or ESP-IDF)", "context": "Blocks all of M4; the TX node cannot be flashed without it", "blocking": true},
+    {"action": "Decide what to do with the Groq agent's out-of-lane edits to firmware/bench-node/", "context": "They conflict with the bench-node file the CSI RX work needs to modify next", "blocking": true},
+    {"action": "Reorient the radar off the desk toward a chest at 0.6-1.2 m, press RESET, confirm the verdict reaches LOCKED", "context": "M3 done-condition is presence flipping and distance tracking a person, not furniture", "blocking": false},
+    {"action": "Place the C6 several metres from the bench node on a USB power bank with the walking path between them", "context": "CSI measures perturbation between separated antennas; co-locating measures nothing", "blocking": false}
+  ],
+  "decisions": [
+    {"decision": "Endpoint is the product edge device, not the research bench node", "rationale": "User chose this explicitly; the node must end the track emitting EdgeTelemetryEnvelope packets the existing backend consumes", "phase": "hardware-lane"},
+    {"decision": "Gait/Doppler identification, the M8 noise-model anchor, and simulation comparison are all out of scope", "rationale": "User said to drop the research; CSI is developed only as far as presence/movement/rf_disturbance/respiration features", "phase": "hardware-lane"},
+    {"decision": "The 450 Hz CSI gate is a measurement to record, not a blocker", "rationale": "It gated gait Doppler, which is out of scope; product features need far less", "phase": "hardware-lane"},
+    {"decision": "Radar UART pins established empirically by cycling candidates rather than trusting the library example", "rationale": "The mmWaveKit example targets the C6 and leans on that board's default mapping; GPIO44 carries traffic and GPIO43 is silent", "phase": "hardware-lane"},
+    {"decision": "Radar message semantics cross-validated rather than assumed", "rationale": "Message 0x0100 carries the module's own plain-text log which labels the numeric ids; distance was independently confirmed against point-cloud y", "phase": "hardware-lane"},
+    {"decision": "Absent values are transmitted as NaN or an explicit sentinel behind a validity bitmask, never 0", "rationale": "docs/DATA_CONTRACT.md forbids zero-filling an unavailable value; the rule starts on the wire in frame.h", "phase": "hardware-lane"},
+    {"decision": "Work split seam is firmware/shared/frame.h; host tooling builds against a synthetic generator with no board attached", "rationale": "Lets the host stack be built in parallel with bench work", "phase": "hardware-lane"}
+  ],
+  "uncommitted_files": [
+    "firmware/bench-node/src/main.cpp (modified by the Groq agent, out of lane)",
+    "firmware/docs/BRINGUP_LOG.md (modified by the Groq agent, out of lane)",
+    "firmware/tx-node/ (untracked, my C6 beacon, does not build yet)"
+  ],
+  "next_action": "Resolve the C6 platform blocker with the user, then flash the TX beacon and move to M4 RX on the S3.",
+  "context_notes": "M0-M3 are genuinely done on hardware with measured evidence in firmware/docs/BRINGUP_LOG.md. The single most important finding is that the radar reported a confident 117-119 bpm heart rate off a desk while breathing correctly reported invalid - the two vital fields do not fail the same way, so M8 cannot gate them with one rule. There is an unraised scope concern: the user asked for a fused view detecting body shape, posture, heart rate and breathing. Posture and body shape are not achievable with these parts (MLX90640 gives 6-10 px on a person at 3 m; the radar exposes no dense point cloud), and vitals are uncalibrated consumer-grade estimates that demonstrably fabricate. That needs flagging under section 3 of the brief before any fused viewer is built."
+}
