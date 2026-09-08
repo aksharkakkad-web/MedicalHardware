@@ -29,6 +29,7 @@
  *   csi head '<hH'      4 bytes, then payload_len-4 int8 as interleaved I/Q
  *   thermal  '<768f' 3072 bytes
  *   radar    '<BBBfff' 15 bytes
+ *   ambient  '<Bf'      5 bytes
  */
 
 #ifndef SENSE_FRAME_H
@@ -51,7 +52,8 @@ extern "C" {
 typedef enum {
   SENSE_FRAME_CSI = 1,
   SENSE_FRAME_THERMAL = 2,
-  SENSE_FRAME_RADAR = 3
+  SENSE_FRAME_RADAR = 3,
+  SENSE_FRAME_AMBIENT = 4
 } sense_frame_type_t;
 
 typedef struct __attribute__((packed)) {
@@ -128,6 +130,25 @@ typedef struct __attribute__((packed)) {
   float respiration_rpm;
   float heart_rate_bpm;
 } sense_radar_payload_t;
+
+/*
+ * Type 4 - AMBIENT.
+ *
+ * BH1750 illuminance from the carrier. Present so that every other signal has
+ * a light/dark reference: activity at 3am in the dark means something
+ * different from the same activity at 3pm, and a clock alone cannot tell you
+ * whether the lights are on. It also helps explain thermal background drift,
+ * since solar loading warms floors and furniture.
+ *
+ * `valid` is 0 when the sensor did not answer, and `lux` is then NaN. This is
+ * a broadband lux reading with no spectral channels - see
+ * firmware/docs/LIGHT_SENSING_NOTES.md before using it for anything beyond
+ * "dark" versus "lit".
+ */
+typedef struct __attribute__((packed)) {
+  uint8_t valid;
+  float lux;
+} sense_ambient_payload_t;
 
 /*
  * CRC16-CCITT (poly 0x1021, init 0xFFFF, no input/output reflection, no final

@@ -25,6 +25,7 @@ CRC_BYTES = 2
 TYPE_CSI = 1
 TYPE_THERMAL = 2
 TYPE_RADAR = 3
+TYPE_AMBIENT = 4
 
 THERMAL_COLS = 32
 THERMAL_ROWS = 24
@@ -33,6 +34,7 @@ THERMAL_PIXELS = THERMAL_COLS * THERMAL_ROWS
 _CSI_HEAD = struct.Struct("<hH")           # rssi, subcarriers
 _THERMAL = struct.Struct(f"<{THERMAL_PIXELS}f")
 _RADAR = struct.Struct("<BBBfff")          # valid, presence, quality, dist, resp, hr
+_AMBIENT = struct.Struct("<Bf")            # valid, lux
 
 RADAR_VALID_PRESENCE = 1 << 0
 RADAR_VALID_DISTANCE = 1 << 1
@@ -91,6 +93,18 @@ class RadarFrame:
     respiration_rpm: float | None = None
     heart_rate_bpm: float | None = None
     quality: int | None = None
+
+
+@dataclass
+class AmbientFrame:
+    """Illuminance. ``lux`` is None when the sensor did not answer.
+
+    A dark room is a legitimate 0 lux, so zero can never also mean "no
+    reading" - the same rule the radar fields follow.
+    """
+
+    t_us: int
+    lux: float | None = None
 
 
 @dataclass
@@ -167,6 +181,12 @@ class FrameParser:
             if len(payload) != _THERMAL.size:
                 return None
             return ThermalFrame(t_us=t_us, pixels=list(_THERMAL.unpack(payload)))
+
+        if ftype == TYPE_AMBIENT:
+            if len(payload) != _AMBIENT.size:
+                return None
+            valid, lux = _AMBIENT.unpack(payload)
+            return AmbientFrame(t_us=t_us, lux=lux if valid else None)
 
         if ftype == TYPE_RADAR:
             if len(payload) != _RADAR.size:

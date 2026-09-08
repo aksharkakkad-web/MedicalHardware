@@ -97,6 +97,19 @@
   .readout .v.none{color:var(--ink-3);font-size:15px;font-weight:400}
   .note{font-size:12px;color:var(--ink-2);margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
   .note b{color:var(--ink);font-weight:600}
+
+  /* A stalled feed must announce itself. Freezing on the last good frame looks
+     identical to a working sensor showing a still room, which is the more
+     dangerous of the two. */
+  .canvasWrap{position:relative}
+  .lost{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+    flex-direction:column;gap:5px;border-radius:8px;
+    background:color-mix(in srgb,var(--canvas) 78%,transparent);
+    backdrop-filter:saturate(.25) blur(1.5px)}
+  .canvasWrap.stale .lost{display:flex}
+  .lost b{font-size:14px;font-weight:600}
+  .lost span{font-size:12px;color:var(--ink-2)}
+  .stalePill{font-size:11px;font-weight:600;color:var(--bad);margin-left:6px}
 </style>
 </head>
 <body>
@@ -114,11 +127,11 @@
     <div class="heroBody">
       <div>
         <div class="heroLbl">What the sensors see</div>
-        <canvas id="scene" width="640" height="420"></canvas>
+        <div class="canvasWrap" id="wrap_scene"><canvas id="scene" width="640" height="420"></canvas><div class="lost"><b>No data</b><span>Sensor feed feed stopped</span></div></div>
       </div>
       <div>
         <div class="heroLbl">Where they are in the room</div>
-        <canvas id="plan" width="560" height="420"></canvas>
+        <div class="canvasWrap" id="wrap_plan"><canvas id="plan" width="560" height="420"></canvas><div class="lost"><b>No data</b><span>Position feed stopped</span></div></div>
       </div>
     </div>
   </div>
@@ -127,14 +140,14 @@
     <div class="card">
       <h2>Thermal</h2>
       <p class="hint">MLX90640 &middot; 32&times;24 &middot; warmer is brighter</p>
-      <canvas id="thermal" width="512" height="384"></canvas>
+      <div class="canvasWrap" id="wrap_thermal"><canvas id="thermal" width="512" height="384"></canvas><div class="lost"><b>No data</b><span>Thermal feed stopped</span></div></div>
       <div class="scale"><span id="tmin">–</span><div class="ramp" id="ramp"></div><span id="tmax">–</span></div>
     </div>
 
     <div class="card">
       <h2>Radar</h2>
       <p class="hint">MR60BHA2 &middot; where the target is, seen from above</p>
-      <canvas id="radar" width="512" height="384"></canvas>
+      <div class="canvasWrap" id="wrap_radar"><canvas id="radar" width="512" height="384"></canvas><div class="lost"><b>No data</b><span>Radar feed stopped</span></div></div>
     </div>
 
     <div class="card">
@@ -145,6 +158,8 @@
         <div><div class="k">Distance</div><div class="v" id="vDist">–</div></div>
         <div><div class="k">Breathing</div><div class="v" id="vResp">–</div></div>
         <div><div class="k">Heart rate</div><div class="v" id="vHr">–</div></div>
+        <div><div class="k">Room light</div><div class="v" id="vLux">–</div></div>
+        <div><div class="k">Link</div><div class="v" id="vRssi">–</div></div>
       </div>
       <p class="note"><b>These are estimates, not measurements.</b> They need a nearly
       still person within about 1.5&nbsp;m. A blank field means the sensor reported
@@ -154,7 +169,7 @@
     <div class="card">
       <h2>Wi-Fi CSI</h2>
       <p class="hint">Signal shape across subcarriers &middot; movement disturbs the pattern</p>
-      <canvas id="csi" width="512" height="384"></canvas>
+      <div class="canvasWrap" id="wrap_csi"><canvas id="csi" width="512" height="384"></canvas><div class="lost"><b>No data</b><span>Wi-Fi CSI feed stopped</span></div></div>
     </div>
   </div>
 </div>
@@ -341,15 +356,38 @@ function pill(name,h){
 }
 const fmt=(v,u,d=1)=>v==null?'<span class="v none">not available</span>':`${v.toFixed(d)}<small> ${u}</small>`;
 
+let lastMsg=Date.now();
+setInterval(()=>{
+  // The SSE connection itself can die. Without this the page would sit on a
+  // full set of stale panels with every indicator still green.
+  if(Date.now()-lastMsg>4000){
+    document.querySelectorAll('.canvasWrap').forEach(w=>w.classList.add('stale'));
+    const b=document.getElementById('srcBadge');
+    b.textContent='disconnected'; b.className='badge';
+    const v=document.getElementById('verdict');
+    v.className='verdict empty';
+    document.getElementById('verdictText').innerHTML='No data <small>&middot; the stream has stopped</small>';
+  }
+},1000);
+
 const es=new EventSource('/stream');
 es.onmessage=e=>{
+  lastMsg=Date.now();
   const s=JSON.parse(e.data);
   const b=document.getElementById('srcBadge');
   b.textContent = s.simulated ? 'demo data' : s.source;
   b.className = 'badge'+(s.simulated?' demo':'');
 
+  // Mark every stalled feed rather than leaving a stale frame on screen.
+  const staleMap={scene:'thermal',plan:'thermal',thermal:'thermal',radar:'radar',csi:'csi'};
+  for(const [id,mod] of Object.entries(staleMap)){
+    const w=document.getElementById('wrap_'+id);
+    if(w) w.classList.toggle('stale', s.health[mod].status==='offline');
+  }
+
   document.getElementById('strip').innerHTML =
     pill('Thermal',s.health.thermal)+pill('Radar',s.health.radar)+pill('Wi-Fi CSI',s.health.csi)+
+    pill('Light',s.health.ambient)+
     `<div class="stat"><div class="k">Frames</div><div class="v">${s.stats.frames_ok.toLocaleString()}</div></div>`+
     `<div class="stat"><div class="k">Bad frames</div><div class="v">${s.stats.crc_errors}</div></div>`;
 
@@ -377,6 +415,13 @@ es.onmessage=e=>{
   document.getElementById('vDist').innerHTML = fmt(r.distance_m,'m',2);
   document.getElementById('vResp').innerHTML = fmt(r.respiration_rpm,'breaths/min',0);
   document.getElementById('vHr').innerHTML   = fmt(r.heart_rate_bpm,'bpm',0);
+
+  const amb=s.ambient;
+  document.getElementById('vLux').innerHTML = amb
+    ? amb.band.charAt(0).toUpperCase()+amb.band.slice(1)+`<small> ${amb.lux} lx</small>`
+    : '<span class="v none">not available</span>';
+  document.getElementById('vRssi').innerHTML = (s.csi&&s.csi.rssi!=null)
+    ? s.csi.rssi+'<small> dBm</small>' : '<span class="v none">not available</span>';
 };
 </script>
 </body>

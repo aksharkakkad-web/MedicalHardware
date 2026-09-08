@@ -66,6 +66,62 @@ static Adafruit_MLX90640 mlx;
 static bool mlx_ok = false;
 static float thermal_frame[SENSE_THERMAL_PIXELS];
 
+// Enabling MGMT+DATA promiscuous capture stopped thermal frames dead: read
+// rate went 7.8 Hz -> 0 while the loop sped up, i.e. getFrame() began failing
+// immediately rather than blocking. This is the I2C-under-Wi-Fi-load contention
+// the bring-up brief warns about in section 6. Recover the bus instead of
+// silently reporting no thermal data.
+// Defined below, but needed by thermal_recover(): a bus reset has to bring the
+// light sensor back up too, since both sit on the same I2C bus.
+static bool bh1750_begin();
+static bool lux_ok;
+
+static uint32_t mlx_fail_streak = 0;
+static uint32_t mlx_recoveries = 0;
+static constexpr uint32_t MLX_FAIL_LIMIT = 8;
+
+static void thermal_recover() {
+  mlx_recoveries++;
+  mlx_fail_streak = 0;
+  Wire.end();
+  delay(5);
+  // 400 kHz rather than 1 MHz. The faster clock sustains 16 Hz in a quiet
+  // system but has far less margin once the radio is saturating the bus with
+  // interrupts; frames at 8 Hz are worth more than frames at 16 Hz that stop.
+  Wire.begin(PIN_SDA, PIN_SCL, 400000);
+  mlx_ok = mlx.begin(MLX90640_I2CADDR_DEFAULT, &Wire);
+  if (mlx_ok) {
+    mlx.setMode(MLX90640_CHESS);
+    mlx.setResolution(MLX90640_ADC_18BIT);
+    mlx.setRefreshRate(MLX90640_16_HZ);
+  }
+  lux_ok = bh1750_begin();
+}
+
+// BH1750 on the carrier, same bus as the thermal sensor. Driven directly -
+// it is two registers and a 16-bit read, which is less code than a dependency.
+static constexpr uint8_t BH1750_ADDR = 0x23;
+static constexpr uint8_t BH1750_POWER_ON = 0x01;
+static constexpr uint8_t BH1750_CONT_HIRES = 0x10;
+static uint32_t last_lux_ms = 0;
+
+static bool bh1750_begin() {
+  Wire.beginTransmission(BH1750_ADDR);
+  Wire.write(BH1750_POWER_ON);
+  if (Wire.endTransmission() != 0) return false;
+  Wire.beginTransmission(BH1750_ADDR);
+  Wire.write(BH1750_CONT_HIRES);
+  return Wire.endTransmission() == 0;
+}
+
+// Returns NaN when the sensor does not answer. Never 0 - a dark room is a
+// legitimate 0 lux, so zero cannot also mean "no reading".
+static float bh1750_read() {
+  if (Wire.requestFrom((uint8_t)BH1750_ADDR, (uint8_t)2) != 2) return NAN;
+  const uint16_t raw = ((uint16_t)Wire.read() << 8) | Wire.read();
+  return raw / 1.2f;
+}
+
 static uint32_t stat_thermal = 0, stat_radar = 0, stat_csi = 0;
 static uint32_t last_stat_ms = 0;
 
@@ -285,13 +341,15 @@ void setup() {
   const uint32_t t0 = millis();
   while (!Serial && (millis() - t0) < 3000) delay(50);
 
-  Wire.begin(PIN_SDA, PIN_SCL, 1000000);
+  Wire.begin(PIN_SDA, PIN_SCL, 400000);
   if (mlx.begin(MLX90640_I2CADDR_DEFAULT, &Wire)) {
     mlx.setMode(MLX90640_CHESS);
     mlx.setResolution(MLX90640_ADC_18BIT);
     mlx.setRefreshRate(MLX90640_16_HZ);
     mlx_ok = true;
   }
+
+  lux_ok = bh1750_begin();
 
   Serial1.begin(RADAR_BAUD, SERIAL_8N1, PIN_RADAR_RX, PIN_RADAR_TX);
 
@@ -310,17 +368,29 @@ void setup() {
   // same 3 s window, then callbacks immediately on enabling promiscuous mode.
   // Filter to data frames so ambient management traffic does not dilute the
   // stream with beacons from every AP in range.
+  // MGMT *and* DATA. Measured here: DATA-only collapsed the yield to 1.4 Hz
+  // because most CSI-bearing traffic on a quiet channel is beacons. The
+  // ruvnet/ruview project reports the same effect from the other direction -
+  // MGMT-only starves display-less boards to 0 pps.
+  //
+  // Their firmware warns that DATA promiscuous at 100-500 interrupts/sec can
+  // crash Core 0 in wDev_ProcessFiq via a flash-cache race in the Wi-Fi blob.
+  // Not observed here on Arduino core 2.x, but it is the first thing to
+  // suspect if this node starts resetting under load.
   wifi_promiscuous_filter_t promisc_filter = {};
-  promisc_filter.filter_mask = WIFI_PROMIS_FILTER_MASK_DATA;
+  promisc_filter.filter_mask =
+      WIFI_PROMIS_FILTER_MASK_MGMT | WIFI_PROMIS_FILTER_MASK_DATA;
   esp_wifi_set_promiscuous_filter(&promisc_filter);
   esp_wifi_set_promiscuous(true);
 
   wifi_csi_config_t csi_cfg = {};
   csi_cfg.lltf_en = true;
   csi_cfg.htltf_en = true;
-  csi_cfg.stbc_htltf2_en = false;
+  // Sample the second HT-LTF under STBC, and do not let the channel filter
+  // discard estimates - both widen what actually reaches the callback.
+  csi_cfg.stbc_htltf2_en = true;
   csi_cfg.ltf_merge_en = true;
-  csi_cfg.channel_filter_en = true;
+  csi_cfg.channel_filter_en = false;
   csi_cfg.manu_scale = false;
   csi_cfg.shift = 0;
   esp_wifi_set_csi_config(&csi_cfg);
@@ -355,11 +425,28 @@ void loop() {
   radar_poll();
   emit_radar();
 
-  if (mlx_ok && mlx.getFrame(thermal_frame) == 0) {
-    send_frame(SENSE_FRAME_THERMAL, (uint64_t)esp_timer_get_time(),
-               thermal_frame, sizeof(thermal_frame));
-    stat_thermal++;
-    digitalWrite(PIN_LED, (stat_thermal & 1) ? LOW : HIGH);
+  // Light changes slowly; 2 Hz is plenty and keeps the I2C bus free for
+  // thermal, which is the sensitive one under Wi-Fi load.
+  if (millis() - last_lux_ms >= 500) {
+    last_lux_ms = millis();
+    sense_ambient_payload_t amb;
+    const float lux = lux_ok ? bh1750_read() : NAN;
+    amb.valid = isnan(lux) ? 0 : 1;
+    amb.lux = lux;
+    send_frame(SENSE_FRAME_AMBIENT, (uint64_t)esp_timer_get_time(), &amb,
+               sizeof(amb));
+  }
+
+  if (mlx_ok) {
+    if (mlx.getFrame(thermal_frame) == 0) {
+      mlx_fail_streak = 0;
+      send_frame(SENSE_FRAME_THERMAL, (uint64_t)esp_timer_get_time(),
+                 thermal_frame, sizeof(thermal_frame));
+      stat_thermal++;
+      digitalWrite(PIN_LED, (stat_thermal & 1) ? LOW : HIGH);
+    } else if (++mlx_fail_streak >= MLX_FAIL_LIMIT) {
+      thermal_recover();
+    }
   }
 
   // Counters ride in a radar-shaped frame? No - they would pollute the data.

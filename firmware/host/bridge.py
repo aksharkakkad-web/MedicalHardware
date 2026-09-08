@@ -121,7 +121,11 @@ class State:
         self.radar: F.RadarFrame | None = None
         self.csi_amps: list[float] | None = None
         self.csi_rssi: int | None = None
-        self.rate = {"thermal": RateMeter(), "radar": RateMeter(), "csi": RateMeter()}
+        self.lux: float | None = None
+        self.rate = {
+            "thermal": RateMeter(), "radar": RateMeter(),
+            "csi": RateMeter(), "ambient": RateMeter(),
+        }
         self.parser_stats = F.Stats()
         self.connected = False
         self.source_label = "simulated" if simulated else "waiting"
@@ -138,6 +142,9 @@ class State:
                 self.csi_amps = frame.amplitudes
                 self.csi_rssi = frame.rssi
                 self.rate["csi"].tick()
+            elif isinstance(frame, F.AmbientFrame):
+                self.lux = frame.lux
+                self.rate["ambient"].tick()
 
     def snapshot(self) -> dict:
         with self.lock:
@@ -145,6 +152,7 @@ class State:
             radar = self.radar
             amps = self.csi_amps
             rssi = self.csi_rssi
+            lux = self.lux
             rates = {k: (m.hz, m.age) for k, m in self.rate.items()}
             stats = self.parser_stats
 
@@ -164,7 +172,8 @@ class State:
             "health": {
                 "thermal": health("thermal", 7.0),
                 "radar": health("radar", 4.0),
-                "csi": health("csi", 100.0),
+                "csi": health("csi", 8.0),
+                "ambient": health("ambient", 1.5),
             },
             "stats": {
                 "frames_ok": stats.frames_ok,
@@ -193,6 +202,20 @@ class State:
             }
         if amps:
             out["csi"] = {"amps": [round(a, 1) for a in amps[:64]], "rssi": rssi}
+
+        # Dark/lit only. The BH1750 is broadband with no spectral channels, so
+        # anything circadian would need melanopic weighting this part cannot
+        # provide - see firmware/docs/LIGHT_SENSING_NOTES.md.
+        if lux is not None and rates["ambient"][1] < 3.0:
+            if lux < 5:
+                band = "dark"
+            elif lux < 50:
+                band = "dim"
+            elif lux < 300:
+                band = "lit"
+            else:
+                band = "bright"
+            out["ambient"] = {"lux": round(lux, 1), "band": band}
 
         # Cross-check the two independent sensors. This is the part that earns
         # its keep: the radar alone will report a confident target, and even a
