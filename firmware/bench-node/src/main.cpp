@@ -304,6 +304,17 @@ void setup() {
     esp_now_register_recv_cb(on_espnow_recv);
   }
 
+  // CSI delivers nothing in plain STA mode: the driver discards frames that
+  // are not addressed to this station before they reach the CSI stage.
+  // Measured directly - 0 callbacks against 1460 ESP-NOW receptions in the
+  // same 3 s window, then callbacks immediately on enabling promiscuous mode.
+  // Filter to data frames so ambient management traffic does not dilute the
+  // stream with beacons from every AP in range.
+  wifi_promiscuous_filter_t promisc_filter = {};
+  promisc_filter.filter_mask = WIFI_PROMIS_FILTER_MASK_DATA;
+  esp_wifi_set_promiscuous_filter(&promisc_filter);
+  esp_wifi_set_promiscuous(true);
+
   wifi_csi_config_t csi_cfg = {};
   csi_cfg.lltf_en = true;
   csi_cfg.htltf_en = true;

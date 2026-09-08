@@ -162,3 +162,47 @@ seconds.
 
 **Still to measure:** CSI callback rate at the RX end. A 499 Hz transmit rate is
 the ceiling for it, not a guarantee.
+
+## 2026-09-08 — M4 CSI receiver
+
+**The C6 link is good.** With the TX node across the room on a power bank, the
+S3 receives **~487 ESP-NOW packets/sec** against 499 transmitted — about 97.6%
+delivery. The onboard ceramic antenna is not the problem.
+
+**Zero CSI was a receiver bug, not a link or antenna problem.** A staged
+diagnostic separated the causes:
+
+| Mode | CSI callbacks / 3 s | ESP-NOW recv / 3 s |
+|---|---|---|
+| STA, no promiscuous | **0** | 1460 |
+| promiscuous on | 56 | 1480 |
+| promiscuous + filter | 50–310 | ~1475 |
+
+In plain STA mode the driver discards frames not addressed to this station
+before they reach the CSI stage, so the callback never fires. Enabling
+promiscuous mode fixes it. This is now set in the stream firmware with a
+data-frame filter, so ambient beacons from every AP in range do not dilute the
+stream.
+
+**Rate is still far below the packet rate: 1.4 Hz measured.** Two observations
+point at the cause rather than the receiver:
+
+- captured CSI reports **RSSI −91 dBm**, while the C6 measures **−54 dBm** in
+  the same room. What is being captured is distant ambient traffic, not the
+  beacon.
+- the diagnostic's CSI counts swung 16–310 per window while ESP-NOW reception
+  stayed rock steady at ~1470, so the frames are arriving and being decoded but
+  are not producing CSI.
+
+**Prime suspect: the ESP-NOW PHY rate.** Broadcast ESP-NOW defaults to a basic
+802.11b rate, which carries no HT-LTF and does not yield a usable channel
+estimate. Fixing it means setting an explicit OFDM/HT rate on the TX peer
+(`esp_now_set_peer_rate_config()` on the C6's Arduino 3.x core) — which requires
+retrieving the C6 to reflash it.
+
+Secondary suspect, not yet ruled out: the bench loop is thermal-bound at ~7.8 Hz
+because `mlx.getFrame()` blocks, and drains at most 32 ring entries per
+iteration. That caps throughput but cannot explain an RSSI of −91.
+
+**Not yet resolved.** CSI is proven working end to end — frames parse, 64
+subcarriers, zero CRC errors — but not yet locked to the TX node.
