@@ -45,7 +45,7 @@ static constexpr uint8_t WIFI_CHANNEL = 6;
 // Enough subcarriers for HT20 (64 pairs). Anything longer is truncated rather
 // than dropped, so a wider capture still yields usable frames.
 static constexpr int CSI_MAX_IQ = 128;
-static constexpr int CSI_RING = 64;
+static constexpr int CSI_RING = 256;
 
 typedef struct {
   uint64_t t_us;
@@ -78,6 +78,7 @@ static bool lux_ok;
 
 static uint32_t mlx_fail_streak = 0;
 static uint32_t mlx_recoveries = 0;
+static uint32_t last_reported_recoveries = 0;
 static constexpr uint32_t MLX_FAIL_LIMIT = 8;
 
 static void thermal_recover() {
@@ -127,14 +128,17 @@ static uint32_t last_stat_ms = 0;
 
 // ------------------------------------------------------------- tx framing ---
 
-static uint8_t tx_buf[SENSE_FRAME_HEADER_BYTES + SENSE_FRAME_MAX_PAYLOAD +
-                      SENSE_FRAME_CRC_BYTES];
+// Two tasks now write frames - the sensor loop on core 1 and the CSI drain on
+// core 0 - so the buffer and the USB write have to be serialised.
+static SemaphoreHandle_t tx_mutex = nullptr;
 
-// One writer for every modality, so the wire format lives in exactly one place.
 static void send_frame(uint8_t type, uint64_t t_us, const void *payload,
                        uint16_t payload_len) {
   if (payload_len > SENSE_FRAME_MAX_PAYLOAD) return;
+  if (tx_mutex && xSemaphoreTake(tx_mutex, pdMS_TO_TICKS(50)) != pdTRUE) return;
 
+  static uint8_t tx_buf[SENSE_FRAME_HEADER_BYTES + SENSE_FRAME_MAX_PAYLOAD +
+                        SENSE_FRAME_CRC_BYTES];
   uint8_t *p = tx_buf;
   const uint32_t magic = SENSE_FRAME_MAGIC;
   memcpy(p, &magic, 4);
@@ -152,7 +156,57 @@ static void send_frame(uint8_t type, uint64_t t_us, const void *payload,
   memcpy(p, &crc, 2);
   p += 2;
 
-  Serial.write(tx_buf, p - tx_buf);
+  // USB CDC accepts short writes when its buffer is full. Returning early
+  // leaves a truncated frame on the wire, and the next task's frame lands in
+  // the middle of it - which is exactly the CRC errors and resyncs that
+  // appeared when the CSI drain moved to its own core.
+  const size_t total = (size_t)(p - tx_buf);
+  size_t sent = 0;
+  uint32_t guard = 0;
+  while (sent < total && guard++ < 2000) {
+    const size_t n = Serial.write(tx_buf + sent, total - sent);
+    if (n == 0) {
+      delayMicroseconds(200);
+    } else {
+      sent += n;
+    }
+  }
+  if (tx_mutex) xSemaphoreGive(tx_mutex);
+}
+
+/*
+ * CSI drain, pinned to core 0.
+ *
+ * The brief says to drain the ring on the other core, and skipping that turned
+ * out to matter: with the drain inline in loop(), thermal and CSI could not
+ * both run. mlx.getFrame() blocks for over 100 ms, and during that window the
+ * 64-entry ring overflows and the callback drops everything. Measured as
+ * 12.5 Hz CSI with thermal dead, or 7.8 Hz thermal with CSI dead, depending on
+ * which side won.
+ */
+static void csi_drain_task(void *arg) {
+  (void)arg;
+  for (;;) {
+    int drained = 0;
+    while (csi_tail != csi_head && drained < 64) {
+      volatile csi_item_t *slot = &csi_ring[csi_tail];
+
+      uint8_t pl[4 + CSI_MAX_IQ];
+      const int16_t rssi = slot->rssi;
+      const uint16_t n = slot->n_pairs;
+      const uint64_t t_us = slot->t_us;
+      memcpy(pl, &rssi, 2);
+      memcpy(pl + 2, &n, 2);
+      const int nbytes = n * 2;
+      for (int i = 0; i < nbytes; i++) pl[4 + i] = (uint8_t)slot->iq[i];
+
+      csi_tail = (csi_tail + 1) % CSI_RING;
+      send_frame(SENSE_FRAME_CSI, t_us, pl, (uint16_t)(4 + nbytes));
+      stat_csi++;
+      drained++;
+    }
+    vTaskDelay(pdMS_TO_TICKS(2));
+  }
 }
 
 // --------------------------------------------------------------- csi hook ---
@@ -397,31 +451,17 @@ void setup() {
   esp_wifi_set_csi_rx_cb(csi_cb, NULL);
   esp_wifi_set_csi(true);
 
+  tx_mutex = xSemaphoreCreateMutex();
+
+  // Core 0 alongside the Wi-Fi driver; the sensor loop keeps core 1.
+  xTaskCreatePinnedToCore(csi_drain_task, "csi_drain", 4096, nullptr, 5, nullptr, 0);
+
   last_stat_ms = millis();
 }
 
 // ------------------------------------------------------------------- loop ---
 
 void loop() {
-  // Drain the CSI ring first; it is the highest-rate producer.
-  int drained = 0;
-  while (csi_tail != csi_head && drained < 32) {
-    volatile csi_item_t *slot = &csi_ring[csi_tail];
-
-    uint8_t pl[4 + CSI_MAX_IQ];
-    const int16_t rssi = slot->rssi;
-    const uint16_t n = slot->n_pairs;
-    memcpy(pl, &rssi, 2);
-    memcpy(pl + 2, &n, 2);
-    const int nbytes = n * 2;
-    for (int i = 0; i < nbytes; i++) pl[4 + i] = (uint8_t)slot->iq[i];
-
-    send_frame(SENSE_FRAME_CSI, slot->t_us, pl, (uint16_t)(4 + nbytes));
-    csi_tail = (csi_tail + 1) % CSI_RING;
-    stat_csi++;
-    drained++;
-  }
-
   radar_poll();
   emit_radar();
 
@@ -433,6 +473,9 @@ void loop() {
     const float lux = lux_ok ? bh1750_read() : NAN;
     amb.valid = isnan(lux) ? 0 : 1;
     amb.lux = lux;
+    if (mlx_recoveries != last_reported_recoveries) {
+      last_reported_recoveries = mlx_recoveries;
+    }
     send_frame(SENSE_FRAME_AMBIENT, (uint64_t)esp_timer_get_time(), &amb,
                sizeof(amb));
   }
