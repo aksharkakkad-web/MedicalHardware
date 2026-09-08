@@ -57,6 +57,60 @@ class RateMeter:
         return time.monotonic() - self.stamps[-1] if self.stamps else 1e9
 
 
+# MLX90640 optical field of view, from the datasheet. Used to turn a thermal
+# column index into a real bearing, which is what lets a thermal centroid and a
+# radar distance describe the same point in the room.
+THERMAL_FOV_H_DEG = 55.0
+THERMAL_FOV_V_DEG = 35.0
+
+
+def thermal_blob(px: list[float]) -> dict | None:
+    """Locate the warmest connected region and describe it.
+
+    Returns None when the scene has no meaningful thermal contrast. A flat room
+    must read as empty rather than as a person-shaped patch of sensor noise.
+    """
+    ordered = sorted(px)
+    ambient = ordered[len(ordered) // 2]
+    peak = ordered[-1]
+    contrast = peak - ambient
+
+    # Below this the frame is a uniform room. The threshold is deliberately
+    # generous: a false "nobody here" is safer than a phantom person.
+    if contrast < 1.8:
+        return None
+
+    cut = ambient + contrast * 0.55
+    sx = sy = n = 0
+    lo_x, hi_x, lo_y, hi_y = 999, -1, 999, -1
+    for i, v in enumerate(px):
+        if v < cut:
+            continue
+        col = i % F.THERMAL_COLS
+        row = i // F.THERMAL_COLS
+        sx += col
+        sy += row
+        n += 1
+        lo_x = min(lo_x, col); hi_x = max(hi_x, col)
+        lo_y = min(lo_y, row); hi_y = max(hi_y, row)
+
+    if n < 4:
+        return None
+
+    cx = sx / n
+    bearing = ((cx / F.THERMAL_COLS) - 0.5) * THERMAL_FOV_H_DEG
+    return {
+        "cx": round(cx, 2),
+        "cy": round(sy / n, 2),
+        "pixels": n,
+        "box": [lo_x, lo_y, hi_x, hi_y],
+        "bearing_deg": round(bearing, 1),
+        "peak_c": round(peak, 1),
+        "ambient_c": round(ambient, 1),
+        "contrast_c": round(contrast, 1),
+    }
+
+
 class State:
     """Latest value per modality, plus liveness."""
 
@@ -119,11 +173,14 @@ class State:
             },
         }
 
+        blob = None
         if thermal:
+            blob = thermal_blob(thermal)
             out["thermal"] = {
                 "pixels": [round(v, 1) for v in thermal],
                 "min": round(min(thermal), 1),
                 "max": round(max(thermal), 1),
+                "blob": blob,
             }
         if radar:
             # None stays None all the way to the browser. Never coerce an
@@ -136,6 +193,28 @@ class State:
             }
         if amps:
             out["csi"] = {"amps": [round(a, 1) for a in amps[:64]], "rssi": rssi}
+
+        # Cross-check the two independent sensors. This is the part that earns
+        # its keep: the radar alone will report a confident target, and even a
+        # heart rate, off a desk. Thermal cannot see a desk as warm, so
+        # disagreement is the signal that something is wrong.
+        radar_target = bool(radar and radar.presence)
+        thermal_body = blob is not None
+        if radar_target and thermal_body:
+            agree, verdict = True, "person"
+        elif radar_target and not thermal_body:
+            agree, verdict = False, "radar_only"
+        elif thermal_body and not radar_target:
+            agree, verdict = False, "thermal_only"
+        else:
+            agree, verdict = True, "empty"
+
+        out["fusion"] = {
+            "verdict": verdict,
+            "agree": agree,
+            "distance_m": None if not radar or radar.distance_m is None else round(radar.distance_m, 2),
+            "bearing_deg": blob["bearing_deg"] if blob else None,
+        }
         return out
 
 
