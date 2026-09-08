@@ -1,102 +1,283 @@
 /*
- * M3 - radar aiming aid.
+ * M4 RX + M5 - unified binary stream.
  *
- * Done condition from HARDWARE_BRINGUP_BRIEF.md: presence flips true/false as
- * you step in and out of range, and distance tracks you.
+ * Streams all three modalities to the host over native USB CDC using the
+ * length-prefixed frames defined in firmware/shared/frame.h. CSV would not fit
+ * at these rates.
  *
- * This build is for physically aiming the sensor. It prints one line at 4 Hz
- * with a verdict, so the sensor can be moved while watching the effect instead
- * of guessing at placement.
+ * All three modalities timestamp off the same esp_timer_get_time(). That
+ * shared clock is what makes cross-modality alignment possible later, and
+ * retrofitting one is painful.
  *
- * Wire format (established empirically - the module does NOT use the
- * documented Seeed "SY...TC" framing; see firmware/docs/BRINGUP_LOG.md):
+ * CSI rule from the brief: do no processing in the callback. It copies into a
+ * ring buffer and returns; the main loop drains it.
  *
- *   uint8  sof = 0x01
- *   uint16 seq          big-endian
- *   uint16 len          big-endian, length of data[] only
- *   uint16 id           big-endian
- *   uint8  token
- *   uint8  data[len]    little-endian words
- *   uint8  checksum     XOR of sof through the last data byte
- *
- * Message ids were confirmed by cross-checking the module's own plain-text log
- * on id 0x0100 against the numeric ids.
+ * Radar wire format was established empirically - the module does NOT use the
+ * documented Seeed "SY...TC" framing. See firmware/docs/BRINGUP_LOG.md for the
+ * derivation and the confirmed message map.
  */
 
 #include <Arduino.h>
+#include <Wire.h>
+#include <Adafruit_MLX90640.h>
+#include <WiFi.h>
+#include <esp_now.h>
+#include <esp_wifi.h>
 
-static constexpr int PIN_LED = LED_BUILTIN;
-static constexpr int PIN_RADAR_RX = 44;  // pad D7
+#include "../../shared/frame.h"
+
+// ---------------------------------------------------------------- config ---
+
+static constexpr int PIN_SDA = 5;   // XIAO pad D4
+static constexpr int PIN_SCL = 6;   // XIAO pad D5
+static constexpr int PIN_RADAR_RX = 44;  // pad D7, confirmed empirically
 static constexpr int PIN_RADAR_TX = 43;  // pad D6
+static constexpr int PIN_LED = LED_BUILTIN;
+
 static constexpr uint32_t RADAR_BAUD = 115200;
 
-static constexpr uint8_t SOF = 0x01;
-static constexpr size_t MAX_DATA = 64;
+// Must match firmware/tx-node. Nothing works if these disagree, and the
+// failure is silent.
+static constexpr uint8_t WIFI_CHANNEL = 6;
 
-// Confirmed message ids.
-static constexpr uint16_t ID_LOG = 0x0100;       // ASCII status log
-static constexpr uint16_t ID_BREATH = 0x0A14;    // breathing rate, rpm
-static constexpr uint16_t ID_HEART = 0x0A15;     // heart rate, bpm
-static constexpr uint16_t ID_DISTANCE = 0x0A16;  // target distance, cm
-static constexpr uint16_t ID_POSITION = 0x0A17;  // target (x, y), metres
-static constexpr uint16_t ID_CLOUD = 0x0A04;     // count + per-target (x, y)
-static constexpr uint16_t ID_PRESENCE = 0x0A29;  // presence / target state
+// ------------------------------------------------------------ csi buffer ---
 
-// Vitals need a near-stationary subject. The brief gives ~1.5 m for heart rate
-// and ~2 m for respiration; below ~30 cm the target sits in the module's own
-// near-field clutter.
-static constexpr float MIN_USEFUL_CM = 30.0f;
-static constexpr float MAX_VITALS_CM = 150.0f;
+// Enough subcarriers for HT20 (64 pairs). Anything longer is truncated rather
+// than dropped, so a wider capture still yields usable frames.
+static constexpr int CSI_MAX_IQ = 128;
+static constexpr int CSI_RING = 64;
 
-// Breathing spread over the sample window, above which the reading is not
-// trustworthy enough to call locked.
-static constexpr float BREATH_SPREAD_LIMIT = 6.0f;
+typedef struct {
+  uint64_t t_us;
+  int16_t rssi;
+  uint16_t n_pairs;
+  int8_t iq[CSI_MAX_IQ];
+} csi_item_t;
 
-static float last_breath = 0.0f;
-static float last_heart = 0.0f;
-static float last_distance = 0.0f;
-static float last_x = 0.0f, last_y = 0.0f;
-static uint32_t last_presence = 0;
-static uint32_t last_count = 0;
-static char last_log[40] = {0};
+static volatile csi_item_t csi_ring[CSI_RING];
+static volatile uint32_t csi_head = 0;  // written by the callback
+static volatile uint32_t csi_tail = 0;  // read by the loop
+static volatile uint32_t csi_dropped = 0;
+static volatile uint32_t csi_total = 0;
 
-static bool have_target = false;
-static uint32_t last_target_ms = 0;
+// ------------------------------------------------------------------ state ---
 
-// A live person cannot hold a distance to within a hundredth of a centimetre.
-// Readings that never move are a rigid reflector - a desk, a wall, the bench
-// itself - and every vital derived from them is meaningless. Detect it rather
-// than letting a confident-looking number stand.
-static float frozen_ref_cm = -1.0f;
-static int frozen_samples = 0;
-static constexpr float FROZEN_EPS_CM = 0.05f;
-static constexpr int FROZEN_LIMIT = 12;  // ~3 s at the 4 Hz report rate
+static Adafruit_MLX90640 mlx;
+static bool mlx_ok = false;
+static float thermal_frame[SENSE_THERMAL_PIXELS];
 
-// Rolling window of valid breathing readings, used only to judge stability.
-static constexpr int BREATH_WIN = 16;
-static float breath_win[BREATH_WIN];
-static int breath_n = 0, breath_i = 0;
+static uint32_t stat_thermal = 0, stat_radar = 0, stat_csi = 0;
+static uint32_t last_stat_ms = 0;
 
-static uint32_t frames_ok = 0, frames_bad_crc = 0;
-static uint32_t last_report = 0;
+// ------------------------------------------------------------- tx framing ---
 
-static float read_f32(const uint8_t *p) {
-  float f;
-  memcpy(&f, p, 4);
-  return f;
+static uint8_t tx_buf[SENSE_FRAME_HEADER_BYTES + SENSE_FRAME_MAX_PAYLOAD +
+                      SENSE_FRAME_CRC_BYTES];
+
+// One writer for every modality, so the wire format lives in exactly one place.
+static void send_frame(uint8_t type, uint64_t t_us, const void *payload,
+                       uint16_t payload_len) {
+  if (payload_len > SENSE_FRAME_MAX_PAYLOAD) return;
+
+  uint8_t *p = tx_buf;
+  const uint32_t magic = SENSE_FRAME_MAGIC;
+  memcpy(p, &magic, 4);
+  p += 4;
+  *p++ = type;
+  memcpy(p, &t_us, 8);
+  p += 8;
+  memcpy(p, &payload_len, 2);
+  p += 2;
+  memcpy(p, payload, payload_len);
+  p += payload_len;
+
+  // CRC covers type..payload, i.e. everything but the magic and the CRC.
+  const uint16_t crc = sense_crc16(tx_buf + 4, 11 + payload_len);
+  memcpy(p, &crc, 2);
+  p += 2;
+
+  Serial.write(tx_buf, p - tx_buf);
 }
 
-static uint32_t read_u32(const uint8_t *p) {
-  return (uint32_t)p[0] | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16) |
-         ((uint32_t)p[3] << 24);
+// --------------------------------------------------------------- csi hook ---
+
+// Called from the Wi-Fi task. Copies and returns - nothing else.
+static void IRAM_ATTR csi_cb(void *ctx, wifi_csi_info_t *info) {
+  (void)ctx;
+  if (!info || !info->buf || info->len <= 0) return;
+
+  const uint32_t head = csi_head;
+  const uint32_t next = (head + 1) % CSI_RING;
+  if (next == csi_tail) {
+    csi_dropped++;  // consumer is behind; drop rather than block the radio
+    return;
+  }
+
+  volatile csi_item_t *slot = &csi_ring[head];
+  slot->t_us = (uint64_t)esp_timer_get_time();
+  slot->rssi = info->rx_ctrl.rssi;
+
+  int n = info->len;
+  if (n > CSI_MAX_IQ) n = CSI_MAX_IQ;
+  slot->n_pairs = (uint16_t)(n / 2);
+  for (int i = 0; i < n; i++) slot->iq[i] = info->buf[i];
+
+  csi_head = next;
+  csi_total++;
 }
 
-static int read_byte(uint32_t deadline_ms) {
+// Arduino core 2.x signature. The C6 TX node runs a 3.x core, where this takes
+// an esp_now_recv_info_t instead - the two nodes deliberately sit on different
+// cores, so do not copy this signature across.
+static void on_espnow_recv(const uint8_t *mac, const uint8_t *data, int len) {
+  (void)mac;
+  (void)data;
+  (void)len;
+  // Reception itself is what triggers the CSI callback; nothing to do here.
+}
+
+// ----------------------------------------------------------------- radar ---
+
+static int radar_read(uint32_t deadline_ms) {
   while ((int32_t)(millis() - deadline_ms) < 0) {
     if (Serial1.available()) return Serial1.read();
   }
   return -1;
 }
+
+// Latest value per confirmed message id, with an explicit validity flag each.
+static float rv_distance_cm = NAN, rv_breath = NAN, rv_heart = NAN;
+static float rv_x = NAN, rv_y = NAN;
+static uint32_t rv_count = 0, rv_presence = 0;
+static bool rv_dirty = false;
+
+static void radar_poll() {
+  if (!Serial1.available()) return;
+  if ((uint8_t)Serial1.read() != 0x01) return;
+
+  uint8_t hdr[6];
+  const uint32_t deadline = millis() + 30;
+  for (int i = 0; i < 6; i++) {
+    const int v = radar_read(deadline);
+    if (v < 0) return;
+    hdr[i] = (uint8_t)v;
+  }
+  const uint16_t len = ((uint16_t)hdr[2] << 8) | hdr[3];
+  const uint16_t id = ((uint16_t)hdr[4] << 8) | hdr[5];
+  if (len > 64) return;
+
+  const int tok = radar_read(deadline);
+  if (tok < 0) return;
+  uint8_t data[64];
+  for (uint16_t i = 0; i < len; i++) {
+    const int v = radar_read(deadline);
+    if (v < 0) return;
+    data[i] = (uint8_t)v;
+  }
+  const int crc_rx = radar_read(deadline);
+  if (crc_rx < 0) return;
+
+  uint8_t crc = 0x01;
+  for (int i = 0; i < 6; i++) crc ^= hdr[i];
+  crc ^= (uint8_t)tok;
+  for (uint16_t i = 0; i < len; i++) crc ^= data[i];
+  if (crc != (uint8_t)crc_rx) return;
+
+  float f;
+  switch (id) {
+    case 0x0A14:  // breathing rate, rpm
+      if (len >= 4) {
+        memcpy(&f, data, 4);
+        // 0 is the module's "no valid estimate" marker, not a measurement.
+        rv_breath = (f > 0.5f) ? f : NAN;
+        rv_dirty = true;
+      }
+      break;
+    case 0x0A15:  // heart rate, bpm
+      if (len >= 4) {
+        memcpy(&f, data, 4);
+        rv_heart = (f > 0.5f) ? f : NAN;
+        rv_dirty = true;
+      }
+      break;
+    case 0x0A16:  // target distance, cm
+      if (len >= 8) {
+        memcpy(&f, data + 4, 4);
+        rv_distance_cm = f;
+        rv_dirty = true;
+      }
+      break;
+    case 0x0A17:  // target position, metres
+      if (len >= 8) {
+        memcpy(&rv_x, data, 4);
+        memcpy(&rv_y, data + 4, 4);
+        rv_dirty = true;
+      }
+      break;
+    case 0x0A04:  // point cloud: target count first
+      if (len >= 4) {
+        rv_count = (uint32_t)data[0] | ((uint32_t)data[1] << 8) |
+                   ((uint32_t)data[2] << 16) | ((uint32_t)data[3] << 24);
+        rv_dirty = true;
+      }
+      break;
+    case 0x0A29:  // presence / target state
+      if (len >= 2) {
+        rv_presence = (uint32_t)(data[0] | (data[1] << 8));
+        rv_dirty = true;
+      }
+      break;
+    default:
+      break;
+  }
+}
+
+static void emit_radar() {
+  if (!rv_dirty) return;
+  rv_dirty = false;
+
+  sense_radar_payload_t pl;
+  pl.valid = 0;
+  pl.presence = SENSE_RADAR_PRESENCE_ABSENT;
+  pl.quality = SENSE_RADAR_QUALITY_ABSENT;
+  pl.distance_m = NAN;
+  pl.respiration_rpm = NAN;
+  pl.heart_rate_bpm = NAN;
+
+  // Presence gates everything else. With no target the module still reports a
+  // distance of 0.0, which is not a measurement of anything - forwarding it
+  // would put a confident "0.00 m" on the dashboard for an empty room. The
+  // contract's rule against zero-filling applies to a zero the sensor itself
+  // volunteers, not just to one we would invent.
+  const bool target = rv_count > 0;
+
+  pl.valid |= SENSE_RADAR_VALID_PRESENCE;
+  pl.presence = target ? 1 : 0;
+
+  if (target) {
+    if (!isnan(rv_distance_cm) && rv_distance_cm > 1.0f) {
+      pl.valid |= SENSE_RADAR_VALID_DISTANCE;
+      pl.distance_m = rv_distance_cm / 100.0f;
+    }
+    if (!isnan(rv_breath)) {
+      pl.valid |= SENSE_RADAR_VALID_RESPIRATION;
+      pl.respiration_rpm = rv_breath;
+    }
+    if (!isnan(rv_heart)) {
+      pl.valid |= SENSE_RADAR_VALID_HEART_RATE;
+      pl.heart_rate_bpm = rv_heart;
+    }
+  } else {
+    // Drop stale vitals rather than letting the last live reading linger after
+    // the person leaves.
+    rv_breath = rv_heart = NAN;
+  }
+
+  send_frame(SENSE_FRAME_RADAR, (uint64_t)esp_timer_get_time(), &pl, sizeof(pl));
+  stat_radar++;
+}
+
+// ------------------------------------------------------------------ setup ---
 
 void setup() {
   pinMode(PIN_LED, OUTPUT);
@@ -104,158 +285,78 @@ void setup() {
   const uint32_t t0 = millis();
   while (!Serial && (millis() - t0) < 3000) delay(50);
 
+  Wire.begin(PIN_SDA, PIN_SCL, 1000000);
+  if (mlx.begin(MLX90640_I2CADDR_DEFAULT, &Wire)) {
+    mlx.setMode(MLX90640_CHESS);
+    mlx.setResolution(MLX90640_ADC_18BIT);
+    mlx.setRefreshRate(MLX90640_16_HZ);
+    mlx_ok = true;
+  }
+
   Serial1.begin(RADAR_BAUD, SERIAL_8N1, PIN_RADAR_RX, PIN_RADAR_TX);
 
-  Serial.println();
-  Serial.println("=== bench node: M3 radar aiming ===");
-  Serial.println();
-  Serial.println("Aim the sensor face at your chest, roughly 0.6-1.2 m away,");
-  Serial.println("with nothing between you and it. Then sit still.");
-  Serial.println();
-  Serial.println("Presence and distance work while you move. Breathing and");
-  Serial.println("heart rate do not - they need you almost motionless, and are");
-  Serial.println("uncalibrated consumer-grade estimates either way.");
-  Serial.println();
-  last_report = millis();
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect();
+  esp_wifi_set_ps(WIFI_PS_NONE);
+  esp_wifi_set_channel(WIFI_CHANNEL, WIFI_SECOND_CHAN_NONE);
+
+  if (esp_now_init() == ESP_OK) {
+    esp_now_register_recv_cb(on_espnow_recv);
+  }
+
+  wifi_csi_config_t csi_cfg = {};
+  csi_cfg.lltf_en = true;
+  csi_cfg.htltf_en = true;
+  csi_cfg.stbc_htltf2_en = false;
+  csi_cfg.ltf_merge_en = true;
+  csi_cfg.channel_filter_en = true;
+  csi_cfg.manu_scale = false;
+  csi_cfg.shift = 0;
+  esp_wifi_set_csi_config(&csi_cfg);
+  esp_wifi_set_csi_rx_cb(csi_cb, NULL);
+  esp_wifi_set_csi(true);
+
+  last_stat_ms = millis();
 }
 
+// ------------------------------------------------------------------- loop ---
+
 void loop() {
-  const int b = read_byte(millis() + 200);
-  if (b < 0) return;
-  if ((uint8_t)b != SOF) return;
+  // Drain the CSI ring first; it is the highest-rate producer.
+  int drained = 0;
+  while (csi_tail != csi_head && drained < 32) {
+    volatile csi_item_t *slot = &csi_ring[csi_tail];
 
-  uint8_t hdr[6];
-  const uint32_t deadline = millis() + 100;
-  for (int i = 0; i < 6; i++) {
-    const int v = read_byte(deadline);
-    if (v < 0) return;
-    hdr[i] = (uint8_t)v;
-  }
-  const uint16_t len = ((uint16_t)hdr[2] << 8) | hdr[3];
-  const uint16_t id = ((uint16_t)hdr[4] << 8) | hdr[5];
-  if (len > MAX_DATA) return;
+    uint8_t pl[4 + CSI_MAX_IQ];
+    const int16_t rssi = slot->rssi;
+    const uint16_t n = slot->n_pairs;
+    memcpy(pl, &rssi, 2);
+    memcpy(pl + 2, &n, 2);
+    const int nbytes = n * 2;
+    for (int i = 0; i < nbytes; i++) pl[4 + i] = (uint8_t)slot->iq[i];
 
-  const int tok = read_byte(deadline);
-  if (tok < 0) return;
-
-  uint8_t data[MAX_DATA];
-  for (uint16_t i = 0; i < len; i++) {
-    const int v = read_byte(deadline);
-    if (v < 0) return;
-    data[i] = (uint8_t)v;
-  }
-  const int crc_rx = read_byte(deadline);
-  if (crc_rx < 0) return;
-
-  uint8_t crc = SOF;
-  for (int i = 0; i < 6; i++) crc ^= hdr[i];
-  crc ^= (uint8_t)tok;
-  for (uint16_t i = 0; i < len; i++) crc ^= data[i];
-  if (crc != (uint8_t)crc_rx) {
-    frames_bad_crc++;
-    return;
-  }
-  frames_ok++;
-
-  switch (id) {
-    case ID_BREATH:
-      if (len >= 4) {
-        last_breath = read_f32(data);
-        // The module reports 0 for "no valid estimate". Keeping it out of the
-        // window matters: averaging zeros in would manufacture a plausible
-        // low reading out of missing data.
-        if (last_breath > 0.5f) {
-          breath_win[breath_i] = last_breath;
-          breath_i = (breath_i + 1) % BREATH_WIN;
-          if (breath_n < BREATH_WIN) breath_n++;
-        }
-      }
-      break;
-    case ID_HEART:
-      if (len >= 4) last_heart = read_f32(data);
-      break;
-    case ID_DISTANCE:
-      if (len >= 8) last_distance = read_f32(data + 4);
-      break;
-    case ID_POSITION:
-      if (len >= 8) {
-        last_x = read_f32(data);
-        last_y = read_f32(data + 4);
-      }
-      break;
-    case ID_CLOUD:
-      if (len >= 4) {
-        last_count = read_u32(data);
-        if (last_count > 0) {
-          have_target = true;
-          last_target_ms = millis();
-        }
-      }
-      break;
-    case ID_PRESENCE:
-      if (len >= 2) last_presence = (uint32_t)(data[0] | (data[1] << 8));
-      break;
-    case ID_LOG:
-      if (len > 0) {
-        const uint16_t n = len < sizeof(last_log) - 1 ? len : sizeof(last_log) - 1;
-        for (uint16_t k = 0; k < n; k++) {
-          const char c = (char)data[k];
-          last_log[k] = (c >= 32 && c < 127) ? c : ' ';
-        }
-        last_log[n] = 0;
-      }
-      break;
-    default:
-      break;
+    send_frame(SENSE_FRAME_CSI, slot->t_us, pl, (uint16_t)(4 + nbytes));
+    csi_tail = (csi_tail + 1) % CSI_RING;
+    stat_csi++;
+    drained++;
   }
 
+  radar_poll();
+  emit_radar();
+
+  if (mlx_ok && mlx.getFrame(thermal_frame) == 0) {
+    send_frame(SENSE_FRAME_THERMAL, (uint64_t)esp_timer_get_time(),
+               thermal_frame, sizeof(thermal_frame));
+    stat_thermal++;
+    digitalWrite(PIN_LED, (stat_thermal & 1) ? LOW : HIGH);
+  }
+
+  // Counters ride in a radar-shaped frame? No - they would pollute the data.
+  // Rates are derived host-side from frame arrival times instead, so the
+  // stream carries only measurements.
   const uint32_t now = millis();
-  if (now - last_report < 250) return;
-  last_report = now;
-
-  // A target is stale if the cloud has not reported one recently.
-  if (now - last_target_ms > 1500) have_target = false;
-  digitalWrite(PIN_LED, have_target ? LOW : HIGH);
-
-  float spread = 0.0f;
-  if (breath_n >= 4) {
-    float lo = breath_win[0], hi = breath_win[0];
-    for (int i = 1; i < breath_n; i++) {
-      if (breath_win[i] < lo) lo = breath_win[i];
-      if (breath_win[i] > hi) hi = breath_win[i];
-    }
-    spread = hi - lo;
+  if (now - last_stat_ms >= 5000) {
+    last_stat_ms = now;
+    stat_thermal = stat_radar = stat_csi = 0;
   }
-
-  if (have_target && fabsf(last_distance - frozen_ref_cm) < FROZEN_EPS_CM) {
-    if (frozen_samples < 10000) frozen_samples++;
-  } else {
-    frozen_samples = 0;
-    frozen_ref_cm = last_distance;
-  }
-
-  const char *verdict;
-  if (!have_target) {
-    verdict = "NO TARGET - nothing in the beam; aim at your chest";
-  } else if (frozen_samples >= FROZEN_LIMIT) {
-    verdict = "STATIC REFLECTOR - distance frozen; it is locked on furniture";
-  } else if (last_distance < MIN_USEFUL_CM) {
-    verdict = "TOO CLOSE - back off past 30 cm";
-  } else if (last_distance > MAX_VITALS_CM) {
-    verdict = "IN RANGE for presence, TOO FAR for vitals";
-  } else if (breath_n < 4) {
-    verdict = "TARGET HELD - waiting for a breathing estimate";
-  } else if (spread > BREATH_SPREAD_LIMIT) {
-    verdict = "UNSTABLE - hold still, or re-aim at the chest";
-  } else {
-    verdict = "LOCKED";
-  }
-
-  Serial.printf(
-      "tgt=%lu pres=%lu | dist=%6.1fcm  x=%+5.2f y=%+5.2f | breath=%4.1f "
-      "heart=%5.1f | spread=%4.1f | %s\n",
-      (unsigned long)last_count, (unsigned long)last_presence, last_distance,
-      last_x, last_y, last_breath, last_heart, spread, verdict);
-  Serial.printf("    module log: \"%s\"   frames ok=%lu bad=%lu\n", last_log,
-                (unsigned long)frames_ok, (unsigned long)frames_bad_crc);
 }

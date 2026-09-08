@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bench Node</title>
+<style>
+  /* Values follow docs/design-system.md so the bench view reads as part of
+     the same product: white canvas, neutral ink, hairline rules, and colour
+     reserved for meaning. */
+  :root{
+    --canvas:#ffffff; --surface:#ffffff; --quiet:#f5f5f5;
+    --ink:#171717; --ink-2:#737373; --ink-3:#a3a3a3;
+    --line:#e5e5e5; --line-strong:#d4d4d4;
+    --action:#2563eb;
+    --ok:#16a34a; --warn:#d97706; --bad:#dc2626;
+    --radius-card:12px;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --canvas:#0a0a0a; --surface:#141414; --quiet:#1c1c1c;
+      --ink:#f5f5f5; --ink-2:#a3a3a3; --ink-3:#737373;
+      --line:#262626; --line-strong:#333333;
+      --action:#3b82f6;
+      --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--canvas); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased; font-size:14px; line-height:1.45;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:32px 40px 64px}
+
+  header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:4px}
+  h1{font-size:30px;font-weight:650;letter-spacing:-.021em;margin:0}
+  .sub{color:var(--ink-2);font-size:14px;margin:0 0 28px}
+
+  .badge{
+    font-size:11px;font-weight:650;letter-spacing:.04em;text-transform:uppercase;
+    padding:4px 9px;border-radius:999px;border:1px solid var(--line-strong);color:var(--ink-2);
+  }
+  .badge.demo{background:#fef3c7;border-color:#fcd34d;color:#92400e}
+  @media (prefers-color-scheme: dark){.badge.demo{background:#3f2d0a;border-color:#a16207;color:#fbbf24}}
+
+  /* status strip */
+  .strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));
+    gap:0;border:1px solid var(--line);border-radius:var(--radius-card);overflow:hidden;margin-bottom:28px}
+  .stat{padding:14px 16px;border-right:1px solid var(--line);background:var(--surface)}
+  .stat:last-child{border-right:none}
+  .stat .k{font-size:11px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.05em;
+    display:flex;align-items:center;gap:6px;margin-bottom:5px}
+  .stat .v{font-family:var(--mono);font-size:19px;font-weight:550;letter-spacing:-.01em}
+  .stat .v small{font-size:12px;color:var(--ink-2);font-weight:400;margin-left:2px}
+  .dot{width:7px;height:7px;border-radius:50%;flex:none;background:var(--ink-3)}
+  .dot.ok{background:var(--ok)} .dot.degraded{background:var(--warn)} .dot.offline{background:var(--bad)}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media (max-width:900px){.grid{grid-template-columns:1fr} .wrap{padding:24px 16px 48px}}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);
+    padding:18px 18px 16px;min-width:0}
+  .card.wide{grid-column:1 / -1}
+  .card h2{font-size:15px;font-weight:600;margin:0 0 2px;letter-spacing:-.006em}
+  .card .hint{font-size:12px;color:var(--ink-2);margin:0 0 14px}
+
+  canvas{display:block;width:100%;border-radius:8px;background:var(--quiet)}
+
+  .scale{display:flex;align-items:center;gap:8px;margin-top:10px;font-family:var(--mono);
+    font-size:11px;color:var(--ink-2)}
+  .ramp{flex:1;height:6px;border-radius:3px}
+
+  .readout{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);
+    border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .readout div{background:var(--surface);padding:12px 14px}
+  .readout .k{font-size:11px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.05em}
+  .readout .v{font-family:var(--mono);font-size:22px;font-weight:550;letter-spacing:-.015em;margin-top:3px}
+  .readout .v.none{color:var(--ink-3);font-size:15px;font-weight:400}
+  .note{font-size:12px;color:var(--ink-2);margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+  .note b{color:var(--ink);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Bench node</h1>
+    <span class="badge" id="srcBadge">connecting</span>
+  </header>
+  <p class="sub">Live view of what the sensors actually see. Not a medical device.</p>
+
+  <div class="strip" id="strip"></div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Thermal</h2>
+      <p class="hint">MLX90640 &middot; 32&times;24 &middot; warmer is brighter</p>
+      <canvas id="thermal" width="512" height="384"></canvas>
+      <div class="scale"><span id="tmin">–</span><div class="ramp" id="ramp"></div><span id="tmax">–</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Radar</h2>
+      <p class="hint">MR60BHA2 &middot; where the target is, seen from above</p>
+      <canvas id="radar" width="512" height="384"></canvas>
+    </div>
+
+    <div class="card">
+      <h2>Vital estimates</h2>
+      <p class="hint">Uncalibrated consumer sensor. Blank means the sensor could not measure it.</p>
+      <div class="readout">
+        <div><div class="k">Presence</div><div class="v" id="vPres">–</div></div>
+        <div><div class="k">Distance</div><div class="v" id="vDist">–</div></div>
+        <div><div class="k">Breathing</div><div class="v" id="vResp">–</div></div>
+        <div><div class="k">Heart rate</div><div class="v" id="vHr">–</div></div>
+      </div>
+      <p class="note"><b>These are estimates, not measurements.</b> They need a nearly
+      still person within about 1.5&nbsp;m. A blank field means the sensor reported
+      nothing usable &mdash; it is never filled in with a guess.</p>
+    </div>
+
+    <div class="card">
+      <h2>Wi-Fi CSI</h2>
+      <p class="hint">Signal shape across subcarriers &middot; movement disturbs the pattern</p>
+      <canvas id="csi" width="512" height="384"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+// Thermal colormap: dark blue -> magenta -> orange -> white. Perceptually
+// ordered so "brighter is warmer" reads correctly without a legend.
+const STOPS=[[8,10,40],[70,20,110],[160,35,105],[card=>0,0,0][0]?0:220,0,0];
+const RAMP=[[8,10,40],[70,20,110],[160,35,105],[220,80,60],[250,160,50],[255,245,220]];
+function heat(t){
+  t=Math.max(0,Math.min(1,t));
+  const x=t*(RAMP.length-1), i=Math.floor(x), f=x-i;
+  const a=RAMP[i], b=RAMP[Math.min(i+1,RAMP.length-1)];
+  return [a[0]+(b[0]-a[0])*f, a[1]+(b[1]-a[1])*f, a[2]+(b[2]-a[2])*f];
+}
+document.getElementById('ramp').style.background =
+  'linear-gradient(90deg,'+RAMP.map(c=>`rgb(${c[0]},${c[1]},${c[2]})`).join(',')+')';
+
+const COLS=32, ROWS=24;
+const tCan=document.getElementById('thermal'), tCtx=tCan.getContext('2d');
+const off=document.createElement('canvas'); off.width=COLS; off.height=ROWS;
+const oCtx=off.getContext('2d');
+
+function drawThermal(px,lo,hi){
+  const img=oCtx.createImageData(COLS,ROWS);
+  const span=Math.max(hi-lo,2.0); // a flat scene must render flat, not as noise
+  for(let i=0;i<COLS*ROWS;i++){
+    const [r,g,b]=heat((px[i]-lo)/span);
+    img.data[i*4]=r; img.data[i*4+1]=g; img.data[i*4+2]=b; img.data[i*4+3]=255;
+  }
+  oCtx.putImageData(img,0,0);
+  tCtx.imageSmoothingEnabled=true; tCtx.imageSmoothingQuality='high';
+  tCtx.drawImage(off,0,0,tCan.width,tCan.height);
+}
+
+const rCan=document.getElementById('radar'), rCtx=rCan.getContext('2d');
+function css(v){return getComputedStyle(document.body).getPropertyValue(v).trim()}
+function drawRadar(d){
+  const W=rCan.width,H=rCan.height; rCtx.clearRect(0,0,W,H);
+  rCtx.fillStyle=css('--quiet'); rCtx.fillRect(0,0,W,H);
+  const ox=W/2, oy=H-28, maxM=3.0, scale=(H-56)/maxM;
+  rCtx.strokeStyle=css('--line-strong'); rCtx.fillStyle=css('--ink-3');
+  rCtx.font='11px ui-monospace,monospace'; rCtx.textAlign='center';
+  for(let m=1;m<=3;m++){
+    rCtx.beginPath(); rCtx.arc(ox,oy,m*scale,Math.PI,2*Math.PI); rCtx.stroke();
+    rCtx.fillText(m+' m', ox, oy-m*scale+14);
+  }
+  rCtx.fillStyle=css('--ink-2');
+  rCtx.beginPath(); rCtx.arc(ox,oy,4,0,7); rCtx.fill();
+  rCtx.fillText('sensor', ox, oy+18);
+  if(d && d.distance_m!=null){
+    const y=oy-Math.min(d.distance_m,maxM)*scale;
+    const c=css('--action');
+    rCtx.fillStyle=c+'33';
+    rCtx.beginPath(); rCtx.arc(ox,y,26,0,7); rCtx.fill();
+    rCtx.fillStyle=c;
+    rCtx.beginPath(); rCtx.arc(ox,y,9,0,7); rCtx.fill();
+    rCtx.fillStyle=css('--ink');
+    rCtx.font='600 13px -apple-system,sans-serif';
+    rCtx.fillText(d.distance_m.toFixed(2)+' m', ox, y-20);
+  }else{
+    rCtx.fillStyle=css('--ink-3'); rCtx.font='13px -apple-system,sans-serif';
+    rCtx.fillText('no target', ox, oy-scale);
+  }
+}
+
+// CSI waterfall: newest row at the bottom, scrolling upward.
+const cCan=document.getElementById('csi'), cCtx=cCan.getContext('2d');
+cCtx.fillStyle='#111'; cCtx.fillRect(0,0,cCan.width,cCan.height);
+function drawCsi(amps){
+  if(!amps||!amps.length) return;
+  const W=cCan.width,H=cCan.height;
+  cCtx.drawImage(cCan,0,-2);           // scroll up
+  const bw=W/amps.length, mx=Math.max(...amps,1);
+  for(let i=0;i<amps.length;i++){
+    const [r,g,b]=heat(amps[i]/mx);
+    cCtx.fillStyle=`rgb(${r|0},${g|0},${b|0})`;
+    cCtx.fillRect(i*bw,H-2,bw+1,2);
+  }
+}
+
+function pill(name,h){
+  return `<div class="stat"><div class="k"><span class="dot ${h.status}"></span>${name}</div>
+          <div class="v">${h.hz.toFixed(1)}<small>Hz</small></div></div>`;
+}
+const fmt=(v,u,d=1)=>v==null?'<span class="v none">not available</span>':`${v.toFixed(d)}<small> ${u}</small>`;
+
+const es=new EventSource('/stream');
+es.onmessage=e=>{
+  const s=JSON.parse(e.data);
+  const b=document.getElementById('srcBadge');
+  b.textContent = s.simulated ? 'demo data' : s.source;
+  b.className = 'badge'+(s.simulated?' demo':'');
+
+  document.getElementById('strip').innerHTML =
+    pill('Thermal',s.health.thermal)+pill('Radar',s.health.radar)+pill('Wi-Fi CSI',s.health.csi)+
+    `<div class="stat"><div class="k">Frames</div><div class="v">${s.stats.frames_ok.toLocaleString()}</div></div>`+
+    `<div class="stat"><div class="k">Bad frames</div><div class="v">${s.stats.crc_errors}</div></div>`;
+
+  if(s.thermal){
+    drawThermal(s.thermal.pixels,s.thermal.min,s.thermal.max);
+    document.getElementById('tmin').textContent=s.thermal.min.toFixed(1)+'°C';
+    document.getElementById('tmax').textContent=s.thermal.max.toFixed(1)+'°C';
+  }
+  drawRadar(s.radar);
+  if(s.csi) drawCsi(s.csi.amps);
+
+  const r=s.radar||{};
+  document.getElementById('vPres').innerHTML = r.presence==null
+    ? '<span class="v none">not available</span>' : (r.presence?'Someone here':'Empty');
+  document.getElementById('vDist').innerHTML = fmt(r.distance_m,'m',2);
+  document.getElementById('vResp').innerHTML = fmt(r.respiration_rpm,'breaths/min',0);
+  document.getElementById('vHr').innerHTML   = fmt(r.heart_rate_bpm,'bpm',0);
+};
+</script>
+</body>
+</html>
