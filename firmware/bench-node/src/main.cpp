@@ -55,6 +55,18 @@ static constexpr bool CSI_FILTER_BY_MAC = true;
 
 // Enough subcarriers for HT20 (64 pairs). Anything longer is truncated rather
 // than dropped, so a wider capture still yields usable frames.
+// Stream one CSI frame in N. Capture still runs at the full beacon rate and
+// the true rate is reported in the stats frame; this only limits what crosses
+// USB.
+//
+// At 500 Hz, CSI alone is ~75 KB/s and it starved everything else: thermal
+// fell to 1 Hz, radar to 17 Hz, and CRC errors began climbing as writes were
+// truncated. Nothing downstream needs that rate. The vitals estimator
+// decimates to 25 Hz internally, and breathing at 0.1-0.5 Hz and cardiac at
+// 0.8-2.0 Hz are nowhere near Nyquist-limited by 100 Hz. The 500 Hz figure in
+// the brief was for gait Doppler, which is out of scope.
+static constexpr uint32_t CSI_STREAM_DIVISOR = 5;  // 500 Hz captured -> 100 Hz streamed
+
 static constexpr int CSI_MAX_IQ = 128;
 static constexpr int CSI_RING = 256;
 
@@ -147,7 +159,11 @@ static SemaphoreHandle_t tx_mutex = nullptr;
 static void send_frame(uint8_t type, uint64_t t_us, const void *payload,
                        uint16_t payload_len) {
   if (payload_len > SENSE_FRAME_MAX_PAYLOAD) return;
-  if (tx_mutex && xSemaphoreTake(tx_mutex, pdMS_TO_TICKS(50)) != pdTRUE) return;
+  // At 500 Hz the CSI drain wants this mutex almost continuously. A short
+  // timeout meant the thermal frame simply gave up and was discarded, which
+  // showed as thermal collapsing to 0.7 Hz while CSI ran perfectly. Wait long
+  // enough that a slow producer still gets its turn.
+  if (tx_mutex && xSemaphoreTake(tx_mutex, pdMS_TO_TICKS(400)) != pdTRUE) return;
 
   static uint8_t tx_buf[SENSE_FRAME_HEADER_BYTES + SENSE_FRAME_MAX_PAYLOAD +
                         SENSE_FRAME_CRC_BYTES];
@@ -200,8 +216,17 @@ static void csi_drain_task(void *arg) {
   (void)arg;
   for (;;) {
     int drained = 0;
-    while (csi_tail != csi_head && drained < 64) {
+    // Bounded per pass so the mutex is released regularly rather than held
+    // across a long burst.
+    while (csi_tail != csi_head && drained < 16) {
       volatile csi_item_t *slot = &csi_ring[csi_tail];
+
+      static uint32_t seen = 0;
+      if ((seen++ % CSI_STREAM_DIVISOR) != 0) {
+        csi_tail = (csi_tail + 1) % CSI_RING;
+        drained++;
+        continue;
+      }
 
       uint8_t pl[4 + CSI_MAX_IQ];
       const int16_t rssi = slot->rssi;
@@ -369,7 +394,10 @@ void setup() {
   tx_mutex = xSemaphoreCreateMutex();
 
   // Core 0 alongside the Wi-Fi driver; the sensor loop keeps core 1.
-  xTaskCreatePinnedToCore(csi_drain_task, "csi_drain", 4096, nullptr, 6, nullptr, 0);
+  // Priority 2, not 6. The Arduino loop task that owns thermal runs at 1, so a
+  // high-priority drain starved it outright. CSI still keeps up at 500 Hz
+  // because it is I/O bound on USB, not CPU bound.
+  xTaskCreatePinnedToCore(csi_drain_task, "csi_drain", 4096, nullptr, 2, nullptr, 0);
   xTaskCreatePinnedToCore(radar_task, "radar", 3072, nullptr, 4, nullptr, 0);
 
   last_stat_ms = millis();

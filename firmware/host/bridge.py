@@ -227,6 +227,8 @@ class State:
         # genuinely report whether the channel is being disturbed.
         self.csi_hist: list[list[float]] = []
         self.device: F.DeviceStats | None = None
+        self._prev_dev: tuple[float, int] | None = None
+        self._captured_hz: float | None = None
         self.rate = {
             "thermal": RateMeter(), "radar": RateMeter(),
             "csi": RateMeter(), "ambient": RateMeter(),
@@ -403,6 +405,21 @@ class State:
             )
 
         if dev:
+            # The streamed CSI rate is deliberately below the captured rate, so
+            # report both. Health should judge the radio by what it captured.
+            # The node sends stats once a second while snapshots run at 15 Hz,
+            # so most snapshots see an unchanged counter. Recompute only when
+            # it actually moves, otherwise a zero delta reads as 0 Hz.
+            if self._prev_dev is None:
+                self._prev_dev = (time.monotonic(), dev.csi_accepted)
+            elif dev.csi_accepted > self._prev_dev[1]:
+                dt = time.monotonic() - self._prev_dev[0]
+                if dt > 0.4:
+                    self._captured_hz = round(
+                        (dev.csi_accepted - self._prev_dev[1]) / dt, 1
+                    )
+                    self._prev_dev = (time.monotonic(), dev.csi_accepted)
+            out["csi_captured_hz"] = self._captured_hz
             out["device"] = {
                 "csi_accepted": dev.csi_accepted,
                 "csi_rejected": dev.csi_rejected,

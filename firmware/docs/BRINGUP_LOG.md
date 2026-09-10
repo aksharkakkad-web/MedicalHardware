@@ -353,3 +353,55 @@ useful the moment a third node exists.
 **Still to measure:** whether the OFDM rate actually raises the bench node's CSI
 quality. That needs the C6 back across the room on the power bank with the S3
 reconnected over USB.
+
+## 2026-09-10 — M4 CSI done: 500 Hz, and the bandwidth budget
+
+**M4 PASS. 503.7 Hz sustained**, against the brief's ≥450 Hz done-condition.
+Captured RSSI −63 dBm, i.e. the TX node rather than distant ambient traffic.
+`csi_accepted` and `espnow_rx` are identical (70411 each): **every beacon packet
+now yields exactly one CSI frame**, and `csi_dropped` is 0.
+
+Three changes got there, all needed together:
+
+1. Promiscuous mode — without it the driver discards frames before the CSI
+   stage. Measured 0 callbacks against 1460 receptions.
+2. `channel_filter_en = false` and MGMT+DATA filtering — DATA-only collapsed
+   yield to 1.4 Hz.
+3. An OFDM/HT20 rate forced on the TX peer. Broadcast ESP-NOW defaults to a
+   basic 802.11b rate carrying no HT-LTF, so the beacon produced no usable
+   estimate at all; the CSI arriving before this fix was ambient traffic.
+
+Plus a MAC filter accepting only the TX node, which turns a mixture of
+transmitters into one coherent time series.
+
+**Streaming is decimated to 100 Hz; capture stays at 500.** At full rate CSI
+alone is ~75 KB/s over USB CDC and it starved everything else — thermal fell to
+1.0 Hz, radar to 17 Hz, and CRC errors climbed as writes were truncated.
+Nothing downstream needs 500 Hz: the vitals estimator decimates to 25 Hz
+internally, and 0.1–2.0 Hz signals are nowhere near Nyquist-limited by 100 Hz.
+The 500 Hz figure was a gait-Doppler requirement, and gait is out of scope. The
+true capture rate is still reported, from the device's own counter.
+
+**Balanced result, all five streams at once:**
+
+| Stream | Rate |
+|---|---|
+| CSI captured | 503.7 Hz |
+| CSI streamed | 102 Hz |
+| Thermal | 7.8 Hz |
+| Radar | 21.6 Hz |
+| Ambient | 2.0 Hz |
+
+A mutex-timeout bug surfaced on the way: at 500 Hz the CSI drain held the TX
+mutex almost continuously, and thermal frames hit a 50 ms timeout and were
+silently discarded. Raising the timeout and dropping the drain task's priority
+below the Arduino loop fixed it.
+
+**CSI vitals produced their first real readings** once the stream was clean and
+single-source, and they do not agree with the radar. Recorded here rather than
+smoothed over: CSI 71.7 bpm at full confidence while radar reported 83.0 bpm,
+and CSI found no breathing while radar reported 15 rpm. Neither instrument is
+validated against a reference, so the disagreement identifies no winner. Note
+also that CSI reporting a confident heart rate while failing to find breathing
+is backwards — breathing is the larger, easier signal — which is reason to
+distrust that particular number rather than celebrate it.
