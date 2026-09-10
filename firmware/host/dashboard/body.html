@@ -59,7 +59,8 @@
   <div class="cols">
     <div class="card">
       <h2>Silhouette and landmarks</h2>
-      <p class="hint">Each marker is a position measured from warm pixels, not a model prediction.</p>
+      <p class="hint">COCO-17 skeleton. Solid dots are measured from the silhouette;
+      hollow dots are inferred from anatomical proportion. Empty slots are left empty.</p>
       <div class="canvasWrap" id="wrap"><canvas id="c" width="720" height="540"></canvas>
         <div class="lost"><b>No data</b><span>thermal feed stopped</span></div></div>
     </div>
@@ -70,8 +71,8 @@
         <p class="hint">From thermal geometry and radar range.</p>
         <div class="rows">
           <div class="row"><span class="k">In frame</span><span class="v" id="vis">–</span></div>
-          <div class="row"><span class="k">Posture</span><span class="v" id="posture">–</span></div>
-          <div class="row"><span class="k">Landmarks found</span><span class="v" id="nlm">–</span></div>
+          <div class="row"><span class="k">Body position</span><span class="v" id="posture">–</span></div>
+          <div class="row"><span class="k">Keypoints</span><span class="v" id="nlm">–</span></div>
           <div class="row"><span class="k">Visible height</span><span class="v" id="hm">–</span></div>
           <div class="row"><span class="k">Distance</span><span class="v" id="dist">–</span></div>
           <div class="row"><span class="k">Silhouette</span><span class="v" id="px">–</span></div>
@@ -102,6 +103,7 @@
           <div class="row"><span class="k">Channel energy</span><span class="v" id="energy">–</span></div>
           <div class="row"><span class="k">Skeleton</span><span class="v none" id="skel">not available</span></div>
         </div>
+        <p class="note" id="poseNote" style="border-top:none;padding-top:0"></p>
         <p class="note"><b>CSI contributes movement, not body landmarks.</b>
         Keypoint estimation from Wi-Fi needs several receive antennas to
         separate directions. This bench has one transmitter and one receiver,
@@ -123,6 +125,14 @@ const cv=document.getElementById('c'),ctx=cv.getContext('2d');
 const off=document.createElement('canvas');off.width=COLS;off.height=ROWS;
 const octx=off.getContext('2d');
 
+const EDGES=[["left_shoulder","right_shoulder"],["left_shoulder","left_elbow"],
+["left_elbow","left_wrist"],["right_shoulder","right_elbow"],
+["right_elbow","right_wrist"],["left_shoulder","left_hip"],
+["right_shoulder","right_hip"],["left_hip","right_hip"],
+["left_hip","left_knee"],["left_knee","left_ankle"],
+["right_hip","right_knee"],["right_knee","right_ankle"],
+["nose","left_shoulder"],["nose","right_shoulder"]];
+
 function draw(t,body){
   const W=cv.width,H=cv.height;
   if(!t){ctx.fillStyle='#111';ctx.fillRect(0,0,W,H);return;}
@@ -134,43 +144,40 @@ function draw(t,body){
   octx.putImageData(img,0,0);
   ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
   ctx.drawImage(off,0,0,W,H);
-  if(!body||!body.landmarks) return;
+  if(!body||!body.pose) return;
 
-  const L=body.landmarks, sx=W/COLS, sy=H/ROWS;
-  const P=n=>L[n]?[(L[n].x+0.5)*sx,(L[n].y+0.5)*sy]:null;
-  const mid=(a,b)=>a&&b?[(a[0]+b[0])/2,(a[1]+b[1])/2]:null;
+  const K=body.pose.keypoints, sx=W/COLS, sy=H/ROWS;
+  const P=n=>{const k=K[n]; return (k&&k.x!=null)?[(k.x+0.5)*sx,(k.y+0.5)*sy]:null;};
 
-  const head=P('head')||P('top_of_mass'), sl=P('shoulder_left'),
-        sr=P('shoulder_right'), torso=P('torso'), base=P('base');
-  const neck=mid(sl,sr);
-
-  // Only draw a segment when both of its endpoints were actually measured.
-  const segs=[[sl,sr],[neck,head],[neck,torso],[torso,base]].filter(p=>p[0]&&p[1]);
+  // Bones only between two measured joints. A missing joint breaks the chain
+  // rather than being interpolated across.
   ctx.lineCap='round';
-  for(const [col,w] of [['rgba(0,0,0,.55)',8],['rgba(255,255,255,.97)',3.5]]){
+  for(const [col,w] of [['rgba(0,0,0,.5)',7],['rgba(255,255,255,.95)',3]]){
     ctx.strokeStyle=col;ctx.lineWidth=w;
-    for(const [a,b] of segs){ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();}
+    for(const [p,q] of EDGES){
+      const a2=P(p),b2=P(q); if(!a2||!b2) continue;
+      ctx.beginPath();ctx.moveTo(a2[0],a2[1]);ctx.lineTo(b2[0],b2[1]);ctx.stroke();
+    }
   }
 
-  for(const name of Object.keys(L)){
-    const p=P(name); if(!p) continue;
-    const lm=L[name];
-    const r = name==='head'||name==='top_of_mass' ? 11 : (name==='torso'?8:6);
-    // Low-confidence landmarks are drawn hollow, so a guess never looks like
-    // a measurement.
-    ctx.fillStyle='rgba(0,0,0,.55)';ctx.beginPath();ctx.arc(p[0],p[1],r+2.5,0,7);ctx.fill();
-    if(lm.confidence>=0.6){
+  for(const n of Object.keys(K)){
+    const p=P(n); if(!p) continue;
+    const c=K[n].confidence, r=(n==='nose')?9:6;
+    ctx.fillStyle='rgba(0,0,0,.5)';ctx.beginPath();ctx.arc(p[0],p[1],r+2.5,0,7);ctx.fill();
+    if(c>=0.55){
+      // Solid = measured from the silhouette. Hollow = position inferred from
+      // anatomical proportion because the limb is against the body.
       ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(p[0],p[1],r,0,7);ctx.fill();
     }else{
-      ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=2.5;
+      ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=2.2;
       ctx.beginPath();ctx.arc(p[0],p[1],r,0,7);ctx.stroke();
     }
   }
 
   if(!body.fully_visible){
-    ctx.fillStyle='rgba(217,119,6,.92)';
+    ctx.fillStyle='rgba(217,119,6,.95)';
     ctx.font='600 13px -apple-system,sans-serif';ctx.textAlign='left';
-    ctx.fillText(body.visibility, 12, H-14);
+    ctx.fillText(body.visibility,12,H-14);
   }
 }
 
@@ -192,11 +199,11 @@ new EventSource('/stream').onmessage=e=>{
   set('vis', bd.visibility ? (bd.fully_visible
       ? bd.visibility
       : '<span style="color:var(--warn)">'+bd.visibility+'</span>') : '–');
-  set('posture', bd.posture
-      ? bd.posture + (bd.posture==='unknown'
-          ? '<small style="color:var(--ink-2)"> &middot; '+bd.posture_reason+'</small>' : '')
+  const pos=bd.position||{};
+  set('posture', pos.position
+      ? pos.position+'<small style="color:var(--ink-2);display:block;font-family:-apple-system">'+(pos.reason||'')+'</small>'
       : '–');
-  set('nlm', bd.landmarks ? Object.keys(bd.landmarks).length + ' of 5' : '–');
+  set('nlm', bd.pose ? bd.pose.found+' of '+bd.pose.total : '–');
   set('hm', bd.height_m!=null ? fmt(bd.height_m,'m',2)
       : '<span class="v none">needs full body</span>');
   set('dist', fmt(r.distance_m,'m',2));
@@ -204,6 +211,15 @@ new EventSource('/stream').onmessage=e=>{
   set('tf', bd.surface_f!=null ? bd.surface_f.toFixed(1)+' &deg;F' : '<span class="v none">no body in view</span>');
   set('pf', bd.peak_f!=null ? bd.peak_f.toFixed(1)+' &deg;F' : '–');
   set('af', bd.ambient_f!=null ? bd.ambient_f.toFixed(1)+' &deg;F' : '–');
+
+  if(bd.pose){
+    const K=bd.pose.keypoints||{}, by={};
+    for(const n of Object.keys(K)) if(K[n].x==null&&K[n].reason)
+      (by[K[n].reason]=by[K[n].reason]||[]).push(n);
+    document.getElementById('poseNote').innerHTML =
+      Object.entries(by).map(([r,ns])=>'<b>'+ns.length+' unavailable</b> &mdash; '+r).join('<br>')
+      || '<b>All 17 slots filled.</b>';
+  }
 
   const m=s.csi_motion;
   document.getElementById('motion').textContent = m?m.state:'–';

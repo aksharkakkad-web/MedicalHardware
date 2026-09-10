@@ -27,6 +27,8 @@ TYPE_THERMAL = 2
 TYPE_RADAR = 3
 TYPE_AMBIENT = 4
 TYPE_RADAR_RAW = 5
+TYPE_CSI_REMOTE = 6
+TYPE_STATS = 7
 
 THERMAL_COLS = 32
 THERMAL_ROWS = 24
@@ -36,6 +38,7 @@ _CSI_HEAD = struct.Struct("<hH")           # rssi, subcarriers
 _THERMAL = struct.Struct(f"<{THERMAL_PIXELS}f")
 _RADAR = struct.Struct("<BBBfff")          # valid, presence, quality, dist, resp, hr
 _AMBIENT = struct.Struct("<Bf")            # valid, lux
+_STATS = struct.Struct("<5I")
 
 RADAR_VALID_PRESENCE = 1 << 0
 RADAR_VALID_DISTANCE = 1 << 1
@@ -117,6 +120,18 @@ class RadarRawFrame:
 
 
 @dataclass
+class DeviceStats:
+    """Counters from the node itself."""
+
+    t_us: int
+    csi_accepted: int = 0
+    csi_rejected: int = 0
+    csi_dropped: int = 0
+    espnow_rx: int = 0
+    thermal_recoveries: int = 0
+
+
+@dataclass
 class Stats:
     frames_ok: int = 0
     crc_errors: int = 0
@@ -190,6 +205,13 @@ class FrameParser:
             if len(payload) != _THERMAL.size:
                 return None
             return ThermalFrame(t_us=t_us, pixels=list(_THERMAL.unpack(payload)))
+
+        if ftype == TYPE_STATS:
+            if len(payload) != _STATS.size:
+                return None
+            a, rj, d, e, tr = _STATS.unpack(payload)
+            return DeviceStats(t_us=t_us, csi_accepted=a, csi_rejected=rj,
+                               csi_dropped=d, espnow_rx=e, thermal_recoveries=tr)
 
         if ftype == TYPE_RADAR_RAW:
             return RadarRawFrame(t_us=t_us, data=payload)

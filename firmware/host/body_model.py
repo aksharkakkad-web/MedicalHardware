@@ -25,6 +25,8 @@ from __future__ import annotations
 
 import math
 
+import pose17
+
 COLS = 32
 ROWS = 24
 
@@ -198,7 +200,14 @@ def analyse(px: list[float], distance_m: float | None) -> dict | None:
     warm = temps[: max(1, len(temps) // 10)]
     surface_c = sum(warm) / len(warm)
 
+    cut_flags = {"top": cut_top, "base": cut_base,
+                 "left": cut_left, "right": cut_right}
+    pose = pose17.estimate(region, px, cut_flags)
+    position = pose17.body_position(pose["keypoints"], cut_flags)
+
     return {
+        "pose": pose,
+        "position": position,
         "landmarks": landmarks,
         "visibility": visibility,
         "fully_visible": not (cut_top or cut_base or cut_left or cut_right),

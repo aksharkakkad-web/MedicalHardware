@@ -260,7 +260,10 @@ static void IRAM_ATTR csi_cb(void *ctx, wifi_csi_info_t *info) {
 // Arduino core 2.x signature. The C6 TX node runs a 3.x core, where this takes
 // an esp_now_recv_info_t instead - the two nodes deliberately sit on different
 // cores, so do not copy this signature across.
+static volatile uint32_t espnow_rx = 0;
+
 static void on_espnow_recv(const uint8_t *mac, const uint8_t *data, int len) {
+  espnow_rx++;
   (void)mac;
   (void)data;
   (void)len;
@@ -381,6 +384,18 @@ void loop() {
   // sensor kept reporting. Both I2C devices are therefore driven from one
   // thread. CSI and radar have no bus to contend for and stay on their own
   // tasks.
+  static uint32_t last_stats = 0;
+  if (millis() - last_stats >= 1000) {
+    last_stats = millis();
+    sense_stats_payload_t st;
+    st.csi_accepted = csi_total;
+    st.csi_rejected = csi_rejected;
+    st.csi_dropped = csi_dropped;
+    st.espnow_rx = espnow_rx;
+    st.thermal_recoveries = mlx_recoveries;
+    send_frame(SENSE_FRAME_STATS, (uint64_t)esp_timer_get_time(), &st, sizeof(st));
+  }
+
   static uint32_t last_lux = 0;
   if (millis() - last_lux >= 500) {
     last_lux = millis();

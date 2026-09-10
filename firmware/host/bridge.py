@@ -226,6 +226,7 @@ class State:
         # cannot give body landmarks from a single antenna, but it does
         # genuinely report whether the channel is being disturbed.
         self.csi_hist: list[list[float]] = []
+        self.device: F.DeviceStats | None = None
         self.rate = {
             "thermal": RateMeter(), "radar": RateMeter(),
             "csi": RateMeter(), "ambient": RateMeter(),
@@ -272,6 +273,8 @@ class State:
                 self.csi_hist.append(amps)
                 if len(self.csi_hist) > 40:
                     self.csi_hist.pop(0)
+            elif isinstance(frame, F.DeviceStats):
+                self.device = frame
             elif isinstance(frame, F.AmbientFrame):
                 self.lux = frame.lux
                 self.rate["ambient"].tick()
@@ -285,6 +288,7 @@ class State:
             lux = self.lux
             vout = self.vitals_out
             hist = list(self.csi_hist)
+            dev = self.device
             rates = {k: (m.hz, m.age) for k, m in self.rate.items()}
             stats = self.parser_stats
 
@@ -397,6 +401,15 @@ class State:
             out["body"] = body_model.analyse(
                 thermal, radar.distance_m if radar else None
             )
+
+        if dev:
+            out["device"] = {
+                "csi_accepted": dev.csi_accepted,
+                "csi_rejected": dev.csi_rejected,
+                "csi_dropped": dev.csi_dropped,
+                "espnow_rx": dev.espnow_rx,
+                "thermal_recoveries": dev.thermal_recoveries,
+            }
 
         out["fusion"] = {
             "verdict": verdict,

@@ -55,7 +55,8 @@ typedef enum {
   SENSE_FRAME_RADAR = 3,
   SENSE_FRAME_AMBIENT = 4,
   SENSE_FRAME_RADAR_RAW = 5,
-  SENSE_FRAME_CSI_REMOTE = 6
+  SENSE_FRAME_CSI_REMOTE = 6,
+  SENSE_FRAME_STATS = 7
 } sense_frame_type_t;
 
 typedef struct __attribute__((packed)) {
@@ -183,6 +184,21 @@ typedef struct __attribute__((packed)) {
  * boards share no time base, so remote CSI cannot be aligned with local CSI
  * more finely than the relay interval.
  */
+
+/*
+ * Type 7 - STATS.
+ *
+ * Device-side counters. Without these, "no CSI frames" is ambiguous: nothing
+ * arriving at the antenna and everything arriving but being filtered out look
+ * identical from the host. Rejected-vs-accepted separates them immediately.
+ */
+typedef struct __attribute__((packed)) {
+  uint32_t csi_accepted;
+  uint32_t csi_rejected;   /* arrived, but not from the configured TX node */
+  uint32_t csi_dropped;    /* ring full: the host is not draining fast enough */
+  uint32_t espnow_rx;      /* ESP-NOW packets received, any source */
+  uint32_t thermal_recoveries;
+} sense_stats_payload_t;
 
 /*
  * CRC16-CCITT (poly 0x1021, init 0xFFFF, no input/output reflection, no final
