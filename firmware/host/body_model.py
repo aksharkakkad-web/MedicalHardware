@@ -193,6 +193,49 @@ def analyse(px: list[float], distance_m: float | None) -> dict | None:
         m_per_px = (2.0 * distance_m * math.tan(math.radians(FOV_V_DEG / 2))) / ROWS
         height_m = round(height_px * m_per_px, 2)
 
+    # --- forehead / head-site temperature --------------------------------
+    #
+    # A temporal-artery thermometer works by scanning the forehead and keeping
+    # the *peak* reading, because any averaging pulls in cooler surroundings.
+    # The same logic applies here: take the hottest pixel on the head rather
+    # than a mean.
+    #
+    # What differs from a real thermometer is spatial resolution, and it is not
+    # a small difference. One pixel subtends a fixed angle, so its footprint
+    # grows with distance:
+    #
+    #     footprint = 2 * d * tan(FOV/2) / pixels
+    #
+    # At 1 m that is about 3 cm across; at 3 m about 10 cm. A forehead is
+    # roughly 5 cm. Once the footprint exceeds the forehead, every pixel is a
+    # blend of skin, hair and background, and the peak reads low - which is why
+    # the footprint is reported alongside the temperature rather than buried.
+    head_temp = None
+    head_rows_t = [r for r in ys if r <= band_of_head] if (band_of_head := top + max(1, int(height_px * 0.18))) else []
+    head_px = [px[r * COLS + c] for r in head_rows_t if r in rows for c in rows[r]]
+    if head_px and not cut_top:
+        peak_head = max(head_px)
+        px_w = px_h = None
+        quality = "unknown"
+        if distance_m:
+            px_w = 2.0 * distance_m * math.tan(math.radians(FOV_H_DEG / 2)) / COLS
+            px_h = 2.0 * distance_m * math.tan(math.radians(FOV_V_DEG / 2)) / ROWS
+            biggest = max(px_w, px_h) * 100.0  # cm
+            if biggest <= 3.0:
+                quality = "good"
+            elif biggest <= 6.0:
+                quality = "fair - pixel is about forehead-sized"
+            else:
+                quality = "poor - each pixel is wider than a forehead"
+        head_temp = {
+            "peak_c": round(peak_head, 1),
+            "peak_f": round(peak_head * 9 / 5 + 32, 1),
+            "pixels_used": len(head_px),
+            "pixel_cm": None if px_w is None else round(max(px_w, px_h) * 100, 1),
+            "quality": quality,
+            "site": "warmest point on the head",
+        }
+
     # --- surface temperature ---------------------------------------------
     # Warmest pixels within the body region only. The single hottest pixel is
     # noisy, so use the mean of the top few.
@@ -218,6 +261,7 @@ def analyse(px: list[float], distance_m: float | None) -> dict | None:
         "width_px": max_w,
         "height_m": height_m,
         "pixels": len(region),
+        "head_temp": head_temp,
         "surface_c": round(surface_c, 1),
         "surface_f": round(surface_c * 9 / 5 + 32, 1),
         "ambient_c": round(ambient, 1),

@@ -97,6 +97,13 @@
   .readout .v.none{color:var(--ink-3);font-size:15px;font-weight:400}
   .note{font-size:12px;color:var(--ink-2);margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
   .note b{color:var(--ink);font-weight:600}
+  .src{font-size:11px;color:var(--ink-3);margin-top:3px;line-height:1.35}
+  /* A disagreement between instruments is information. Showing two confident
+     numbers side by side and letting the reader pick is not. */
+  .conflict{margin-top:12px;padding:11px 13px;border-radius:8px;font-size:12px;line-height:1.5;
+    background:color-mix(in srgb,var(--warn) 10%,transparent);
+    border:1px solid color-mix(in srgb,var(--warn) 40%,transparent)}
+  .conflict b{color:var(--ink)}
 
   /* A stalled feed must announce itself. Freezing on the last good frame looks
      identical to a working sensor showing a still room, which is the more
@@ -157,19 +164,23 @@
       <div class="readout">
         <div><div class="k">Presence</div><div class="v" id="vPres">–</div></div>
         <div><div class="k">Distance</div><div class="v" id="vDist">–</div></div>
-        <div><div class="k">Breathing</div><div class="v" id="vResp">–</div></div>
-        <div><div class="k">Heart rate</div><div class="v" id="vHr">–</div></div>
-        <div><div class="k">Breathing (Wi-Fi)</div><div class="v" id="vcResp">–</div></div>
-        <div><div class="k">Heart rate (Wi-Fi)</div><div class="v" id="vcHr">–</div></div>
+        <div><div class="k">Breathing</div><div class="v" id="vResp">–</div>
+             <div class="src" id="sResp"></div></div>
+        <div><div class="k">Heart rate</div><div class="v" id="vHr">–</div>
+             <div class="src" id="sHr"></div></div>
+        <div><div class="k">Head temp</div><div class="v" id="vHead">–</div>
+             <div class="src" id="sHead"></div></div>
         <div><div class="k">Room light</div><div class="v" id="vLux">–</div></div>
-        <div><div class="k">Link</div><div class="v" id="vRssi">–</div></div>
       </div>
-      <p class="note"><b>These are estimates, not measurements.</b> They need a nearly
-      still person within about 1.5&nbsp;m. A blank field means the sensor reported
-      nothing usable &mdash; it is never filled in with a guess.
-      The Wi-Fi rows are derived from CSI on this machine and have
-      <b>never been checked against a reference device</b>, so treat them as
-      unvalidated.</p>
+      <div id="conflict"></div>
+      <p class="note"><b>These are estimates, not measurements.</b> Radar is used
+      within about 1.5&nbsp;m, where its 5&nbsp;mm wavelength and range gating
+      make it the better instrument; Wi-Fi CSI is used beyond that, where it
+      reaches further but cannot tell that what changed was the person. Neither
+      has <b>ever been checked against a reference device</b>.
+      Head temperature is <b>skin surface, not body temperature</b> &mdash; see the
+      body view. A blank field means nothing usable was measured; it is never
+      filled in with a guess.</p>
     </div>
 
     <div class="card">
@@ -450,9 +461,29 @@ es.onmessage=e=>{
   document.getElementById('vResp').innerHTML = fmt(r.respiration_rpm,'breaths/min',0);
   document.getElementById('vHr').innerHTML   = fmt(r.heart_rate_bpm,'bpm',0);
 
-  const cv=s.csi_vitals||{};
-  document.getElementById('vcResp').innerHTML = fmt(cv.breathing_rpm,'breaths/min',0);
-  document.getElementById('vcHr').innerHTML   = fmt(cv.heart_rate_bpm,'bpm',0);
+  const V=s.vitals||{};
+  const SRC={radar:'radar', wifi_csi:'Wi-Fi CSI'};
+  document.getElementById('vResp').innerHTML = fmt(V.respiration_rpm,'breaths/min',0);
+  document.getElementById('vHr').innerHTML   = fmt(V.heart_rate_bpm,'bpm',0);
+  document.getElementById('sResp').textContent = V.respiration_source
+    ? SRC[V.respiration_source]+' \u00b7 '+V.respiration_reason : (V.respiration_reason||'');
+  document.getElementById('sHr').textContent = V.heart_source
+    ? SRC[V.heart_source]+' \u00b7 '+V.heart_reason : (V.heart_reason||'');
+
+  const ht=(s.body||{}).head_temp;
+  document.getElementById('vHead').innerHTML = ht
+    ? ht.peak_f.toFixed(1)+'<small> &deg;F</small>'
+    : '<span class="v none">no head in view</span>';
+  document.getElementById('sHead').textContent = ht
+    ? 'skin surface \u00b7 '+(ht.pixel_cm?ht.pixel_cm+' cm/pixel \u00b7 ':'')+ht.quality : '';
+
+  const bits=[];
+  if(V.disagreements&&V.disagreements.length)
+    bits.push('<b>The two instruments disagree.</b> '+V.disagreements.join('; ')+
+      '. Neither is checked against a reference device, so this does not say which is right.');
+  if(V.suspect) bits.push('<b>Suspect reading.</b> '+V.suspect+'.');
+  document.getElementById('conflict').innerHTML =
+    bits.length ? '<div class="conflict">'+bits.join('<br>')+'</div>' : '';
 
   const amb=s.ambient;
   document.getElementById('vLux').innerHTML = amb

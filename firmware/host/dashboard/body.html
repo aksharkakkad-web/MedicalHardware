@@ -83,10 +83,22 @@
         <h2>Surface temperature</h2>
         <p class="hint">What the sensor actually measures.</p>
         <div class="rows">
+          <div class="row"><span class="k">Head / forehead peak</span><span class="v" id="hf">–</span></div>
+          <div class="row"><span class="k">Pixel footprint</span><span class="v" id="pcm">–</span></div>
+          <div class="row"><span class="k">Reading quality</span><span class="v" id="hq">–</span></div>
           <div class="row"><span class="k">Warmest on body</span><span class="v" id="tf">–</span></div>
           <div class="row"><span class="k">Peak pixel</span><span class="v" id="pf">–</span></div>
           <div class="row"><span class="k">Room</span><span class="v" id="af">–</span></div>
         </div>
+        <p class="note" style="border-top:none;padding-top:0"><b>How this compares to a
+        thermometer.</b> A temporal-artery thermometer scans the forehead and keeps the
+        <b>peak</b> reading, which is what this does. What it cannot copy is the
+        resolution: one pixel covers about 3&nbsp;cm at 1&nbsp;m and 10&nbsp;cm at
+        3&nbsp;m, while a forehead is roughly 5&nbsp;cm. Once a pixel is wider than a
+        forehead, every reading blends skin with hair and background and reads low.
+        A real thermometer also works at a fixed few centimetres with a calibrated
+        skin-to-core offset; that offset changes with distance, airflow and ambient,
+        so it is not applied here.</p>
         <p class="note"><b>This is surface temperature, not body temperature.</b>
         It reads whatever faces the sensor &mdash; clothing, hair, exposed skin
         &mdash; at whatever distance, with no emissivity calibration. Exposed
@@ -208,6 +220,12 @@ new EventSource('/stream').onmessage=e=>{
       : '<span class="v none">needs full body</span>');
   set('dist', fmt(r.distance_m,'m',2));
   set('px', bd.height_px!=null ? bd.height_px+' x '+bd.width_px+' px' : '–');
+  const ht=bd.head_temp;
+  set('hf', ht ? ht.peak_f.toFixed(1)+' &deg;F' : '<span class="v none">no head in view</span>');
+  set('pcm', ht&&ht.pixel_cm!=null ? ht.pixel_cm+' cm' : '–');
+  set('hq', ht ? (ht.quality.startsWith('good')
+      ? '<span style="color:var(--ok)">'+ht.quality+'</span>'
+      : '<span style="color:var(--warn)">'+ht.quality+'</span>') : '–');
   set('tf', bd.surface_f!=null ? bd.surface_f.toFixed(1)+' &deg;F' : '<span class="v none">no body in view</span>');
   set('pf', bd.peak_f!=null ? bd.peak_f.toFixed(1)+' &deg;F' : '–');
   set('af', bd.ambient_f!=null ? bd.ambient_f.toFixed(1)+' &deg;F' : '–');

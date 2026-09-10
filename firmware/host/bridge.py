@@ -30,6 +30,7 @@ import stream.frames as F
 from vitals import VitalsEstimator
 from radar_decode import RadarDecoder
 import body_model
+import vitals_select
 
 DASHBOARD = Path(__file__).parent / "dashboard" / "index.html"
 BODY_VIEW = Path(__file__).parent / "dashboard" / "body.html"
@@ -427,6 +428,12 @@ class State:
                 "espnow_rx": dev.espnow_rx,
                 "thermal_recoveries": dev.thermal_recoveries,
             }
+
+        out["vitals"] = vitals_select.select(
+            out.get("radar"),
+            out.get("csi_vitals"),
+            radar.distance_m if radar else None,
+        )
 
         out["fusion"] = {
             "verdict": verdict,
