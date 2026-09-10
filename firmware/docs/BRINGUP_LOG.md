@@ -310,3 +310,46 @@ once the link settles (6 and 8 across the whole session).
 Thermal is capped by the sensor: chess mode reads two subpages per full frame,
 so a 16 Hz refresh yields ~8 Hz complete frames. Raising it further needs
 1 MHz I2C, which previously failed under Wi-Fi load.
+
+## 2026-09-09 — C6 reflash: OFDM rate, and the half-duplex limit
+
+**OFDM rate forced — the fix the S3's CSI needed.** `esp_now_set_peer_rate_config()`
+with `WIFI_PHY_MODE_HT20` / `WIFI_PHY_RATE_MCS0_LGI` returns `ESP_OK`, and the
+beacon still holds 498 Hz. Broadcast ESP-NOW otherwise defaults to a basic
+802.11b rate that carries no HT-LTF, which is why the bench node had been
+capturing CSI at RSSI −91 (distant ambient traffic) while this node sat at −50
+in the same room.
+
+**C6 CSI capture: silent until the full Wi-Fi 6 acquire config was set.** The
+short config — `enable`, `acquire_csi_legacy/ht20/ht40/su/mu` — returned
+`ESP_OK` from all four setup calls and the callback never fired once. Adding
+`acquire_csi_force_lltf`, `acquire_csi_vht` and
+`acquire_csi_he_stbc_mode` (MAC v3 path) made it fire immediately. Every
+success code lied; only the counter told the truth.
+
+**Then it stopped, and the reason is physical.** Capture climbed to 103 frames
+during boot and froze the instant the beacon reached 498 Hz:
+
+```
+tx   0 Hz  csi_seen=67   relayed=17  rssi=-50
+tx 425 Hz  csi_seen=83   relayed=31  rssi=-53
+tx 498 Hz  csi_seen=103  relayed=51  rssi=-75
+tx 498 Hz  csi_seen=103  relayed=51  rssi=-75   <- frozen
+```
+
+The radio is half-duplex. A node transmitting 500 packets/sec has almost no
+airtime left to receive, so it cannot also be a useful receiver. This is not a
+configuration problem and no amount of tuning fixes it.
+
+**Consequence: the C6 is a transmitter or a receiver, not both.** Since the
+bench node's CSI depends on this beacon, the beacon wins. Using the C6 as a
+second receiver would need either a much lower beacon rate — which degrades the
+measurement it exists to enable — or a third node to take over transmitting.
+
+The relay path (frame type 6, `SENSE_FRAME_CSI_REMOTE`) is implemented and
+proven to work end to end; it is simply starved at full beacon rate. It becomes
+useful the moment a third node exists.
+
+**Still to measure:** whether the OFDM rate actually raises the bench node's CSI
+quality. That needs the C6 back across the room on the power bank with the S3
+reconnected over USB.

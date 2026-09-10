@@ -54,7 +54,8 @@ typedef enum {
   SENSE_FRAME_THERMAL = 2,
   SENSE_FRAME_RADAR = 3,
   SENSE_FRAME_AMBIENT = 4,
-  SENSE_FRAME_RADAR_RAW = 5
+  SENSE_FRAME_RADAR_RAW = 5,
+  SENSE_FRAME_CSI_REMOTE = 6
 } sense_frame_type_t;
 
 typedef struct __attribute__((packed)) {
@@ -165,6 +166,22 @@ typedef struct __attribute__((packed)) {
  * can be changed without reflashing.
  *
  * Type 3 stays defined so older recordings still parse.
+ */
+
+/*
+ * Type 6 - CSI_REMOTE.
+ *
+ * Same payload shape as type 1, but captured at the TX node and relayed to the
+ * bench node inside an ESP-NOW packet, which then forwards it over USB.
+ *
+ * The value is spatial, not reciprocal. Measuring the same C6<->S3 link from
+ * both ends gives two looks at one path, since the channel is reciprocal.
+ * What is genuinely new is that the C6 sits somewhere else in the room, so
+ * ambient traffic reaches it along a different path than it reaches the S3.
+ *
+ * `t_us` is the *bench node's* clock at relay time, not the C6's. The two
+ * boards share no time base, so remote CSI cannot be aligned with local CSI
+ * more finely than the relay interval.
  */
 
 /*
