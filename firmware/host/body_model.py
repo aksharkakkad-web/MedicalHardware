@@ -26,9 +26,14 @@ from __future__ import annotations
 import math
 
 import pose17
+import thermometry
 
 COLS = 32
 ROWS = 24
+
+# One calibration for the whole process; a fitted offset belongs to a setup,
+# not to a frame.
+_CALIBRATION = thermometry.Calibration()
 
 # Vertical field of view, from the MLX90640 datasheet, used to convert pixel
 # extent into metres once the radar supplies a range.
@@ -227,7 +232,27 @@ def analyse(px: list[float], distance_m: float | None) -> dict | None:
                 quality = "fair - pixel is about forehead-sized"
             else:
                 quality = "poor - each pixel is wider than a forehead"
+        # Local background: the ring just outside the head region. Those pixels
+        # are hair, neck and shoulders - much warmer than the room - and using
+        # room temperature here would over-correct the unmixing.
+        ring = []
+        head_set = {r * COLS + c for r in head_rows_t if r in rows for c in rows[r]}
+        for i in head_set:
+            r0, c0 = divmod(i, COLS)
+            for dr in (-1, 0, 1):
+                for dc in (-2, -1, 1, 2):
+                    rr, cc = r0 + dr, c0 + dc
+                    j = rr * COLS + cc
+                    if 0 <= rr < ROWS and 0 <= cc < COLS and j not in head_set:
+                        ring.append(px[j])
+        bg_c = sorted(ring)[len(ring) // 2] if ring else ambient
+
+        est = thermometry.estimate(peak_head, ambient, distance_m,
+                                   _CALIBRATION, background_c=bg_c)
+
         head_temp = {
+            "estimate": est,
+            "background_c": round(bg_c, 1),
             "peak_c": round(peak_head, 1),
             "peak_f": round(peak_head * 9 / 5 + 32, 1),
             "pixels_used": len(head_px),
