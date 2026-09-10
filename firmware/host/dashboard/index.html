@@ -259,21 +259,29 @@ function drawCsi(amps){
 // ---- fused scene: thermal image with the detected body outlined ----------
 const sCan=document.getElementById('scene'), sCtx=sCan.getContext('2d');
 function drawSkeleton(ctx,body,W,H){
-  if(!body) return;
-  const sx=W/COLS, sy=H/ROWS;
-  const P=p=>[(p[0]+0.5)*sx,(p[1]+0.5)*sy];
-  const head=P(body.head), sl=P(body.shoulder_l), sr=P(body.shoulder_r),
-        torso=P(body.torso), base=P(body.base);
-  const mid=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2];
-  const line=(a,b)=>{ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();};
+  if(!body||!body.landmarks) return;
+  const L=body.landmarks, sx=W/COLS, sy=H/ROWS;
+  const P=n=>L[n]?[(L[n].x+0.5)*sx,(L[n].y+0.5)*sy]:null;
+  const mid=(a,b)=>a&&b?[(a[0]+b[0])/2,(a[1]+b[1])/2]:null;
+  const head=P('head')||P('top_of_mass'), sl=P('shoulder_left'),
+        sr=P('shoulder_right'), torso=P('torso'), base=P('base');
+  const neck=mid(sl,sr);
+  const segs=[[sl,sr],[neck,head],[neck,torso],[torso,base]].filter(p=>p[0]&&p[1]);
   ctx.lineCap='round';
   for(const [col,w] of [['rgba(0,0,0,.55)',6],['rgba(255,255,255,.95)',2.5]]){
-    ctx.strokeStyle=col; ctx.lineWidth=w;
-    line(sl,sr); line(mid(sl,sr),head); line(mid(sl,sr),torso); line(torso,base);
+    ctx.strokeStyle=col;ctx.lineWidth=w;
+    for(const [a2,b2] of segs){ctx.beginPath();ctx.moveTo(a2[0],a2[1]);ctx.lineTo(b2[0],b2[1]);ctx.stroke();}
   }
-  for(const [p,r] of [[head,7],[sl,4],[sr,4],[torso,5],[base,4]]){
+  for(const name of Object.keys(L)){
+    const p=P(name); if(!p) continue;
+    const r = (name==='head'||name==='top_of_mass') ? 7 : (name==='torso'?5:4);
     ctx.fillStyle='rgba(0,0,0,.55)';ctx.beginPath();ctx.arc(p[0],p[1],r+2,0,7);ctx.fill();
-    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(p[0],p[1],r,0,7);ctx.fill();
+    if(L[name].confidence>=0.6){
+      ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(p[0],p[1],r,0,7);ctx.fill();
+    }else{
+      ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=2;
+      ctx.beginPath();ctx.arc(p[0],p[1],r,0,7);ctx.stroke();
+    }
   }
 }
 

@@ -69,12 +69,29 @@
         <h2>Measurements</h2>
         <p class="hint">From thermal geometry and radar range.</p>
         <div class="rows">
+          <div class="row"><span class="k">In frame</span><span class="v" id="vis">–</span></div>
           <div class="row"><span class="k">Posture</span><span class="v" id="posture">–</span></div>
+          <div class="row"><span class="k">Landmarks found</span><span class="v" id="nlm">–</span></div>
           <div class="row"><span class="k">Visible height</span><span class="v" id="hm">–</span></div>
           <div class="row"><span class="k">Distance</span><span class="v" id="dist">–</span></div>
-          <div class="row"><span class="k">Height / width</span><span class="v" id="aspect">–</span></div>
           <div class="row"><span class="k">Silhouette</span><span class="v" id="px">–</span></div>
         </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <h2>Surface temperature</h2>
+        <p class="hint">What the sensor actually measures.</p>
+        <div class="rows">
+          <div class="row"><span class="k">Warmest on body</span><span class="v" id="tf">–</span></div>
+          <div class="row"><span class="k">Peak pixel</span><span class="v" id="pf">–</span></div>
+          <div class="row"><span class="k">Room</span><span class="v" id="af">–</span></div>
+        </div>
+        <p class="note"><b>This is surface temperature, not body temperature.</b>
+        It reads whatever faces the sensor &mdash; clothing, hair, exposed skin
+        &mdash; at whatever distance, with no emissivity calibration. Exposed
+        skin normally sits around 88&ndash;95&nbsp;&deg;F against a
+        98.6&nbsp;&deg;F core. <b>It cannot tell you whether someone has a
+        fever or is healthy</b>, and nothing here should be read that way.</p>
       </div>
 
       <div class="card">
@@ -117,28 +134,43 @@ function draw(t,body){
   octx.putImageData(img,0,0);
   ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
   ctx.drawImage(off,0,0,W,H);
-  if(!body) return;
+  if(!body||!body.landmarks) return;
 
-  const sx=W/COLS, sy=H/ROWS;
-  const P=p=>[ (p[0]+0.5)*sx, (p[1]+0.5)*sy ];
-  const head=P(body.head), sl=P(body.shoulder_l), sr=P(body.shoulder_r),
-        torso=P(body.torso), base=P(body.base);
+  const L=body.landmarks, sx=W/COLS, sy=H/ROWS;
+  const P=n=>L[n]?[(L[n].x+0.5)*sx,(L[n].y+0.5)*sy]:null;
+  const mid=(a,b)=>a&&b?[(a[0]+b[0])/2,(a[1]+b[1])/2]:null;
 
+  const head=P('head')||P('top_of_mass'), sl=P('shoulder_left'),
+        sr=P('shoulder_right'), torso=P('torso'), base=P('base');
+  const neck=mid(sl,sr);
+
+  // Only draw a segment when both of its endpoints were actually measured.
+  const segs=[[sl,sr],[neck,head],[neck,torso],[torso,base]].filter(p=>p[0]&&p[1]);
   ctx.lineCap='round';
-  ctx.strokeStyle='rgba(0,0,0,.55)'; ctx.lineWidth=8;
-  seg(); ctx.strokeStyle='rgba(255,255,255,.97)'; ctx.lineWidth=3.5; seg();
-  function seg(){
-    line(sl,sr); line(mid(sl,sr),head); line(mid(sl,sr),torso); line(torso,base);
+  for(const [col,w] of [['rgba(0,0,0,.55)',8],['rgba(255,255,255,.97)',3.5]]){
+    ctx.strokeStyle=col;ctx.lineWidth=w;
+    for(const [a,b] of segs){ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();}
   }
-  function mid(a,b){return [(a[0]+b[0])/2,(a[1]+b[1])/2];}
-  function line(a,b){ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();}
 
-  for(const [p,r,lbl] of [[head,11,'head'],[sl,6,''],[sr,6,''],[torso,8,'torso'],[base,6,'base']]){
+  for(const name of Object.keys(L)){
+    const p=P(name); if(!p) continue;
+    const lm=L[name];
+    const r = name==='head'||name==='top_of_mass' ? 11 : (name==='torso'?8:6);
+    // Low-confidence landmarks are drawn hollow, so a guess never looks like
+    // a measurement.
     ctx.fillStyle='rgba(0,0,0,.55)';ctx.beginPath();ctx.arc(p[0],p[1],r+2.5,0,7);ctx.fill();
-    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(p[0],p[1],r,0,7);ctx.fill();
-    if(lbl){ctx.fillStyle='rgba(0,0,0,.6)';ctx.font='600 12px -apple-system,sans-serif';
-      ctx.textAlign='center';ctx.fillText(lbl,p[0],p[1]-r-7);
-      ctx.fillStyle='#fff';ctx.fillText(lbl,p[0],p[1]-r-8);}
+    if(lm.confidence>=0.6){
+      ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(p[0],p[1],r,0,7);ctx.fill();
+    }else{
+      ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=2.5;
+      ctx.beginPath();ctx.arc(p[0],p[1],r,0,7);ctx.stroke();
+    }
+  }
+
+  if(!body.fully_visible){
+    ctx.fillStyle='rgba(217,119,6,.92)';
+    ctx.font='600 13px -apple-system,sans-serif';ctx.textAlign='left';
+    ctx.fillText(body.visibility, 12, H-14);
   }
 }
 
@@ -156,12 +188,22 @@ new EventSource('/stream').onmessage=e=>{
 
   draw(s.thermal, s.body);
   const bd=s.body||{}, r=s.radar||{};
-  document.getElementById('posture').textContent = bd.posture || '–';
-  document.getElementById('hm').innerHTML  = fmt(bd.height_m,'m',2);
-  document.getElementById('dist').innerHTML= fmt(r.distance_m,'m',2);
-  document.getElementById('aspect').textContent = bd.aspect!=null?bd.aspect.toFixed(2):'–';
-  document.getElementById('px').textContent = bd.height_px!=null
-    ? bd.height_px+' x '+bd.width_px+' px' : '–';
+  const set=(id,v)=>document.getElementById(id).innerHTML=v;
+  set('vis', bd.visibility ? (bd.fully_visible
+      ? bd.visibility
+      : '<span style="color:var(--warn)">'+bd.visibility+'</span>') : '–');
+  set('posture', bd.posture
+      ? bd.posture + (bd.posture==='unknown'
+          ? '<small style="color:var(--ink-2)"> &middot; '+bd.posture_reason+'</small>' : '')
+      : '–');
+  set('nlm', bd.landmarks ? Object.keys(bd.landmarks).length + ' of 5' : '–');
+  set('hm', bd.height_m!=null ? fmt(bd.height_m,'m',2)
+      : '<span class="v none">needs full body</span>');
+  set('dist', fmt(r.distance_m,'m',2));
+  set('px', bd.height_px!=null ? bd.height_px+' x '+bd.width_px+' px' : '–');
+  set('tf', bd.surface_f!=null ? bd.surface_f.toFixed(1)+' &deg;F' : '<span class="v none">no body in view</span>');
+  set('pf', bd.peak_f!=null ? bd.peak_f.toFixed(1)+' &deg;F' : '–');
+  set('af', bd.ambient_f!=null ? bd.ambient_f.toFixed(1)+' &deg;F' : '–');
 
   const m=s.csi_motion;
   document.getElementById('motion').textContent = m?m.state:'–';

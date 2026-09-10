@@ -29,6 +29,7 @@ from pathlib import Path
 import stream.frames as F
 from vitals import VitalsEstimator
 from radar_decode import RadarDecoder
+import body_model
 
 DASHBOARD = Path(__file__).parent / "dashboard" / "index.html"
 BODY_VIEW = Path(__file__).parent / "dashboard" / "body.html"
@@ -254,7 +255,16 @@ class State:
                 )
                 self.rate["radar"].tick()
             elif isinstance(frame, F.CsiFrame):
+                # Normalise out the receiver's automatic gain control. When the
+                # AGC steps, every subcarrier amplitude jumps at once - which
+                # reads as a whole-body movement that never happened. RSSI
+                # tracks the gain state, so referencing amplitudes to it keeps
+                # the series comparable across gain changes.
                 amps = frame.amplitudes
+                if frame.rssi:
+                    scale = 10 ** ((frame.rssi + 50) / 40.0)
+                    if 0.05 < scale < 20:
+                        amps = [a / scale for a in amps]
                 self.csi_amps = amps
                 self.csi_rssi = frame.rssi
                 self.rate["csi"].tick()
@@ -383,9 +393,9 @@ class State:
                 motion = "active"
             out["csi_motion"] = {"energy": round(energy, 2), "state": motion}
 
-        if thermal and blob:
-            out["body"] = body_geometry(
-                thermal, blob, radar.distance_m if radar else None
+        if thermal:
+            out["body"] = body_model.analyse(
+                thermal, radar.distance_m if radar else None
             )
 
         out["fusion"] = {

@@ -40,6 +40,17 @@ static constexpr uint32_t RADAR_BAUD = 115200;
 // failure is silent.
 static constexpr uint8_t WIFI_CHANNEL = 6;
 
+// Accept CSI only from the TX node.
+//
+// Promiscuous capture picks up every AP in range, so the stream was a mixture:
+// the beacon at about -50 dBm interleaved with ambient traffic at about -90.
+// Those are different transmitters over different paths, and interleaving them
+// destroys the temporal coherence that breathing and movement estimation
+// depend on - consecutive samples were not measuring the same channel. One
+// source, one path, one coherent time series.
+static const uint8_t TX_NODE_MAC[6] = {0x10, 0xBD, 0xA3, 0x96, 0x47, 0xD8};
+static constexpr bool CSI_FILTER_BY_MAC = true;
+
 // ------------------------------------------------------------ csi buffer ---
 
 // Enough subcarriers for HT20 (64 pairs). Anything longer is truncated rather
@@ -59,6 +70,7 @@ static volatile uint32_t csi_head = 0;  // written by the callback
 static volatile uint32_t csi_tail = 0;  // read by the loop
 static volatile uint32_t csi_dropped = 0;
 static volatile uint32_t csi_total = 0;
+static volatile uint32_t csi_rejected = 0;
 
 // ------------------------------------------------------------------ state ---
 
@@ -215,6 +227,15 @@ static void csi_drain_task(void *arg) {
 static void IRAM_ATTR csi_cb(void *ctx, wifi_csi_info_t *info) {
   (void)ctx;
   if (!info || !info->buf || info->len <= 0) return;
+
+  if (CSI_FILTER_BY_MAC) {
+    for (int i = 0; i < 6; i++) {
+      if (info->mac[i] != TX_NODE_MAC[i]) {
+        csi_rejected++;
+        return;
+      }
+    }
+  }
 
   const uint32_t head = csi_head;
   const uint32_t next = (head + 1) % CSI_RING;
