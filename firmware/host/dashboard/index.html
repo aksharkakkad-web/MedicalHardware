@@ -170,6 +170,8 @@
              <div class="src" id="sHr"></div></div>
         <div><div class="k">Head temp</div><div class="v" id="vHead">–</div>
              <div class="src" id="sHead"></div></div>
+        <div><div class="k">Unusual?</div><div class="v" id="vAbn">–</div>
+             <div class="src" id="sAbn"></div></div>
         <div><div class="k">Room light</div><div class="v" id="vLux">–</div></div>
       </div>
       <div id="conflict"></div>
@@ -312,6 +314,21 @@ function drawScene(t,blob,radar,body){
   const w=(blob.box[2]-blob.box[0]+1)*sx, h=(blob.box[3]-blob.box[1]+1)*sy;
   sCtx.strokeStyle='rgba(255,255,255,.95)'; sCtx.lineWidth=2;
   sCtx.setLineDash([7,5]); sCtx.strokeRect(x,y,w,h); sCtx.setLineDash([]);
+
+  const st=ht&&ht.estimate&&ht.estimate.status;
+  const abn=document.getElementById('vAbn');
+  if(st){
+    const v=st.state;
+    const bad=/unusual for this person|above typical|below typical/.test(v);
+    const mid=/mildly unusual/.test(v);
+    const unk=/cannot distinguish|building baseline|no reading/.test(v);
+    abn.innerHTML = unk
+      ? '<span style="font-size:15px;font-weight:400;color:var(--ink-3)">'+v+'</span>'
+      : '<span style="color:'+(bad?'var(--bad)':mid?'var(--warn)':'var(--ok)')+'">'+v+'</span>';
+    document.getElementById('sAbn').textContent =
+      (st.relative&&st.relative.detail) || (st.absolute&&st.absolute.detail) || '';
+  } else { abn.innerHTML='<span class="v none">no reading</span>';
+           document.getElementById('sAbn').textContent=''; }
 
   const bits=[];
   if(radar&&radar.distance_m!=null) bits.push(radar.distance_m.toFixed(2)+' m away');
@@ -476,6 +493,21 @@ es.onmessage=e=>{
     : '<span class="v none">no head in view</span>';
   document.getElementById('sHead').textContent = ht
     ? 'skin surface \u00b7 '+(ht.pixel_cm?ht.pixel_cm+' cm/pixel \u00b7 ':'')+ht.quality : '';
+
+  const st=ht&&ht.estimate&&ht.estimate.status;
+  const abn=document.getElementById('vAbn');
+  if(st){
+    const v=st.state;
+    const bad=/unusual for this person|above typical|below typical/.test(v);
+    const mid=/mildly unusual/.test(v);
+    const unk=/cannot distinguish|building baseline|no reading/.test(v);
+    abn.innerHTML = unk
+      ? '<span style="font-size:15px;font-weight:400;color:var(--ink-3)">'+v+'</span>'
+      : '<span style="color:'+(bad?'var(--bad)':mid?'var(--warn)':'var(--ok)')+'">'+v+'</span>';
+    document.getElementById('sAbn').textContent =
+      (st.relative&&st.relative.detail) || (st.absolute&&st.absolute.detail) || '';
+  } else { abn.innerHTML='<span class="v none">no reading</span>';
+           document.getElementById('sAbn').textContent=''; }
 
   const bits=[];
   if(V.disagreements&&V.disagreements.length)

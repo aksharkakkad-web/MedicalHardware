@@ -31,8 +31,10 @@ from vitals import VitalsEstimator
 from radar_decode import RadarDecoder
 import body_model
 import vitals_select
+import temp_status
 
 DASHBOARD = Path(__file__).parent / "dashboard" / "index.html"
+BASELINE_PATH = Path(__file__).parent / "temp_baseline.json"
 BODY_VIEW = Path(__file__).parent / "dashboard" / "body.html"
 
 
@@ -237,6 +239,9 @@ class State:
         # without lagging a real change meaningfully - skin temperature does
         # not move quickly.
         self.skin_hist: list[tuple[float, float]] = []
+        self.baseline = temp_status.Baseline()
+        self.baseline.load(BASELINE_PATH)
+        self._last_baseline_save = 0.0
         self.rate = {
             "thermal": RateMeter(), "radar": RateMeter(),
             "csi": RateMeter(), "ambient": RateMeter(),
@@ -423,6 +428,22 @@ class State:
                         est["core_f"] = round(est["core_f"] + delta, 1)
                     est["smoothed_over"] = len(vals)
                     est["jitter_f"] = round(vals[-1] - vals[0], 1)
+
+                    # Feed the person's own history, then judge against it.
+                    # Only smoothed, in-range readings are allowed to teach the
+                    # baseline - an out-of-range or single-frame value would
+                    # widen it and mask the very change it exists to catch.
+                    if est.get("core_f") is not None:
+                        self.baseline.add(est["core_f"])
+                        if now - self._last_baseline_save > 30:
+                            self._last_baseline_save = now
+                            try:
+                                self.baseline.save(BASELINE_PATH)
+                            except OSError:
+                                pass
+                    est["status"] = temp_status.assess(
+                        est.get("core_f"), est.get("uncertainty_f"), self.baseline
+                    )
             out["body"] = body
 
         if dev:
