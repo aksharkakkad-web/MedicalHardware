@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "device_id": "dev_bench_01",
+  "sequence": 1,
+  "device_monotonic_ms": null,
+  "firmware_version": "bench-0.1.0",
+  "buffered_packets": 0,
+  "sources_seen": [
+    "radar",
+    "thermal",
+    "wifi_csi"
+  ],
+  "transport_status": "ok"
+}

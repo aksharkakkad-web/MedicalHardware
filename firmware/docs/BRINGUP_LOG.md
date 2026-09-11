@@ -405,3 +405,42 @@ validated against a reference, so the disagreement identifies no winner. Note
 also that CSI reporting a confident heart rate while failing to find breathing
 is backwards — breathing is the larger, easier signal — which is reason to
 distrust that particular number rather than celebrate it.
+
+## 2026-09-11 — M8: edge telemetry pipeline
+
+Live sensors now flow through feature extraction into contract envelopes and
+into a validating ingest endpoint. End to end against real hardware: **48
+envelopes sent, 48 accepted, 0 rejected**, plus 16 heartbeats, evenly split
+across radar, thermal and wifi_csi.
+
+**Extraction** (`firmware/host/edge/extractors.py`) produces the three declared
+payload formats. The governing rule is the contract's: an unavailable value is
+never zero-filled, imputed or forward-filled — the field is omitted and a
+reason recorded. Concretely, with no target the radar still volunteers a
+distance of 0.0, and that is dropped rather than forwarded.
+
+**Envelopes** (`edge/envelope.py`) carry strictly increasing sequence numbers
+per `(device, source)`, `device_time` null until the node has wall time, and
+transport batch/retry metadata.
+
+**Ingest** (`mock_ingest/server.py`) stands in for `POST /v1/ingest/telemetry`,
+which does not exist yet and belongs to the backend lane. It validates
+strictly and returns the specific violation, because a bare 422 tells the
+firmware lane nothing.
+
+**Tests** (`tests/test_edge_contract.py`, 12 passing) carry their weight in the
+negative cases. A validator that accepts everything proves nothing, so these
+assert rejection of: a null in a measurement field, a score outside 0–1, a
+replayed sequence number, an unknown payload format, and a missing required
+field. Three more assert the no-zero-fill rule directly — radar with no target
+omits distance and both vitals, absent vitals are omitted rather than zeroed,
+and `near_floor_score` is withheld unless the whole body is in frame, since a
+person standing close otherwise looks identical to one lying down.
+
+**Handoff artefact:** `tests/fixtures/valid_envelopes.json` and
+`heartbeat.json` are contract-valid examples of all three sources, for whoever
+implements the real backend route.
+
+Not done here: the real ingest endpoint, and network transport from the device.
+Both are deliberate — the endpoint is Akshar's lane, and raw streaming stays on
+USB while only compact envelopes are intended for the network.
