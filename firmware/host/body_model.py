@@ -34,6 +34,20 @@ ROWS = 24
 # One calibration for the whole process; a fitted offset belongs to a setup,
 # not to a frame.
 _CALIBRATION = thermometry.Calibration()
+_CAL_PATH = __import__("pathlib").Path(__file__).parent / "temp_calibration.json"
+_CALIBRATION.load(_CAL_PATH)
+
+
+def calibrate(skin_c: float, reference_core_c: float,
+              ambient_c: float | None = None) -> dict:
+    """Pin the skin-to-core offset against a real thermometer.
+
+    The offset belongs to one setup - this sensor, this mounting, this
+    distance, this room. It is not a property of the person.
+    """
+    _CALIBRATION.fit(skin_c, reference_core_c, ambient_c)
+    _CALIBRATION.save(_CAL_PATH)
+    return _CALIBRATION.to_dict()
 
 # Vertical field of view, from the MLX90640 datasheet, used to convert pixel
 # extent into metres once the radar supplies a range.

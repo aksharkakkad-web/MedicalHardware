@@ -123,6 +123,9 @@ def unmix(t_meas_c: float, t_bg_c: float, f: float) -> float:
     return inner**0.25 - C_TO_K
 
 
+CAL_PATH = None  # set by the host at startup
+
+
 @dataclass
 class Calibration:
     """Offset fitted against a real thermometer, for one setup."""
@@ -130,8 +133,14 @@ class Calibration:
     skin_to_core_c: float = DEFAULT_SKIN_TO_CORE_C
     samples: int = 0
     calibrated: bool = False
+    # Room temperature when the offset was fitted. The gap between skin and
+    # core widens as the room cools, so an offset measured in a 27 C room does
+    # not transfer unchanged to an 18 C one. Without this the ambient term
+    # double-counts: the fit already absorbed the conditions it was taken in.
+    ambient_at_fit_c: float | None = None
 
-    def fit(self, skin_c: float, reference_core_c: float) -> None:
+    def fit(self, skin_c: float, reference_core_c: float,
+            ambient_c: float | None = None) -> None:
         obs = reference_core_c - skin_c
         if self.samples == 0:
             self.skin_to_core_c = obs
@@ -140,6 +149,34 @@ class Calibration:
             self.skin_to_core_c += (obs - self.skin_to_core_c) / (self.samples + 1)
         self.samples += 1
         self.calibrated = True
+        if ambient_c is not None:
+            self.ambient_at_fit_c = ambient_c
+
+    def to_dict(self) -> dict:
+        return {"skin_to_core_c": self.skin_to_core_c,
+                "samples": self.samples,
+                "calibrated": self.calibrated,
+                "ambient_at_fit_c": self.ambient_at_fit_c}
+
+    def load(self, path) -> None:
+        import json
+        import os
+        if not os.path.exists(path):
+            return
+        try:
+            with open(path) as fh:
+                d = json.load(fh)
+            self.skin_to_core_c = float(d["skin_to_core_c"])
+            self.samples = int(d.get("samples", 1))
+            self.calibrated = bool(d.get("calibrated", True))
+            self.ambient_at_fit_c = d.get("ambient_at_fit_c")
+        except Exception:
+            pass
+
+    def save(self, path) -> None:
+        import json
+        with open(path, "w") as fh:
+            json.dump(self.to_dict(), fh, indent=2)
 
 
 def usable_range_m() -> float:
@@ -211,7 +248,10 @@ def estimate(
         }
 
     # 3. skin to core
-    gap = cal.skin_to_core_c + AMBIENT_SLOPE * (REFERENCE_AMBIENT_C - ambient_c)
+    # Adjust from wherever the offset was actually fitted, not from a nominal
+    # reference the fit never saw.
+    baseline = cal.ambient_at_fit_c if cal.ambient_at_fit_c is not None else REFERENCE_AMBIENT_C
+    gap = cal.skin_to_core_c + AMBIENT_SLOPE * (baseline - ambient_c)
     core_c = skin_c + gap
     steps.append({
         "step": "skin to core",

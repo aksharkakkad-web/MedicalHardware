@@ -230,6 +230,13 @@ class State:
         self.device: F.DeviceStats | None = None
         self._prev_dev: tuple[float, int] | None = None
         self._captured_hz: float | None = None
+        # Rolling window of skin readings. The detected head region shifts by a
+        # pixel or two between frames and the peak moves with it, giving about
+        # +/-1.7 F of frame-to-frame jitter that is measurement noise rather
+        # than any change in the person. A median over a few seconds removes it
+        # without lagging a real change meaningfully - skin temperature does
+        # not move quickly.
+        self.skin_hist: list[tuple[float, float]] = []
         self.rate = {
             "thermal": RateMeter(), "radar": RateMeter(),
             "csi": RateMeter(), "ambient": RateMeter(),
@@ -401,9 +408,22 @@ class State:
             out["csi_motion"] = {"energy": round(energy, 2), "state": motion}
 
         if thermal:
-            out["body"] = body_model.analyse(
-                thermal, radar.distance_m if radar else None
-            )
+            body = body_model.analyse(thermal, radar.distance_m if radar else None)
+            if body and body.get("head_temp"):
+                now = time.monotonic()
+                self.skin_hist.append((now, body["head_temp"]["estimate"]["skin_f"]))
+                self.skin_hist = [(t, v) for t, v in self.skin_hist if now - t <= 4.0]
+                vals = sorted(v for _, v in self.skin_hist)
+                if len(vals) >= 5:
+                    med = vals[len(vals) // 2]
+                    est = body["head_temp"]["estimate"]
+                    delta = med - est["skin_f"]
+                    est["skin_f"] = round(med, 1)
+                    if est.get("core_f") is not None:
+                        est["core_f"] = round(est["core_f"] + delta, 1)
+                    est["smoothed_over"] = len(vals)
+                    est["jitter_f"] = round(vals[-1] - vals[0], 1)
+            out["body"] = body
 
         if dev:
             # The streamed CSI rate is deliberately below the captured rate, so
@@ -583,6 +603,54 @@ def make_handler(state: State):
                         time.sleep(1 / 15)
                 except (BrokenPipeError, ConnectionResetError):
                     return
+            elif self.path.startswith("/calibrate"):
+                import urllib.parse
+                q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+                try:
+                    ref_f = float(q.get("f", [""])[0])
+                except ValueError:
+                    self.send_error(400, "pass ?f=<reference temperature in F>")
+                    return
+                # Average several seconds. A single frame is not a measurement:
+                # consecutive head readings have been seen to differ by more
+                # than 10 F as the detected head region shifts.
+                skins, ambs = [], []
+                for _ in range(40):
+                    snap = state.snapshot()
+                    ht = (snap.get("body") or {}).get("head_temp")
+                    if ht:
+                        skins.append(ht["estimate"]["skin_f"])
+                        ambs.append(ht.get("background_c"))
+                    time.sleep(0.15)
+                if len(skins) < 10:
+                    payload = {"ok": False,
+                               "error": f"only {len(skins)} of 40 samples saw a head; "
+                                        "sit still, facing the sensor, within 1.5 m"}
+                else:
+                    skins.sort()
+                    # Median, then the spread, so an unstable subject is
+                    # reported rather than averaged into false precision.
+                    med = skins[len(skins) // 2]
+                    spread = skins[-1] - skins[0]
+                    amb_c = sorted(a for a in ambs if a is not None)
+                    amb_c = amb_c[len(amb_c) // 2] if amb_c else None
+                    cal = body_model.calibrate((med - 32) * 5 / 9,
+                                               (ref_f - 32) * 5 / 9, amb_c)
+                    payload = {"ok": True, "reference_f": ref_f,
+                               "samples": len(skins),
+                               "measured_skin_f": round(med, 1),
+                               "sample_spread_f": round(spread, 1),
+                               "calibration": cal}
+                    if spread > 4.0:
+                        payload["warning"] = (
+                            f"readings varied by {spread:.1f} F during calibration; "
+                            "the offset is only as good as that stability")
+                body = json.dumps(payload, indent=2).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
             elif self.path in ("/", "/index.html", "/body"):
                 body = (BODY_VIEW if self.path == "/body" else DASHBOARD).read_bytes()
                 self.send_response(200)
