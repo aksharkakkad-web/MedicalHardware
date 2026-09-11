@@ -172,6 +172,8 @@
              <div class="src" id="sHead"></div></div>
         <div><div class="k">Unusual?</div><div class="v" id="vAbn">–</div>
              <div class="src" id="sAbn"></div></div>
+        <div><div class="k">Confidence</div><div class="v" id="vConf">–</div>
+             <div class="src" id="sConf"></div></div>
         <div><div class="k">Room light</div><div class="v" id="vLux">–</div></div>
       </div>
       <div id="conflict"></div>
@@ -329,6 +331,26 @@ function drawScene(t,blob,radar,body){
       (st.relative&&st.relative.detail) || (st.absolute&&st.absolute.detail) || '';
   } else { abn.innerHTML='<span class="v none">no reading</span>';
            document.getElementById('sAbn').textContent=''; }
+
+  // Confidence and unusualness answer different questions and are shown
+  // separately: one is about the measurement, the other about the reading.
+  const est=ht&&ht.estimate;
+  const cf=est&&est.confidence, un=est&&est.unusualness;
+  const vc=(s.vitals||{}).confidence;
+  const cEl=document.getElementById('vConf'), sEl=document.getElementById('sConf');
+  const shown = cf&&cf.pct!=null ? cf : (vc&&vc.pct!=null ? vc : null);
+  if(shown){
+    const p=shown.pct;
+    const col = p>=60?'var(--ok)':p>=25?'var(--warn)':'var(--bad)';
+    cEl.innerHTML='<span style="color:'+col+'">'+p.toFixed(0)+'<small> %</small></span>';
+    sEl.textContent='limited by '+shown.limiting+' \u00b7 '+shown.limiting_why;
+  } else { cEl.innerHTML='<span class="v none">no reading</span>'; sEl.textContent=''; }
+
+  if(un&&un.pct>0){
+    const prev=document.getElementById('sAbn').textContent;
+    document.getElementById('sAbn').textContent =
+      un.pct.toFixed(0)+'% unusual \u00b7 '+un.why+(prev?' \u00b7 '+prev:'');
+  }
 
   const bits=[];
   if(radar&&radar.distance_m!=null) bits.push(radar.distance_m.toFixed(2)+' m away');
@@ -508,6 +530,26 @@ es.onmessage=e=>{
       (st.relative&&st.relative.detail) || (st.absolute&&st.absolute.detail) || '';
   } else { abn.innerHTML='<span class="v none">no reading</span>';
            document.getElementById('sAbn').textContent=''; }
+
+  // Confidence and unusualness answer different questions and are shown
+  // separately: one is about the measurement, the other about the reading.
+  const est=ht&&ht.estimate;
+  const cf=est&&est.confidence, un=est&&est.unusualness;
+  const vc=(s.vitals||{}).confidence;
+  const cEl=document.getElementById('vConf'), sEl=document.getElementById('sConf');
+  const shown = cf&&cf.pct!=null ? cf : (vc&&vc.pct!=null ? vc : null);
+  if(shown){
+    const p=shown.pct;
+    const col = p>=60?'var(--ok)':p>=25?'var(--warn)':'var(--bad)';
+    cEl.innerHTML='<span style="color:'+col+'">'+p.toFixed(0)+'<small> %</small></span>';
+    sEl.textContent='limited by '+shown.limiting+' \u00b7 '+shown.limiting_why;
+  } else { cEl.innerHTML='<span class="v none">no reading</span>'; sEl.textContent=''; }
+
+  if(un&&un.pct>0){
+    const prev=document.getElementById('sAbn').textContent;
+    document.getElementById('sAbn').textContent =
+      un.pct.toFixed(0)+'% unusual \u00b7 '+un.why+(prev?' \u00b7 '+prev:'');
+  }
 
   const bits=[];
   if(V.disagreements&&V.disagreements.length)

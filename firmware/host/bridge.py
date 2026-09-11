@@ -32,6 +32,7 @@ from radar_decode import RadarDecoder
 import body_model
 import vitals_select
 import temp_status
+import confidence
 
 DASHBOARD = Path(__file__).parent / "dashboard" / "index.html"
 BASELINE_PATH = Path(__file__).parent / "temp_baseline.json"
@@ -444,6 +445,17 @@ class State:
                     est["status"] = temp_status.assess(
                         est.get("core_f"), est.get("uncertainty_f"), self.baseline
                     )
+                    est["confidence"] = confidence.temperature_confidence(
+                        est, len(self.baseline.samples)
+                    )
+                    rel = est["status"].get("relative") or {}
+                    if rel.get("spread_f"):
+                        z = rel["delta_f"] / rel["spread_f"]
+                        pct, why = confidence.unusualness_pct(
+                            z, len(self.baseline.samples)
+                        )
+                        est["unusualness"] = {"pct": pct, "z": round(z, 2),
+                                              "why": why}
             out["body"] = body
 
         if dev:
@@ -475,6 +487,12 @@ class State:
             out.get("csi_vitals"),
             radar.distance_m if radar else None,
         )
+
+        if out.get("vitals"):
+            out["vitals"]["confidence"] = confidence.vitals_confidence(
+                out["vitals"], out.get("health", {}),
+                radar.distance_m if radar else None,
+            )
 
         out["fusion"] = {
             "verdict": verdict,
