@@ -28,6 +28,31 @@ def _clamp01(v: float) -> float:
     return max(0.0, min(1.0, v))
 
 
+# Below this confidence the conditions do not support the reading, and sending
+# it anyway is how an unreliable number becomes an authoritative one two systems
+# downstream. Withheld with a reason instead.
+MIN_CONFIDENCE_PCT = 25.0
+
+
+def gate(payload: dict, reasons: list[str], fields: list[str],
+         confidence: dict | None) -> tuple[dict, list[str]]:
+    """Drop fields the measurement conditions do not support."""
+    if not confidence or confidence.get("pct") is None:
+        return payload, reasons
+    pct = confidence["pct"]
+    if pct >= MIN_CONFIDENCE_PCT:
+        return payload, reasons
+    dropped = [f for f in fields if f in payload]
+    for f in dropped:
+        payload.pop(f)
+    if dropped:
+        reasons = reasons + [
+            f"{', '.join(dropped)} withheld: measurement confidence {pct:.0f}% "
+            f"(limited by {confidence.get('limiting')})"
+        ]
+    return payload, reasons
+
+
 def radar_features(radar: dict | None, health: dict) -> tuple[dict, list[str]]:
     """radar_edge_features_v1."""
     payload: dict = {}

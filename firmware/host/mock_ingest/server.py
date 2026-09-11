@@ -45,6 +45,7 @@ class Store:
         self.accepted: list[dict] = []
         self.rejected: list[dict] = []
         self.heartbeats: list[dict] = []
+        self.assessments: list[dict] = []
         self.last_seq: dict[tuple[str, str], int] = {}
 
 
@@ -115,6 +116,8 @@ def make_handler(store: Store):
                     "accepted": len(store.accepted),
                     "rejected": len(store.rejected),
                     "heartbeats": len(store.heartbeats),
+                    "assessments": len(store.assessments),
+                    "recent_assessments": store.assessments[-3:],
                     "by_source": {
                         s: sum(1 for e in store.accepted if e["source"] == s)
                         for s in sorted({e["source"] for e in store.accepted})
@@ -128,6 +131,27 @@ def make_handler(store: Store):
                 body = json.loads(self.rfile.read(n) or b"{}")
             except json.JSONDecodeError as e:
                 self._json(400, {"error": f"invalid JSON: {e}"})
+                return
+
+            if self.path == "/v1/assessments":
+                # Deliberately NOT part of the frozen telemetry payloads.
+                # docs/DATA_CONTRACT.md puts personal baselines and anomaly
+                # logic in the cloud, and the three payload formats have no
+                # field for a verdict. Folding one in would silently fork the
+                # contract, so host-derived assessments travel on their own
+                # channel and are labelled as host-derived.
+                errs = []
+                for f in ("device_id", "room_id", "kind", "state", "observed_at_ms"):
+                    if f not in body:
+                        errs.append(f"missing required field '{f}'")
+                if body.get("source_stage") != "host":
+                    errs.append("source_stage must be 'host' for a host-derived assessment")
+                if errs:
+                    self._json(422, {"errors": errs})
+                    return
+                with store.lock:
+                    store.assessments.append(body)
+                self._json(202, {"ok": True})
                 return
 
             if self.path == "/v1/ingest/heartbeat":

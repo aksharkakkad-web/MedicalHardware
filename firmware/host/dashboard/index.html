@@ -172,8 +172,7 @@
              <div class="src" id="sHead"></div></div>
         <div><div class="k">Unusual?</div><div class="v" id="vAbn">–</div>
              <div class="src" id="sAbn"></div></div>
-        <div><div class="k">Confidence</div><div class="v" id="vConf">–</div>
-             <div class="src" id="sConf"></div></div>
+
         <div><div class="k">Room light</div><div class="v" id="vLux">–</div></div>
       </div>
       <div id="conflict"></div>
@@ -337,19 +336,18 @@ function drawScene(t,blob,radar,body){
   const est=ht&&ht.estimate;
   const cf=est&&est.confidence, un=est&&est.unusualness;
   const vc=(s.vitals||{}).confidence;
-  const cEl=document.getElementById('vConf'), sEl=document.getElementById('sConf');
-  const shown = cf&&cf.pct!=null ? cf : (vc&&vc.pct!=null ? vc : null);
-  if(shown){
-    const p=shown.pct;
-    const col = p>=60?'var(--ok)':p>=25?'var(--warn)':'var(--bad)';
-    cEl.innerHTML='<span style="color:'+col+'">'+p.toFixed(0)+'<small> %</small></span>';
-    sEl.textContent='limited by '+shown.limiting+' \u00b7 '+shown.limiting_why;
-  } else { cEl.innerHTML='<span class="v none">no reading</span>'; sEl.textContent=''; }
-
+  // Confidence is no longer shown as its own number. It is still computed,
+  // and it now gates what leaves the device: a reading the conditions do not
+  // support is withheld from the telemetry pipeline rather than displayed with
+  // a caveat and sent anyway.
   if(un&&un.pct>0){
     const prev=document.getElementById('sAbn').textContent;
+    let note = un.pct.toFixed(0)+'% unusual \u00b7 '+un.why;
+    if(cf&&cf.pct<40) note += ' \u00b7 weak measurement ('+cf.limiting+')';
+    document.getElementById('sAbn').textContent = note+(prev?' \u00b7 '+prev:'');
+  } else if(cf&&cf.pct<40){
     document.getElementById('sAbn').textContent =
-      un.pct.toFixed(0)+'% unusual \u00b7 '+un.why+(prev?' \u00b7 '+prev:'');
+      'weak measurement \u00b7 '+cf.limiting_why;
   }
 
   const bits=[];
@@ -536,19 +534,18 @@ es.onmessage=e=>{
   const est=ht&&ht.estimate;
   const cf=est&&est.confidence, un=est&&est.unusualness;
   const vc=(s.vitals||{}).confidence;
-  const cEl=document.getElementById('vConf'), sEl=document.getElementById('sConf');
-  const shown = cf&&cf.pct!=null ? cf : (vc&&vc.pct!=null ? vc : null);
-  if(shown){
-    const p=shown.pct;
-    const col = p>=60?'var(--ok)':p>=25?'var(--warn)':'var(--bad)';
-    cEl.innerHTML='<span style="color:'+col+'">'+p.toFixed(0)+'<small> %</small></span>';
-    sEl.textContent='limited by '+shown.limiting+' \u00b7 '+shown.limiting_why;
-  } else { cEl.innerHTML='<span class="v none">no reading</span>'; sEl.textContent=''; }
-
+  // Confidence is no longer shown as its own number. It is still computed,
+  // and it now gates what leaves the device: a reading the conditions do not
+  // support is withheld from the telemetry pipeline rather than displayed with
+  // a caveat and sent anyway.
   if(un&&un.pct>0){
     const prev=document.getElementById('sAbn').textContent;
+    let note = un.pct.toFixed(0)+'% unusual \u00b7 '+un.why;
+    if(cf&&cf.pct<40) note += ' \u00b7 weak measurement ('+cf.limiting+')';
+    document.getElementById('sAbn').textContent = note+(prev?' \u00b7 '+prev:'');
+  } else if(cf&&cf.pct<40){
     document.getElementById('sAbn').textContent =
-      un.pct.toFixed(0)+'% unusual \u00b7 '+un.why+(prev?' \u00b7 '+prev:'');
+      'weak measurement \u00b7 '+cf.limiting_why;
   }
 
   const bits=[];

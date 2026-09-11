@@ -57,6 +57,7 @@ def main():
     b = envelope.EnvelopeBuilder(args.device_id, args.tenant_id, args.room_id)
     t_end = time.monotonic() + args.seconds
     sent = accepted = rejected = 0
+    assessments_sent = [0]
     prev_max_temp = None
 
     print(f"bridge {args.bridge} -> ingest {args.ingest} at {args.hz} Hz\n")
@@ -79,7 +80,14 @@ def main():
         if thermal:
             prev_max_temp = thermal["max"]
 
+        vitals = snap.get("vitals") or {}
+        v_conf = vitals.get("confidence")
+
         pl, why = extractors.radar_features(snap.get("radar"), health.get("radar", {}))
+        # Confidence no longer surfaces as a number; it gates instead. A vitals
+        # reading the conditions cannot support is withheld with its reason
+        # rather than shipped for something downstream to treat as fact.
+        pl, why = extractors.gate(pl, why, ["heart_rate_bpm", "respiration_rpm"], v_conf)
         if pl:
             envelopes.append(b.build("radar", extractors.FORMAT_RADAR, pl, None, why, batch))
 
@@ -92,6 +100,7 @@ def main():
                                           snap.get("csi_vitals"),
                                           health.get("csi", {}),
                                           snap.get("csi_captured_hz"))
+        pl, why = extractors.gate(pl, why, ["respiration_feature"], v_conf)
         if pl:
             envelopes.append(b.build("wifi_csi", extractors.FORMAT_CSI, pl, None, why, batch))
 
@@ -105,6 +114,37 @@ def main():
                     if r.get("errors"):
                         print(f"  REJECTED seq {r['sequence']}: {r['errors']}")
 
+        # Abnormality travels on its own channel. The three payload formats are
+        # frozen and have no field for a verdict, and the contract puts
+        # baselines and anomaly logic in the cloud - so this is labelled
+        # host-derived rather than folded into telemetry.
+        est = ((snap.get("body") or {}).get("head_temp") or {}).get("estimate") or {}
+        status = est.get("status")
+        if status and status.get("state") not in (None, "no reading"):
+            rel = status.get("relative") or {}
+            t_conf = est.get("confidence") or {}
+            assessment = {
+                "schema_version": "1.0",
+                "source_stage": "host",
+                "device_id": args.device_id,
+                "room_id": args.room_id,
+                "kind": "temperature_deviation",
+                "state": status["state"],
+                "observed_at_ms": int(time.time() * 1000),
+                "value_f": est.get("core_f"),
+                "uncertainty_f": est.get("uncertainty_f"),
+                "baseline_f": rel.get("baseline_f"),
+                "delta_f": rel.get("delta_f"),
+                "unusualness_pct": (est.get("unusualness") or {}).get("pct"),
+                "measurement_confidence_pct": t_conf.get("pct"),
+                "limiting_factor": t_conf.get("limiting"),
+                "can_tell": status.get("can_tell"),
+                "note": status.get("note"),
+            }
+            code, _ = post(f"{args.ingest}/v1/assessments", assessment)
+            if code == 202:
+                assessments_sent[0] += 1
+
         dev = snap.get("device") or {}
         post(f"{args.ingest}/v1/ingest/heartbeat",
              b.heartbeat("bench-0.1.0", dev.get("csi_dropped", 0),
@@ -112,7 +152,8 @@ def main():
                           if health.get(s, {}).get("status") == "ok"]))
         time.sleep(1.0 / args.hz)
 
-    print(f"\nsent {sent}  accepted {accepted}  rejected {rejected}")
+    print(f"\nsent {sent}  accepted {accepted}  rejected {rejected}"
+          f"  assessments {assessments_sent[0]}")
 
 
 if __name__ == "__main__":

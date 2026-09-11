@@ -27,6 +27,8 @@ from __future__ import annotations
 
 import math
 import time
+
+import confidence
 from dataclasses import dataclass, field
 
 # Population reference points, degrees F. Used only for the absolute check.
@@ -122,18 +124,24 @@ def assess(core_f: float | None, uncertainty_f: float | None,
         median, spread = st
         delta = core_f - median
         z = delta / spread
-        if abs(z) < 2.0:
-            relative = {"verdict": "usual for this person",
-                        "detail": f"{delta:+.1f} F from a usual {median:.1f} F "
-                                  f"(normal variation is about +/-{spread:.1f} F)"}
-        elif abs(z) < 3.0:
-            relative = {"verdict": "mildly unusual",
-                        "detail": f"{delta:+.1f} F from a usual {median:.1f} F, "
-                                  f"about {abs(z):.1f}x the normal variation"}
+
+        # Derive the verdict from the same percentage that gets reported.
+        # Thresholding on raw z separately produced readings labelled "usual
+        # for this person" while carrying 86% unusualness - both correct by
+        # their own formula, and plainly contradictory to anyone reading them.
+        pct, _why = confidence.unusualness_pct(z, len(baseline.samples))
+        if pct < 80.0:
+            verdict = "usual for this person"
+        elif pct < 95.0:
+            verdict = "mildly unusual"
         else:
-            relative = {"verdict": "unusual for this person",
-                        "detail": f"{delta:+.1f} F from a usual {median:.1f} F, "
-                                  f"about {abs(z):.1f}x the normal variation"}
+            verdict = "unusual for this person"
+        relative = {
+            "verdict": verdict,
+            "unusualness_pct": pct,
+            "detail": (f"{delta:+.1f} F from a usual {median:.1f} F; a gap this "
+                       f"large shows up in about {100-pct:.0f}% of readings"),
+        }
         relative["delta_f"] = round(delta, 1)
         relative["baseline_f"] = round(median, 1)
         relative["spread_f"] = round(spread, 1)

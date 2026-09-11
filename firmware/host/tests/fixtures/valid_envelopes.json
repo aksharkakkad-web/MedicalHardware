@@ -17,7 +17,7 @@
       "signal_quality": 1.0
     },
     "transport": {
-      "batch_id": "84ee51eba28b",
+      "batch_id": "32cd45c5f006",
       "retry_count": 0
     }
   },
@@ -44,7 +44,7 @@
       "signal_quality": 1.0
     },
     "transport": {
-      "batch_id": "b00daa422baf",
+      "batch_id": "d87bacb18eed",
       "retry_count": 0
     }
   },
@@ -67,7 +67,7 @@
       "signal_quality": 1.0
     },
     "transport": {
-      "batch_id": "b5add33ca4ac",
+      "batch_id": "665b6ceb6f7b",
       "retry_count": 0
     }
   }
