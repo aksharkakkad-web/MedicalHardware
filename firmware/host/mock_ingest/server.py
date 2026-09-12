@@ -14,7 +14,10 @@ lane nothing.
 from __future__ import annotations
 
 import argparse
+import hmac
 import json
+import os
+import secrets
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -37,6 +40,34 @@ NEVER_NULL = {
     "presence_score", "movement_score", "respiration_feature",
     "centroid_x", "centroid_y", "max_observed_temp_c",
 }
+
+
+class Auth:
+    """Bearer-token check for the ingest endpoints.
+
+    The key is read from the environment or generated at startup - never a
+    literal in the source, and never written to the repository. Comparison is
+    constant-time so a wrong key cannot be recovered by timing the response.
+
+    Reads are left open because /stats is a local bench aid. Writes are not.
+    """
+
+    def __init__(self, key: str | None) -> None:
+        self.key = key
+        self.generated = False
+        if not self.key:
+            self.key = secrets.token_urlsafe(24)
+            self.generated = True
+
+    def check(self, header: str | None) -> str | None:
+        if not header:
+            return "missing Authorization header; expected 'Bearer <key>'"
+        scheme, _, token = header.partition(" ")
+        if scheme.lower() != "bearer":
+            return f"unsupported authorization scheme {scheme!r}; expected Bearer"
+        if not hmac.compare_digest(token.strip(), self.key):
+            return "invalid API key"
+        return None
 
 
 class Store:
@@ -92,7 +123,7 @@ def validate(env: dict, store: Store) -> list[str]:
     return errs
 
 
-def make_handler(store: Store):
+def make_handler(store: Store, auth: Auth):
     class H(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
 
@@ -126,6 +157,19 @@ def make_handler(store: Store):
                 })
 
         def do_POST(self):
+            err = auth.check(self.headers.get("Authorization"))
+            if err:
+                # 401 with the reason, so a misconfigured sender can be fixed
+                # without guessing. The reason never reveals the key.
+                self.send_response(401)
+                self.send_header("WWW-Authenticate", 'Bearer realm="ingest"')
+                raw = json.dumps({"error": err}).encode()
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(raw)))
+                self.end_headers()
+                self.wfile.write(raw)
+                return
+
             n = int(self.headers.get("Content-Length", 0))
             try:
                 body = json.loads(self.rfile.read(n) or b"{}")
@@ -189,11 +233,20 @@ def make_handler(store: Store):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=8500)
+    ap.add_argument("--api-key", default=os.environ.get("INGEST_API_KEY"),
+                    help="bearer token required on POST; defaults to $INGEST_API_KEY")
     args = ap.parse_args()
     store = Store()
-    srv = ThreadingHTTPServer(("127.0.0.1", args.port), make_handler(store))
+    auth = Auth(args.api_key)
+    srv = ThreadingHTTPServer(("127.0.0.1", args.port), make_handler(store, auth))
     print(f"mock ingest on http://127.0.0.1:{args.port}")
-    print("  POST /v1/ingest/telemetry   POST /v1/ingest/heartbeat   GET /stats")
+    print("  POST /v1/ingest/telemetry   POST /v1/ingest/heartbeat")
+    print("  POST /v1/assessments        GET  /stats")
+    if auth.generated:
+        print(f"\n  generated API key: {auth.key}")
+        print("  export INGEST_API_KEY to set your own and keep it stable")
+    else:
+        print("\n  API key loaded from configuration")
     srv.serve_forever()
 
 

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import time
 import urllib.request
 
@@ -26,11 +27,13 @@ def read_snapshot(bridge_url: str, timeout: float = 10.0) -> dict | None:
     return json.loads(chunks[-2]) if len(chunks) >= 2 else None
 
 
-def post(url: str, body, retries: int = 2) -> tuple[int, dict]:
+def post(url: str, body, retries: int = 2, api_key: str | None = None) -> tuple[int, dict]:
     data = json.dumps(body).encode()
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
     for attempt in range(retries + 1):
-        req = urllib.request.Request(url, data=data,
-                                     headers={"Content-Type": "application/json"})
+        req = urllib.request.Request(url, data=data, headers=headers)
         try:
             with urllib.request.urlopen(req, timeout=5) as r:
                 return r.status, json.loads(r.read() or b"{}")
@@ -52,7 +55,13 @@ def main():
     ap.add_argument("--room-id", default="room_bench")
     ap.add_argument("--hz", type=float, default=1.0)
     ap.add_argument("--seconds", type=float, default=30.0)
+    ap.add_argument("--api-key", default=os.environ.get("INGEST_API_KEY"),
+                    help="bearer token for the ingest endpoint; "
+                         "defaults to $INGEST_API_KEY")
     args = ap.parse_args()
+    if not args.api_key:
+        print("No API key. Set INGEST_API_KEY or pass --api-key.")
+        return
 
     b = envelope.EnvelopeBuilder(args.device_id, args.tenant_id, args.room_id)
     t_end = time.monotonic() + args.seconds
@@ -105,7 +114,7 @@ def main():
             envelopes.append(b.build("wifi_csi", extractors.FORMAT_CSI, pl, None, why, batch))
 
         if envelopes:
-            code, resp = post(f"{args.ingest}/v1/ingest/telemetry", envelopes)
+            code, resp = post(f"{args.ingest}/v1/ingest/telemetry", envelopes, api_key=args.api_key)
             sent += len(envelopes)
             accepted += resp.get("accepted", 0)
             rejected += resp.get("rejected", 0)
@@ -141,7 +150,7 @@ def main():
                 "can_tell": status.get("can_tell"),
                 "note": status.get("note"),
             }
-            code, _ = post(f"{args.ingest}/v1/assessments", assessment)
+            code, _ = post(f"{args.ingest}/v1/assessments", assessment, api_key=args.api_key)
             if code == 202:
                 assessments_sent[0] += 1
 
@@ -149,7 +158,8 @@ def main():
         post(f"{args.ingest}/v1/ingest/heartbeat",
              b.heartbeat("bench-0.1.0", dev.get("csi_dropped", 0),
                          [s for s in ("radar", "thermal", "wifi_csi")
-                          if health.get(s, {}).get("status") == "ok"]))
+                          if health.get(s, {}).get("status") == "ok"]),
+             api_key=args.api_key)
         time.sleep(1.0 / args.hz)
 
     print(f"\nsent {sent}  accepted {accepted}  rejected {rejected}"

@@ -23,6 +23,33 @@ the same encoder and parser as real hardware, so the view cannot accidentally
 work only for simulated input. Measured and simulated data must never be
 mistakable for one another.
 
+## Telemetry pipeline
+
+The ingest endpoints require a bearer token. Set one and keep it out of the
+repository:
+
+```bash
+export INGEST_API_KEY="$(python3 -c 'import secrets;print(secrets.token_urlsafe(24))')"
+
+~/.platformio/penv/bin/python -m mock_ingest.server --port 8500   # receiver
+~/.platformio/penv/bin/python pipeline.py --seconds 60            # sender
+curl -s http://127.0.0.1:8500/stats                              # counters
+```
+
+Started without a key the receiver generates one and prints it, so it is never
+accidentally unauthenticated. Reads (`/stats`) are open because it is a local
+bench aid; writes are not.
+
+`/v1/ingest/telemetry` and `/v1/ingest/heartbeat` mirror
+`docs/DATA_CONTRACT.md`. `/v1/assessments` is separate on purpose: the three
+payload formats are frozen and have no field for a verdict, and the contract
+puts baselines and anomaly logic in the cloud, so host-derived assessments
+travel on their own channel tagged `source_stage: "host"`.
+
+Measurement confidence is not displayed anywhere. It gates instead - a reading
+the conditions cannot support is withheld from the payload with its reason
+rather than sent for something downstream to treat as fact.
+
 ## Layout
 
 | Path | Purpose |

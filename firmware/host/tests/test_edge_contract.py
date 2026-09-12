@@ -165,6 +165,35 @@ def test_every_generated_envelope_validates():
         json.dumps(b.heartbeat("bench-0.1.0", 0, ["radar", "thermal", "wifi_csi"]), indent=2))
 
 
+# --- auth ----------------------------------------------------------------
+
+def test_auth_rejects_missing_wrong_and_bad_scheme():
+    from mock_ingest.server import Auth
+    a = Auth("correct-horse")
+    assert a.check(None) is not None
+    assert "missing Authorization" in a.check(None)
+    assert "invalid API key" in a.check("Bearer wrong")
+    assert "unsupported authorization scheme" in a.check("Basic correct-horse")
+    assert a.check("Bearer correct-horse") is None
+
+
+def test_auth_generates_a_key_when_none_supplied():
+    """A server with no configured key must not end up unauthenticated."""
+    from mock_ingest.server import Auth
+    a = Auth(None)
+    assert a.generated
+    assert len(a.key) >= 20
+    assert a.check(f"Bearer {a.key}") is None
+
+
+def test_auth_error_never_echoes_the_key():
+    from mock_ingest.server import Auth
+    a = Auth("super-secret-value")
+    for header in (None, "Bearer nope", "Basic super-secret-value"):
+        msg = a.check(header) or ""
+        assert "super-secret-value" not in msg, msg
+
+
 if __name__ == "__main__":
     passed = failed = 0
     for name, fn in sorted(globals().items()):
