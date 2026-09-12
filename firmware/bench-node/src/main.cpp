@@ -113,7 +113,13 @@ static void thermal_recover() {
   // 400 kHz rather than 1 MHz. The faster clock sustains 16 Hz in a quiet
   // system but has far less margin once the radio is saturating the bus with
   // interrupts; frames at 8 Hz are worth more than frames at 16 Hz that stop.
-  Wire.begin(PIN_SDA, PIN_SCL, 400000);
+  // 1 MHz. The bus was dropped to 400 kHz when thermal died under Wi-Fi load,
+  // before the recovery path existed. With recovery in place the faster clock
+  // is worth taking back: getFrame() duration is what drags the loop down, and
+  // at 400 kHz reading 768 pixels twice per frame was holding the loop near
+  // 1 Hz. A failed transaction now re-inits the bus instead of killing the
+  // stream.
+  Wire.begin(PIN_SDA, PIN_SCL, 1000000);
   mlx_ok = mlx.begin(MLX90640_I2CADDR_DEFAULT, &Wire);
   if (mlx_ok) {
     mlx.setMode(MLX90640_CHESS);
@@ -331,7 +337,13 @@ void setup() {
   const uint32_t t0 = millis();
   while (!Serial && (millis() - t0) < 3000) delay(50);
 
-  Wire.begin(PIN_SDA, PIN_SCL, 400000);
+  // 1 MHz. The bus was dropped to 400 kHz when thermal died under Wi-Fi load,
+  // before the recovery path existed. With recovery in place the faster clock
+  // is worth taking back: getFrame() duration is what drags the loop down, and
+  // at 400 kHz reading 768 pixels twice per frame was holding the loop near
+  // 1 Hz. A failed transaction now re-inits the bus instead of killing the
+  // stream.
+  Wire.begin(PIN_SDA, PIN_SCL, 1000000);
   if (mlx.begin(MLX90640_I2CADDR_DEFAULT, &Wire)) {
     mlx.setMode(MLX90640_CHESS);
     mlx.setResolution(MLX90640_ADC_18BIT);

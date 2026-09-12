@@ -31,6 +31,7 @@ from vitals import VitalsEstimator
 from radar_decode import RadarDecoder
 import body_model
 import vitals_select
+import posture_watch
 import temp_status
 import confidence
 
@@ -243,6 +244,8 @@ class State:
         self.baseline = temp_status.Baseline()
         self.baseline.load(BASELINE_PATH)
         self._last_baseline_save = 0.0
+        self.posture = posture_watch.PostureWatcher()
+        self.posture_events: list[dict] = []
         self.rate = {
             "thermal": RateMeter(), "radar": RateMeter(),
             "csi": RateMeter(), "ambient": RateMeter(),
@@ -457,6 +460,26 @@ class State:
                         est["unusualness"] = {"pct": pct, "z": round(z, 2),
                                               "why": why}
             out["body"] = body
+            # Posture watching, not fall detection. See posture_watch.py for
+            # what this can and cannot observe.
+            tconf = ((body or {}).get("head_temp") or {}).get("estimate", {}).get(
+                "confidence", {}).get("pct")
+            ev = self.posture.update(body, tconf)
+            if ev:
+                rec = {
+                    "kind": ev.kind, "at": ev.at, "detail": ev.detail,
+                    "confidence_pct": ev.confidence_pct,
+                    "prior_posture": ev.prior_posture,
+                    "limitations": ev.limitations,
+                }
+                sent, why = posture_watch.notify(ev)
+                rec["notified"] = sent
+                rec["notify_detail"] = why
+                self.posture_events.append(rec)
+                self.posture_events = self.posture_events[-20:]
+
+        if self.posture_events:
+            out["posture_events"] = self.posture_events[-3:]
 
         if dev:
             # The streamed CSI rate is deliberately below the captured rate, so

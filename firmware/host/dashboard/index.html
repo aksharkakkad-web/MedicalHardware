@@ -176,6 +176,7 @@
         <div><div class="k">Room light</div><div class="v" id="vLux">–</div></div>
       </div>
       <div id="conflict"></div>
+      <div id="postureEvents"></div>
       <p class="note"><b>These are estimates, not measurements.</b> Radar is used
       within about 1.5&nbsp;m, where its 5&nbsp;mm wavelength and range gating
       make it the better instrument; Wi-Fi CSI is used beyond that, where it
@@ -349,6 +350,14 @@ function drawScene(t,blob,radar,body){
     document.getElementById('sAbn').textContent =
       'weak measurement \u00b7 '+cf.limiting_why;
   }
+
+  const pe=s.posture_events;
+  document.getElementById('postureEvents').innerHTML = (pe&&pe.length)
+    ? '<div class="conflict"><b>Posture change observed.</b> '+pe[pe.length-1].detail
+      +' &middot; notification '+(pe[pe.length-1].notified?'sent':'not sent: '+pe[pe.length-1].notify_detail)
+      +'<br><span style="color:var(--ink-2)">This is a posture observation, not a fall alarm. '
+      +pe[pe.length-1].limitations.join('; ')+'</span></div>'
+    : '';
 
   const bits=[];
   if(radar&&radar.distance_m!=null) bits.push(radar.distance_m.toFixed(2)+' m away');
@@ -547,6 +556,14 @@ es.onmessage=e=>{
     document.getElementById('sAbn').textContent =
       'weak measurement \u00b7 '+cf.limiting_why;
   }
+
+  const pe=s.posture_events;
+  document.getElementById('postureEvents').innerHTML = (pe&&pe.length)
+    ? '<div class="conflict"><b>Posture change observed.</b> '+pe[pe.length-1].detail
+      +' &middot; notification '+(pe[pe.length-1].notified?'sent':'not sent: '+pe[pe.length-1].notify_detail)
+      +'<br><span style="color:var(--ink-2)">This is a posture observation, not a fall alarm. '
+      +pe[pe.length-1].limitations.join('; ')+'</span></div>'
+    : '';
 
   const bits=[];
   if(V.disagreements&&V.disagreements.length)

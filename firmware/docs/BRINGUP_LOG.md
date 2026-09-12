@@ -444,3 +444,55 @@ implements the real backend route.
 Not done here: the real ingest endpoint, and network transport from the device.
 Both are deliberate — the endpoint is Akshar's lane, and raw streaming stays on
 USB while only compact envelopes are intended for the network.
+
+## 2026-09-12 — posture watching, and a hardware problem worth stopping on
+
+**Posture change detection, explicitly not fall detection.**
+`firmware/host/posture_watch.py` reports a body whose silhouette has been
+horizontal for a sustained period *and* was observed upright beforehand, then
+sends a notification carrying its own limitations.
+
+Why it is not framed as a fall detector, beyond section 3 of the brief:
+
+- It cannot see the fall. A fall lasts a few hundred milliseconds; at 8 Hz that
+  is one or two frames, and thermal has been measured as low as 1 Hz under
+  Wi-Fi load. This detects the aftermath, not the event.
+- It cannot separate a fall from lying down, stretching or floor exercises.
+- It sees nothing once the body leaves the 35° vertical field of view, which is
+  exactly what happens when someone goes to the floor near a wall-mounted node.
+
+Behaviour verified against five scenarios: upright→horizontal fires after the
+8 s sustain; a 4 s bend does not; a body horizontal throughout does not (someone
+asleep is not an event); a second episode inside the 3-minute cooldown is
+suppressed; and poor conditions attach extra limitations to the message rather
+than suppressing it silently.
+
+Two bugs found by those tests. The cooldown initialised to `0.0`, which put the
+first ever event inside the window and suppressed it — the one notification that
+matters most. And the push failed with `CERTIFICATE_VERIFY_FAILED` because
+PlatformIO's bundled Python has no default CA bundle; fixed by pointing at a
+real bundle rather than disabling verification, since an unverified push channel
+can be redirected by anyone on the path.
+
+### Stop-and-ask: the node keeps dropping off USB
+
+Twice within minutes, `/dev/cu.usbmodem*` disappeared entirely — not a slow
+port, an absent one. `thermal_recoveries` was 0 both times, so the thermal
+sensor was answering; this is the board leaving the bus.
+
+The surrounding symptoms fit one cause. Across recent runs: thermal fell from
+7.9 Hz to 1.0 Hz, ambient from 2.0 to 1.0, CSI captured from 518 Hz to 352 Hz,
+and CRC errors and resyncs began *accumulating* (24 and 28 against 2427 frames)
+where earlier runs froze at 6 and held.
+
+That combination — degrading I2C, a wobbling radio, a link corrupting frames,
+and the board dropping off the bus — is what power instability looks like. The
+bring-up brief prescribes the fix in section 5 and we have not done it:
+
+> Power budget is roughly 330 mA on the bench node. Add 100 µF bulk across the
+> 5 V rail and 0.1 µF near each sensor; Wi-Fi TX bursts upset I2C otherwise.
+
+We are running promiscuous capture at ~500 Hz with the radio permanently awake
+and I2C at 1 MHz, through a hub. This is the exact load profile that warning
+describes. Adding the decoupling is a hardware task and should come before more
+software tuning, because every rate measured under an unstable rail is suspect.
