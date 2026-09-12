@@ -49,6 +49,20 @@ COOLDOWN_S = 180.0
 # History kept for deciding whether the person was upright beforehand.
 HISTORY_S = 60.0
 
+# --- demo mode -----------------------------------------------------------
+#
+# Set POSTURE_DEMO=1 for a trigger fast enough to film: it fires in about a
+# second, re-arms in ten, and does not require having seen the person upright
+# first.
+#
+# This is a separate mode rather than looser defaults on purpose. These settings
+# make the detector fire on a stretch, a lean, or a warm object of the right
+# shape, and a demo preset that quietly became the deployed one is exactly how
+# an unreliable alarm ends up being trusted. The notification says DEMO so a
+# recording can never be mistaken for the real behaviour.
+DEMO_SUSTAIN_S = 1.2
+DEMO_COOLDOWN_S = 10.0
+
 
 @dataclass
 class PostureEvent:
@@ -61,7 +75,14 @@ class PostureEvent:
 
 
 class PostureWatcher:
-    def __init__(self) -> None:
+    def __init__(self, demo: bool | None = None) -> None:
+        self.demo = (os.environ.get("POSTURE_DEMO", "") == "1"
+                     if demo is None else demo)
+        self.sustain_s = DEMO_SUSTAIN_S if self.demo else SUSTAIN_S
+        self.cooldown_s = DEMO_COOLDOWN_S if self.demo else COOLDOWN_S
+        # Demo mode drops the prior-upright requirement, which is what makes it
+        # fire quickly and also what makes it unreliable.
+        self.require_prior_upright = not self.demo
         self.history: list[tuple[float, str, bool]] = []  # time, posture, fully_visible
         self.horizontal_since: float | None = None
         # None, not 0.0. A zero start puts the first ever event inside the
@@ -92,9 +113,9 @@ class PostureWatcher:
             return None
 
         held = now - self.horizontal_since
-        if held < SUSTAIN_S:
+        if held < self.sustain_s:
             return None
-        if self.last_notified is not None and now - self.last_notified < COOLDOWN_S:
+        if self.last_notified is not None and now - self.last_notified < self.cooldown_s:
             return None
 
         # Was the person upright earlier in the window? A transition is far more
@@ -105,7 +126,7 @@ class PostureWatcher:
             if now - t > held + 2.0 and st not in ("lying down", "horizontal", "unknown"):
                 prior = st
                 break
-        if prior is None:
+        if prior is None and self.require_prior_upright:
             # No upright observation to transition from. Report nothing rather
             # than treating a persistently horizontal scene as a new event.
             return None
@@ -114,6 +135,9 @@ class PostureWatcher:
             "thermal silhouette only; cannot distinguish a fall from lying down",
             "cannot see the fall itself, only a posture that persisted",
         ]
+        if self.demo:
+            limitations.insert(0, "DEMO MODE: 1.2 s trigger, no upright "
+                                  "precondition - fires on a stretch or a lean")
         if not fully:
             limitations.append("body is partly outside the sensor's field of view")
         if confidence_pct is not None and confidence_pct < 40:
@@ -123,7 +147,8 @@ class PostureWatcher:
         return PostureEvent(
             kind="posture_change_to_horizontal",
             at=time.time(),
-            detail=f"horizontal for {held:.0f}s, previously {prior}",
+            detail=(f"horizontal for {held:.1f}s"
+                    + (f", previously {prior}" if prior else "")),
             confidence_pct=confidence_pct if confidence_pct is not None else 0.0,
             prior_posture=prior,
             limitations=limitations,
@@ -165,6 +190,7 @@ def notify(event: PostureEvent, topic: str | None = None,
     if not topic:
         return False, "no NTFY_TOPIC configured"
 
+    demo = any("DEMO MODE" in l for l in event.limitations)
     body = (
         f"{event.detail}\n\n"
         "This is a posture observation from a thermal sensor, not a fall alarm "
@@ -175,7 +201,8 @@ def notify(event: PostureEvent, topic: str | None = None,
         f"{server}/{topic}",
         data=body.encode(),
         headers={
-            "Title": "Posture change: horizontal",
+            "Title": ("DEMO - posture change: horizontal" if demo
+                      else "Posture change: horizontal"),
             "Priority": "default",
             "Tags": "eyes",
         },
