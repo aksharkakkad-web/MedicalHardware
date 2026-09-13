@@ -509,8 +509,30 @@ es.onmessage=e=>{
 
   const V=s.vitals||{};
   const SRC={radar:'radar', wifi_csi:'Wi-Fi CSI'};
-  document.getElementById('vResp').innerHTML = fmt(V.respiration_rpm,'breaths/min',0);
-  document.getElementById('vHr').innerHTML   = fmt(V.heart_rate_bpm,'bpm',0);
+  // Headline the smoothed estimate with its band. A single frame is noise; the
+  // band is what an honest estimate looks like at this instrument's precision.
+  const E=V.estimate||{};
+  const show=(id,est,inst,unit)=>{
+    const el=document.getElementById(id);
+    if(est){
+      // Stale readings are dimmed and stamped with their age rather than
+      // blanked. The number stays real; its age says how much to trust it.
+      const dim = est.stale ? ';color:var(--ink-3)' : '';
+      el.innerHTML = '<span style="'+dim.slice(1)+'">'+est.value.toFixed(0)
+        + '<small> '+unit+'</small></span>'
+        + (est.spread>0&&!est.stale
+            ? '<small style="color:var(--ink-3)"> &nbsp;'+est.low.toFixed(0)
+              +'\u2013'+est.high.toFixed(0)+'</small>' : '')
+        + (est.stale ? '<small style="color:var(--warn)"> &nbsp;'
+              +est.age_s.toFixed(0)+'s ago</small>' : '');
+    } else if(inst!=null){
+      el.innerHTML = inst.toFixed(0)+'<small> '+unit+'</small>';
+    } else {
+      el.innerHTML = '<span class="v none">waiting for a reading</span>';
+    }
+  };
+  show('vResp', E.respiration_rpm, V.respiration_rpm, 'breaths/min');
+  show('vHr',   E.heart_rate_bpm,  V.heart_rate_bpm,  'bpm');
   document.getElementById('sResp').textContent = V.respiration_source
     ? SRC[V.respiration_source]+' \u00b7 '+V.respiration_reason : (V.respiration_reason||'');
   document.getElementById('sHr').textContent = V.heart_source

@@ -19,6 +19,7 @@ import argparse
 import glob
 import json
 import math
+import os
 import random
 import struct
 import threading
@@ -246,6 +247,7 @@ class State:
         self._last_baseline_save = 0.0
         self.posture = posture_watch.PostureWatcher()
         self.posture_events: list[dict] = []
+        self.vitals_smoother = vitals_select.Smoother()
         self.rate = {
             "thermal": RateMeter(), "radar": RateMeter(),
             "csi": RateMeter(), "ambient": RateMeter(),
@@ -509,6 +511,7 @@ class State:
             out.get("radar"),
             out.get("csi_vitals"),
             radar.distance_m if radar else None,
+            self.vitals_smoother,
         )
 
         if out.get("vitals"):
@@ -551,22 +554,40 @@ def vitals_worker(state: State) -> None:
         time.sleep(1.0)
 
 
-def serial_reader(state: State, port: str) -> None:
+def serial_reader(state: State, port: str | None) -> None:
+    """Read frames, and survive the board re-enumerating.
+
+    Native USB CDC comes back under a different device name after a reset -
+    usbmodem101 became usbmodem1101 in practice. Holding the name captured at
+    startup meant every reconnect retried a port that no longer existed, and the
+    dashboard sat on stale values marked offline while a perfectly healthy board
+    sat on the next name along. The port is therefore re-detected on every
+    reconnect, and an explicitly requested port is still preferred when it is
+    present.
+    """
     import serial  # imported lazily so the fake source needs no dependency
 
+    requested = port
     parser = F.FrameParser()
     state.parser_stats = parser.stats
+
     while True:
+        target = requested if (requested and os.path.exists(requested)) else autodetect_port()
+        if not target:
+            state.connected = False
+            state.source_label = "waiting for a board"
+            time.sleep(1.0)
+            continue
         try:
-            with serial.Serial(port, 115200, timeout=0.1) as ser:
+            with serial.Serial(target, 115200, timeout=0.1) as ser:
                 state.connected = True
-                state.source_label = port
+                state.source_label = target
                 while True:
                     chunk = ser.read(8192)
                     if chunk:
                         for frame in parser.feed(chunk):
                             state.apply(frame)
-        except Exception as exc:  # port vanished on reset, or not plugged in
+        except Exception as exc:
             state.connected = False
             state.source_label = f"reconnecting ({exc.__class__.__name__})"
             time.sleep(1.0)
@@ -740,14 +761,13 @@ def main() -> None:
     args = ap.parse_args()
 
     if args.source == "serial":
-        port = args.port or autodetect_port()
-        if not port:
-            print("No board found. Plug one in, or run with --source fake.")
-            return
+        # No longer fatal when absent: the reader waits and picks the board up
+        # whenever it appears, which is also what happens after every reflash.
+        port = args.port
         state = State(simulated=False)
         threading.Thread(target=serial_reader, args=(state, port), daemon=True).start()
         threading.Thread(target=vitals_worker, args=(state,), daemon=True).start()
-        print(f"Reading {port}")
+        print(f"Reading {port or '(auto-detect)'}")
     else:
         state = State(simulated=True)
         threading.Thread(target=fake_reader, args=(state,), daemon=True).start()
