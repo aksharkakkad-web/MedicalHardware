@@ -63,6 +63,12 @@ HISTORY_S = 60.0
 DEMO_SUSTAIN_S = 1.2
 DEMO_COOLDOWN_S = 10.0
 
+# How far before the horizontal period an upright observation must sit to count
+# as a transition. Normal mode wants clear separation; demo mode only needs
+# enough to prove the person was actually standing first.
+PRIOR_MARGIN_S = 2.0
+DEMO_PRIOR_MARGIN_S = 0.4
+
 
 @dataclass
 class PostureEvent:
@@ -80,9 +86,13 @@ class PostureWatcher:
                      if demo is None else demo)
         self.sustain_s = DEMO_SUSTAIN_S if self.demo else SUSTAIN_S
         self.cooldown_s = DEMO_COOLDOWN_S if self.demo else COOLDOWN_S
-        # Demo mode drops the prior-upright requirement, which is what makes it
-        # fire quickly and also what makes it unreliable.
-        self.require_prior_upright = not self.demo
+        # Demo mode keeps the transition requirement. Firing on any horizontal
+        # region meant it triggered on ordinary movement, a chair, or a warm
+        # object that happened to be wide - the alert has to mean "this person
+        # was upright and now is not", which is the only thing that resembles a
+        # fall. Demo mode shortens the window rather than removing it.
+        self.require_prior_upright = True
+        self.prior_margin_s = DEMO_PRIOR_MARGIN_S if self.demo else PRIOR_MARGIN_S
         self.history: list[tuple[float, str, bool]] = []  # time, posture, fully_visible
         self.horizontal_since: float | None = None
         # None, not 0.0. A zero start puts the first ever event inside the
@@ -131,7 +141,7 @@ class PostureWatcher:
         # all night and is not an event.
         prior = None
         for t, st, _ in reversed(self.history):
-            if now - t > held + 2.0 and st not in ("lying down", "horizontal", "unknown"):
+            if now - t > held + self.prior_margin_s and st not in ("lying down", "horizontal", "unknown"):
                 prior = st
                 break
         if prior is None and self.require_prior_upright:
@@ -144,8 +154,8 @@ class PostureWatcher:
             "cannot see the fall itself, only a posture that persisted",
         ]
         if self.demo:
-            limitations.insert(0, "DEMO MODE: 1.2 s trigger, no upright "
-                                  "precondition - fires on a stretch or a lean")
+            limitations.insert(0, "DEMO MODE: 1.2 s trigger with a 0.4 s "
+                                  "upright precondition")
         if not fully:
             limitations.append("body is partly outside the sensor's field of view")
         if confidence_pct is not None and confidence_pct < 40:
