@@ -39,6 +39,11 @@ FG_FLOOR_C = 0.45
 
 MIN_REGION_PX = 6
 
+# Hysteresis band. Between these the shape is ambiguous and no state change is
+# reported, which stops the orientation flapping for anyone near square-on.
+UPRIGHT_ASPECT = 1.35
+HORIZONTAL_ASPECT = 0.80
+
 
 class MotionBody:
     def __init__(self) -> None:
@@ -98,6 +103,28 @@ class MotionBody:
         cx = sum(cols) / len(cols)
         aspect = height / max(1, width)
 
+        # Clipping makes the ratio meaningless. Standing close to the sensor
+        # fills the frame side to side, so the region measures "wide" for the
+        # same reason a fallen person does - the true width is simply larger
+        # than the field of view. The same applies vertically. When either axis
+        # is clipped on both sides, orientation is unknown rather than
+        # horizontal.
+        clipped_h = min(cols) <= 0 and max(cols) >= COLS - 1
+        clipped_v = top <= 0 and base >= ROWS - 1
+        orientation_known = not (clipped_h or clipped_v)
+
+        # Hysteresis. A single threshold at 1.0 flaps frame to frame for anyone
+        # near square-on; separate thresholds mean a state only changes when
+        # the shape clearly changes.
+        if not orientation_known:
+            orientation = "unknown"
+        elif aspect >= UPRIGHT_ASPECT:
+            orientation = "upright"
+        elif aspect <= HORIZONTAL_ASPECT:
+            orientation = "horizontal"
+        else:
+            orientation = "ambiguous"
+
         return {
             "pixels": len(region),
             "box": [min(cols), top, max(cols), base],
@@ -105,9 +132,12 @@ class MotionBody:
             "height_px": height,
             "width_px": width,
             "aspect": round(aspect, 2),
-            # Wider than tall is the whole signal. It survives partial framing,
-            # needs no keypoints, and does not care about absolute temperature.
-            "horizontal": aspect < 1.0,
+            "orientation": orientation,
+            "orientation_known": orientation_known,
+            "clipped_h": clipped_h,
+            "clipped_v": clipped_v,
+            "horizontal": orientation == "horizontal",
+            "upright": orientation == "upright",
             "peak_delta_c": round(max(fg), 1),
             "touches_bottom": base >= ROWS - 1,
             **self.last_diag,

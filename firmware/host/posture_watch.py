@@ -93,8 +93,17 @@ class PostureWatcher:
         # fall. Demo mode shortens the window rather than removing it.
         self.require_prior_upright = True
         self.prior_margin_s = DEMO_PRIOR_MARGIN_S if self.demo else PRIOR_MARGIN_S
+        # How long the upright shape must hold before it counts.
+        self.confirm_upright_s = 1.0 if self.demo else 3.0
+        # And how recently, so a fall is tied to a standing observation rather
+        # than to one from minutes ago.
+        self.upright_valid_for_s = 20.0 if self.demo else 90.0
         self.history: list[tuple[float, str, bool]] = []  # time, posture, fully_visible
         self.horizontal_since: float | None = None
+        self.upright_since: float | None = None
+        # When the person was last confidently upright. A fall is only reported
+        # against a confirmed upright, never against "not currently horizontal".
+        self.confirmed_upright_at: float | None = None
         # None, not 0.0. A zero start puts the first ever event inside the
         # cooldown window and suppresses it - the one notification that matters
         # most is the first one.
@@ -113,9 +122,25 @@ class PostureWatcher:
         # Motion wins when it disagrees. The absolute-temperature path can lock
         # onto a static hot object and report a confident, frozen posture; the
         # motion region cannot, because a static object is the background.
+        #
+        # "not horizontal" is not the same as upright. A clipped or ambiguous
+        # region means the orientation is unknown, and treating unknown as
+        # upright is what let someone standing close to the sensor - filling
+        # the frame, therefore measuring wide - arm the detector and then
+        # immediately satisfy it.
         if motion is not None:
-            state = "horizontal" if motion.get("horizontal") else "upright"
+            state = motion.get("orientation", "unknown")
             fully = not motion.get("touches_bottom", False)
+
+        # An upright observation only counts once the shape has held that way
+        # for long enough to be trusted.
+        if state == "upright":
+            if self.upright_since is None:
+                self.upright_since = now
+            if now - self.upright_since >= self.confirm_upright_s:
+                self.confirmed_upright_at = now
+        else:
+            self.upright_since = None
 
         self.history.append((now, state, fully))
         self.history = [h for h in self.history if now - h[0] <= HISTORY_S]
@@ -136,18 +161,19 @@ class PostureWatcher:
         if self.last_notified is not None and now - self.last_notified < self.cooldown_s:
             return None
 
-        # Was the person upright earlier in the window? A transition is far more
-        # informative than a steady state - someone asleep in bed is horizontal
-        # all night and is not an event.
-        prior = None
-        for t, st, _ in reversed(self.history):
-            if now - t > held + self.prior_margin_s and st not in ("lying down", "horizontal", "unknown"):
-                prior = st
-                break
-        if prior is None and self.require_prior_upright:
-            # No upright observation to transition from. Report nothing rather
-            # than treating a persistently horizontal scene as a new event.
+        # Require a confirmed upright, recently. This is the whole guard
+        # against a false alarm from someone standing close: filling the frame
+        # reads as wide, but it never reads as a confirmed *upright*, so the
+        # detector is never armed and the horizontal shape alone cannot fire it.
+        if self.confirmed_upright_at is None:
             return None
+        since_upright = now - self.confirmed_upright_at
+        if since_upright > self.upright_valid_for_s:
+            return None
+        if since_upright < held:
+            # The upright confirmation must predate the horizontal period.
+            return None
+        prior = "standing"
 
         limitations = [
             "thermal silhouette only; cannot distinguish a fall from lying down",
