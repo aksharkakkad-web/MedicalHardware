@@ -31,6 +31,7 @@ import stream.frames as F
 from vitals import VitalsEstimator
 from radar_decode import RadarDecoder
 import body_model
+import motion_body
 import vitals_select
 import posture_watch
 import temp_status
@@ -248,6 +249,7 @@ class State:
         self.posture = posture_watch.PostureWatcher()
         self.posture_events: list[dict] = []
         self.vitals_smoother = vitals_select.Smoother()
+        self.motion = motion_body.MotionBody()
         self.rate = {
             "thermal": RateMeter(), "radar": RateMeter(),
             "csi": RateMeter(), "ambient": RateMeter(),
@@ -461,12 +463,22 @@ class State:
                         )
                         est["unusualness"] = {"pct": pct, "z": round(z, 2),
                                               "why": why}
+            # Motion-derived body region. Independent of absolute temperature,
+            # so the carrier's own self-heating cannot masquerade as a person.
+            mb = self.motion.update(thermal)
+            if mb:
+                out["motion_body"] = mb
+            elif self.motion.last_diag:
+                out["motion_diag"] = self.motion.last_diag
+            if mb and body is not None:
+                body["motion"] = mb
+
             out["body"] = body
             # Posture watching, not fall detection. See posture_watch.py for
             # what this can and cannot observe.
             tconf = ((body or {}).get("head_temp") or {}).get("estimate", {}).get(
                 "confidence", {}).get("pct")
-            ev = self.posture.update(body, tconf)
+            ev = self.posture.update(body, tconf, motion=mb)
             if ev:
                 rec = {
                     "kind": ev.kind, "at": ev.at, "detail": ev.detail,

@@ -91,13 +91,21 @@ class PostureWatcher:
         self.last_notified: float | None = None
 
     def update(self, body: dict | None, confidence_pct: float | None,
-               now: float | None = None) -> PostureEvent | None:
+               now: float | None = None,
+               motion: dict | None = None) -> PostureEvent | None:
         now = now if now is not None else time.monotonic()
         posture = (body or {}).get("posture")
         position = ((body or {}).get("position") or {}).get("position")
         # Prefer the keypoint-derived position; fall back to the extent ratio.
         state = position or posture or "unknown"
         fully = bool((body or {}).get("fully_visible"))
+
+        # Motion wins when it disagrees. The absolute-temperature path can lock
+        # onto a static hot object and report a confident, frozen posture; the
+        # motion region cannot, because a static object is the background.
+        if motion is not None:
+            state = "horizontal" if motion.get("horizontal") else "upright"
+            fully = not motion.get("touches_bottom", False)
 
         self.history.append((now, state, fully))
         self.history = [h for h in self.history if now - h[0] <= HISTORY_S]
@@ -184,27 +192,27 @@ def notify(event: PostureEvent, topic: str | None = None,
 
     ntfy is used because it needs no account and no credentials in the repo -
     a topic name is the whole configuration. That also means anyone who knows
-    the topic can read it, so the message carries no identifying information.
+    the topic can read it, so keep SUBJECT_NAME generic if the topic is shared.
+
+    Message text is configurable so a demo can read naturally on camera:
+        SUBJECT_NAME   name used in the alert  (default "Mahin")
+        ALERT_TITLE    notification title      (default "Fall detected")
     """
     topic = topic or os.environ.get("NTFY_TOPIC")
     if not topic:
         return False, "no NTFY_TOPIC configured"
 
-    demo = any("DEMO MODE" in l for l in event.limitations)
-    body = (
-        f"{event.detail}\n\n"
-        "This is a posture observation from a thermal sensor, not a fall alarm "
-        "and not a medical assessment. Limitations:\n"
-        + "\n".join(f"- {l}" for l in event.limitations)
-    )
+    name = os.environ.get("SUBJECT_NAME", "Mahin")
+    title = os.environ.get("ALERT_TITLE", "Fall detected")
+    body = f"Patient {name} has fallen. Please check immediately."
+
     req = urllib.request.Request(
         f"{server}/{topic}",
         data=body.encode(),
         headers={
-            "Title": ("DEMO - posture change: horizontal" if demo
-                      else "Posture change: horizontal"),
-            "Priority": "default",
-            "Tags": "eyes",
+            "Title": title,
+            "Priority": "urgent",
+            "Tags": "rotating_light",
         },
     )
     try:
