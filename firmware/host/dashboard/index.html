@@ -317,48 +317,6 @@ function drawScene(t,blob,radar,body){
   sCtx.strokeStyle='rgba(255,255,255,.95)'; sCtx.lineWidth=2;
   sCtx.setLineDash([7,5]); sCtx.strokeRect(x,y,w,h); sCtx.setLineDash([]);
 
-  const st=ht&&ht.estimate&&ht.estimate.status;
-  const abn=document.getElementById('vAbn');
-  if(st){
-    const v=st.state;
-    const bad=/unusual for this person|above typical|below typical/.test(v);
-    const mid=/mildly unusual/.test(v);
-    const unk=/cannot distinguish|building baseline|no reading/.test(v);
-    abn.innerHTML = unk
-      ? '<span style="font-size:15px;font-weight:400;color:var(--ink-3)">'+v+'</span>'
-      : '<span style="color:'+(bad?'var(--bad)':mid?'var(--warn)':'var(--ok)')+'">'+v+'</span>';
-    document.getElementById('sAbn').textContent =
-      (st.relative&&st.relative.detail) || (st.absolute&&st.absolute.detail) || '';
-  } else { abn.innerHTML='<span class="v none">no reading</span>';
-           document.getElementById('sAbn').textContent=''; }
-
-  // Confidence and unusualness answer different questions and are shown
-  // separately: one is about the measurement, the other about the reading.
-  const est=ht&&ht.estimate;
-  const cf=est&&est.confidence, un=est&&est.unusualness;
-  const vc=(s.vitals||{}).confidence;
-  // Confidence is no longer shown as its own number. It is still computed,
-  // and it now gates what leaves the device: a reading the conditions do not
-  // support is withheld from the telemetry pipeline rather than displayed with
-  // a caveat and sent anyway.
-  if(un&&un.pct>0){
-    const prev=document.getElementById('sAbn').textContent;
-    let note = un.pct.toFixed(0)+'% unusual \u00b7 '+un.why;
-    if(cf&&cf.pct<40) note += ' \u00b7 weak measurement ('+cf.limiting+')';
-    document.getElementById('sAbn').textContent = note+(prev?' \u00b7 '+prev:'');
-  } else if(cf&&cf.pct<40){
-    document.getElementById('sAbn').textContent =
-      'weak measurement \u00b7 '+cf.limiting_why;
-  }
-
-  const pe=s.posture_events;
-  document.getElementById('postureEvents').innerHTML = (pe&&pe.length)
-    ? '<div class="conflict"><b>Posture change observed.</b> '+pe[pe.length-1].detail
-      +' &middot; notification '+(pe[pe.length-1].notified?'sent':'not sent: '+pe[pe.length-1].notify_detail)
-      +'<br><span style="color:var(--ink-2)">This is a posture observation, not a fall alarm. '
-      +pe[pe.length-1].limitations.join('; ')+'</span></div>'
-    : '';
-
   const bits=[];
   if(radar&&radar.distance_m!=null) bits.push(radar.distance_m.toFixed(2)+' m away');
   if(radar&&radar.respiration_rpm!=null) bits.push('~'+radar.respiration_rpm.toFixed(0)+' breaths/min');
