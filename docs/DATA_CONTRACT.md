@@ -361,6 +361,8 @@ Every edge telemetry packet should support:
 
 - `device_time` — nullable ISO timestamp if device has synchronized wall time;
 - `device_monotonic_ms` — nullable monotonic time;
+- `stream_id` — optional non-identifying device/host boot identifier, stable
+  for one producer process or device boot and changed when its sequence resets;
 - `sequence` — required increasing integer per device/source stream;
 - `received_at` — assigned by backend;
 - `processed_at` — assigned during cloud processing.
@@ -397,6 +399,11 @@ Endpoint concept:
 
 `POST /v1/ingest/telemetry`
 
+The endpoint accepts one envelope or a bounded list. A list is one atomic
+capture cycle even when older producers assign a different
+`transport.batch_id` to each envelope. All items in a capture cycle must name
+one tenant, device, and room, with at most one item per source.
+
 ```json
 {
   "schema_version": "1.0",
@@ -405,6 +412,7 @@ Endpoint concept:
   "room_id": "room_214",
   "source": "radar",
   "sensor_model": "prototype_60ghz_radar",
+  "stream_id": "boot_20260824_01",
   "sequence": 184201,
   "device_time": null,
   "device_monotonic_ms": 9184412,
@@ -423,6 +431,13 @@ Endpoint concept:
 }
 ```
 
+`stream_id` is optional for backward compatibility. When omitted, the backend
+uses the value `legacy`; an exact retry remains safe, but a legacy producer
+cannot restart sequence numbering until it adopts a new stream ID. Optional
+top-level `quality_reasons` is a bounded list explaining unavailable or
+limited source information. It does not authorize zero-filling a missing
+measurement and does not automatically invalidate unrelated present fields.
+
 ### `source` enum
 
 Initial:
@@ -430,7 +445,8 @@ Initial:
 - `radar`
 - `thermal`
 - `wifi_csi`
-- `accessory`
+- `accessory` (reserved for a future version; not accepted by the core V1
+  ingestion route)
 
 ### `payload_format`
 
@@ -1472,9 +1488,12 @@ Do not denormalize resident names/PHI into sensor tables.
 
 An edge telemetry packet is uniquely identified by:
 
-`device_id + source + sequence + schema_version`
+`tenant_id + device_id + source + stream_id + sequence + schema_version`
 
 Duplicate retries must not duplicate stored data or downstream events.
+An omitted `stream_id` is normalized to `legacy`. Reusing the same packet
+identity with different content is a conflict, not a retry. A new stream may
+restart sequence numbering; a lower sequence inside the same stream is stale.
 
 ### Processing
 
