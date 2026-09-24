@@ -1,11 +1,12 @@
 # Cofounder Backend Review
 
-**Review date:** September 1, 2026
+**Review date:** September 24, 2026
 **Audience:** Founders and product reviewers
-**Current decision:** The Phase 2 backend runway remains complete and ready for
-frontend connection. The Phase 5 backend monitoring-intelligence lane is also
-complete on deterministic synthetic normalized fixtures. The shared frontend,
-hardware, Phase 6 ingestion, and real-world product gates remain open.
+**Current decision:** The independent backend software runway is complete
+through Phase 6 on deterministic synthetic and device-shaped data. The shared
+frontend connection, real-hardware measurement validation, live-model release
+gate, production credentials, deployment, and real-world product gates remain
+open.
 
 **Latest intelligence update:** the three-stage recall → parallel specialists
 → final review layer is now implemented, durably saved, exposed to the
@@ -34,11 +35,14 @@ An event already exists
 → related resident context and every change survive restart
 ```
 
-The normalized-fixture upstream monitoring-intelligence workflow is now
-implemented:
+The complete software path into that workflow is now implemented:
 
 ```text
-synthetic normalized features
+authenticated compact radar / thermal / CSI telemetry
+→ durable raw packet storage and retry protection
+→ device → room → resident assignment proof
+→ source-specific validation and normalization
+→ aligned multimodal frame
 → quality, missingness, agreement, and contradiction
 → personal numerical baseline and learning guard
 → anomaly episode and evidence revision
@@ -47,10 +51,11 @@ synthetic normalized features
 → existing caregiver event workflow
 ```
 
-Therefore, the backend is ready for frontend convergence and for a separate
-Phase 6 producer to drive the same normalized boundary. It is not ready to
-claim real physiological or movement detection from hardware. The detailed
-Phase 5 evidence is in `docs/PHASE_5_BACKEND_REVIEW.md`.
+Therefore, the backend is ready for frontend convergence and for Mahin's
+producer to replace the test producer at the same ingestion boundary. It is
+not ready to claim real physiological or movement accuracy from hardware. The
+detailed Phase 5 evidence is in `docs/PHASE_5_BACKEND_REVIEW.md`; the Phase 6
+evidence is in `docs/TELEMETRY_BACKEND_REVIEW.md`.
 
 ## What has been implemented
 
@@ -92,8 +97,8 @@ The backend can represent and explain:
 Away, return, limited, and unavailable periods are preserved in an awareness
 timeline. Leaving the room is awareness, not an emergency warning.
 
-These states currently come from synthetic scenarios or future producers. The
-backend does not yet infer them from live sensor signals.
+These states are proven with synthetic and device-shaped inputs. Their accuracy
+on live sensor measurements is not yet proven.
 
 ### 4. Calibration and setup changes
 
@@ -104,10 +109,11 @@ backend does not yet infer them from live sensor signals.
 - Unaffected calibration progress and all earlier history remain intact.
 - Setup-change retries and conflicting versions are handled safely.
 
-The Phase 2 calibration workflow and bookkeeping remain intact. Phase 5 now
-also implements the synthetic normalized-fixture numerical baseline learner;
-real raw/device observation ingestion and production threshold validation are
-later work.
+The Phase 2 calibration workflow and bookkeeping remain intact. Phase 5
+implements the numerical baseline learner, and Phase 6 now feeds it from
+device-shaped observations. A new resident remains honestly `calibrating`
+until enough eligible numerical history exists. Production threshold and
+real-sensor calibration validation are later work.
 
 ### 5. Device assignment and health
 
@@ -191,6 +197,25 @@ signal-processing filter that detects anomalies.
   resident status, and the complete active event queue.
 - Database implementation details do not need to enter frontend code.
 
+### 11. Telemetry-to-intelligence bridge
+
+- Bearer-authenticated telemetry and heartbeat endpoints accept the current
+  compact radar, thermal, and Wi-Fi CSI envelope shapes.
+- Every accepted packet is committed before downstream processing, so a
+  processing failure cannot erase the original evidence.
+- Exact retries are safe no-ops; changed reuse of the same packet identity and
+  stale same-stream packets are rejected; gaps are accepted and recorded.
+- A new boot/session `stream_id` can restart sequence numbering without being
+  mistaken for stale data.
+- Device, room, and resident assignment must agree before resident-specific
+  processing. The backend never trusts resident identity from telemetry.
+- Separate source normalizers preserve missingness and quality limitations;
+  absent measurements are never invented as zeroes.
+- Aligned frames enter the existing baseline, anomaly, AI-analysis, and event
+  workflow, and incomplete work can be replayed after restart.
+- Host-generated `/v1/assessments` are intentionally not a production anomaly
+  input. Product anomalies come from the backend intelligence path.
+
 ## Complete product flow that is proven today
 
 The automated founder walkthrough performs this story:
@@ -227,19 +252,30 @@ The automated founder walkthrough performs this story:
 - A 24-scenario canonical replay with computed metrics and a nonzero-on-failure
   founder checkpoint.
 
-### Not implemented
+### Not implemented or not yet proven
 
-- Receiving or persisting a continuous stream of real or simulated edge
-  telemetry; that is Phase 6.
-- Raw/vendor radar, thermal, or Wi-Fi CSI parsing and conversion.
+- Raw/vendor radar, thermal, or Wi-Fi CSI parsing and conversion in the cloud;
+  that deliberately remains an edge/hardware responsibility.
+- Real-hardware measurement validity and sustained operating evidence.
 - Production thresholds, production confidence calibration, and real-world
   priority validation.
 - Validated clinical or physiological warning thresholds.
 - A live production AI provider and its real latency/cost/reliability evidence.
 
-The normalized intelligence flow is complete without changing the event
-workflow. Phase 6 must add edge-telemetry ingestion through this boundary,
-without moving raw streams into the Phase 5 engine.
+The software flow is complete from compact telemetry through the existing
+event workflow. Real hardware now needs to replace the test producer without
+moving raw streams into the Phase 5 engine.
+
+### Phase 6 measured replay
+
+The device-shaped replay covers 48 scenarios and accepted 385 telemetry
+packets. It safely ignored 3 exact retries, detected 2/2 expected identity
+conflicts and 2/2 assignment blocks, had zero feature-mapping failures,
+captured every supported synthetic anomaly case, created no false events in
+normal or away cases, and had zero replay-idempotency failures. Two saved runs
+produced the same functional results; latency varied normally between runs.
+These are software-fixture measurements, not field, hardware, or clinical
+accuracy claims.
 
 ### Phase 5 measured replay
 
@@ -283,8 +319,9 @@ commit `81319ecb9a2c7b5120108ddbf0558a184b999c16`.
 - The real clinic frontend connected to the Product API.
 - A complete browser-level caregiver journey using real backend responses.
 - Real sensor or hardware input.
-- End-to-end sensor-to-event detection.
-- Detection accuracy, false-alert rate, or missed-event rate.
+- End-to-end **real-hardware** sensor-to-event accuracy. The software path from
+  device-shaped telemetry to events is proven.
+- Field detection accuracy, false-alert rate, or missed-event rate.
 - Clinical meaning or clinical safety.
 - Real notification delivery.
 - Production authentication and role permissions.
@@ -296,8 +333,10 @@ commit `81319ecb9a2c7b5120108ddbf0558a184b999c16`.
 
 ## Reviewer recommendation
 
-**Approved for the next checkpoint:** connect the clinic frontend to the real
-backend using toy data without redesigning the agreed product behavior.
+**Approved for the next checkpoint:** run the existing Mahin producer against
+the registered backend socket, connect selected clinic frontend paths to the
+real Product API, and collect representative sensor data without redesigning
+the agreed product behavior.
 
 **Not approved for:** claims that the system detects real anomalies, monitors
 real residents, or is ready for clinical use.
@@ -313,10 +352,11 @@ Rishit's real clinic interface:
 6. show honest loading, missing, limited, unavailable, and failure states; and
 7. repeat the journey after a backend restart.
 
-Akshar's next separate backend responsibility is Phase 6 simulated telemetry
-ingestion through the normalized boundary that real hardware will eventually
-use. Rishit's frontend convergence and hardware validation remain independently
-owned and are not claimed complete here.
+Akshar's next responsibility is integration and validation: support the real
+frontend client, register Mahin's test device, collect reference-backed sensor
+data, tune only from that evidence, and run the separate live-model release
+gate. Rishit's frontend convergence and Mahin's hardware validation remain
+independently owned and are not claimed complete here.
 
 ## Related source-of-truth documents
 
@@ -329,3 +369,6 @@ owned and are not claimed complete here.
   `docs/PHASE_2_CHECKPOINT_D_REVIEW.md`
 - Frontend connection instructions: `docs/PHASE_2_FRONTEND_API_HANDOFF.md`
 - Phase 5 backend monitoring review: `docs/PHASE_5_BACKEND_REVIEW.md`
+- Hardware/backend integration socket: `docs/HARDWARE_BACKEND_HANDOFF.md`
+- Phase 6 telemetry backend review: `docs/TELEMETRY_BACKEND_REVIEW.md`
+- Device-shaped replay evidence: `docs/TELEMETRY_PIPELINE_TEST_REPORT.md`

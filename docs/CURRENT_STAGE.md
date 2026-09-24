@@ -1,21 +1,22 @@
 # Current Project Stage
 
-**Updated:** September 1, 2026
+**Updated:** September 24, 2026
 
-**Operating status:** Phase 1 product logic is complete. Phase 2 remains **In
-progress**: its backend Checkpoints A through D are complete, while Rishit's
-frontend convergence and hardware work remain independent and open. Akshar's
-Phase 5 backend monitoring-intelligence lane is now **complete on deterministic
-synthetic normalized fixtures**. The shared Phase 5 product gate is not closed
-until its frontend and hardware exit work is reviewed. See
+**Operating status:** Phase 1 product logic and the Phase 2 backend checkpoints
+are complete. Akshar's Phase 5 intelligence lane and Phase 6 telemetry software
+bridge are now **complete on deterministic synthetic/device-shaped data**.
+Rishit's frontend convergence, live hardware validation, real-sensor
+calibration, live-model release gate, production credentials, and deployment
+remain open. See
 `docs/PHASE_GATES.md` for the shared start → build → review → merge →
 next-checkpoint process.
 
 ## Where we are now
 
-We have finished the Phase 1 behavior milestone, the first durable Phase 2
-event slice, all four Phase 2 backend checkpoints, and the Phase 5 backend
-monitoring-intelligence lane using synthetic data.
+We have finished the Phase 1 behavior milestone, all four Phase 2 backend
+checkpoints, the Phase 5 monitoring-intelligence lane, and the independent
+Phase 6 software bridge from Mahin-shaped telemetry to the existing event
+system.
 
 This is not the complete deployed product yet. The caregiver product backbone
 now has a file-backed database, versioned Product API, durable lifecycle and
@@ -26,7 +27,7 @@ memory, tenant isolation, idempotency, audit history, and restart proofs. The
 frontend connection, the complete user-facing experiences, and real hardware
 remain unfinished.
 
-Akshar's next independent backend layer is now implemented as the Monitoring
+Akshar's monitoring evaluation layer is implemented as the Monitoring
 Intelligence Lab: a 12-cluster taxonomy, 120-case canonical set, deterministic
 mass-case generator, strict Gemini 3.5 Flash adapter, feedback/memory skill
 boundaries, hard safety grading, resumable redacted artifacts, and model
@@ -122,15 +123,29 @@ recurrence, learning controls, and the 24-scenario replay now pass their
 backend gate. The replay explicitly selects eligible resident context for a
 nonurgent AI request and proves anomaly, interpretation, disposition, bridge,
 and caregiver-event lineage across a repository restart. Akshar can support
-Rishit's frontend convergence and prepare the separate Phase 6 simulated
-edge-telemetry ingestion path. Phase 6 and real device data are not implemented
-by this milestone. Gemini 3.5 Flash has passed a small live staged
-compatibility proof; broader live-model, privacy, representative-data, and
-production Terra/Sol validation remain open.
+Rishit's frontend convergence. The Phase 6 software path is also complete:
+authenticated telemetry/heartbeat endpoints, durable packet and replay
+storage, server-side assignment, radar/thermal/CSI normalization, fusion,
+baseline gating, anomaly/AI/event connection, restart restoration, and a
+48-case device-shaped replay all pass. The replay accepted 385 packets, safely
+ignored 3 retry packets, detected 2/2 expected conflicts and 2/2 assignment
+blocks, produced 100% recall on its supported synthetic anomaly cases, and
+created no false events in normal/away cases.
+
+Akshar's next backend work is integration and validation, not another hidden
+software foundation phase: support Rishit's real API client, plug in Mahin's
+registered device, collect representative hardware data, tune only from that
+data, and run the separate live-model/release gate. Gemini 3.5 Flash has passed
+a small live staged compatibility proof; broader live-model, privacy,
+representative-data, and production Terra/Sol validation remain open.
 
 ## What the hardware track builds in parallel
 
-The hardware engineer can continue radar, thermal, and Wi-Fi CSI bring-up independently. The device should produce the versioned compact telemetry boundary documented for both simulation and real hardware.
+The hardware engineer can continue radar, thermal, and Wi-Fi CSI bring-up
+independently. Mahin's current branch already emits the accepted V1 envelope
+shapes. The next hardware checkpoint is to point those envelopes at the real
+backend with a registered tenant/device/room, add a boot/session `stream_id`,
+and validate measurements against safe reference data.
 
 Real hardware later replaces the simulator as the telemetry producer. It should not require the frontend flow or backend product logic to be rebuilt.
 
@@ -173,4 +188,7 @@ Real hardware later replaces the simulator as the telemetry producer. It should 
 - Phase 5 backend intelligence evidence: `docs/PHASE_5_BACKEND_REVIEW.md`
 - Monitoring intelligence evaluation workflow: `docs/MONITORING_INTELLIGENCE_LAB.md`
 - Staged AI backend review: `docs/MULTI_AGENT_BACKEND_REVIEW.md`
+- Hardware/backend socket: `docs/HARDWARE_BACKEND_HANDOFF.md`
+- Phase 6 backend review: `docs/TELEMETRY_BACKEND_REVIEW.md`
+- Device-shaped replay evidence: `docs/TELEMETRY_PIPELINE_TEST_REPORT.md`
 - Generated Product API: `docs/openapi/product-api-v1.json`
