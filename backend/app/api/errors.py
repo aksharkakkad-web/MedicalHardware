@@ -5,12 +5,14 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from backend.app.contracts.common import ErrorDetail, ErrorEnvelope
 from backend.app.services.errors import (
+    AuthenticationError,
     ConcurrentUpdateError,
     IdempotencyConflictError,
     InvalidInputError,
     InvalidTransitionError,
     NotFoundError,
     ProductError,
+    ServiceUnavailableError,
 )
 
 
@@ -34,9 +36,22 @@ MUTATION_ERROR_RESPONSES = {
     422: _documented_error("Unprocessable Content"),
     500: _documented_error("Internal Server Error"),
 }
+INGEST_ERROR_RESPONSES = {
+    401: _documented_error("Unauthorized"),
+    404: _documented_error("Not Found"),
+    409: _documented_error("Conflict"),
+    422: _documented_error("Unprocessable Content"),
+    503: _documented_error("Service Unavailable"),
+    **METHOD_NOT_ALLOWED_ERROR_RESPONSES,
+    500: _documented_error("Internal Server Error"),
+}
 
 
 def _status_code(error: ProductError) -> int:
+    if isinstance(error, AuthenticationError):
+        return 401
+    if isinstance(error, ServiceUnavailableError):
+        return 503
     if isinstance(error, NotFoundError):
         return 404
     if isinstance(error, InvalidInputError):

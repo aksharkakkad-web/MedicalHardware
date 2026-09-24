@@ -39,3 +39,13 @@ class IdempotencyConflictError(ProductError):
 class ConcurrentUpdateError(ProductError):
     code = "concurrent_update"
     default_message = "Resource was updated by another request"
+
+
+class AuthenticationError(ProductError):
+    code = "unauthorized"
+    default_message = "Authentication required"
+
+
+class ServiceUnavailableError(ProductError):
+    code = "service_unavailable"
+    default_message = "Service unavailable"
