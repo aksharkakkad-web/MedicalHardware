@@ -55,6 +55,23 @@ class DeviceRepository:
         ).one_or_none()
         return None if row is None else self._stored(*row)
 
+    def active_room_assignments(
+        self,
+        tenant_id: str,
+        device_id: str,
+    ) -> tuple[DeviceRoomAssignmentRow, ...]:
+        """Return every active assignment so callers can fail closed on conflicts."""
+        rows = self._session.scalars(
+            select(DeviceRoomAssignmentRow)
+            .where(
+                DeviceRoomAssignmentRow.tenant_id == tenant_id,
+                DeviceRoomAssignmentRow.device_id == device_id,
+                DeviceRoomAssignmentRow.status == "active",
+            )
+            .order_by(DeviceRoomAssignmentRow.assignment_id)
+        ).all()
+        return tuple(rows)
+
     @staticmethod
     def _base_statement():
         return (
