@@ -42,6 +42,7 @@ def test_replay_proves_ingest_assignment_features_and_anomaly_behavior(
     assert summary.feature_mapping_failures == 0
     assert summary.supported_anomaly_recall == 1.0
     assert summary.normal_false_event_rate == 0.0
+    assert summary.events_without_live_ai == 0
     assert summary.replay_idempotency_failures == 0
 
 

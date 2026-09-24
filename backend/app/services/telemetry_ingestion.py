@@ -30,6 +30,10 @@ from backend.app.domain.device_health import (
     DeviceSourceHealth,
     DeviceSourceHealthState,
 )
+from backend.app.ingestion.assignment import (
+    AssignmentUnavailableError,
+    resolve_monitoring_assignment,
+)
 from backend.app.services.errors import InvalidInputError, NotFoundError
 
 
@@ -90,8 +94,6 @@ class TelemetryIngestionService:
                     error="post_commit_processing_failed",
                 )
                 self._session.commit()
-            self._session.expire_all()
-            batch = self._telemetry.get_batch(batch.batch_id)
 
         status = "duplicate" if batch.duplicate else "accepted"
         item_count = len(batch.packets)
@@ -153,7 +155,14 @@ class TelemetryIngestionService:
                             heartbeat.transport_status.casefold()
                             not in {"ok", "online", "connected"},
                         ),
-                        ("assignment_unavailable", device.assignment is None),
+                        (
+                            "assignment_unavailable",
+                            state is DeviceHealthState.ASSIGNMENT_UNAVAILABLE,
+                        ),
+                        (
+                            "expected_source_missing",
+                            not set(_EXPECTED_SOURCES) <= seen,
+                        ),
                     )
                     if applies
                 )
@@ -185,7 +194,20 @@ class TelemetryIngestionService:
         tenant_id: str,
         heartbeat: DeviceHeartbeatRequest,
     ) -> DeviceHealthState:
-        if not self._devices.active_room_assignments(tenant_id, heartbeat.device_id):
+        device_assignments = self._devices.active_room_assignments(
+            tenant_id,
+            heartbeat.device_id,
+        )
+        if len(device_assignments) != 1:
+            return DeviceHealthState.ASSIGNMENT_UNAVAILABLE
+        try:
+            resolve_monitoring_assignment(
+                self._session,
+                tenant_id,
+                heartbeat.device_id,
+                device_assignments[0].room_id,
+            )
+        except AssignmentUnavailableError:
             return DeviceHealthState.ASSIGNMENT_UNAVAILABLE
         if heartbeat.buffered_packets > 0:
             return DeviceHealthState.BUFFERING
@@ -193,6 +215,8 @@ class TelemetryIngestionService:
         if transport in {"retry", "retrying", "backoff"}:
             return DeviceHealthState.RETRYING
         if transport not in {"ok", "online", "connected"}:
+            return DeviceHealthState.DEGRADED
+        if not set(_EXPECTED_SOURCES) <= set(heartbeat.sources_seen):
             return DeviceHealthState.DEGRADED
         return DeviceHealthState.ONLINE
 

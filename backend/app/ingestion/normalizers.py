@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 
@@ -67,6 +68,16 @@ def normalize_envelope(
         if _low_signal(envelope):
             source_reasons = tuple(sorted(set(source_reasons + ("low_signal_quality",))))
         source_quality = QualityClass.LIMITED
+        features = tuple(
+            replace(
+                feature,
+                quality_class=QualityClass.LIMITED,
+                quality_reasons=tuple(
+                    sorted(set((*feature.quality_reasons, *source_reasons)))
+                ),
+            )
+            for feature in features
+        )
     else:
         source_quality = QualityClass.GOOD
 

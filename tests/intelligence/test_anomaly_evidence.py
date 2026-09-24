@@ -257,6 +257,14 @@ def test_uncertain_candidate_evidence_does_not_prove_candidate_ended(
     assert expected_limitation in uncertain.limitations
 
 
+def test_limited_evidence_cannot_start_an_anomaly_candidate() -> None:
+    update = _advance(None, 0, 14.0, quality=QualityClass.LIMITED)
+
+    assert update.episode is None
+    assert update.evidence_limited is True
+    assert "limited_quality" in update.limitations
+
+
 def test_missing_frame_pauses_recovery_and_three_good_frames_close() -> None:
     # Break caught: absent evidence is interpreted as recovery or recovery closes too early.
     active = _active_episode().episode

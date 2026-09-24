@@ -12,6 +12,7 @@ from backend.app.db.base import Base
 from backend.app.db.models import (
     DeviceHealthObservationRow,
     EdgeTelemetryRow,
+    RoomResidentAssignmentRow,
     TelemetryCaptureBatchRow,
 )
 from backend.app.db.seed import seed_synthetic_story
@@ -70,7 +71,7 @@ def test_current_mahin_capture_is_accepted(ingest_client: TestClient) -> None:
         "duplicate_count": 0,
         "rejected": 0,
         "duplicate": False,
-        "processing_state": "calibrating",
+        "processing_state": "pending",
         "results": [
             {
                 "schema_version": "1.0",
@@ -254,3 +255,63 @@ def test_capture_limit_is_enforced_at_contract_boundary(
 
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "invalid_input"
+
+
+def test_ingest_http_body_size_is_bounded(ingest_client: TestClient) -> None:
+    response = ingest_client.post(
+        "/v1/ingest/telemetry",
+        content=b" " * (512 * 1024 + 1),
+        headers={**HEADERS, "Content-Type": "application/json"},
+    )
+
+    assert response.status_code == 413
+
+
+def test_heartbeat_requires_active_resident_assignment(
+    ingest_client: TestClient,
+) -> None:
+    with Session(ingest_client.app.state.engine) as session:
+        assignment = session.get(RoomResidentAssignmentRow, "assign_room_214_a")
+        assert assignment is not None
+        assignment.status = "inactive"
+        session.commit()
+
+    response = ingest_client.post(
+        "/v1/ingest/heartbeat",
+        json={
+            "schema_version": "1.0",
+            "device_id": "device_room_214",
+            "sequence": 44,
+            "device_monotonic_ms": 4400,
+            "firmware_version": "bench-0.1.0",
+            "buffered_packets": 0,
+            "sources_seen": ["radar", "thermal", "wifi_csi"],
+            "transport_status": "ok",
+        },
+        headers=HEADERS,
+    )
+
+    assert response.status_code == 202
+    assert response.json()["health_state"] == "assignment_unavailable"
+
+
+def test_heartbeat_missing_expected_source_is_degraded(
+    ingest_client: TestClient,
+) -> None:
+    response = ingest_client.post(
+        "/v1/ingest/heartbeat",
+        json={
+            "schema_version": "1.0",
+            "device_id": "device_room_214",
+            "sequence": 45,
+            "device_monotonic_ms": 4500,
+            "firmware_version": "bench-0.1.0",
+            "buffered_packets": 0,
+            "sources_seen": ["radar", "thermal"],
+            "transport_status": "ok",
+        },
+        headers=HEADERS,
+    )
+
+    assert response.status_code == 202
+    assert response.json()["health_state"] == "degraded"

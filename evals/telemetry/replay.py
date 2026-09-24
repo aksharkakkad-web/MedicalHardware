@@ -26,6 +26,7 @@ from backend.app.db.models import (
     MonitoringEventRow,
     NormalizedObservationRow,
     RoomRow,
+    TelemetryCaptureBatchRow,
 )
 from backend.app.db.seed import seed_synthetic_story
 from backend.app.db.session import create_engine_for_url
@@ -86,6 +87,7 @@ class ReplaySummary:
     feature_mapping_failures: int
     supported_anomaly_recall: float
     normal_false_event_rate: float
+    events_without_live_ai: int
     replay_idempotency_failures: int
     median_case_latency_ms: float
     p95_case_latency_ms: float
@@ -170,6 +172,7 @@ def run_replay(suite: tuple[TelemetryScenario, ...]) -> ReplayResult:
             if not normal_cases
             else sum(item.event_created for item in normal_cases) / len(normal_cases)
         ),
+        events_without_live_ai=sum(item.event_created for item in results),
         replay_idempotency_failures=sum(
             scenario.expected_duplicate and not result.replay_idempotent
             for scenario, result in zip(suite, results, strict=True)
@@ -272,8 +275,18 @@ def _run_scenario(scenario: TelemetryScenario) -> ScenarioResult:
                         headers=_HEADERS,
                     )
                 )
+            if not app.state.telemetry_worker.wait_until_idle(timeout=10.0):
+                raise RuntimeError("telemetry worker did not drain evaluation cases")
 
             with Session(app.state.engine) as session:
+                processing_states = tuple(
+                    session.scalars(
+                        select(TelemetryCaptureBatchRow.processing_state).order_by(
+                            TelemetryCaptureBatchRow.received_at,
+                            TelemetryCaptureBatchRow.batch_id,
+                        )
+                    ).all()
+                )
                 raw_packets = int(
                     session.scalar(select(func.count()).select_from(EdgeTelemetryRow))
                     or 0
@@ -309,11 +322,6 @@ def _run_scenario(scenario: TelemetryScenario) -> ScenarioResult:
         bodies = tuple(
             response.json() if response.headers.get("content-type", "").startswith("application/json") else {}
             for response in responses
-        )
-        processing_states = tuple(
-            body["processing_state"]
-            for response, body in zip(responses, bodies, strict=True)
-            if response.status_code == 202
         )
         accepted_packets = sum(
             int(body.get("accepted", 0))
@@ -418,12 +426,13 @@ def _report(result: ReplayResult) -> str:
         f"- Assignment blocks detected: {summary.assignment_blocks_detected}/{summary.expected_assignment_blocks}",
         f"- Supported anomaly recall: {summary.supported_anomaly_recall:.1%}",
         f"- Normal false-event rate: {summary.normal_false_event_rate:.1%}",
+        f"- Caregiver events without a trusted live AI result: {summary.events_without_live_ai}",
         f"- Median case latency: {summary.median_case_latency_ms:.3f} ms",
         f"- P95 case latency: {summary.p95_case_latency_ms:.3f} ms",
         "",
         "## Interpretation",
         "",
-        "The replay proves the software contract, durability, assignment gate, source normalization, fusion, synthetic anomaly path, event idempotency, and restart behavior with controlled data. It does not prove real-sensor accuracy, production calibration thresholds, clinical meaning, or deployment readiness.",
+        "The replay proves the software contract, durability, assignment gate, source normalization, fusion, synthetic anomaly path, pending-safe AI boundary, and restart behavior with controlled data. Anomalies remain pending and create no caregiver event without a trusted AI result. A separate focused integration test proves that a validated staged analysis can create an idempotent caregiver event. This does not prove real-sensor accuracy, production calibration thresholds, clinical meaning, or deployment readiness.",
     ]
     if failing:
         lines.extend(("", "## Failures", ""))

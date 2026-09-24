@@ -38,6 +38,9 @@ features” and “the product has trustworthy evidence to evaluate.”
   multimodal capture list.
 - A separate authenticated endpoint receives device heartbeat information.
 - The original accepted packets are committed before intelligence processing.
+- New accepted captures return `202 pending` immediately; one durable
+  background lane performs downstream work and drains unfinished work after
+  restart.
 - Exact retries do not repeat downstream work.
 - Changed reuse of a packet identity, stale same-stream packets, sequence gaps,
   and new boot/session streams each have explicit behavior.
@@ -58,6 +61,9 @@ features” and “the product has trustworthy evidence to evaluate.”
   normalizer.
 - Missing fields remain missing; they are not converted to zero or guessed.
 - Source quality limitations remain attached to the evidence.
+- Source-limited measurements cannot independently activate an ordinary
+  anomaly, and broad engineering/sensor bounds reject impossible values before
+  they reach a baseline.
 - All valid sources from one request become one aligned frame for the existing
   intelligence engine.
 
@@ -70,6 +76,9 @@ features” and “the product has trustworthy evidence to evaluate.”
   teach the personal baseline.
 - Historical replay restores incomplete anomaly/event state without pretending
   an old packet is a new live observation.
+- Ordinary anomalies remain `analysis_pending` and create no caregiver event
+  when no trusted AI provider is configured. The explicit urgent safety path
+  remains separate.
 - Host-generated `/v1/assessments` are not trusted as product anomalies.
 
 ## What the mass test proved
@@ -89,12 +98,18 @@ restart/replay behavior.
 | Feature-mapping failures | 0 |
 | Supported synthetic anomaly recall | 100% |
 | False caregiver events in normal/away cases | 0 |
+| Caregiver events without trusted live AI output | 0 |
 | Replay-idempotency failures | 0 |
 
 Two saved evaluation runs produced the same functional results. The first run
-had a median processing latency of 201.572 ms and p95 of 296.949 ms on the
+had a median isolated-case runtime of 216.396 ms and p95 of 336.605 ms on the
 development machine. Those timings are a development reference, not a service
 level promise.
+
+The mass replay intentionally leaves the live model unconfigured and proves
+pending-safe behavior. A separate focused integration test supplies a valid
+staged analysis and proves that trusted AI output can create one idempotent
+high-priority caregiver event.
 
 Detailed artifacts and the rerun command are in
 `docs/TELEMETRY_PIPELINE_TEST_REPORT.md`.

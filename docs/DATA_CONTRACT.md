@@ -436,7 +436,17 @@ uses the value `legacy`; an exact retry remains safe, but a legacy producer
 cannot restart sequence numbering until it adopts a new stream ID. Optional
 top-level `quality_reasons` is a bounded list explaining unavailable or
 limited source information. It does not authorize zero-filling a missing
-measurement and does not automatically invalidate unrelated present fields.
+measurement. Because it is source-wide, present measurements from that source
+are conservatively marked limited; a feature-specific omission should be
+represented by omitting that measurement rather than weakening unrelated
+sources.
+
+The V1 HTTP request body is limited to 512 KiB and each envelope may carry at
+most 32 quality reasons. Numerical fields also have broad engineering/sensor
+plausibility bounds (for example radar heart rate at most 300 bpm, respiration
+at most 100 rpm, room distance at most 50 m, tracked height at most 3.5 m,
+vertical speed within ±20 m/s, and MLX90640 temperatures within its broad
+transport range). These are malformed-input guards, not clinical thresholds.
 
 ### `source` enum
 

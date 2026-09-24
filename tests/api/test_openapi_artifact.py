@@ -62,6 +62,7 @@ def test_device_ingestion_contract_is_published_with_bearer_auth() -> None:
             "404",
             "405",
             "409",
+            "413",
             "422",
             "500",
             "503",

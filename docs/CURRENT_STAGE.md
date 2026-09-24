@@ -130,7 +130,9 @@ baseline gating, anomaly/AI/event connection, restart restoration, and a
 48-case device-shaped replay all pass. The replay accepted 385 packets, safely
 ignored 3 retry packets, detected 2/2 expected conflicts and 2/2 assignment
 blocks, produced 100% recall on its supported synthetic anomaly cases, and
-created no false events in normal/away cases.
+created no false events in normal/away cases or untrusted caregiver events
+while live AI was unavailable. New telemetry returns immediately after durable
+commit and is processed by a restart-safe background lane.
 
 Akshar's next backend work is integration and validation, not another hidden
 software foundation phase: support Rishit's real API client, plug in Mahin's

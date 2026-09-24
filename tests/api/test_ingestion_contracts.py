@@ -113,6 +113,46 @@ def test_capture_size_is_bounded() -> None:
         TelemetryCaptureRequest.model_validate(oversized)
 
 
+def test_quality_reason_count_is_bounded() -> None:
+    with pytest.raises(ValidationError, match="quality_reasons"):
+        EdgeTelemetryEnvelope.model_validate(
+            _radar(quality_reasons=[f"reason-{index}" for index in range(33)])
+        )
+
+
+@pytest.mark.parametrize(
+    "payload",
+    (
+        {"heart_rate_bpm": 301.0},
+        {"respiration_rpm": 101.0},
+        {"distance_m": 51.0},
+        {"tracked_height_m": 3.6},
+        {"vertical_velocity_mps": 21.0},
+    ),
+)
+def test_radar_rejects_values_outside_broad_engineering_bounds(
+    payload: dict[str, object],
+) -> None:
+    with pytest.raises(ValidationError):
+        EdgeTelemetryEnvelope.model_validate(_radar(payload=payload))
+
+
+@pytest.mark.parametrize(
+    "payload",
+    (
+        {"max_observed_temp_c": 126.0},
+        {"temperature_trend_c": -51.0},
+    ),
+)
+def test_thermal_rejects_values_outside_sensor_bounds(
+    payload: dict[str, object],
+) -> None:
+    thermal = deepcopy(_capture()[1])
+    thermal["payload"] = payload
+    with pytest.raises(ValidationError):
+        EdgeTelemetryEnvelope.model_validate(thermal)
+
+
 def test_stream_id_allows_explicit_device_boot_identity() -> None:
     parsed = EdgeTelemetryEnvelope.model_validate(
         _radar(stream_id="boot-01", device_monotonic_ms=1234)

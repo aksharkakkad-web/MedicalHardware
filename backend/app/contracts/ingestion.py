@@ -27,11 +27,37 @@ ReasonText = Annotated[
     StringConstraints(strip_whitespace=True, min_length=1, max_length=500),
 ]
 Score = Annotated[float, Field(ge=0.0, le=1.0, allow_inf_nan=False)]
-FiniteFloat = Annotated[float, Field(allow_inf_nan=False)]
-PositiveFloat = Annotated[float, Field(gt=0.0, allow_inf_nan=False)]
-NonnegativeFloat = Annotated[float, Field(ge=0.0, allow_inf_nan=False)]
+HeartRateBpm = Annotated[
+    float,
+    Field(gt=0.0, le=300.0, allow_inf_nan=False),
+]
+RespirationRpm = Annotated[
+    float,
+    Field(gt=0.0, le=100.0, allow_inf_nan=False),
+]
+RoomDistanceMeters = Annotated[
+    float,
+    Field(ge=0.0, le=50.0, allow_inf_nan=False),
+]
+TrackedHeightMeters = Annotated[
+    float,
+    Field(ge=0.0, le=3.5, allow_inf_nan=False),
+]
+VerticalVelocityMps = Annotated[
+    float,
+    Field(ge=-20.0, le=20.0, allow_inf_nan=False),
+]
+ObservedTemperatureC = Annotated[
+    float,
+    Field(ge=-40.0, le=125.0, allow_inf_nan=False),
+]
+TemperatureTrendC = Annotated[
+    float,
+    Field(ge=-50.0, le=50.0, allow_inf_nan=False),
+]
 PositiveSequence = Annotated[int, Field(gt=0, strict=True)]
 NonnegativeInteger = Annotated[int, Field(ge=0, strict=True)]
+QualityReasons = Annotated[tuple[ReasonText, ...], Field(max_length=32)]
 
 TelemetrySource = Literal["radar", "thermal", "wifi_csi"]
 PayloadFormat = Literal[
@@ -57,13 +83,14 @@ class _PayloadModel(BaseModel):
 
 
 class RadarPayload(_PayloadModel):
-    heart_rate_bpm: PositiveFloat | None = None
-    respiration_rpm: PositiveFloat | None = None
-    distance_m: NonnegativeFloat | None = None
+    # These are broad transport sanity limits, not clinical thresholds.
+    heart_rate_bpm: HeartRateBpm | None = None
+    respiration_rpm: RespirationRpm | None = None
+    distance_m: RoomDistanceMeters | None = None
     movement_score: Score | None = None
     signal_quality: Score | None = None
-    tracked_height_m: NonnegativeFloat | None = None
-    vertical_velocity_mps: FiniteFloat | None = None
+    tracked_height_m: TrackedHeightMeters | None = None
+    vertical_velocity_mps: VerticalVelocityMps | None = None
     position_state: Literal["upright_like", "floor_like", "unknown"] | None = None
 
 
@@ -75,12 +102,12 @@ class ThermalPayload(_PayloadModel):
     person_detected: bool | None = None
     centroid_x: Score | None = None
     centroid_y: Score | None = None
-    temperature_trend_c: FiniteFloat | None = None
-    max_observed_temp_c: FiniteFloat | None = None
+    temperature_trend_c: TemperatureTrendC | None = None
+    max_observed_temp_c: ObservedTemperatureC | None = None
     position_features: ThermalPositionFeatures | None = None
     signal_quality: Score | None = None
-    tracked_height_m: NonnegativeFloat | None = None
-    vertical_velocity_mps: FiniteFloat | None = None
+    tracked_height_m: TrackedHeightMeters | None = None
+    vertical_velocity_mps: VerticalVelocityMps | None = None
     position_state: Literal["upright_like", "floor_like", "unknown"] | None = None
 
 
@@ -114,7 +141,7 @@ class EdgeTelemetryEnvelope(BaseModel):
     device_monotonic_ms: NonnegativeInteger | None
     payload_format: PayloadFormat
     payload: dict[str, Any]
-    quality_reasons: tuple[ReasonText, ...] = ()
+    quality_reasons: QualityReasons = ()
     transport: TelemetryTransport
 
     @field_validator("quality_reasons", mode="before")

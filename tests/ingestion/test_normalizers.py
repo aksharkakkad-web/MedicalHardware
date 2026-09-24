@@ -99,7 +99,10 @@ def test_thermal_maps_presence_position_and_temperature_without_guessing() -> No
     assert observation.source_quality_reasons == (
         "temperature trend needs more history",
     )
-    assert features["person_detected"].quality_class is QualityClass.GOOD
+    assert features["person_detected"].quality_class is QualityClass.LIMITED
+    assert "temperature trend needs more history" in (
+        features["person_detected"].quality_reasons
+    )
 
 
 def test_wifi_csi_maps_present_evidence_and_diagnostics() -> None:
@@ -125,6 +128,26 @@ def test_empty_payload_becomes_unusable_instead_of_fabricated_zero() -> None:
     assert observation.features[0].name == "source_unavailable"
     assert observation.features[0].value is None
     assert observation.features[0].quality_class is QualityClass.UNUSABLE
+
+
+def test_source_limitation_is_preserved_on_measurement_features() -> None:
+    raw = _raw("radar")
+    raw["quality_reasons"] = ["low signal quality"]
+    raw["payload"]["signal_quality"] = 0.2
+
+    observation = normalize_envelope(
+        EdgeTelemetryEnvelope.model_validate(raw), ASSIGNMENT, NOW
+    )
+
+    assert observation.source_quality_class is QualityClass.LIMITED
+    assert all(
+        feature.quality_class is QualityClass.LIMITED
+        for feature in observation.features
+    )
+    assert all(
+        "low_signal_quality" in feature.quality_reasons
+        for feature in observation.features
+    )
 
 
 def test_observation_identity_and_capture_window_are_deterministic() -> None:

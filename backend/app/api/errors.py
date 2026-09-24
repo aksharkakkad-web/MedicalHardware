@@ -40,6 +40,7 @@ INGEST_ERROR_RESPONSES = {
     401: _documented_error("Unauthorized"),
     404: _documented_error("Not Found"),
     409: _documented_error("Conflict"),
+    413: _documented_error("Content Too Large"),
     422: _documented_error("Unprocessable Content"),
     503: _documented_error("Service Unavailable"),
     **METHOD_NOT_ALLOWED_ERROR_RESPONSES,

@@ -126,6 +126,7 @@ device reboot does not need to fake ever-increasing sequence numbers.
 
 Telemetry returns one of these processing states:
 
+- a newly accepted capture returns `pending` immediately after durable commit;
 - `processed`: the capture reached the intelligence path;
 - `calibrating`: the capture is valid, but this resident still needs eligible
   numerical history before anomaly comparison is honest;
@@ -134,9 +135,18 @@ Telemetry returns one of these processing states:
 - `pending` or `processing`: committed work has not finished yet;
 - `failed`: the original packet remains stored and can be replayed.
 
+Downstream work runs outside the device request and unfinished work is drained
+after backend restart. An exact retry may therefore report a later durable
+state for the same batch. The device does not wait for AI processing.
+
 Heartbeat responses map the device to `online`, `buffering`, `retrying`,
 `degraded`, `offline`, or `assignment_unavailable`. A device problem changes
 monitoring availability; it is not automatically a resident health event.
+
+The complete request body is capped at 512 KiB, `quality_reasons` is capped at
+32 entries per envelope, and numerical fields use deliberately broad
+engineering/sensor plausibility bounds. These reject broken transport values;
+they are not medical thresholds.
 
 ## Ownership boundary
 

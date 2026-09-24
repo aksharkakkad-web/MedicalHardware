@@ -423,6 +423,27 @@ class StructuredAnalysisClient(Protocol):
         """Return one structured response for a bounded analysis stage."""
 
 
+@dataclass(frozen=True)
+class UnavailableStructuredAnalysisClient:
+    """Explicit pending-safe boundary used when no live provider is configured."""
+
+    model_id: str = "unavailable-runtime-provider"
+
+    def analyze(self, request: StageRequest) -> StageResponse:
+        if not isinstance(request, StageRequest):
+            raise ValueError("request must be a StageRequest")
+        return StageResponse(
+            stage=request.stage,
+            status=StageStatus.UNAVAILABLE,
+            request_fingerprint=request.request_fingerprint,
+            payload_json=None,
+            model_id=self.model_id,
+            model_version="unavailable",
+            latency_ms=0.0,
+            error="provider_not_configured",
+        )
+
+
 __all__ = [
     "ANALYSIS_SCHEMA_VERSION",
     "AnalysisRun",
@@ -440,4 +461,5 @@ __all__ = [
     "StageResponse",
     "StageStatus",
     "StructuredAnalysisClient",
+    "UnavailableStructuredAnalysisClient",
 ]

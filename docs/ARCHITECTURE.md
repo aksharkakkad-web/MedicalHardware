@@ -209,7 +209,9 @@ This boundary is deliberate: **edge makes data manageable; cloud makes it intell
 backend now exposes bearer-authenticated `POST /v1/ingest/telemetry` and
 `POST /v1/ingest/heartbeat`, accepts Mahin's current three compact formats,
 commits raw packets before processing, and records exact retry/conflict/stream
-behavior. Production device identity and credential rotation remain later
+behavior. New captures return `202 pending`; a single durable background lane
+processes them and drains pending/failed work on restart. Production device
+identity and credential rotation remain later
 deployment work.
 
 ### Responsibilities
@@ -773,7 +775,7 @@ Track at minimum:
 - feedback completion;
 - baseline update history;
 - model/prompt/version IDs attached to events;
-- queue/backlog depth if asynchronous workers are introduced.
+- queue/backlog depth for the asynchronous telemetry worker.
 
 Every important event must be reproducible from stored evidence/version metadata where practical.
 

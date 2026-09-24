@@ -958,6 +958,7 @@
               "minLength": 1,
               "type": "string"
             },
+            "maxItems": 32,
             "title": "Quality Reasons",
             "type": "array"
           },
@@ -3798,6 +3799,16 @@
             },
             "description": "Conflict"
           },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -3903,6 +3914,16 @@
               }
             },
             "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Content Too Large"
           },
           "422": {
             "content": {

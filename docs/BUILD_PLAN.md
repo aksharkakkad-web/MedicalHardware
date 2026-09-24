@@ -475,7 +475,8 @@ Allow radar, thermal, and CSI normalized observations to contribute independentl
 
 **Backend status (September 24, 2026): complete on deterministic device-shaped
 data.** The authenticated endpoints, durable raw store, retry/stream rules,
-heartbeat mapping, post-commit processing, and replay CLI are implemented.
+heartbeat mapping, immediate `202 pending`, durable background/startup-drain
+processing, and replay CLI are implemented.
 Rishit's visible simulator/UI connection and real-device validation remain
 separate open work.
 

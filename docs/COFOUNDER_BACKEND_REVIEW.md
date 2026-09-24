@@ -203,6 +203,8 @@ signal-processing filter that detects anomalies.
   compact radar, thermal, and Wi-Fi CSI envelope shapes.
 - Every accepted packet is committed before downstream processing, so a
   processing failure cannot erase the original evidence.
+- The device request returns `202 pending` after commit; one background worker
+  processes batches and restores unfinished work after restart.
 - Exact retries are safe no-ops; changed reuse of the same packet identity and
   stale same-stream packets are rejected; gaps are accepted and recorded.
 - A new boot/session `stream_id` can restart sequence numbering without being
@@ -213,6 +215,8 @@ signal-processing filter that detects anomalies.
   absent measurements are never invented as zeroes.
 - Aligned frames enter the existing baseline, anomaly, AI-analysis, and event
   workflow, and incomplete work can be replayed after restart.
+- Ordinary anomaly evidence stays pending and creates no caregiver event when
+  trusted AI is unavailable; the backend does not guess severity.
 - Host-generated `/v1/assessments` are intentionally not a production anomaly
   input. Product anomalies come from the backend intelligence path.
 
@@ -272,7 +276,8 @@ The device-shaped replay covers 48 scenarios and accepted 385 telemetry
 packets. It safely ignored 3 exact retries, detected 2/2 expected identity
 conflicts and 2/2 assignment blocks, had zero feature-mapping failures,
 captured every supported synthetic anomaly case, created no false events in
-normal or away cases, and had zero replay-idempotency failures. Two saved runs
+normal or away cases, created zero caregiver events without trusted live AI,
+and had zero replay-idempotency failures. Two saved runs
 produced the same functional results; latency varied normally between runs.
 These are software-fixture measurements, not field, hardware, or clinical
 accuracy claims.
