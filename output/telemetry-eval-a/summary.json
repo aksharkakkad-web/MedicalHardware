@@ -1,0 +1,18 @@
+{
+  "accepted_packets": 385,
+  "assignment_blocks_detected": 2,
+  "duplicate_packets": 3,
+  "expected_assignment_blocks": 2,
+  "expected_conflicts": 2,
+  "expected_conflicts_detected": 2,
+  "failed_cases": 0,
+  "feature_mapping_failures": 0,
+  "median_case_latency_ms": 201.572,
+  "normal_false_event_rate": 0.0,
+  "p95_case_latency_ms": 296.949,
+  "passed_cases": 48,
+  "rejected_requests": 2,
+  "replay_idempotency_failures": 0,
+  "supported_anomaly_recall": 1.0,
+  "total_cases": 48
+}
