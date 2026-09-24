@@ -464,3 +464,25 @@ def test_startup_drains_capture_committed_before_worker_started(tmp_path) -> Non
                 .processing_state
                 == "calibrating"
             )
+
+
+def test_worker_survives_one_unexpected_batch_failure(tmp_path) -> None:
+    app = _make_app(tmp_path)
+
+    with TestClient(app) as client:
+        app.state.telemetry_worker.enqueue("missing_batch")
+        response = client.post(
+            "/v1/ingest/telemetry",
+            json=_capture(),
+            headers=HEADERS,
+        )
+
+        _wait_for_processing(app)
+
+        with Session(app.state.engine) as session:
+            assert (
+                TelemetryRepository(session)
+                .get_batch(response.json()["batch_id"])
+                .processing_state
+                == "calibrating"
+            )

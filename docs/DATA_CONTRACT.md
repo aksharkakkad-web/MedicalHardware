@@ -436,10 +436,11 @@ uses the value `legacy`; an exact retry remains safe, but a legacy producer
 cannot restart sequence numbering until it adopts a new stream ID. Optional
 top-level `quality_reasons` is a bounded list explaining unavailable or
 limited source information. It does not authorize zero-filling a missing
-measurement. Because it is source-wide, present measurements from that source
-are conservatively marked limited; a feature-specific omission should be
-represented by omitting that measurement rather than weakening unrelated
-sources.
+measurement and does not automatically weaken unrelated present measurements.
+A measured low `signal_quality` is treated as source-wide and marks all
+features from that source limited; a field-specific omission should be
+represented by omitting that measurement and explaining it in
+`quality_reasons`.
 
 The V1 HTTP request body is limited to 512 KiB and each envelope may carry at
 most 32 quality reasons. Numerical fields also have broad engineering/sensor

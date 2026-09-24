@@ -65,19 +65,23 @@ def normalize_envelope(
         source_quality = QualityClass.UNUSABLE
         source_reasons = unavailable_reasons
     elif source_reasons or _low_signal(envelope):
-        if _low_signal(envelope):
+        low_signal = _low_signal(envelope)
+        if low_signal:
             source_reasons = tuple(sorted(set(source_reasons + ("low_signal_quality",))))
         source_quality = QualityClass.LIMITED
-        features = tuple(
-            replace(
-                feature,
-                quality_class=QualityClass.LIMITED,
-                quality_reasons=tuple(
-                    sorted(set((*feature.quality_reasons, *source_reasons)))
-                ),
+        if low_signal:
+            features = tuple(
+                replace(
+                    feature,
+                    quality_class=QualityClass.LIMITED,
+                    quality_reasons=tuple(
+                        sorted(
+                            set((*feature.quality_reasons, "low_signal_quality"))
+                        )
+                    ),
+                )
+                for feature in features
             )
-            for feature in features
-        )
     else:
         source_quality = QualityClass.GOOD
 

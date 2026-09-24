@@ -196,6 +196,29 @@ def test_post_commit_processor_sees_durable_capture(
     assert observed == [(response.json()["batch_id"], 1)]
 
 
+def test_post_commit_scheduling_failure_is_reported_as_failed(
+    ingest_client: TestClient,
+) -> None:
+    def processor(_: str) -> None:
+        raise RuntimeError("synthetic scheduling failure")
+
+    ingest_client.app.state.telemetry_post_commit_processor = processor
+
+    response = ingest_client.post(
+        "/v1/ingest/telemetry", json=_fixture(), headers=HEADERS
+    )
+
+    assert response.status_code == 202
+    assert response.json()["processing_state"] == "failed"
+    with Session(ingest_client.app.state.engine) as session:
+        stored = session.get(
+            TelemetryCaptureBatchRow,
+            ("tenant_demo", response.json()["batch_id"]),
+        )
+        assert stored is not None
+        assert stored.processing_state == "failed"
+
+
 def test_heartbeat_records_health_once_across_retry(
     ingest_client: TestClient,
 ) -> None:

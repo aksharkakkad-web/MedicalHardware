@@ -99,8 +99,8 @@ def test_thermal_maps_presence_position_and_temperature_without_guessing() -> No
     assert observation.source_quality_reasons == (
         "temperature trend needs more history",
     )
-    assert features["person_detected"].quality_class is QualityClass.LIMITED
-    assert "temperature trend needs more history" in (
+    assert features["person_detected"].quality_class is QualityClass.GOOD
+    assert "temperature trend needs more history" not in (
         features["person_detected"].quality_reasons
     )
 

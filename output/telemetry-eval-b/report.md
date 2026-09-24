@@ -14,8 +14,8 @@ This report exercises device-shaped radar, thermal, and Wi-Fi CSI payloads throu
 - Supported anomaly recall: 100.0%
 - Normal false-event rate: 0.0%
 - Caregiver events without a trusted live AI result: 0
-- Median case latency: 216.017 ms
-- P95 case latency: 336.443 ms
+- Median case latency: 201.025 ms
+- P95 case latency: 384.645 ms
 
 ## Interpretation
 

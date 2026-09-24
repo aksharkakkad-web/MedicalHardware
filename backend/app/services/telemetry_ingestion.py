@@ -87,7 +87,7 @@ class TelemetryIngestionService:
                 self._post_commit_processor(batch.batch_id)
             except Exception:
                 self._session.rollback()
-                self._telemetry.mark_processed(
+                batch = self._telemetry.mark_processed(
                     batch.batch_id,
                     state="failed",
                     processed_at=self._clock(),

@@ -1632,9 +1632,9 @@
     "semantic_hash": ""
   },
   "docs/DATA_CONTRACT.md": {
-    "mtime": 1790262025.8555636,
-    "seen": 1790262754.267759,
-    "ast_hash": "566ade12236ca08c181237a5ed4003d5",
+    "mtime": 1790263218.0071962,
+    "seen": 1790263387.053478,
+    "ast_hash": "aeb18ce7db07212203ce50d1bce24e89",
     "semantic_hash": ""
   },
   "docs/PHASE_2_CHECKPOINT_A_REVIEW.md": {
@@ -3624,15 +3624,15 @@
     "semantic_hash": ""
   },
   "backend/app/ingestion/normalizers.py": {
-    "mtime": 1790260252.96992,
-    "seen": 1790262754.267362,
-    "ast_hash": "f8f7b576f87beeaa7d10934fdd009eb7",
+    "mtime": 1790263218.0052116,
+    "seen": 1790263387.053267,
+    "ast_hash": "dfdaf40367f8a9df96a439dc9495899d",
     "semantic_hash": ""
   },
   "backend/app/services/telemetry_ingestion.py": {
-    "mtime": 1790260490.009738,
-    "seen": 1790262754.2673862,
-    "ast_hash": "5fa0a1ab8893b63a939c3ceb6cce818c",
+    "mtime": 1790263218.0056636,
+    "seen": 1790263387.053291,
+    "ast_hash": "c574636e694661d939840bd372519ed1",
     "semantic_hash": ""
   },
   "backend/app/services/telemetry_processing.py": {
@@ -3666,33 +3666,33 @@
     "semantic_hash": ""
   },
   "output/telemetry-eval-a/results.json": {
-    "mtime": 1790260760.0746322,
-    "seen": 1790262754.2674088,
-    "ast_hash": "9ec0422764311a9bbd7db9cfa35c7c8b",
+    "mtime": 1790263352.046979,
+    "seen": 1790263387.053313,
+    "ast_hash": "62f5f53fa736819fb86e6eb151f7c526",
     "semantic_hash": ""
   },
   "output/telemetry-eval-a/summary.json": {
-    "mtime": 1790260760.0748515,
-    "seen": 1790262754.2674088,
-    "ast_hash": "68a279b4b9258f914f0714acb60d3457",
+    "mtime": 1790263352.0473948,
+    "seen": 1790263387.053314,
+    "ast_hash": "a836debe837be9210cbc0701dd62089c",
     "semantic_hash": ""
   },
   "output/telemetry-eval-b/results.json": {
-    "mtime": 1790260760.0892541,
-    "seen": 1790262754.267411,
-    "ast_hash": "b10be24056f546add481c37c9039cd39",
+    "mtime": 1790263352.1884098,
+    "seen": 1790263387.0533152,
+    "ast_hash": "e7b2cea6362f2e9b2b8030ebab9dadfa",
     "semantic_hash": ""
   },
   "output/telemetry-eval-b/summary.json": {
-    "mtime": 1790260760.0894136,
-    "seen": 1790262754.267411,
-    "ast_hash": "80d6657c1cad6b693c521aa40f1a90a7",
+    "mtime": 1790263352.1885736,
+    "seen": 1790263387.053316,
+    "ast_hash": "2271dd8e6f02a86efad937edd835284b",
     "semantic_hash": ""
   },
   "tests/api/test_ingestion_api.py": {
-    "mtime": 1790260555.3259275,
-    "seen": 1790262754.267435,
-    "ast_hash": "af0aac99f89870d5a84f8cf001a3ce61",
+    "mtime": 1790263131.278298,
+    "seen": 1790263387.05334,
+    "ast_hash": "af3bdeec1753a69bb2a41d8425a026ea",
     "semantic_hash": ""
   },
   "tests/api/test_ingestion_contracts.py": {
@@ -3720,15 +3720,15 @@
     "semantic_hash": ""
   },
   "tests/ingestion/test_normalizers.py": {
-    "mtime": 1790260252.971911,
-    "seen": 1790262754.2675781,
-    "ast_hash": "8123dbd701464e1258796317bf6d3387",
+    "mtime": 1790263131.2776136,
+    "seen": 1790263387.053379,
+    "ast_hash": "e958810faf23b4806704776226b5103b",
     "semantic_hash": ""
   },
   "tests/integration/test_edge_telemetry_pipeline.py": {
-    "mtime": 1790260555.3264098,
-    "seen": 1790262754.267581,
-    "ast_hash": "962f87e5f884673e2323e6f33ecf6b5a",
+    "mtime": 1790263131.2790954,
+    "seen": 1790263387.05338,
+    "ast_hash": "800e04483835c07fef3dd997471419ac",
     "semantic_hash": ""
   },
   "tests/persistence/test_telemetry_repositories.py": {
@@ -3744,15 +3744,15 @@
     "semantic_hash": ""
   },
   "docs/TELEMETRY_BACKEND_REVIEW.md": {
-    "mtime": 1790261939.4906945,
-    "seen": 1790262754.267775,
-    "ast_hash": "a4eb815e580d94a0fcc5c6865349b572",
+    "mtime": 1790263365.9965205,
+    "seen": 1790263387.053493,
+    "ast_hash": "1a390f8ff2c818574f991ca930ab54a1",
     "semantic_hash": ""
   },
   "docs/TELEMETRY_PIPELINE_TEST_REPORT.md": {
-    "mtime": 1790261866.2335863,
-    "seen": 1790262754.267776,
-    "ast_hash": "40a790a2cf98b353ad72c45cbc1f2360",
+    "mtime": 1790263365.9971983,
+    "seen": 1790263387.053494,
+    "ast_hash": "d50447fb1502f85fea9004ff6d04534b",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-09-23-telemetry-intelligence-bridge.md": {
@@ -3768,15 +3768,15 @@
     "semantic_hash": ""
   },
   "output/telemetry-eval-a/report.md": {
-    "mtime": 1790260760.074981,
-    "seen": 1790262754.267848,
-    "ast_hash": "4704a1631bb3d5aea11df64ab31cc0ff",
+    "mtime": 1790263352.0475252,
+    "seen": 1790263387.053529,
+    "ast_hash": "244af4944582ae21e595196d4d0816f3",
     "semantic_hash": ""
   },
   "output/telemetry-eval-b/report.md": {
-    "mtime": 1790260760.0895483,
-    "seen": 1790262754.267849,
-    "ast_hash": "13d35be37f460fd98bdb35634608e431",
+    "mtime": 1790263352.1886845,
+    "seen": 1790263387.0535302,
+    "ast_hash": "d30ea381a9b0a98356f1859cda4e680b",
     "semantic_hash": ""
   },
   "backend/app/api/request_limits.py": {
@@ -3786,9 +3786,9 @@
     "semantic_hash": ""
   },
   "backend/app/services/telemetry_worker.py": {
-    "mtime": 1790260490.0088418,
-    "seen": 1790262754.2673879,
-    "ast_hash": "c104e5cc539d4526f58de50236754b4f",
+    "mtime": 1790263218.0062978,
+    "seen": 1790263387.053293,
+    "ast_hash": "26ff2ecbf2f9cfc46043ca1f252b7c50",
     "semantic_hash": ""
   }
 }

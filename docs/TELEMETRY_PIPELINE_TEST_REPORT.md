@@ -22,8 +22,8 @@ This is strong evidence that the software plumbing behaves as designed with cont
 | Normal/away false-event rate | 0% |
 | Caregiver events without trusted live AI output | 0 |
 | Replay idempotency failures | 0 |
-| Median isolated-case runtime, first recorded run | 216.396 ms |
-| P95 isolated-case runtime, first recorded run | 336.605 ms |
+| Median isolated-case runtime, first recorded run | 202.245 ms |
+| P95 isolated-case runtime, first recorded run | 370.206 ms |
 
 Runtime numbers are local development measurements and are not production service-level claims.
 

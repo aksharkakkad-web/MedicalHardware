@@ -102,7 +102,7 @@ restart/replay behavior.
 | Replay-idempotency failures | 0 |
 
 Two saved evaluation runs produced the same functional results. The first run
-had a median isolated-case runtime of 216.396 ms and p95 of 336.605 ms on the
+had a median isolated-case runtime of 202.245 ms and p95 of 370.206 ms on the
 development machine. Those timings are a development reference, not a service
 level promise.
 

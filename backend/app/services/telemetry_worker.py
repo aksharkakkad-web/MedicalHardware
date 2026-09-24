@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+import logging
 from queue import Queue
 from threading import Condition, Thread
 from time import monotonic
@@ -15,6 +16,7 @@ from backend.app.services.telemetry_processing import TelemetryProcessingCoordin
 
 
 SessionFactory = Callable[[], Session]
+_LOGGER = logging.getLogger(__name__)
 
 
 class TelemetryProcessingWorker:
@@ -107,6 +109,13 @@ class TelemetryProcessingWorker:
                         session,
                         self._engine,
                     ).process_batch(batch_id)
+            except Exception:
+                # One malformed or externally removed job must not strand every
+                # later committed capture in the single V1 processing lane.
+                _LOGGER.exception(
+                    "Unexpected telemetry worker failure for batch %s",
+                    batch_id,
+                )
             finally:
                 with self._condition:
                     self._scheduled.discard(batch_id)
