@@ -70,7 +70,7 @@ def test_current_mahin_capture_is_accepted(ingest_client: TestClient) -> None:
         "duplicate_count": 0,
         "rejected": 0,
         "duplicate": False,
-        "processing_state": "pending",
+        "processing_state": "calibrating",
         "results": [
             {
                 "schema_version": "1.0",

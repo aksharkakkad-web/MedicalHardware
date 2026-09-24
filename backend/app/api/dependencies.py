@@ -106,6 +106,7 @@ def telemetry_ingestion_service(
             "telemetry_post_commit_processor",
             None,
         ),
+        clock=getattr(request.app.state, "telemetry_clock", None),
     )
 
 

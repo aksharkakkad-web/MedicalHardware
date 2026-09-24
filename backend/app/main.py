@@ -11,6 +11,8 @@ from backend.app.api.v1.router import router as v1_router
 from backend.app.config import Settings
 from backend.app.contracts.common import HealthResponse
 from backend.app.db.session import create_engine_for_url, create_session_factory
+from backend.app.intelligence.orchestration import MonitoringIntelligenceEngine
+from backend.app.services.telemetry_processing import TelemetryProcessingCoordinator
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -29,6 +31,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = settings or Settings()
     app.state.engine = create_engine_for_url(app.state.settings.database_url)
     app.state.session_factory = create_session_factory(app.state.engine)
+    app.state.monitoring_engine = MonitoringIntelligenceEngine()
+
+    def process_telemetry_batch(batch_id: str) -> None:
+        with app.state.session_factory() as session:
+            TelemetryProcessingCoordinator(
+                session,
+                app.state.monitoring_engine,
+            ).process_batch(batch_id)
+
+    app.state.telemetry_post_commit_processor = process_telemetry_batch
     register_error_handlers(app)
     app.include_router(v1_router)
 
