@@ -152,4 +152,3 @@ def test_assignment_identity_must_match_envelope() -> None:
 
     with pytest.raises(ValueError, match="assignment must match telemetry envelope"):
         normalize_envelope(_envelope("radar"), mismatched, NOW)
-

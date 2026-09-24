@@ -75,7 +75,7 @@ size, and unknown top-level fields.
 
 - [ ] **Step 3: Verify red**
 
-Run: `python3 -m pytest tests/api/test_ingestion_contracts.py -q`  
+Run: `python3 -m pytest tests/api/test_ingestion_contracts.py -q`
 Expected: FAIL because the ingestion contracts do not exist.
 
 - [ ] **Step 4: Implement the strict Pydantic contracts**
@@ -133,7 +133,7 @@ heartbeat retry.
 
 - [ ] **Step 2: Verify red**
 
-Run: `python3 -m pytest tests/persistence/test_telemetry_repositories.py -q`  
+Run: `python3 -m pytest tests/persistence/test_telemetry_repositories.py -q`
 Expected: FAIL because rows and repository do not exist.
 
 - [ ] **Step 3: Implement migration, rows, mappers, and repositories**
@@ -203,7 +203,7 @@ payload, deterministic IDs, and optional future posture fields.
 
 - [ ] **Step 3: Verify red**
 
-Run: `python3 -m pytest tests/ingestion/test_assignment.py tests/ingestion/test_normalizers.py -q`  
+Run: `python3 -m pytest tests/ingestion/test_assignment.py tests/ingestion/test_normalizers.py -q`
 Expected: FAIL because ingestion modules do not exist.
 
 - [ ] **Step 4: Implement one isolated normalizer per format**
@@ -257,7 +257,7 @@ limits, conflict, assignment block, heartbeat health, and secret-free errors.
 
 - [ ] **Step 2: Verify red**
 
-Run: `python3 -m pytest tests/api/test_ingestion_api.py -q`  
+Run: `python3 -m pytest tests/api/test_ingestion_api.py -q`
 Expected: FAIL with 404.
 
 - [ ] **Step 3: Implement auth, routes, and heartbeat mapping**
@@ -317,7 +317,7 @@ through the existing API. Pin processing failure remains durable/replayable.
 
 - [ ] **Step 3: Verify red**
 
-Run: `python3 -m pytest tests/integration/test_edge_telemetry_pipeline.py -q`  
+Run: `python3 -m pytest tests/integration/test_edge_telemetry_pipeline.py -q`
 Expected: FAIL because the coordinator does not exist.
 
 - [ ] **Step 4: Implement processing and restart restoration**
@@ -373,7 +373,7 @@ low-quality baseline exclusion.
 
 - [ ] **Step 2: Verify red**
 
-Run: `python3 -m pytest tests/evals/test_edge_telemetry_replay.py -q`  
+Run: `python3 -m pytest tests/evals/test_edge_telemetry_replay.py -q`
 Expected: FAIL because `evals.telemetry` does not exist.
 
 - [ ] **Step 3: Implement at least 48 deterministic cases and metrics**

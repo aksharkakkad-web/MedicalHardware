@@ -1,8 +1,11 @@
 # Telemetry Intelligence Bridge Design
 
-**Status:** Approved product direction; implementation design for Akshar's backend lane  
-**Date:** 2026-09-23  
-**Owner:** Akshar — backend and monitoring intelligence  
+**Status:** Approved product direction; implementation design for Akshar's backend lane
+
+**Date:** 2026-09-23
+
+**Owner:** Akshar — backend and monitoring intelligence
+
 **Hardware handoff reviewed:** `origin/hardware/device-frame-format` at `ed990bc`
 
 ## 1. Outcome

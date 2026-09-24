@@ -1,7 +1,9 @@
 # Hardware ↔ Backend Handoff
 
-**Audience:** Mahin and Akshar  
-**Status:** Software socket implemented and tested with Mahin-shaped payloads  
+**Audience:** Mahin and Akshar
+
+**Status:** Software socket implemented and tested with Mahin-shaped payloads
+
 **Purpose:** Replace the test telemetry producer with the bench hardware without
 redesigning the backend intelligence.
 
@@ -171,4 +173,3 @@ The checkpoint passes when the team can show all of the following:
 8. saved captures replay to the same software result after restart.
 
 Only after that checkpoint should the team tune thresholds against real data.
-
