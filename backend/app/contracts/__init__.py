@@ -23,6 +23,15 @@ from backend.app.contracts.devices import (
     DeviceSourceHealthResponse,
 )
 from backend.app.contracts.feedback import MemoryEntryResponse, ResidentMemoryResponse
+from backend.app.contracts.ingestion import (
+    DeviceHeartbeatRequest,
+    EdgeTelemetryEnvelope,
+    HeartbeatIngestResponse,
+    TelemetryCaptureRequest,
+    TelemetryIngestItemResponse,
+    TelemetryIngestResponse,
+    TelemetryTransport,
+)
 from backend.app.contracts.residents import ResidentListResponse, ResidentSummary
 from backend.app.contracts.status import (
     AwarenessTimelineResponse,
@@ -48,6 +57,8 @@ __all__ = [
     "DeviceListItemResponse",
     "DeviceListResponse",
     "DeviceSourceHealthResponse",
+    "DeviceHeartbeatRequest",
+    "EdgeTelemetryEnvelope",
     "ErrorDetail",
     "ErrorEnvelope",
     "EventActionResponse",
@@ -55,6 +66,7 @@ __all__ = [
     "EventPriorityHistoryResponse",
     "EventResponse",
     "HealthResponse",
+    "HeartbeatIngestResponse",
     "MemoryEntryResponse",
     "MonitoringStatusResponse",
     "ResidentListResponse",
@@ -63,5 +75,9 @@ __all__ = [
     "ResidentStatusResponse",
     "SetupChangeRequest",
     "SetupChangeResponse",
+    "TelemetryCaptureRequest",
+    "TelemetryIngestItemResponse",
+    "TelemetryIngestResponse",
+    "TelemetryTransport",
     "UTCDateTime",
 ]

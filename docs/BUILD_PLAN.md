@@ -473,6 +473,13 @@ Allow radar, thermal, and CSI normalized observations to contribute independentl
 
 ## 13. Milestone 8 — Edge Telemetry Simulator + Ingestion
 
+**Backend status (September 24, 2026): complete on deterministic device-shaped
+data.** The authenticated endpoints, durable raw store, retry/stream rules,
+heartbeat mapping, immediate `202 pending`, durable background/startup-drain
+processing, and replay CLI are implemented.
+Rishit's visible simulator/UI connection and real-device validation remain
+separate open work.
+
 ### Goal
 
 Exercise the same compact edge-telemetry boundary the real ESP32 will use.
@@ -526,6 +533,12 @@ At minimum:
 
 ## 14. Milestone 9 — Edge Preprocessor + Cloud Normalizer Boundaries
 
+**Cloud status: complete for the frozen V1 formats.** Radar, thermal, and CSI
+normalizers plus device → room → resident assignment validation now feed the
+existing fused-frame contract. Mahin's firmware/host branch already emits the
+accepted formats; improved real hardware extraction can replace its current
+internals without changing the backend socket.
+
 ### Goal
 
 Create the edge-preprocessor and cloud-normalizer boundaries now, then fill in real hardware math as sensors arrive.
@@ -563,6 +576,12 @@ Only firmware/edge adapters and source normalizers should need hardware-specific
 ---
 
 ## 15. Milestone 10 — Evaluation Harness
+
+**Telemetry software status: complete for the deterministic gate.** The
+48-case device-shaped replay records per-case JSON, a summary, and a readable
+report. It passed twice with stable non-runtime content. Real-sensor accuracy,
+production threshold calibration, live-model release gates, and long-duration
+rates remain open.
 
 ### Goal
 

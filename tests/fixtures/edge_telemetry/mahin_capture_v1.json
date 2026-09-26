@@ -1,0 +1,76 @@
+[
+  {
+    "schema_version": "1.0",
+    "device_id": "device_room_214",
+    "tenant_id": "tenant_demo",
+    "room_id": "room_214",
+    "source": "radar",
+    "sensor_model": "MR60BHA2",
+    "sequence": 41,
+    "device_time": null,
+    "device_monotonic_ms": null,
+    "payload_format": "radar_edge_features_v1",
+    "payload": {
+      "distance_m": 1.24,
+      "respiration_rpm": 15.0,
+      "heart_rate_bpm": 72.0,
+      "signal_quality": 0.94
+    },
+    "transport": {
+      "batch_id": "radar-batch-41",
+      "retry_count": 0
+    }
+  },
+  {
+    "schema_version": "1.0",
+    "device_id": "device_room_214",
+    "tenant_id": "tenant_demo",
+    "room_id": "room_214",
+    "source": "thermal",
+    "sensor_model": "MLX90640",
+    "sequence": 38,
+    "device_time": null,
+    "device_monotonic_ms": null,
+    "payload_format": "mlx90640_edge_features_v1",
+    "payload": {
+      "person_detected": true,
+      "max_observed_temp_c": 35.7,
+      "centroid_x": 0.53,
+      "centroid_y": 0.41,
+      "position_features": {
+        "near_floor_score": 0.08
+      },
+      "signal_quality": 0.88
+    },
+    "quality_reasons": [
+      "temperature trend needs more history"
+    ],
+    "transport": {
+      "batch_id": "thermal-batch-38",
+      "retry_count": 0
+    }
+  },
+  {
+    "schema_version": "1.0",
+    "device_id": "device_room_214",
+    "tenant_id": "tenant_demo",
+    "room_id": "room_214",
+    "source": "wifi_csi",
+    "sensor_model": "ESP32-S3",
+    "sequence": 52,
+    "device_time": null,
+    "device_monotonic_ms": null,
+    "payload_format": "esp32_csi_edge_v1",
+    "payload": {
+      "presence_score": 0.86,
+      "movement_score": 0.2,
+      "rf_disturbance_score": 0.12,
+      "respiration_feature": 0.48,
+      "signal_quality": 0.82
+    },
+    "transport": {
+      "batch_id": "csi-batch-52",
+      "retry_count": 0
+    }
+  }
+]

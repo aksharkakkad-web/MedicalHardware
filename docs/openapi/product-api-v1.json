@@ -720,6 +720,87 @@
         "title": "DeviceHealthState",
         "type": "string"
       },
+      "DeviceHeartbeatRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "buffered_packets": {
+            "minimum": 0.0,
+            "title": "Buffered Packets",
+            "type": "integer"
+          },
+          "device_id": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Device Id",
+            "type": "string"
+          },
+          "device_monotonic_ms": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Monotonic Ms"
+          },
+          "firmware_version": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Firmware Version",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "sequence": {
+            "exclusiveMinimum": 0.0,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "sources_seen": {
+            "items": {
+              "enum": [
+                "radar",
+                "thermal",
+                "wifi_csi"
+              ],
+              "type": "string"
+            },
+            "title": "Sources Seen",
+            "type": "array"
+          },
+          "stream_id": {
+            "default": "legacy",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Stream Id",
+            "type": "string"
+          },
+          "transport_status": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Transport Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "device_id",
+          "sequence",
+          "device_monotonic_ms",
+          "firmware_version",
+          "buffered_packets",
+          "sources_seen",
+          "transport_status"
+        ],
+        "title": "DeviceHeartbeatRequest",
+        "type": "object"
+      },
       "DeviceListItemResponse": {
         "additionalProperties": false,
         "properties": {
@@ -821,6 +902,130 @@
         ],
         "title": "DeviceSourceHealthState",
         "type": "string"
+      },
+      "EdgeTelemetryEnvelope": {
+        "additionalProperties": false,
+        "properties": {
+          "device_id": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Device Id",
+            "type": "string"
+          },
+          "device_monotonic_ms": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Monotonic Ms"
+          },
+          "device_time": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Time"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "title": "Payload",
+            "type": "object"
+          },
+          "payload_format": {
+            "enum": [
+              "radar_edge_features_v1",
+              "mlx90640_edge_features_v1",
+              "esp32_csi_edge_v1",
+              "simulated_radar_edge_v1"
+            ],
+            "title": "Payload Format",
+            "type": "string"
+          },
+          "quality_reasons": {
+            "default": [],
+            "items": {
+              "maxLength": 500,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 32,
+            "title": "Quality Reasons",
+            "type": "array"
+          },
+          "room_id": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Room Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "sensor_model": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Sensor Model",
+            "type": "string"
+          },
+          "sequence": {
+            "exclusiveMinimum": 0.0,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "source": {
+            "enum": [
+              "radar",
+              "thermal",
+              "wifi_csi"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "stream_id": {
+            "default": "legacy",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Stream Id",
+            "type": "string"
+          },
+          "tenant_id": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "transport": {
+            "$ref": "#/components/schemas/TelemetryTransport"
+          }
+        },
+        "required": [
+          "schema_version",
+          "device_id",
+          "tenant_id",
+          "room_id",
+          "source",
+          "sensor_model",
+          "sequence",
+          "device_time",
+          "device_monotonic_ms",
+          "payload_format",
+          "payload",
+          "transport"
+        ],
+        "title": "EdgeTelemetryEnvelope",
+        "type": "object"
       },
       "ErrorDetail": {
         "additionalProperties": false,
@@ -1469,6 +1674,49 @@
           "service"
         ],
         "title": "HealthResponse",
+        "type": "object"
+      },
+      "HeartbeatIngestResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "device_id": {
+            "title": "Device Id",
+            "type": "string"
+          },
+          "duplicate": {
+            "title": "Duplicate",
+            "type": "boolean"
+          },
+          "health_state": {
+            "enum": [
+              "online",
+              "offline",
+              "degraded",
+              "buffering",
+              "retrying",
+              "assignment_unavailable"
+            ],
+            "title": "Health State",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "sequence": {
+            "title": "Sequence",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "device_id",
+          "sequence",
+          "duplicate",
+          "health_state"
+        ],
+        "title": "HeartbeatIngestResponse",
         "type": "object"
       },
       "LearningDecisionResponse": {
@@ -2356,6 +2604,144 @@
         "title": "SubmitFeedbackRequest",
         "type": "object"
       },
+      "TelemetryCaptureRequest": {
+        "items": {
+          "$ref": "#/components/schemas/EdgeTelemetryEnvelope"
+        },
+        "title": "TelemetryCaptureRequest",
+        "type": "array"
+      },
+      "TelemetryIngestItemResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "errors": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "sequence": {
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "source": {
+            "enum": [
+              "radar",
+              "thermal",
+              "wifi_csi"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "accepted",
+              "duplicate",
+              "rejected"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "sequence",
+          "status"
+        ],
+        "title": "TelemetryIngestItemResponse",
+        "type": "object"
+      },
+      "TelemetryIngestResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "accepted": {
+            "title": "Accepted",
+            "type": "integer"
+          },
+          "batch_id": {
+            "title": "Batch Id",
+            "type": "string"
+          },
+          "duplicate": {
+            "title": "Duplicate",
+            "type": "boolean"
+          },
+          "duplicate_count": {
+            "title": "Duplicate Count",
+            "type": "integer"
+          },
+          "processing_state": {
+            "enum": [
+              "pending",
+              "processing",
+              "processed",
+              "calibrating",
+              "blocked",
+              "failed"
+            ],
+            "title": "Processing State",
+            "type": "string"
+          },
+          "rejected": {
+            "title": "Rejected",
+            "type": "integer"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/TelemetryIngestItemResponse"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "batch_id",
+          "accepted",
+          "duplicate_count",
+          "rejected",
+          "duplicate",
+          "processing_state",
+          "results"
+        ],
+        "title": "TelemetryIngestResponse",
+        "type": "object"
+      },
+      "TelemetryTransport": {
+        "additionalProperties": false,
+        "properties": {
+          "batch_id": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Batch Id",
+            "type": "string"
+          },
+          "retry_count": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Retry Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "batch_id"
+        ],
+        "title": "TelemetryTransport",
+        "type": "object"
+      },
       "UpdateNotificationPreferencesRequest": {
         "additionalProperties": false,
         "properties": {
@@ -2390,6 +2776,12 @@
         ],
         "title": "UpdateNotificationPreferencesRequest",
         "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "scheme": "bearer",
+        "type": "http"
       }
     }
   },
@@ -3340,6 +3732,238 @@
         "summary": "Resolve Event",
         "tags": [
           "events"
+        ]
+      }
+    },
+    "/v1/ingest/heartbeat": {
+      "post": {
+        "operationId": "ingest_heartbeat_v1_ingest_heartbeat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceHeartbeatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HeartbeatIngestResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "405": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Method Not Allowed"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Ingest Heartbeat",
+        "tags": [
+          "device-ingestion"
+        ]
+      }
+    },
+    "/v1/ingest/telemetry": {
+      "post": {
+        "operationId": "ingest_telemetry_v1_ingest_telemetry_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TelemetryCaptureRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetryIngestResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "405": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Method Not Allowed"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Ingest Telemetry",
+        "tags": [
+          "device-ingestion"
         ]
       }
     },

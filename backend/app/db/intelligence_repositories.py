@@ -195,6 +195,28 @@ class IntelligenceRepository:
         )
         return None if row is None else anomaly_from_row(row)
 
+    def latest_anomaly_for_lane(
+        self,
+        tenant_id: str,
+        resident_id: str,
+        room_id: str,
+    ) -> StoredAnomalyRevision | None:
+        row = self._session.scalar(
+            select(AnomalyRevisionRow)
+            .where(
+                AnomalyRevisionRow.tenant_id == tenant_id,
+                AnomalyRevisionRow.resident_id == resident_id,
+                AnomalyRevisionRow.room_id == room_id,
+            )
+            .order_by(
+                AnomalyRevisionRow.recorded_at.desc(),
+                AnomalyRevisionRow.packet_revision.desc(),
+                AnomalyRevisionRow.anomaly_revision_id.desc(),
+            )
+            .limit(1)
+        )
+        return None if row is None else anomaly_from_row(row)
+
     def save_interpretation(
         self,
         tenant_id: str,

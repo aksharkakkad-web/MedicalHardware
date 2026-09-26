@@ -763,3 +763,171 @@ class AuditLogRow(Base):
     target_id: Mapped[str] = mapped_column(String(255))
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     details: Mapped[dict[str, object]] = mapped_column(JSON)
+
+
+class TelemetryCaptureBatchRow(Base):
+    __tablename__ = "telemetry_capture_batches"
+    __table_args__ = (
+        UniqueConstraint(
+            "tenant_id",
+            "request_fingerprint",
+            name="uq_telemetry_capture_fingerprint",
+        ),
+        ForeignKeyConstraint(
+            ("tenant_id", "device_id"),
+            ("devices.tenant_id", "devices.device_id"),
+        ),
+        ForeignKeyConstraint(
+            ("tenant_id", "room_id"),
+            ("rooms.tenant_id", "rooms.room_id"),
+        ),
+        CheckConstraint(
+            "processing_state IN ('pending', 'processing', 'processed', "
+            "'calibrating', 'blocked', 'failed')",
+            name="ck_telemetry_capture_processing_state",
+        ),
+    )
+
+    tenant_id: Mapped[str] = mapped_column(
+        ForeignKey("tenants.tenant_id"),
+        primary_key=True,
+    )
+    batch_id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    device_id: Mapped[str] = mapped_column(String(255), index=True)
+    room_id: Mapped[str] = mapped_column(String(255), index=True)
+    request_fingerprint: Mapped[str] = mapped_column(String(64))
+    received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    processing_state: Mapped[str] = mapped_column(String(64), index=True)
+    processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    processing_error: Mapped[str | None] = mapped_column(String(500))
+
+
+class EdgeTelemetryRow(Base):
+    __tablename__ = "edge_telemetry"
+    __table_args__ = (
+        UniqueConstraint(
+            "tenant_id",
+            "device_id",
+            "source",
+            "stream_id",
+            "sequence",
+            "schema_version",
+            name="uq_edge_telemetry_packet_identity",
+        ),
+        ForeignKeyConstraint(
+            ("tenant_id", "batch_id"),
+            (
+                "telemetry_capture_batches.tenant_id",
+                "telemetry_capture_batches.batch_id",
+            ),
+        ),
+        ForeignKeyConstraint(
+            ("tenant_id", "device_id"),
+            ("devices.tenant_id", "devices.device_id"),
+        ),
+        ForeignKeyConstraint(
+            ("tenant_id", "room_id"),
+            ("rooms.tenant_id", "rooms.room_id"),
+        ),
+        CheckConstraint("sequence >= 1", name="ck_edge_telemetry_sequence"),
+        CheckConstraint("sequence_gap >= 0", name="ck_edge_telemetry_sequence_gap"),
+    )
+
+    telemetry_id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(
+        ForeignKey("tenants.tenant_id"),
+        index=True,
+    )
+    batch_id: Mapped[str] = mapped_column(String(255), index=True)
+    device_id: Mapped[str] = mapped_column(String(255), index=True)
+    room_id: Mapped[str] = mapped_column(String(255), index=True)
+    source: Mapped[str] = mapped_column(String(64), index=True)
+    sensor_model: Mapped[str] = mapped_column(String(255))
+    stream_id: Mapped[str] = mapped_column(String(255))
+    sequence: Mapped[int] = mapped_column(Integer)
+    sequence_gap: Mapped[int] = mapped_column(Integer)
+    schema_version: Mapped[str] = mapped_column(String(64))
+    device_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    device_monotonic_ms: Mapped[int | None] = mapped_column(Integer)
+    payload_format: Mapped[str] = mapped_column(String(255))
+    payload: Mapped[dict[str, object]] = mapped_column(JSON)
+    quality_reasons: Mapped[list[str]] = mapped_column(JSON)
+    transport: Mapped[dict[str, object]] = mapped_column(JSON)
+    payload_hash: Mapped[str] = mapped_column(String(64))
+    received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class NormalizedObservationRow(Base):
+    __tablename__ = "normalized_observations"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ("tenant_id", "batch_id"),
+            (
+                "telemetry_capture_batches.tenant_id",
+                "telemetry_capture_batches.batch_id",
+            ),
+        ),
+    )
+
+    tenant_id: Mapped[str] = mapped_column(
+        ForeignKey("tenants.tenant_id"),
+        primary_key=True,
+    )
+    observation_id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    batch_id: Mapped[str] = mapped_column(String(255), index=True)
+    observation: Mapped[dict[str, object]] = mapped_column(JSON)
+
+
+class FusedFrameRow(Base):
+    __tablename__ = "fused_frames"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "batch_id", name="uq_fused_frame_batch"),
+        ForeignKeyConstraint(
+            ("tenant_id", "batch_id"),
+            (
+                "telemetry_capture_batches.tenant_id",
+                "telemetry_capture_batches.batch_id",
+            ),
+        ),
+    )
+
+    tenant_id: Mapped[str] = mapped_column(
+        ForeignKey("tenants.tenant_id"),
+        primary_key=True,
+    )
+    frame_id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    batch_id: Mapped[str] = mapped_column(String(255), index=True)
+    frame: Mapped[dict[str, object]] = mapped_column(JSON)
+
+
+class DeviceHeartbeatIdentityRow(Base):
+    __tablename__ = "device_heartbeat_identities"
+    __table_args__ = (
+        UniqueConstraint(
+            "tenant_id",
+            "device_id",
+            "stream_id",
+            "sequence",
+            name="uq_device_heartbeat_identity",
+        ),
+        ForeignKeyConstraint(
+            ("tenant_id", "device_id"),
+            ("devices.tenant_id", "devices.device_id"),
+        ),
+    )
+
+    heartbeat_identity_id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+    tenant_id: Mapped[str] = mapped_column(
+        ForeignKey("tenants.tenant_id"),
+        index=True,
+    )
+    device_id: Mapped[str] = mapped_column(String(255), index=True)
+    stream_id: Mapped[str] = mapped_column(String(255))
+    sequence: Mapped[int] = mapped_column(Integer)
+    payload_hash: Mapped[str] = mapped_column(String(64))
+    payload: Mapped[dict[str, object]] = mapped_column(JSON)
+    received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

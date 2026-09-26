@@ -37,6 +37,7 @@ class PersistentMonitoringService:
         resident_hint = kwargs.get("resident_id")
         baseline_hint = kwargs.get("baseline")
         anomaly_hint = kwargs.get("anomaly_id")
+        frame_hint = args[0] if args else kwargs.get("frame")
         current_baseline = None
         if (
             isinstance(tenant_hint, str)
@@ -56,6 +57,33 @@ class PersistentMonitoringService:
                 # the stateful engine consumes the new frame.
                 raise ConcurrentUpdateError(
                     "baseline identity has different contents"
+                )
+        if (
+            isinstance(tenant_hint, str)
+            and isinstance(anomaly_hint, str)
+        ):
+            stored_anomaly = self._intelligence.latest_anomaly(
+                tenant_hint,
+                anomaly_hint,
+            )
+            if (
+                stored_anomaly is not None
+                and stored_anomaly.update.episode is not None
+                and isinstance(resident_hint, str)
+                and frame_hint is not None
+                and frame_hint.window_start
+                >= stored_anomaly.update.episode.current_time
+            ):
+                stored_event = self._events.find_for_source_anomaly(
+                    tenant_hint,
+                    anomaly_hint,
+                )
+                self._engine.restore_episode(
+                    tenant_id=tenant_hint,
+                    room_id=stored_anomaly.update.room_id,
+                    resident_id=resident_hint,
+                    episode=stored_anomaly.update.episode,
+                    event=None if stored_event is None else stored_event.event,
                 )
         if (
             isinstance(tenant_hint, str)

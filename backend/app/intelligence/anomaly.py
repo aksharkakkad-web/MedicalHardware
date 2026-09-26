@@ -540,11 +540,17 @@ def advance_episode(
         continuing=episode is not None,
     )
     crossing = tuple(
-        item for item in deviations if abs(item.robust_z) >= policy.start_abs_z
+        item
+        for item in deviations
+        if item.quality_class == QualityClass.GOOD
+        and abs(item.robust_z) >= policy.start_abs_z
     )
 
     if episode is None or episode.state == AnomalyState.CLOSED:
         if not crossing:
+            limited = any(
+                item.quality_class == QualityClass.LIMITED for item in deviations
+            )
             return _update_record(
                 episode,
                 deviations,
@@ -557,8 +563,8 @@ def advance_episode(
                 unknowns=explicit_unknowns,
                 missing_initiating_features=(),
                 policy=policy,
-                evidence_limited=False,
-                limitations=(),
+                evidence_limited=limited,
+                limitations=("limited_quality",) if limited else (),
             )
         recurrence_of = (
             episode.anomaly_id

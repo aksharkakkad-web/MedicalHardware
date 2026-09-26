@@ -1,8 +1,10 @@
 from collections.abc import Iterator
 from dataclasses import dataclass
+from hmac import compare_digest
 from typing import Annotated
 
-from fastapi import Depends, Header, Request
+from fastapi import Depends, Header, Request, Security
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from backend.app.db.repositories import (
@@ -23,11 +25,19 @@ from backend.app.domain._validation import require_nonblank_text
 from backend.app.services.event_commands import EventCommandService
 from backend.app.services.event_queue import ProductEventQueueQueryService
 from backend.app.services.device_queries import ProductDeviceQueryService
-from backend.app.services.errors import InvalidInputError
+from backend.app.services.errors import (
+    AuthenticationError,
+    InvalidInputError,
+    ServiceUnavailableError,
+)
 from backend.app.services.idempotency import IdempotencyService
 from backend.app.services.queries import AccessContext, ProductQueryService
 from backend.app.services.setup_commands import SetupChangeCommandService
 from backend.app.services.status_queries import ProductStatusQueryService
+from backend.app.services.telemetry_ingestion import TelemetryIngestionService
+
+
+_ingest_bearer = HTTPBearer(auto_error=False)
 
 
 def access_context(
@@ -56,6 +66,48 @@ def request_idempotency_key(
 def database_session(request: Request) -> Iterator[Session]:
     with request.app.state.session_factory() as session:
         yield session
+
+
+def ingest_tenant_id(
+    request: Request,
+    credentials: Annotated[
+        HTTPAuthorizationCredentials | None,
+        Security(_ingest_bearer),
+    ],
+) -> str:
+    configured_secret = request.app.state.settings.ingest_bearer_key
+    configured_tenant = request.app.state.settings.ingest_tenant_id
+    if (
+        configured_secret is None
+        or not configured_tenant
+        or not configured_tenant.strip()
+    ):
+        raise ServiceUnavailableError("Device ingestion is not configured")
+    configured_key = configured_secret.get_secret_value()
+    if not configured_key:
+        raise ServiceUnavailableError("Device ingestion is not configured")
+    if (
+        credentials is None
+        or credentials.scheme.casefold() != "bearer"
+        or not compare_digest(credentials.credentials, configured_key)
+    ):
+        raise AuthenticationError()
+    return configured_tenant.strip()
+
+
+def telemetry_ingestion_service(
+    request: Request,
+    session: Annotated[Session, Depends(database_session)],
+) -> TelemetryIngestionService:
+    return TelemetryIngestionService(
+        session,
+        post_commit_processor=getattr(
+            request.app.state,
+            "telemetry_post_commit_processor",
+            None,
+        ),
+        clock=getattr(request.app.state, "telemetry_clock", None),
+    )
 
 
 def query_service(

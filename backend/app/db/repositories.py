@@ -304,6 +304,25 @@ class EventRepository:
         )
         return None if event_row is None else self._hydrate(tenant_id, event_row)
 
+    def find_for_source_anomaly(
+        self,
+        tenant_id: str,
+        anomaly_id: str,
+    ) -> StoredEvent | None:
+        event_row = self._session.scalar(
+            select(MonitoringEventRow)
+            .where(
+                MonitoringEventRow.tenant_id == tenant_id,
+                MonitoringEventRow.source_anomaly_id == anomaly_id,
+            )
+            .order_by(
+                MonitoringEventRow.last_signal_at.desc(),
+                MonitoringEventRow.event_id,
+            )
+            .limit(1)
+        )
+        return None if event_row is None else self._hydrate(tenant_id, event_row)
+
     def get(self, tenant_id: str, event_id: str) -> StoredEvent:
         stored = self.find(tenant_id, event_id)
         if stored is None:

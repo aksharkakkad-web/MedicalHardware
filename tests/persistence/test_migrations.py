@@ -49,6 +49,11 @@ EXPECTED_TABLES = {
     "disposition_decisions",
     "event_bridge_records",
     "multi_agent_analysis_runs",
+    "telemetry_capture_batches",
+    "edge_telemetry",
+    "normalized_observations",
+    "fused_frames",
+    "device_heartbeat_identities",
 }
 
 EXPECTED_COLUMNS = {
@@ -370,6 +375,60 @@ EXPECTED_COLUMNS = {
         "observed_at": False,
         "payload_json": False,
     },
+    "telemetry_capture_batches": {
+        "tenant_id": False,
+        "batch_id": False,
+        "device_id": False,
+        "room_id": False,
+        "request_fingerprint": False,
+        "received_at": False,
+        "processing_state": False,
+        "processed_at": True,
+        "processing_error": True,
+    },
+    "edge_telemetry": {
+        "telemetry_id": False,
+        "tenant_id": False,
+        "batch_id": False,
+        "device_id": False,
+        "room_id": False,
+        "source": False,
+        "sensor_model": False,
+        "stream_id": False,
+        "sequence": False,
+        "sequence_gap": False,
+        "schema_version": False,
+        "device_time": True,
+        "device_monotonic_ms": True,
+        "payload_format": False,
+        "payload": False,
+        "quality_reasons": False,
+        "transport": False,
+        "payload_hash": False,
+        "received_at": False,
+    },
+    "normalized_observations": {
+        "tenant_id": False,
+        "observation_id": False,
+        "batch_id": False,
+        "observation": False,
+    },
+    "fused_frames": {
+        "tenant_id": False,
+        "frame_id": False,
+        "batch_id": False,
+        "frame": False,
+    },
+    "device_heartbeat_identities": {
+        "heartbeat_identity_id": False,
+        "tenant_id": False,
+        "device_id": False,
+        "stream_id": False,
+        "sequence": False,
+        "payload_hash": False,
+        "payload": False,
+        "received_at": False,
+    },
 }
 
 EXPECTED_PRIMARY_KEYS = {
@@ -400,6 +459,11 @@ EXPECTED_PRIMARY_KEYS = {
     "multi_agent_analysis_runs": ("tenant_id", "analysis_id"),
     "disposition_decisions": ("tenant_id", "disposition_id"),
     "event_bridge_records": ("event_bridge_record_id",),
+    "telemetry_capture_batches": ("tenant_id", "batch_id"),
+    "edge_telemetry": ("telemetry_id",),
+    "normalized_observations": ("tenant_id", "observation_id"),
+    "fused_frames": ("tenant_id", "frame_id"),
+    "device_heartbeat_identities": ("heartbeat_identity_id",),
 }
 
 EXPECTED_FOREIGN_KEYS = {
@@ -525,6 +589,29 @@ EXPECTED_FOREIGN_KEYS = {
         ("resident_id", "residents", "resident_id"),
         ("room_id", "rooms", "room_id"),
     },
+    "telemetry_capture_batches": {
+        ("tenant_id", "tenants", "tenant_id"),
+        ("tenant_id", "devices", "tenant_id"),
+        ("tenant_id", "rooms", "tenant_id"),
+    },
+    "edge_telemetry": {
+        ("tenant_id", "tenants", "tenant_id"),
+        ("tenant_id", "telemetry_capture_batches", "tenant_id"),
+        ("tenant_id", "devices", "tenant_id"),
+        ("tenant_id", "rooms", "tenant_id"),
+    },
+    "normalized_observations": {
+        ("tenant_id", "tenants", "tenant_id"),
+        ("tenant_id", "telemetry_capture_batches", "tenant_id"),
+    },
+    "fused_frames": {
+        ("tenant_id", "tenants", "tenant_id"),
+        ("tenant_id", "telemetry_capture_batches", "tenant_id"),
+    },
+    "device_heartbeat_identities": {
+        ("tenant_id", "tenants", "tenant_id"),
+        ("tenant_id", "devices", "tenant_id"),
+    },
 }
 
 EXPECTED_UNIQUES = {
@@ -558,6 +645,22 @@ EXPECTED_UNIQUES = {
     "multi_agent_analysis_runs": set(),
     "disposition_decisions": set(),
     "event_bridge_records": {("tenant_id", "idempotency_key")},
+    "telemetry_capture_batches": {("tenant_id", "request_fingerprint")},
+    "edge_telemetry": {
+        (
+            "tenant_id",
+            "device_id",
+            "source",
+            "stream_id",
+            "sequence",
+            "schema_version",
+        )
+    },
+    "normalized_observations": set(),
+    "fused_frames": {("tenant_id", "batch_id")},
+    "device_heartbeat_identities": {
+        ("tenant_id", "device_id", "stream_id", "sequence")
+    },
 }
 
 EXPECTED_INDEXES = {
@@ -634,6 +737,22 @@ EXPECTED_INDEXES = {
         ("event_id",),
         ("source_anomaly_id", "evidence_revision"),
     },
+    "telemetry_capture_batches": {
+        ("device_id",),
+        ("room_id",),
+        ("received_at",),
+        ("processing_state",),
+    },
+    "edge_telemetry": {
+        ("tenant_id",),
+        ("batch_id",),
+        ("device_id",),
+        ("room_id",),
+        ("source",),
+    },
+    "normalized_observations": {("batch_id",)},
+    "fused_frames": {("batch_id",)},
+    "device_heartbeat_identities": {("tenant_id",), ("device_id",)},
 }
 
 EXPECTED_COMPOSITE_OWNERSHIP_FOREIGN_KEYS = {
@@ -726,6 +845,36 @@ EXPECTED_COMPOSITE_OWNERSHIP_FOREIGN_KEYS = {
         (("tenant_id", "resident_id"), "residents", ("tenant_id", "resident_id")),
         (("tenant_id", "room_id"), "rooms", ("tenant_id", "room_id")),
     },
+    "telemetry_capture_batches": {
+        (("tenant_id", "device_id"), "devices", ("tenant_id", "device_id")),
+        (("tenant_id", "room_id"), "rooms", ("tenant_id", "room_id")),
+    },
+    "edge_telemetry": {
+        (
+            ("tenant_id", "batch_id"),
+            "telemetry_capture_batches",
+            ("tenant_id", "batch_id"),
+        ),
+        (("tenant_id", "device_id"), "devices", ("tenant_id", "device_id")),
+        (("tenant_id", "room_id"), "rooms", ("tenant_id", "room_id")),
+    },
+    "normalized_observations": {
+        (
+            ("tenant_id", "batch_id"),
+            "telemetry_capture_batches",
+            ("tenant_id", "batch_id"),
+        ),
+    },
+    "fused_frames": {
+        (
+            ("tenant_id", "batch_id"),
+            "telemetry_capture_batches",
+            ("tenant_id", "batch_id"),
+        ),
+    },
+    "device_heartbeat_identities": {
+        (("tenant_id", "device_id"), "devices", ("tenant_id", "device_id")),
+    },
 }
 
 
@@ -793,6 +942,11 @@ def test_initial_migration_creates_product_backbone(tmp_path: Path) -> None:
         "llm_interpretations",
         "disposition_decisions",
         "event_bridge_records",
+        "telemetry_capture_batches",
+        "edge_telemetry",
+        "normalized_observations",
+        "fused_frames",
+        "device_heartbeat_identities",
     }
     for table_name in task_8_tables:
         migrated_uniques = {
@@ -904,7 +1058,7 @@ def test_flexible_context_migration_defaults_old_memory_to_general_context(
         )
         revision = session.scalar(text("SELECT version_num FROM alembic_version"))
 
-    assert revision == "0007_multi_agent_analysis"
+    assert revision == "0008_edge_telemetry_ingestion"
     assert restored.entries[0].context_kind == "general_context"
     assert restored.entries[0].effective_from is None
     assert restored.entries[0].effective_until is None

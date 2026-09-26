@@ -50,6 +50,25 @@ def test_event_contract_publishes_additive_multi_agent_analysis() -> None:
     } <= set(analysis_schema["properties"])
 
 
+def test_device_ingestion_contract_is_published_with_bearer_auth() -> None:
+    document = generate_openapi_document()
+
+    for route in ("/v1/ingest/telemetry", "/v1/ingest/heartbeat"):
+        operation = document["paths"][route]["post"]
+        assert operation["security"] == [{"HTTPBearer": []}]
+        assert set(operation["responses"]) == {
+            "202",
+            "401",
+            "404",
+            "405",
+            "409",
+            "413",
+            "422",
+            "500",
+            "503",
+        }
+
+
 def test_every_v1_operation_documents_development_access_headers() -> None:
     document = generate_openapi_document()
     for route, path in document["paths"].items():
@@ -57,6 +76,9 @@ def test_every_v1_operation_documents_development_access_headers() -> None:
             continue
         for method, operation in path.items():
             if method not in {"get", "post", "put", "patch", "delete"}:
+                continue
+            if route.startswith("/v1/ingest/"):
+                assert operation["security"] == [{"HTTPBearer": []}]
                 continue
             parameters = {item["name"] for item in operation["parameters"]}
             assert {"X-Tenant-Id", "X-Actor-Id"} <= parameters
