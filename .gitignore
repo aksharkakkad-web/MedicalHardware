@@ -36,3 +36,9 @@ eval-results/
 # Regenerable Graphify cache and timestamped backups
 graphify-out/cache/ast/
 graphify-out/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/
+
+# Hardware lane
+firmware/**/.pio/
+firmware/captures/
+firmware/host/temp_calibration.json
+firmware/host/temp_baseline.json
