@@ -111,7 +111,8 @@ def temperature_confidence(est: dict | None, baseline_n: int) -> dict:
 
 def vitals_confidence(selected: dict | None, health: dict, distance_m: float | None) -> dict:
     if not selected or selected.get("heart_rate_bpm") is None:
-        return confidence_pct([])
+        return dict(confidence_pct([]), kind="heuristic_quality_score", calibrated=False,
+                    interpretation="engineering score; not a probability of accuracy")
     f = []
     src = selected.get("heart_source")
     if src == "radar":
@@ -125,10 +126,16 @@ def vitals_confidence(selected: dict | None, health: dict, distance_m: float | N
         f.append(("sample rate", min(1.0, hz / 25.0), f"CSI at {hz:.1f} Hz"))
         f.append(("spatial selectivity", 0.4,
                   "one antenna cannot confirm the change was the person"))
-    f.append(("cross-check", 1.0 if selected.get("agree") else 0.35,
-              "instruments agree" if selected.get("agree")
-              else "radar and Wi-Fi disagree"))
+    agreement = selected.get("heart_agree", selected.get("agree"))
+    cross_score = 1.0 if agreement is True else (0.35 if agreement is False else 0.6)
+    cross_reason = ("instruments agree" if agreement is True else
+                    "radar and Wi-Fi disagree" if agreement is False else
+                    "no simultaneous comparison available")
+    f.append(("cross-check", cross_score, cross_reason))
     if selected.get("suspect"):
         f.append(("plausibility", 0.3, selected["suspect"]))
     f.append(("validation", 0.6, "never checked against a reference device"))
-    return confidence_pct(f)
+    result = confidence_pct(f)
+    result.update(kind="heuristic_quality_score", calibrated=False,
+                  interpretation="engineering score; not a probability of accuracy")
+    return result

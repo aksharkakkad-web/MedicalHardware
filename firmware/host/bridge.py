@@ -16,6 +16,7 @@ DEMO badge. Measured and simulated data must never be mistakable for one another
 from __future__ import annotations
 
 import argparse
+import copy
 import glob
 import json
 import math
@@ -29,17 +30,31 @@ from pathlib import Path
 
 import stream.frames as F
 from vitals import VitalsEstimator
-from radar_decode import RadarDecoder
+from radar_decode import RadarDecoder, ID_HEART, ID_BREATH, ID_CLOUD
 import body_model
 import motion_body
 import vitals_select
-import posture_watch
-import temp_status
 import confidence
 
 DASHBOARD = Path(__file__).parent / "dashboard" / "index.html"
-BASELINE_PATH = Path(__file__).parent / "temp_baseline.json"
 BODY_VIEW = Path(__file__).parent / "dashboard" / "body.html"
+
+
+def json_safe(obj):
+    """Replace non-finite floats with None, recursively.
+
+    json.dumps writes NaN and Infinity as bare tokens, which are not JSON. The
+    browser's JSON.parse rejects the whole message, so a single NaN anywhere in
+    a snapshot froze every panel on the dashboard while the sensors were fine.
+    An absent reading is None the whole way to the browser.
+    """
+    if isinstance(obj, float):
+        return obj if math.isfinite(obj) else None
+    if isinstance(obj, dict):
+        return {k: json_safe(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [json_safe(v) for v in obj]
+    return obj
 
 
 class RateMeter:
@@ -58,7 +73,7 @@ class RateMeter:
 
     @property
     def hz(self) -> float:
-        if len(self.stamps) < 2:
+        if self.age > self.window or len(self.stamps) < 2:
             return 0.0
         span = self.stamps[-1] - self.stamps[0]
         return (len(self.stamps) - 1) / span if span > 0 else 0.0
@@ -92,13 +107,14 @@ def thermal_blob(px: list[float]) -> dict | None:
     Returns None when the scene has no meaningful thermal contrast. A flat room
     must read as empty rather than as a person-shaped patch of sensor noise.
     """
+    if len(px) != F.THERMAL_PIXELS or not all(math.isfinite(v) for v in px):
+        return None
     ordered = sorted(px)
     ambient = ordered[len(ordered) // 2]
     peak = ordered[-1]
     contrast = peak - ambient
 
-    # Below this the frame is a uniform room. The threshold is deliberately
-    # generous: a false "nobody here" is safer than a phantom person.
+    # Low contrast means no resolved warm region, not proof of an empty room.
     if contrast < 1.8:
         return None
 
@@ -218,6 +234,13 @@ class State:
 
     def __init__(self, simulated: bool) -> None:
         self.lock = threading.Lock()
+        self.snapshot_lock = threading.Lock()
+        self.device_times = {}
+        self.received_at = {}
+        self.radar_raw = False
+        self.vitals_out_at = None
+        self._epoch = 0
+        self._derived_epoch = 0
         self.simulated = simulated
         self.thermal: list[float] | None = None
         self.radar: F.RadarFrame | None = None
@@ -243,11 +266,6 @@ class State:
         # without lagging a real change meaningfully - skin temperature does
         # not move quickly.
         self.skin_hist: list[tuple[float, float]] = []
-        self.baseline = temp_status.Baseline()
-        self.baseline.load(BASELINE_PATH)
-        self._last_baseline_save = 0.0
-        self.posture = posture_watch.PostureWatcher()
-        self.posture_events: list[dict] = []
         self.vitals_smoother = vitals_select.Smoother()
         self.motion = motion_body.MotionBody()
         self.rate = {
@@ -260,18 +278,31 @@ class State:
 
     def apply(self, frame) -> None:
         with self.lock:
+            modality = ("thermal" if isinstance(frame, F.ThermalFrame) else
+                        "radar" if isinstance(frame, (F.RadarFrame, F.RadarRawFrame)) else
+                        "csi" if isinstance(frame, F.CsiFrame) else
+                        "ambient" if isinstance(frame, F.AmbientFrame) else
+                        "stats" if isinstance(frame, F.DeviceStats) else None)
+            if modality:
+                previous = self.device_times.get(modality)
+                if previous is not None and frame.t_us < previous:
+                    self._reset_measurements()
+                self.device_times[modality] = frame.t_us
+                self.received_at[modality] = time.monotonic()
             if isinstance(frame, F.ThermalFrame):
                 self.thermal = orient(frame.pixels)
                 self.rate["thermal"].tick()
             elif isinstance(frame, F.RadarFrame):
+                self.radar_raw = False
                 self.radar = frame          # legacy on-device decode
                 self.rate["radar"].tick()
             elif isinstance(frame, F.RadarRawFrame):
+                self.radar_raw = True
                 # Vendor protocol decoded here, not on the node.
-                self.radar_decoder.feed(frame.data)
+                self.radar_decoder.feed(frame.data, t_us=frame.t_us)
                 st = self.radar_decoder.state
                 self.radar = F.RadarFrame(
-                    t_us=frame.t_us,
+                    t_us=self.radar_decoder.device_times.get(ID_CLOUD, frame.t_us),
                     presence=st.presence,
                     distance_m=st.distance_m,
                     respiration_rpm=st.respiration_rpm,
@@ -292,7 +323,14 @@ class State:
                 self.csi_amps = amps
                 self.csi_rssi = frame.rssi
                 self.rate["csi"].tick()
-                self.vitals.add(time.monotonic(), amps)
+                sample_t = frame.t_us / 1_000_000.0
+                if self.vitals.samples and (sample_t <= self.vitals.samples[-1][0] or
+                                           sample_t-self.vitals.samples[-1][0] > 0.5):
+                    self.vitals = VitalsEstimator()
+                    self.vitals_out = None
+                    self.vitals_out_at = None
+                    self._epoch += 1
+                self.vitals.add(sample_t, amps)
                 self.csi_hist.append(amps)
                 if len(self.csi_hist) > 40:
                     self.csi_hist.pop(0)
@@ -302,8 +340,52 @@ class State:
                 self.lux = frame.lux
                 self.rate["ambient"].tick()
 
+    def _reset_measurements(self):
+        """Called with the acquisition lock held after a reconnect/device reset."""
+        self._epoch += 1
+        self.device_times.clear()
+        self.received_at.clear()
+        self.thermal = self.radar = self.csi_amps = self.lux = None
+        self.radar_decoder = RadarDecoder()
+        self.vitals = VitalsEstimator()
+        self.vitals_out = self.vitals_out_at = None
+        self.csi_hist = []
+        self.device = None
+        # Snapshot-derived state is reset at the next snapshot boundary. An
+        # in-flight snapshot may finish its old state but cannot publish it.
+        for meter in self.rate.values():
+            meter.stamps.clear()
+
     def snapshot(self) -> dict:
+        with self.snapshot_lock:
+            while True:
+                with self.lock:
+                    epoch = self._epoch
+                    if self._derived_epoch != epoch:
+                        self.vitals_smoother = vitals_select.Smoother()
+                        self.skin_hist = []
+                        self._prev_dev = self._captured_hz = None
+                        self.motion = motion_body.MotionBody()
+                        self._derived_epoch = epoch
+                result = self._snapshot()
+                with self.lock:
+                    if epoch != self._epoch:
+                        continue
+                return result
+
+    def _snapshot(self) -> dict:
+        now = time.monotonic()
         with self.lock:
+            device_times = dict(self.device_times)
+            received_at = dict(self.received_at)
+            vout_at = self.vitals_out_at
+            radar_times = {}
+            if self.radar_raw and self.radar is not None:
+                self.radar_decoder._recompute()
+                rs = self.radar_decoder.state
+                self.radar = F.RadarFrame(self.radar.t_us, rs.presence, rs.distance_m,
+                                         rs.respiration_rpm, rs.heart_rate_bpm)
+                radar_times = dict(self.radar_decoder.updated_at)
             thermal = self.thermal
             radar = self.radar
             amps = self.csi_amps
@@ -323,7 +405,8 @@ class State:
                 status = "degraded"
             else:
                 status = "ok"
-            return {"hz": round(hz, 1), "status": status}
+            return {"hz": 0.0 if status == "offline" else round(hz, 1), "status": status,
+                    "age_s": round(age, 3), "device_t_us": device_times.get(key)}
 
         out = {
             "simulated": self.simulated,
@@ -341,6 +424,18 @@ class State:
             },
         }
 
+        # Freshness is checked before presence, selection and downstream features.
+        if out["health"]["radar"]["status"] == "offline":
+            radar = None
+        thermal_usable = (thermal is not None and out["health"]["thermal"]["status"] != "offline"
+                          and len(thermal) == F.THERMAL_PIXELS
+                          and all(math.isfinite(v) for v in thermal))
+        if not thermal_usable:
+            thermal = None
+        if out["health"]["csi"]["status"] == "offline":
+            amps, hist, vout = None, [], None
+        elif vout_at is None or now-vout_at > vitals_select.MAX_READING_AGE_S:
+            vout = None
         blob = None
         if thermal:
             blob = thermal_blob(thermal)
@@ -376,30 +471,42 @@ class State:
                 band = "bright"
             out["ambient"] = {"lux": round(lux, 1), "band": band}
 
-        # Cross-check the two independent sensors. This is the part that earns
-        # its keep: the radar alone will report a confident target, and even a
-        # heart rate, off a desk. Thermal cannot see a desk as warm, so
-        # disagreement is the signal that something is wrong.
-        radar_target = bool(radar and radar.presence)
+        radar_known = radar is not None and radar.presence is not None
+        radar_target = radar_known and radar.presence
         thermal_body = blob is not None
-        if radar_target and thermal_body:
+        skew_s = (abs(radar.t_us-device_times["thermal"])/1e6
+                  if radar_known and thermal_usable else None)
+        aligned = skew_s is not None and skew_s <= 1.0
+        # These are evidence states, not room-wide identity/emptiness proofs.
+        if radar_target and thermal_body and aligned:
             agree, verdict = True, "person"
-        elif radar_target and not thermal_body:
-            agree, verdict = False, "radar_only"
-        elif thermal_body and not radar_target:
-            agree, verdict = False, "thermal_only"
-        else:
+        elif radar_target:
+            agree, verdict = (False if thermal_usable and aligned else None), "radar_only"
+        elif thermal_body:
+            agree, verdict = (False if radar_known and aligned else None), "thermal_only"
+        elif radar_known and thermal_usable and aligned:
             agree, verdict = True, "empty"
+        else:
+            agree, verdict = None, "unknown"
 
-        # Vitals are only meaningful for a person who is actually there and
-        # nearly still. Reporting a rate for an empty room would be the CSI
-        # equivalent of the radar's 119 bpm off a desk.
-        present = bool(radar and radar.presence) or blob is not None
-        if vout is not None:
-            out["csi_vitals"] = vout if present else {
-                "breathing_rpm": None, "heart_rate_bpm": None,
-                "reason": "nobody detected",
-            }
+        # A fresh, finite, time-compatible thermal view without a blob withholds
+        # unsupported vitals. It cannot prove that a reflector is furniture:
+        # field of view, occlusion and low contrast remain unresolved.
+        vetoed = radar_target and thermal_usable and aligned and not thermal_body
+        if vetoed:
+            out["radar"]["heart_rate_bpm"] = None
+            out["radar"]["respiration_rpm"] = None
+            out["radar"]["vitals_withheld"] = (
+                "person unconfirmed: thermal view has no resolved warm body; "
+                "coverage, contrast or occlusion may limit corroboration"
+            )
+        present = (radar_target or thermal_body) and not vetoed
+        out["csi_vitals"] = vout if present and vout is not None else {
+            "breathing_rpm": None, "heart_rate_bpm": None,
+            "reason": ("person unconfirmed by thermal view" if vetoed else
+                       "no fresh presence evidence" if not present else
+                       "CSI estimate unavailable or stale"),
+        }
 
         # CSI motion energy: mean per-subcarrier standard deviation over the
         # recent window. This is a real, directly measured quantity. It is not
@@ -437,32 +544,6 @@ class State:
                     est["smoothed_over"] = len(vals)
                     est["jitter_f"] = round(vals[-1] - vals[0], 1)
 
-                    # Feed the person's own history, then judge against it.
-                    # Only smoothed, in-range readings are allowed to teach the
-                    # baseline - an out-of-range or single-frame value would
-                    # widen it and mask the very change it exists to catch.
-                    if est.get("core_f") is not None:
-                        self.baseline.add(est["core_f"])
-                        if now - self._last_baseline_save > 30:
-                            self._last_baseline_save = now
-                            try:
-                                self.baseline.save(BASELINE_PATH)
-                            except OSError:
-                                pass
-                    est["status"] = temp_status.assess(
-                        est.get("core_f"), est.get("uncertainty_f"), self.baseline
-                    )
-                    est["confidence"] = confidence.temperature_confidence(
-                        est, len(self.baseline.samples)
-                    )
-                    rel = est["status"].get("relative") or {}
-                    if rel.get("spread_f"):
-                        z = rel["delta_f"] / rel["spread_f"]
-                        pct, why = confidence.unusualness_pct(
-                            z, len(self.baseline.samples)
-                        )
-                        est["unusualness"] = {"pct": pct, "z": round(z, 2),
-                                              "why": why}
             # Motion-derived body region. Independent of absolute temperature,
             # so the carrier's own self-heating cannot masquerade as a person.
             mb = self.motion.update(thermal)
@@ -474,26 +555,6 @@ class State:
                 body["motion"] = mb
 
             out["body"] = body
-            # Posture watching, not fall detection. See posture_watch.py for
-            # what this can and cannot observe.
-            tconf = ((body or {}).get("head_temp") or {}).get("estimate", {}).get(
-                "confidence", {}).get("pct")
-            ev = self.posture.update(body, tconf, motion=mb)
-            if ev:
-                rec = {
-                    "kind": ev.kind, "at": ev.at, "detail": ev.detail,
-                    "confidence_pct": ev.confidence_pct,
-                    "prior_posture": ev.prior_posture,
-                    "limitations": ev.limitations,
-                }
-                sent, why = posture_watch.notify(ev)
-                rec["notified"] = sent
-                rec["notify_detail"] = why
-                self.posture_events.append(rec)
-                self.posture_events = self.posture_events[-20:]
-
-        if self.posture_events:
-            out["posture_events"] = self.posture_events[-3:]
 
         if dev:
             # The streamed CSI rate is deliberately below the captured rate, so
@@ -501,8 +562,9 @@ class State:
             # The node sends stats once a second while snapshots run at 15 Hz,
             # so most snapshots see an unchanged counter. Recompute only when
             # it actually moves, otherwise a zero delta reads as 0 Hz.
-            if self._prev_dev is None:
+            if self._prev_dev is None or dev.csi_accepted < self._prev_dev[1]:
                 self._prev_dev = (time.monotonic(), dev.csi_accepted)
+                self._captured_hz = None
             elif dev.csi_accepted > self._prev_dev[1]:
                 dt = time.monotonic() - self._prev_dev[0]
                 if dt > 0.4:
@@ -510,7 +572,9 @@ class State:
                         (dev.csi_accepted - self._prev_dev[1]) / dt, 1
                     )
                     self._prev_dev = (time.monotonic(), dev.csi_accepted)
-            out["csi_captured_hz"] = self._captured_hz
+            out["csi_captured_hz"] = (self._captured_hz
+                if out["health"]["csi"]["status"] != "offline"
+                and now-received_at.get("stats", -math.inf) <= 3.0 else None)
             out["device"] = {
                 "csi_accepted": dev.csi_accepted,
                 "csi_rejected": dev.csi_rejected,
@@ -524,6 +588,12 @@ class State:
             out.get("csi_vitals"),
             radar.distance_m if radar else None,
             self.vitals_smoother,
+            sample_times={
+                ("radar", "heart"): radar_times.get(ID_HEART, received_at.get("radar", now)),
+                ("radar", "resp"): radar_times.get(ID_BREATH, received_at.get("radar", now)),
+                ("wifi_csi", "heart"): vout_at if vout_at is not None else now,
+                ("wifi_csi", "resp"): vout_at if vout_at is not None else now,
+            }, now=now, health=out["health"],
         )
 
         if out.get("vitals"):
@@ -535,6 +605,11 @@ class State:
         out["fusion"] = {
             "verdict": verdict,
             "agree": agree,
+            "presence_status": "corroborated" if verdict == "person" else "unconfirmed" if radar_target or thermal_body else "not_detected" if verdict == "empty" else "unknown",
+            "thermal_evidence": "body" if thermal_body else "no_resolved_body" if thermal_usable else "unavailable",
+            "time_aligned": aligned,
+            "device_skew_s": skew_s,
+            "limitations": "finite field of view; no person identity or precise sensor latency calibration",
             "distance_m": None if not radar or radar.distance_m is None else round(radar.distance_m, 2),
             "bearing_deg": blob["bearing_deg"] if blob else None,
         }
@@ -551,9 +626,19 @@ def vitals_worker(state: State) -> None:
     """
     while True:
         try:
-            breath, heart = state.vitals.estimate()
             with state.lock:
+                estimator = copy.copy(state.vitals)
+                estimator.samples = list(state.vitals.samples)
+                epoch = state._epoch
+                observed_at = state.received_at.get("csi")
+                input_t_us = state.device_times.get("csi")
+            breath, heart = estimator.estimate()
+            with state.lock:
+                if epoch != state._epoch:
+                    continue
+                state.vitals_out_at = observed_at
                 state.vitals_out = {
+                    "device_t_us": input_t_us,
                     "breathing_rpm": None if breath.rate is None else round(breath.rate, 1),
                     "breathing_confidence": round(breath.confidence, 2),
                     "heart_rate_bpm": None if heart.rate is None else round(heart.rate, 1),
@@ -562,7 +647,9 @@ def vitals_worker(state: State) -> None:
                     "breathing_reason": breath.reason,
                 }
         except Exception:
-            pass
+            with state.lock:
+                state.vitals_out = None
+                state.vitals_out_at = None
         time.sleep(1.0)
 
 
@@ -692,7 +779,7 @@ def make_handler(state: State):
                 self.end_headers()
                 try:
                     while True:
-                        payload = json.dumps(state.snapshot())
+                        payload = json.dumps(json_safe(state.snapshot()), allow_nan=False)
                         self.wfile.write(f"data: {payload}\n\n".encode())
                         self.wfile.flush()
                         time.sleep(1 / 15)
@@ -740,7 +827,7 @@ def make_handler(state: State):
                         payload["warning"] = (
                             f"readings varied by {spread:.1f} F during calibration; "
                             "the offset is only as good as that stability")
-                body = json.dumps(payload, indent=2).encode()
+                body = json.dumps(json_safe(payload), indent=2, allow_nan=False).encode()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Content-Length", str(len(body)))

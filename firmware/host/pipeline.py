@@ -66,7 +66,6 @@ def main():
     b = envelope.EnvelopeBuilder(args.device_id, args.tenant_id, args.room_id)
     t_end = time.monotonic() + args.seconds
     sent = accepted = rejected = 0
-    assessments_sent = [0]
     prev_max_temp = None
 
     print(f"bridge {args.bridge} -> ingest {args.ingest} at {args.hz} Hz\n")
@@ -78,6 +77,11 @@ def main():
 
         health = snap.get("health", {})
         thermal = snap.get("thermal")
+        # Preserve the existing device-clock contract; host arrival time is
+        # not a substitute for acquisition time.
+        def device_ms(source):
+            value = health.get(source, {}).get("device_t_us")
+            return value // 1000 if isinstance(value, int) and value >= 0 else None
         batch = None
         envelopes = []
 
@@ -98,12 +102,12 @@ def main():
         # rather than shipped for something downstream to treat as fact.
         pl, why = extractors.gate(pl, why, ["heart_rate_bpm", "respiration_rpm"], v_conf)
         if pl:
-            envelopes.append(b.build("radar", extractors.FORMAT_RADAR, pl, None, why, batch))
+            envelopes.append(b.build("radar", extractors.FORMAT_RADAR, pl, device_ms("radar"), why, batch))
 
         pl, why = extractors.thermal_features(snap.get("body"), thermal,
                                               health.get("thermal", {}), trend)
         if pl:
-            envelopes.append(b.build("thermal", extractors.FORMAT_THERMAL, pl, None, why, batch))
+            envelopes.append(b.build("thermal", extractors.FORMAT_THERMAL, pl, device_ms("thermal"), why, batch))
 
         pl, why = extractors.csi_features(snap.get("csi"), snap.get("csi_motion"),
                                           snap.get("csi_vitals"),
@@ -111,7 +115,7 @@ def main():
                                           snap.get("csi_captured_hz"))
         pl, why = extractors.gate(pl, why, ["respiration_feature"], v_conf)
         if pl:
-            envelopes.append(b.build("wifi_csi", extractors.FORMAT_CSI, pl, None, why, batch))
+            envelopes.append(b.build("wifi_csi", extractors.FORMAT_CSI, pl, device_ms("csi"), why, batch))
 
         if envelopes:
             code, resp = post(f"{args.ingest}/v1/ingest/telemetry", envelopes, api_key=args.api_key)
@@ -123,47 +127,15 @@ def main():
                     if r.get("errors"):
                         print(f"  REJECTED seq {r['sequence']}: {r['errors']}")
 
-        # Abnormality travels on its own channel. The three payload formats are
-        # frozen and have no field for a verdict, and the contract puts
-        # baselines and anomaly logic in the cloud - so this is labelled
-        # host-derived rather than folded into telemetry.
-        est = ((snap.get("body") or {}).get("head_temp") or {}).get("estimate") or {}
-        status = est.get("status")
-        if status and status.get("state") not in (None, "no reading"):
-            rel = status.get("relative") or {}
-            t_conf = est.get("confidence") or {}
-            assessment = {
-                "schema_version": "1.0",
-                "source_stage": "host",
-                "device_id": args.device_id,
-                "room_id": args.room_id,
-                "kind": "temperature_deviation",
-                "state": status["state"],
-                "observed_at_ms": int(time.time() * 1000),
-                "value_f": est.get("core_f"),
-                "uncertainty_f": est.get("uncertainty_f"),
-                "baseline_f": rel.get("baseline_f"),
-                "delta_f": rel.get("delta_f"),
-                "unusualness_pct": (est.get("unusualness") or {}).get("pct"),
-                "measurement_confidence_pct": t_conf.get("pct"),
-                "limiting_factor": t_conf.get("limiting"),
-                "can_tell": status.get("can_tell"),
-                "note": status.get("note"),
-            }
-            code, _ = post(f"{args.ingest}/v1/assessments", assessment, api_key=args.api_key)
-            if code == 202:
-                assessments_sent[0] += 1
-
         dev = snap.get("device") or {}
         post(f"{args.ingest}/v1/ingest/heartbeat",
              b.heartbeat("bench-0.1.0", dev.get("csi_dropped", 0),
                          [s for s in ("radar", "thermal", "wifi_csi")
-                          if health.get(s, {}).get("status") == "ok"]),
+                          if health.get("csi" if s == "wifi_csi" else s, {}).get("status") == "ok"]),
              api_key=args.api_key)
         time.sleep(1.0 / args.hz)
 
-    print(f"\nsent {sent}  accepted {accepted}  rejected {rejected}"
-          f"  assessments {assessments_sent[0]}")
+    print(f"\nsent {sent}  accepted {accepted}  rejected {rejected}")
 
 
 if __name__ == "__main__":

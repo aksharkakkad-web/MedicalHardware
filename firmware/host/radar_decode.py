@@ -22,7 +22,9 @@ module's own plain-text status log, against the numeric ids.
 
 from __future__ import annotations
 
+import math
 import struct
+import time
 from dataclasses import dataclass
 
 SOF = 0x01
@@ -64,8 +66,10 @@ class RadarDecoder:
         self._breath = None
         self._heart = None
         self._distance_cm = None
+        self.updated_at = {}
+        self.device_times = {}
 
-    def feed(self, data: bytes) -> None:
+    def feed(self, data: bytes, t_us: int | None = None) -> None:
         self.buf.extend(data)
         if len(self.buf) > 8192:
             del self.buf[: len(self.buf) - 8192]
@@ -101,9 +105,10 @@ class RadarDecoder:
                 continue
 
             self.state.frames_ok += 1
-            self._apply(msg_id, frame[8 : 8 + length])
+            self._apply(msg_id, frame[8 : 8 + length], t_us)
 
-    def _apply(self, msg_id: int, data: bytes) -> None:
+    def _apply(self, msg_id: int, data: bytes, t_us: int | None = None) -> None:
+        now = time.monotonic()
         if msg_id == ID_LOG:
             self.state.log = "".join(
                 chr(c) if 32 <= c < 127 else " " for c in data
@@ -111,16 +116,28 @@ class RadarDecoder:
         elif msg_id == ID_BREATH and len(data) >= 4:
             v = struct.unpack_from("<f", data)[0]
             # 0 is the module's "no valid estimate" marker, not a measurement.
-            self._breath = v if v > 0.5 else None
+            self._breath = v if math.isfinite(v) and v > 0.5 else None
+            self.updated_at[msg_id] = now
+            self.device_times[msg_id] = t_us
         elif msg_id == ID_HEART and len(data) >= 4:
             v = struct.unpack_from("<f", data)[0]
-            self._heart = v if v > 0.5 else None
+            self._heart = v if math.isfinite(v) and v > 0.5 else None
+            self.updated_at[msg_id] = now
+            self.device_times[msg_id] = t_us
         elif msg_id == ID_DISTANCE and len(data) >= 8:
             self._distance_cm = struct.unpack_from("<f", data, 4)[0]
+            self.updated_at[msg_id] = now
+            self.device_times[msg_id] = t_us
         elif msg_id == ID_POSITION and len(data) >= 8:
             self.state.x, self.state.y = struct.unpack_from("<ff", data)
         elif msg_id == ID_CLOUD and len(data) >= 4:
             self._count = struct.unpack_from("<I", data)[0]
+            self.updated_at[msg_id] = now
+            self.device_times[msg_id] = t_us
+            if self._count == 0:
+                self._heart = self._breath = self._distance_cm = None
+                for key in (ID_HEART, ID_BREATH, ID_DISTANCE):
+                    self.updated_at.pop(key, None)
         elif msg_id == ID_PRESENCE and len(data) >= 2:
             pass  # state word; presence is taken from the point-cloud count
 
@@ -128,7 +145,9 @@ class RadarDecoder:
 
     def _recompute(self) -> None:
         s = self.state
-        target = self._count > 0
+        now = time.monotonic()
+        fresh = lambda key: key in self.updated_at and now-self.updated_at[key] <= 3.0
+        target = self._count > 0 if fresh(ID_CLOUD) else None
         s.presence = target
         if not target:
             s.distance_m = None
@@ -137,8 +156,8 @@ class RadarDecoder:
             return
         s.distance_m = (
             self._distance_cm / 100.0
-            if self._distance_cm is not None and self._distance_cm > 1.0
+            if fresh(ID_DISTANCE) and self._distance_cm is not None and math.isfinite(self._distance_cm) and self._distance_cm > 1.0
             else None
         )
-        s.respiration_rpm = self._breath
-        s.heart_rate_bpm = self._heart
+        s.respiration_rpm = self._breath if fresh(ID_BREATH) else None
+        s.heart_rate_bpm = self._heart if fresh(ID_HEART) else None

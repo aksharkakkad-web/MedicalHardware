@@ -63,6 +63,20 @@ HISTORY_S = 60.0
 DEMO_SUSTAIN_S = 1.2
 DEMO_COOLDOWN_S = 10.0
 
+# --- trigger-on-change mode ---------------------------------------------
+#
+# POSTURE_SENSITIVE=1 fires on any notable change in the motion region: it
+# appearing, its shape changing, or it moving across the frame. No orientation
+# logic, no upright precondition, no sustain.
+#
+# It will fire when someone walks past, waves, or shifts in a chair. That is
+# the intent - it is a trigger for filming, not a detector - and it is a
+# separate mode so it cannot be mistaken for the real one.
+SENSITIVE_COOLDOWN_S = 6.0
+SENSITIVE_ASPECT_DELTA = 0.35
+SENSITIVE_CENTROID_PX = 3.0
+SENSITIVE_PIXEL_RATIO = 1.6
+
 # How far before the horizontal period an upright observation must sit to count
 # as a transition. Normal mode wants clear separation; demo mode only needs
 # enough to prove the person was actually standing first.
@@ -81,9 +95,13 @@ class PostureEvent:
 
 
 class PostureWatcher:
+    """Sustained posture change, or - in sensitive mode - any change at all."""
+
     def __init__(self, demo: bool | None = None) -> None:
+        self.sensitive = os.environ.get("POSTURE_SENSITIVE", "") == "1"
         self.demo = (os.environ.get("POSTURE_DEMO", "") == "1"
                      if demo is None else demo)
+        self._last_motion: dict | None = None
         self.sustain_s = DEMO_SUSTAIN_S if self.demo else SUSTAIN_S
         self.cooldown_s = DEMO_COOLDOWN_S if self.demo else COOLDOWN_S
         # Demo mode keeps the transition requirement. Firing on any horizontal
@@ -109,6 +127,38 @@ class PostureWatcher:
         # most is the first one.
         self.last_notified: float | None = None
 
+    def _sensitive_check(self, motion: dict, now: float) -> PostureEvent | None:
+        """Fire on any notable change in the motion region."""
+        prev, self._last_motion = self._last_motion, motion
+        if (self.last_notified is not None
+                and now - self.last_notified < SENSITIVE_COOLDOWN_S):
+            return None
+
+        reason = None
+        if prev is None:
+            reason = "movement detected"
+        else:
+            da = abs(motion.get("aspect", 0) - prev.get("aspect", 0))
+            pc, cc = motion.get("centroid") or [0, 0], prev.get("centroid") or [0, 0]
+            dc = ((pc[0] - cc[0]) ** 2 + (pc[1] - cc[1]) ** 2) ** 0.5
+            pa, pb = motion.get("pixels", 1), max(1, prev.get("pixels", 1))
+            ratio = max(pa / pb, pb / pa)
+            if da >= SENSITIVE_ASPECT_DELTA:
+                reason = f"shape changed (aspect {prev['aspect']:.2f} to {motion['aspect']:.2f})"
+            elif dc >= SENSITIVE_CENTROID_PX:
+                reason = f"moved {dc:.1f} px across the frame"
+            elif ratio >= SENSITIVE_PIXEL_RATIO:
+                reason = f"size changed ({pb} to {pa} px)"
+        if not reason:
+            return None
+
+        self.last_notified = now
+        return PostureEvent(
+            kind="motion_change", at=time.time(), detail=reason,
+            confidence_pct=0.0, prior_posture=None,
+            limitations=["SENSITIVE MODE: fires on any movement, not on a fall"],
+        )
+
     def update(self, body: dict | None, confidence_pct: float | None,
                now: float | None = None,
                motion: dict | None = None) -> PostureEvent | None:
@@ -128,6 +178,11 @@ class PostureWatcher:
         # upright is what let someone standing close to the sensor - filling
         # the frame, therefore measuring wide - arm the detector and then
         # immediately satisfy it.
+        if self.sensitive and motion is not None:
+            ev = self._sensitive_check(motion, now)
+            if ev:
+                return ev
+
         if motion is not None:
             state = motion.get("orientation", "unknown")
             fully = not motion.get("touches_bottom", False)
@@ -222,6 +277,10 @@ def _tls_context() -> ssl.SSLContext:
     return ssl.create_default_context()
 
 
+def _unused_marker():
+    pass
+
+
 def notify(event: PostureEvent, topic: str | None = None,
            server: str = "https://ntfy.sh") -> tuple[bool, str]:
     """Send to an ntfy topic. Returns (sent, detail).
@@ -231,24 +290,28 @@ def notify(event: PostureEvent, topic: str | None = None,
     the topic can read it, so keep SUBJECT_NAME generic if the topic is shared.
 
     Message text is configurable so a demo can read naturally on camera:
-        SUBJECT_NAME   name used in the alert  (default "Mahin")
-        ALERT_TITLE    notification title      (default "Fall detected")
+        SUBJECT_NAME   optional subject label
+        ALERT_TITLE    notification title (default "Sustained horizontal posture")
     """
     topic = topic or os.environ.get("NTFY_TOPIC")
     if not topic:
         return False, "no NTFY_TOPIC configured"
 
-    name = os.environ.get("SUBJECT_NAME", "Mahin")
-    title = os.environ.get("ALERT_TITLE", "Fall detected")
-    body = f"Patient {name} has fallen. Please check immediately."
+    name = os.environ.get("SUBJECT_NAME", "Subject")
+    motion_only = event.kind == "motion_change"
+    default_title = "Thermal motion change" if motion_only else "Sustained horizontal posture"
+    title = os.environ.get("ALERT_TITLE", default_title)
+    observation = "motion change" if motion_only else "sustained horizontal posture"
+    body = (f"{name}: {observation} observed in the thermal view. "
+            "This prototype cannot determine whether a fall occurred.")
 
     req = urllib.request.Request(
         f"{server}/{topic}",
         data=body.encode(),
         headers={
             "Title": title,
-            "Priority": "urgent",
-            "Tags": "rotating_light",
+            "Priority": "default",
+            "Tags": "information_source",
         },
     )
     try:

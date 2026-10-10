@@ -21,6 +21,8 @@ definition a change.
 
 from __future__ import annotations
 
+import math
+
 COLS = 32
 ROWS = 24
 
@@ -60,12 +62,22 @@ class MotionBody:
             return None
         # Adapt first, then measure, so a stationary scene converges quickly.
         a = ALPHA if self.frames > 40 else 0.05
-        self.bg = [b + (p - b) * a for b, p in zip(self.bg, px)]
+        # A non-finite pixel must never reach the background. A running average
+        # that takes in one NaN keeps it forever; a NaN at pixel 0 then made
+        # max() return NaN on every frame, which reached the dashboard as a bare
+        # NaN token the browser refused to parse, freezing every panel. A pixel
+        # whose background is already non-finite is re-seeded from the reading.
+        self.bg = [
+            b if not math.isfinite(p) else p if not math.isfinite(b) else b + (p - b) * a
+            for b, p in zip(self.bg, px)
+        ]
         self.frames += 1
         if self.frames < 20:
             return None  # background not settled yet
 
-        fg = [p - b for p, b in zip(px, self.bg)]
+        # A pixel with no reading shows no motion rather than an invented delta.
+        fg = [p - b if math.isfinite(p) and math.isfinite(b) else 0.0
+              for p, b in zip(px, self.bg)]
 
         # Adaptive threshold. A fixed 1.2 C found nothing on real hardware: in a
         # 29-31 C room a clothed person barely exceeds the background, and the

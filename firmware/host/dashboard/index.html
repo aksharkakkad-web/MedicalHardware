@@ -67,7 +67,7 @@
   .verdict.person .vdot{background:var(--ok)}
   .verdict.empty .vdot{background:var(--ink-3)}
   .verdict.radar_only .vdot,.verdict.thermal_only .vdot{background:var(--warn)}
-  .heroBody{display:grid;grid-template-columns:1.15fr 1fr;gap:0}
+  .heroBody{display:grid;grid-template-columns:1.45fr .8fr;gap:0}
   .heroBody > div{padding:16px 18px 18px;min-width:0}
   .heroBody > div:first-child{border-right:1px solid var(--line)}
   .heroLbl{font-size:11px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:9px}
@@ -95,15 +95,15 @@
   .readout .k{font-size:11px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.05em}
   .readout .v{font-family:var(--mono);font-size:22px;font-weight:550;letter-spacing:-.015em;margin-top:3px}
   .readout .v.none{color:var(--ink-3);font-size:15px;font-weight:400}
-  .note{font-size:12px;color:var(--ink-2);margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
-  .note b{color:var(--ink);font-weight:600}
+  .vitalReadout{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .vitalReadout > div{padding:20px 22px;min-width:0}
+  .vitalReadout .k{font-size:13px;font-weight:600;color:var(--ink-2)}
+  .vitalReadout .v{font-size:clamp(34px,3.5vw,48px);font-weight:650;line-height:1.1;margin-top:10px}
+  .vitalReadout .v small{font-size:15px;font-weight:500;color:var(--ink-2)}
+  .vitalReadout .v.none{font-size:18px;line-height:1.35}
+  .vitalReadout .src{font-size:12px;min-height:2.6em;margin-top:9px}
+  @media (max-width:700px){.vitalReadout{grid-template-columns:1fr}}
   .src{font-size:11px;color:var(--ink-3);margin-top:3px;line-height:1.35}
-  /* A disagreement between instruments is information. Showing two confident
-     numbers side by side and letting the reader pick is not. */
-  .conflict{margin-top:12px;padding:11px 13px;border-radius:8px;font-size:12px;line-height:1.5;
-    background:color-mix(in srgb,var(--warn) 10%,transparent);
-    border:1px solid color-mix(in srgb,var(--warn) 40%,transparent)}
-  .conflict b{color:var(--ink)}
 
   /* A stalled feed must announce itself. Freezing on the last good frame looks
      identical to a working sensor showing a still room, which is the more
@@ -114,6 +114,18 @@
     background:color-mix(in srgb,var(--canvas) 78%,transparent);
     backdrop-filter:saturate(.25) blur(1.5px)}
   .canvasWrap.stale .lost{display:flex}
+  .sceneHud{position:absolute;left:10px;right:10px;bottom:10px;display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 20px;padding:12px 15px;
+    border:1px solid rgba(255,255,255,.3);border-radius:8px;
+    background:rgba(10,10,10,.83);color:#fff;backdrop-filter:blur(8px)}
+  .sceneHud .hudLabel{display:block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#d4d4d4}
+  .sceneHud .hudValue{display:block;font-family:var(--mono);font-size:clamp(24px,2.8vw,36px);font-weight:650;line-height:1.2;white-space:nowrap}
+  .sceneHud .hudSecondary{font-size:15px;font-weight:600;line-height:1.2;white-space:normal}
+  .sceneHud .hudNote{display:block;font-size:11px;color:#d4d4d4}
+  .sceneHud .unavailable{font-size:15px;font-weight:400;color:#d4d4d4;white-space:normal}
+  .canvasWrap.stale .sceneHud{visibility:hidden}
+  @media (max-width:600px){.sceneHud{position:relative;inset:auto;margin-top:-8px;border-radius:0 0 8px 8px;gap:12px}}
+  .canvasWrap.stale .lost{z-index:2}
   .lost b{font-size:14px;font-weight:600}
   .lost span{font-size:12px;color:var(--ink-2)}
   .stalePill{font-size:11px;font-weight:600;color:var(--bad);margin-left:6px}
@@ -125,8 +137,8 @@
     <h1>Bench node</h1>
     <span class="badge" id="srcBadge">connecting</span>
   </header>
-  <p class="sub">Live view of what the sensors actually see. Not a medical device.
-     &middot; <a href="/body" target="_blank" style="color:var(--action)">Open body view</a></p>
+  <p class="sub">Live view of what the sensors see &middot;
+     <a href="/body" target="_blank" style="color:var(--action)">Open body view</a></p>
 
   <div class="strip" id="strip"></div>
 
@@ -135,7 +147,14 @@
     <div class="heroBody">
       <div>
         <div class="heroLbl">What the sensors see</div>
-        <div class="canvasWrap" id="wrap_scene"><canvas id="scene" width="640" height="420"></canvas><div class="lost"><b>No data</b><span>Sensor feed feed stopped</span></div></div>
+        <div class="canvasWrap" id="wrap_scene"><canvas id="scene" width="640" height="420"></canvas>
+          <div class="sceneHud" aria-label="Live estimates and body position">
+            <div><span class="hudLabel">Heart rate estimate</span><span class="hudValue" id="hudHeart">not available</span></div>
+            <div><span class="hudLabel">Breathing estimate</span><span class="hudValue" id="hudBreath">not available</span></div>
+            <div><span class="hudLabel">Temperature estimate</span><span class="hudValue hudSecondary" id="hudTemp">not available</span><span class="hudNote" id="hudTempNote">Head skin surface, not body temperature</span></div>
+            <div><span class="hudLabel">Body position</span><span class="hudValue hudSecondary" id="hudPosition">not available</span></div>
+          </div>
+          <div class="lost"><b>No data</b><span>Sensor feed stopped</span></div></div>
       </div>
       <div>
         <div class="heroLbl">Where they are in the room</div>
@@ -145,6 +164,19 @@
   </div>
 
   <div class="grid">
+    <div class="card wide">
+      <h2>Live estimates</h2>
+      <p class="hint">Current sensor estimates. Unavailable readings stay blank.</p>
+      <div class="readout vitalReadout">
+        <div><div class="k">Temperature estimate</div><div class="v" id="vHead">–</div>
+             <div class="src" id="sHead">Head skin surface, not body temperature</div></div>
+        <div><div class="k">Heart rate estimate</div><div class="v" id="vHr">–</div>
+             <div class="src" id="sHr"></div></div>
+        <div><div class="k">Breathing estimate</div><div class="v" id="vResp">–</div>
+             <div class="src" id="sResp"></div></div>
+      </div>
+    </div>
+
     <div class="card">
       <h2>Thermal</h2>
       <p class="hint">MLX90640 &middot; 32&times;24 &middot; warmer is brighter</p>
@@ -159,35 +191,6 @@
     </div>
 
     <div class="card">
-      <h2>Vital estimates</h2>
-      <p class="hint">Uncalibrated consumer sensor. Blank means the sensor could not measure it.</p>
-      <div class="readout">
-        <div><div class="k">Presence</div><div class="v" id="vPres">–</div></div>
-        <div><div class="k">Distance</div><div class="v" id="vDist">–</div></div>
-        <div><div class="k">Breathing</div><div class="v" id="vResp">–</div>
-             <div class="src" id="sResp"></div></div>
-        <div><div class="k">Heart rate</div><div class="v" id="vHr">–</div>
-             <div class="src" id="sHr"></div></div>
-        <div><div class="k">Head temp</div><div class="v" id="vHead">–</div>
-             <div class="src" id="sHead"></div></div>
-        <div><div class="k">Unusual?</div><div class="v" id="vAbn">–</div>
-             <div class="src" id="sAbn"></div></div>
-
-        <div><div class="k">Room light</div><div class="v" id="vLux">–</div></div>
-      </div>
-      <div id="conflict"></div>
-      <div id="postureEvents"></div>
-      <p class="note"><b>These are estimates, not measurements.</b> Radar is used
-      within about 1.5&nbsp;m, where its 5&nbsp;mm wavelength and range gating
-      make it the better instrument; Wi-Fi CSI is used beyond that, where it
-      reaches further but cannot tell that what changed was the person. Neither
-      has <b>ever been checked against a reference device</b>.
-      Head temperature is <b>skin surface, not body temperature</b> &mdash; see the
-      body view. A blank field means nothing usable was measured; it is never
-      filled in with a guess.</p>
-    </div>
-
-    <div class="card">
       <h2>Wi-Fi CSI</h2>
       <p class="hint">Signal shape across subcarriers &middot; movement disturbs the pattern</p>
       <div class="canvasWrap" id="wrap_csi"><canvas id="csi" width="512" height="384"></canvas><div class="lost"><b>No data</b><span>Wi-Fi CSI feed stopped</span></div></div>
@@ -199,6 +202,7 @@
 // Thermal colormap: dark blue -> magenta -> orange -> white. Perceptually
 // ordered so "brighter is warmer" reads correctly without a legend.
 const RAMP=[[8,10,40],[70,20,110],[160,35,105],[220,80,60],[250,160,50],[255,245,220]];
+document.getElementById('hudTempNote').textContent='Head skin surface, not body temperature';
 function heat(t){
   t=Math.max(0,Math.min(1,t));
   const x=t*(RAMP.length-1), i=Math.floor(x), f=x-i;
@@ -300,7 +304,7 @@ function drawSkeleton(ctx,body,W,H){
   }
 }
 
-function drawScene(t,blob,radar,body){
+function drawScene(t,blob,body){
   const W=sCan.width,H=sCan.height;
   sCtx.clearRect(0,0,W,H);
   if(!t){ sCtx.fillStyle=css('--quiet'); sCtx.fillRect(0,0,W,H); return; }
@@ -308,26 +312,14 @@ function drawScene(t,blob,radar,body){
   drawSkeleton(sCtx,body,W,H);
   if(!blob) return;
 
-  // Outline the warm region and pin the radar's numbers to it. The box comes
-  // from thermal, the distance from radar - two independent sensors describing
-  // one object.
+  // Outline the warm region. The adjacent HUD uses the same gated estimates
+  // as the main readout; raw radar numbers must not appear on the scene.
   const sx=W/COLS, sy=H/ROWS;
   const x=blob.box[0]*sx, y=blob.box[1]*sy;
   const w=(blob.box[2]-blob.box[0]+1)*sx, h=(blob.box[3]-blob.box[1]+1)*sy;
   sCtx.strokeStyle='rgba(255,255,255,.95)'; sCtx.lineWidth=2;
   sCtx.setLineDash([7,5]); sCtx.strokeRect(x,y,w,h); sCtx.setLineDash([]);
 
-  const bits=[];
-  if(radar&&radar.distance_m!=null) bits.push(radar.distance_m.toFixed(2)+' m away');
-  if(radar&&radar.respiration_rpm!=null) bits.push('~'+radar.respiration_rpm.toFixed(0)+' breaths/min');
-  const label=bits.join('   ') || 'warm body';
-  sCtx.font='600 14px -apple-system,sans-serif';
-  const tw=sCtx.measureText(label).width;
-  const lx=Math.min(Math.max(x,6),W-tw-20), ly=Math.max(y-32,6);
-  sCtx.fillStyle='rgba(0,0,0,.72)';
-  sCtx.beginPath(); sCtx.roundRect(lx,ly,tw+16,26,7); sCtx.fill();
-  sCtx.fillStyle='#fff'; sCtx.textAlign='left';
-  sCtx.fillText(label,lx+8,ly+18);
 }
 function drawThermalTo(ctx,px,lo,hi,W,H){
   const img=oCtx.createImageData(COLS,ROWS);
@@ -393,17 +385,22 @@ function drawPlan(fusion,blob){
 }
 
 const VERDICTS={
-  person:['person','Person detected','both sensors agree'],
-  empty:['empty','Room empty','no target, no body heat'],
-  radar_only:['radar_only','Radar target with no body heat','likely furniture, not a person'],
-  thermal_only:['thermal_only','Body heat with no radar target','radar has not locked on'],
+  person:['person','Presence corroborated','radar target and warm region; identity unverified'],
+  empty:['empty','No person detected','within the current sensor views'],
+  radar_only:['radar_only','Radar target unconfirmed','thermal coverage or contrast may be limited'],
+  thermal_only:['thermal_only','Warm region detected','radar corroboration unavailable'],
+  unknown:['empty','Presence unknown','fresh evidence unavailable'],
 };
 
 function pill(name,h){
   return `<div class="stat"><div class="k"><span class="dot ${h.status}"></span>${name}</div>
           <div class="v">${h.hz.toFixed(1)}<small>Hz</small></div></div>`;
 }
-const fmt=(v,u,d=1)=>v==null?'<span class="v none">not available</span>':`${v.toFixed(d)}<small> ${u}</small>`;
+function setHud(id,value){
+  const el=document.getElementById(id);
+  el.textContent=value;
+  el.classList.toggle('unavailable',value==='not available');
+}
 
 let lastMsg=Date.now();
 setInterval(()=>{
@@ -413,6 +410,17 @@ setInterval(()=>{
     document.querySelectorAll('.canvasWrap').forEach(w=>w.classList.add('stale'));
     const b=document.getElementById('srcBadge');
     b.textContent='disconnected'; b.className='badge';
+    for(const id of ['vHr','vResp','vHead'])
+      document.getElementById(id).innerHTML='<span class="v none">not available</span>';
+    for(const id of ['sHr','sResp'])
+      document.getElementById(id).textContent='';
+    document.getElementById('sHead').textContent='Head skin surface, not body temperature';
+    for(const id of ['hudHeart','hudBreath','hudTemp','hudPosition'])
+      setHud(id,'not available');
+    document.getElementById('strip').innerHTML=
+      ['Thermal','Radar','Wi-Fi CSI','Light'].map(name=>pill(name,{status:'offline',hz:0})).join('');
+    document.getElementById('tmin').textContent='–';
+    document.getElementById('tmax').textContent='–';
     const v=document.getElementById('verdict');
     v.className='verdict empty';
     document.getElementById('verdictText').innerHTML='No data <small>&middot; the stream has stopped</small>';
@@ -431,7 +439,7 @@ es.onmessage=e=>{
   const staleMap={scene:'thermal',plan:'thermal',thermal:'thermal',radar:'radar',csi:'csi'};
   for(const [id,mod] of Object.entries(staleMap)){
     const w=document.getElementById('wrap_'+id);
-    if(w) w.classList.toggle('stale', s.health[mod].status==='offline');
+    if(w) w.classList.toggle('stale', s.health[mod].status==='offline' || !s[mod]);
   }
 
   document.getElementById('strip').innerHTML =
@@ -446,7 +454,7 @@ es.onmessage=e=>{
     document.getElementById('tmax').textContent=s.thermal.max.toFixed(1)+'°C';
   }
   const blob=s.thermal&&s.thermal.blob;
-  drawScene(s.thermal,blob,s.radar,s.body);
+  drawScene(s.thermal,blob,s.body);
   drawPlan(s.fusion,blob);
   if(s.fusion){
     const [cls,txt,sub]=VERDICTS[s.fusion.verdict]||['empty','—',''];
@@ -458,107 +466,36 @@ es.onmessage=e=>{
   drawRadar(s.radar);
   if(s.csi) drawCsi(s.csi.amps);
 
-  const r=s.radar||{};
-  document.getElementById('vPres').innerHTML = r.presence==null
-    ? '<span class="v none">not available</span>' : (r.presence?'Someone here':'Empty');
-  document.getElementById('vDist').innerHTML = fmt(r.distance_m,'m',2);
-  document.getElementById('vResp').innerHTML = fmt(r.respiration_rpm,'breaths/min',0);
-  document.getElementById('vHr').innerHTML   = fmt(r.heart_rate_bpm,'bpm',0);
-
   const V=s.vitals||{};
-  const SRC={radar:'radar', wifi_csi:'Wi-Fi CSI'};
-  // Headline the smoothed estimate with its band. A single frame is noise; the
-  // band is what an honest estimate looks like at this instrument's precision.
+  const SRC={radar:'Radar', wifi_csi:'Wi-Fi CSI · secondary'};
+  // Display only the published, quality-gated estimate. Raw rates are never
+  // used as a fallback because they can jump between successive frames.
   const E=V.estimate||{};
-  const show=(id,est,inst,unit)=>{
+  const show=(id,hudId,est,inst,unit)=>{
     const el=document.getElementById(id);
-    if(est){
-      // Stale readings are dimmed and stamped with their age rather than
-      // blanked. The number stays real; its age says how much to trust it.
-      const dim = est.stale ? ';color:var(--ink-3)' : '';
-      el.innerHTML = '<span style="'+dim.slice(1)+'">'+est.value.toFixed(0)
-        + '<small> '+unit+'</small></span>'
-        + (est.spread>0&&!est.stale
-            ? '<small style="color:var(--ink-3)"> &nbsp;'+est.low.toFixed(0)
-              +'\u2013'+est.high.toFixed(0)+'</small>' : '')
-        + (est.stale ? '<small style="color:var(--warn)"> &nbsp;'
-              +est.age_s.toFixed(0)+'s ago</small>' : '');
-    } else if(inst!=null){
-      el.innerHTML = inst.toFixed(0)+'<small> '+unit+'</small>';
-    } else {
-      el.innerHTML = '<span class="v none">waiting for a reading</span>';
-    }
+    const available=Number.isFinite(inst) && est && !est.stale &&
+      est.age_s<=3 && Number.isFinite(est.value);
+    el.innerHTML=available
+      ? est.value.toFixed(0)+'<small> '+unit+'</small>'
+      : '<span class="v none">not available</span>';
+    setHud(hudId,available ? est.value.toFixed(0)+' '+unit : 'not available');
+    return available;
   };
-  show('vResp', E.respiration_rpm, V.respiration_rpm, 'breaths/min');
-  show('vHr',   E.heart_rate_bpm,  V.heart_rate_bpm,  'bpm');
-  document.getElementById('sResp').textContent = V.respiration_source
-    ? SRC[V.respiration_source]+' \u00b7 '+V.respiration_reason : (V.respiration_reason||'');
-  document.getElementById('sHr').textContent = V.heart_source
-    ? SRC[V.heart_source]+' \u00b7 '+V.heart_reason : (V.heart_reason||'');
+  const respAvailable=show('vResp','hudBreath',E.respiration_rpm,V.respiration_rpm,'/min');
+  const heartAvailable=show('vHr','hudHeart',E.heart_rate_bpm,V.heart_rate_bpm,'bpm');
+  document.getElementById('sResp').textContent = respAvailable ? SRC[V.respiration_source]||'' : '';
+  document.getElementById('sHr').textContent = heartAvailable ? SRC[V.heart_source]||'' : '';
 
-  const ht=(s.body||{}).head_temp;
-  document.getElementById('vHead').innerHTML = ht
-    ? ht.peak_f.toFixed(1)+'<small> &deg;F</small>'
+  const ht=s.health.thermal.status!=='offline' && (s.body||{}).head_temp;
+  const skinF=ht && Number.isFinite(ht.peak_f) ? ht.peak_f : null;
+  document.getElementById('vHead').innerHTML = skinF!=null
+    ? skinF.toFixed(1)+'<small> &deg;F</small>'
     : '<span class="v none">no head in view</span>';
-  document.getElementById('sHead').textContent = ht
-    ? 'skin surface \u00b7 '+(ht.pixel_cm?ht.pixel_cm+' cm/pixel \u00b7 ':'')+ht.quality : '';
+  document.getElementById('sHead').textContent = 'Head skin surface, not body temperature';
+  setHud('hudTemp',skinF!=null ? skinF.toFixed(1)+' °F' : 'not available');
+  const position=s.health.thermal.status!=='offline' && (s.body||{}).position;
+  setHud('hudPosition',position && position.position ? position.position : 'not available');
 
-  const st=ht&&ht.estimate&&ht.estimate.status;
-  const abn=document.getElementById('vAbn');
-  if(st){
-    const v=st.state;
-    const bad=/unusual for this person|above typical|below typical/.test(v);
-    const mid=/mildly unusual/.test(v);
-    const unk=/cannot distinguish|building baseline|no reading/.test(v);
-    abn.innerHTML = unk
-      ? '<span style="font-size:15px;font-weight:400;color:var(--ink-3)">'+v+'</span>'
-      : '<span style="color:'+(bad?'var(--bad)':mid?'var(--warn)':'var(--ok)')+'">'+v+'</span>';
-    document.getElementById('sAbn').textContent =
-      (st.relative&&st.relative.detail) || (st.absolute&&st.absolute.detail) || '';
-  } else { abn.innerHTML='<span class="v none">no reading</span>';
-           document.getElementById('sAbn').textContent=''; }
-
-  // Confidence and unusualness answer different questions and are shown
-  // separately: one is about the measurement, the other about the reading.
-  const est=ht&&ht.estimate;
-  const cf=est&&est.confidence, un=est&&est.unusualness;
-  const vc=(s.vitals||{}).confidence;
-  // Confidence is no longer shown as its own number. It is still computed,
-  // and it now gates what leaves the device: a reading the conditions do not
-  // support is withheld from the telemetry pipeline rather than displayed with
-  // a caveat and sent anyway.
-  if(un&&un.pct>0){
-    const prev=document.getElementById('sAbn').textContent;
-    let note = un.pct.toFixed(0)+'% unusual \u00b7 '+un.why;
-    if(cf&&cf.pct<40) note += ' \u00b7 weak measurement ('+cf.limiting+')';
-    document.getElementById('sAbn').textContent = note+(prev?' \u00b7 '+prev:'');
-  } else if(cf&&cf.pct<40){
-    document.getElementById('sAbn').textContent =
-      'weak measurement \u00b7 '+cf.limiting_why;
-  }
-
-  const pe=s.posture_events;
-  document.getElementById('postureEvents').innerHTML = (pe&&pe.length)
-    ? '<div class="conflict"><b>Posture change observed.</b> '+pe[pe.length-1].detail
-      +' &middot; notification '+(pe[pe.length-1].notified?'sent':'not sent: '+pe[pe.length-1].notify_detail)
-      +'<br><span style="color:var(--ink-2)">This is a posture observation, not a fall alarm. '
-      +pe[pe.length-1].limitations.join('; ')+'</span></div>'
-    : '';
-
-  const bits=[];
-  if(V.disagreements&&V.disagreements.length)
-    bits.push('<b>The two instruments disagree.</b> '+V.disagreements.join('; ')+
-      '. Neither is checked against a reference device, so this does not say which is right.');
-  if(V.suspect) bits.push('<b>Suspect reading.</b> '+V.suspect+'.');
-  document.getElementById('conflict').innerHTML =
-    bits.length ? '<div class="conflict">'+bits.join('<br>')+'</div>' : '';
-
-  const amb=s.ambient;
-  document.getElementById('vLux').innerHTML = amb
-    ? amb.band.charAt(0).toUpperCase()+amb.band.slice(1)+`<small> ${amb.lux} lx</small>`
-    : '<span class="v none">not available</span>';
-  document.getElementById('vRssi').innerHTML = (s.csi&&s.csi.rssi!=null)
-    ? s.csi.rssi+'<small> dBm</small>' : '<span class="v none">not available</span>';
 };
 </script>
 </body>

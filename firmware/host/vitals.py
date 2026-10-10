@@ -196,13 +196,17 @@ class VitalsEstimator:
     def __init__(self) -> None:
         self.samples: list[tuple[float, list[float]]] = []
         self._last = (VitalEstimate(), VitalEstimate())
-        self._last_run = 0.0
+        self._last_run = -math.inf
+        self._last_received_at = None
 
     def add(self, t: float, amps: list[float]) -> None:
-        self.samples.append((t, amps))
+        if self.samples and (t <= self.samples[-1][0] or t-self.samples[-1][0] > 0.5):
+            self.samples = []
+            self._last = (VitalEstimate(reason="collecting after gap"), VitalEstimate(reason="collecting after gap"))
+            self._last_run = -math.inf
+        self._last_received_at = time.monotonic()
         cutoff = t - (BREATH_WINDOW_S + 5.0)
-        while self.samples and self.samples[0][0] < cutoff:
-            self.samples.pop(0)
+        self.samples = [(ts, a) for ts, a in self.samples if ts >= cutoff] + [(t, amps)]
 
     def _series(self, window_s: float, target_hz: float) -> tuple[list[list[float]], float]:
         """Decimate to ``target_hz`` and return per-subcarrier series."""
@@ -211,7 +215,7 @@ class VitalsEstimator:
         t_end = self.samples[-1][0]
         t_start = t_end - window_s
         rows = [(t, a) for t, a in self.samples if t >= t_start]
-        if len(rows) < 32:
+        if len(rows) < 32 or rows[-1][0]-rows[0][0] < window_s-1.0/target_hz:
             return [], 0.0
 
         step = 1.0 / target_hz
@@ -241,6 +245,9 @@ class VitalsEstimator:
     def estimate(self) -> tuple[VitalEstimate, VitalEstimate]:
         # Rate-limit: this is O(lags x samples) in pure Python.
         now = time.monotonic()
+        if self._last_received_at is None or now-self._last_received_at > 3.0:
+            self._last = (VitalEstimate(reason="CSI stream unavailable"), VitalEstimate(reason="CSI stream unavailable"))
+            return self._last
         if now - self._last_run < 1.0:
             return self._last
         self._last_run = now
