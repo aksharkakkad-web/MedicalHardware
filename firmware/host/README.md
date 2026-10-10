@@ -86,6 +86,13 @@ The current engineering policies are:
   time-aligned breathing observation is required for a heart estimate; breathing
   does not itself determine heart rate. An unavailable or changed instrument
   clears the estimate. Polling the dashboard adds no new observations.
+- For this bench's close-range radar heart-rate display, the dashboard applies
+  a provisional 0.80 multiplier based on the founder's reported comparison
+  that radar read about 25% above their Apple Watch. This is a display
+  adjustment with visible provenance, not a validated calibration: raw radar,
+  published host estimates and outgoing telemetry are unchanged. The adjusted
+  number appears only when a current radar breathing estimate is also
+  published. Breaths per minute do not mathematically determine heart rate.
 - Both displayed rates prefer radar through 1.5 m when it has a usable value;
   Wi-Fi CSI is a secondary fallback. CSI disagreement does not reduce the
   in-range radar display weight. This is a bench source-selection policy,
@@ -114,8 +121,9 @@ The current engineering policies are:
   only when radar confirms a target within 1.5 m.
   The displayed note names the site and states that skin exposure is
   unverified; none of these readings is core temperature. Its main vital
-  readout and thermal scene HUD show only the published heart and breathing
-  estimates, never raw rate fallbacks.
+  readout and thermal scene HUD use the published, quality-gated heart and
+  breathing estimates, with the provisional radar display adjustment above;
+  they never use raw rate fallbacks.
 - Automatic posture notifications and temperature anomaly assessments are
   disabled. Body position remains visible on the thermal scene when available.
 

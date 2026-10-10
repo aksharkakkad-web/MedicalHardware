@@ -55,16 +55,32 @@ const live = {
   posture_events: [{detail: 'old alert', notified: true, limitations: []}],
 };
 streams[0].onmessage({data: JSON.stringify(live)});
-assert.match(element('hudHeart').textContent, /70/);
+assert.match(element('hudHeart').textContent, /56/);
 assert.match(element('hudBreath').textContent, /15/);
 assert.match(element('hudTemp').textContent, /94\.2/);
 assert.match(element('hudPosition').textContent, /upright/i);
 assert.match(element('hudTempNote').textContent, /neck-region surface; skin unverified/i);
 assert.match(element('sHead').textContent, /neck-region surface; skin unverified/i);
-assert.match(element('vHr').innerHTML, /70/);
+assert.match(element('vHr').innerHTML, /56/);
+assert.match(element('hudHeartNote').textContent, /radar breathing present/i);
+assert.match(element('sHr').textContent, /user-reported Apple Watch comparison/i);
+assert.equal(live.vitals.estimate.heart_rate_bpm.value, 70,
+  'display calibration must not mutate the published estimate');
 assert.match(element('vResp').innerHTML, /15/);
 assert.doesNotMatch(html, /id="vAbn"|id="postureEvents"/);
 assert.doesNotMatch(html, /id="conflict"|Suspect reading|The two instruments disagree/);
+
+const noBreathing = JSON.parse(JSON.stringify(live));
+noBreathing.vitals.estimate.respiration_rpm = null;
+streams[0].onmessage({data: JSON.stringify(noBreathing)});
+assert.match(element('hudHeart').textContent, /not available/i);
+
+const csiHeart = JSON.parse(JSON.stringify(live));
+csiHeart.vitals.heart_source = 'wifi_csi';
+csiHeart.vitals.respiration_source = 'wifi_csi';
+streams[0].onmessage({data: JSON.stringify(csiHeart)});
+assert.match(element('hudHeart').textContent, /70/,
+  'radar calibration must not alter a CSI estimate');
 
 const unconfirmed = JSON.parse(JSON.stringify(live));
 unconfirmed.radar.presence = null;

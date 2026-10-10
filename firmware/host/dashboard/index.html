@@ -149,7 +149,7 @@
         <div class="heroLbl">What the sensors see</div>
         <div class="canvasWrap" id="wrap_scene"><canvas id="scene" width="640" height="420"></canvas>
           <div class="sceneHud" aria-label="Live estimates and body position">
-            <div><span class="hudLabel">Heart rate estimate</span><span class="hudValue" id="hudHeart">not available</span></div>
+            <div><span class="hudLabel">Heart rate estimate</span><span class="hudValue" id="hudHeart">not available</span><span class="hudNote" id="hudHeartNote"></span></div>
             <div><span class="hudLabel">Breathing estimate</span><span class="hudValue" id="hudBreath">not available</span></div>
             <div><span class="hudLabel">Temperature estimate</span><span class="hudValue hudSecondary" id="hudTemp">not available</span><span class="hudNote" id="hudTempNote">Surface site unavailable; not core temperature</span></div>
             <div><span class="hudLabel">Body position</span><span class="hudValue hudSecondary" id="hudPosition">not available</span></div>
@@ -469,6 +469,10 @@ es.onmessage=e=>{
 
   const V=s.vitals||{};
   const SRC={radar:'Radar', wifi_csi:'Wi-Fi CSI · secondary'};
+  // A user-reported ~25% radar overread against their Apple Watch implies a
+  // provisional 1/1.25 scale. Keep this in the bench display, with provenance;
+  // the published estimate and raw telemetry remain unchanged.
+  const RADAR_HR_SCALE=0.80;
   // Display only the published, quality-gated estimate. Raw rates are never
   // used as a fallback because they can jump between successive frames.
   const E=V.estimate||{};
@@ -483,9 +487,21 @@ es.onmessage=e=>{
     return available;
   };
   const respAvailable=show('vResp','hudBreath',E.respiration_rpm,V.respiration_rpm,'/min');
-  const heartAvailable=show('vHr','hudHeart',E.heart_rate_bpm,V.heart_rate_bpm,'bpm');
+  const closeRadarHeart=V.heart_source==='radar' && s.radar &&
+    Number.isFinite(s.radar.distance_m) && s.radar.distance_m<=1.5;
+  const pairedBreathing=respAvailable && V.respiration_source==='radar';
+  const corrected=closeRadarHeart && pairedBreathing && E.heart_rate_bpm;
+  const heartEstimate=closeRadarHeart && !pairedBreathing ? null :
+    corrected ? {...E.heart_rate_bpm,value:E.heart_rate_bpm.value*RADAR_HR_SCALE} :
+    E.heart_rate_bpm;
+  const heartAvailable=show('vHr','hudHeart',heartEstimate,V.heart_rate_bpm,'bpm');
   document.getElementById('sResp').textContent = respAvailable ? SRC[V.respiration_source]||'' : '';
-  document.getElementById('sHr').textContent = heartAvailable ? SRC[V.heart_source]||'' : '';
+  document.getElementById('sHr').textContent = heartAvailable
+    ? corrected ? 'Radar · provisional ×0.80 from user-reported Apple Watch comparison'
+                : SRC[V.heart_source]||''
+    : '';
+  document.getElementById('hudHeartNote').textContent = heartAvailable && corrected
+    ? 'Provisional ×0.80 · radar breathing present' : '';
 
   const radarTarget=s.health.radar.status==='ok' && s.radar &&
     s.radar.presence===true && Number.isFinite(s.radar.distance_m) &&
