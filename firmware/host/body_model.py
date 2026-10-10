@@ -282,6 +282,44 @@ def analyse(px: list[float], distance_m: float | None) -> dict | None:
     warm = temps[: max(1, len(temps) // 10)]
     surface_c = sum(warm) / len(warm)
 
+    # Name a narrow upper-body site only when the silhouette supports it.
+    # Thermal pixels cannot distinguish exposed skin from hair or clothing.
+    surface_site = "visible body surface"
+    surface_note = "Warm visible surface; skin and material unverified; not core temperature"
+    site_values = warm
+    if head_row is not None:
+        # The generic shoulder landmark searches the upper half and may land
+        # on the head. Find the first clear widening below the head instead.
+        shoulder_y = next((r for r in ys if r > head_row
+                           and span(r)[1] - span(r)[0] + 1 >= 0.7 * max_w), None)
+        upper_width = max((span(r)[1] - span(r)[0] + 1 for r in ys if r < head_row),
+                          default=0)
+        neck_limit = min(0.6 * max_w, 0.65 * upper_width)
+        neck_rows = []
+        if shoulder_y is not None and upper_width:
+            for r in reversed([r for r in ys if top < r < shoulder_y]):
+                if span(r)[1] - span(r)[0] + 1 > neck_limit:
+                    break
+                neck_rows.append(r)
+        if neck_rows:
+            neck_values = sorted((px[r * COLS + c] for r in neck_rows
+                                  for c in rows[r]), reverse=True)
+            site_values = neck_values[:max(1, len(neck_values) // 10)]
+            surface_site = "neck region"
+            surface_note = "Neck-region surface; skin unverified; not core temperature"
+        elif head_temp:
+            site_values = [head_temp["peak_c"]]
+            surface_site = "head region"
+            surface_note = "Head-region surface; skin unverified; not core temperature"
+    site_c = sum(site_values) / len(site_values)
+    surface_temp = {
+        "estimate_c": round(site_c, 1),
+        "estimate_f": round(site_c * 9 / 5 + 32, 1),
+        "site": surface_site,
+        "note": surface_note,
+        "skin_verified": False,
+    } if len(region) >= 20 else None
+
     cut_flags = {"top": cut_top, "base": cut_base,
                  "left": cut_left, "right": cut_right}
     pose = pose17.estimate(region, px, cut_flags)
@@ -301,6 +339,7 @@ def analyse(px: list[float], distance_m: float | None) -> dict | None:
         "height_m": height_m,
         "pixels": len(region),
         "head_temp": head_temp,
+        "surface_temp": surface_temp,
         "surface_c": round(surface_c, 1),
         "surface_f": round(surface_c * 9 / 5 + 32, 1),
         "ambient_c": round(ambient, 1),

@@ -151,7 +151,7 @@
           <div class="sceneHud" aria-label="Live estimates and body position">
             <div><span class="hudLabel">Heart rate estimate</span><span class="hudValue" id="hudHeart">not available</span></div>
             <div><span class="hudLabel">Breathing estimate</span><span class="hudValue" id="hudBreath">not available</span></div>
-            <div><span class="hudLabel">Temperature estimate</span><span class="hudValue hudSecondary" id="hudTemp">not available</span><span class="hudNote" id="hudTempNote">Head skin surface, not body temperature</span></div>
+            <div><span class="hudLabel">Temperature estimate</span><span class="hudValue hudSecondary" id="hudTemp">not available</span><span class="hudNote" id="hudTempNote">Surface site unavailable; not core temperature</span></div>
             <div><span class="hudLabel">Body position</span><span class="hudValue hudSecondary" id="hudPosition">not available</span></div>
           </div>
           <div class="lost"><b>No data</b><span>Sensor feed stopped</span></div></div>
@@ -169,7 +169,7 @@
       <p class="hint">Current sensor estimates. Unavailable readings stay blank.</p>
       <div class="readout vitalReadout">
         <div><div class="k">Temperature estimate</div><div class="v" id="vHead">–</div>
-             <div class="src" id="sHead">Head skin surface, not body temperature</div></div>
+             <div class="src" id="sHead">Surface site unavailable; not core temperature</div></div>
         <div><div class="k">Heart rate estimate</div><div class="v" id="vHr">–</div>
              <div class="src" id="sHr"></div></div>
         <div><div class="k">Breathing estimate</div><div class="v" id="vResp">–</div>
@@ -202,7 +202,7 @@
 // Thermal colormap: dark blue -> magenta -> orange -> white. Perceptually
 // ordered so "brighter is warmer" reads correctly without a legend.
 const RAMP=[[8,10,40],[70,20,110],[160,35,105],[220,80,60],[250,160,50],[255,245,220]];
-document.getElementById('hudTempNote').textContent='Head skin surface, not body temperature';
+document.getElementById('hudTempNote').textContent='Surface site unavailable; not core temperature';
 function heat(t){
   t=Math.max(0,Math.min(1,t));
   const x=t*(RAMP.length-1), i=Math.floor(x), f=x-i;
@@ -414,7 +414,8 @@ setInterval(()=>{
       document.getElementById(id).innerHTML='<span class="v none">not available</span>';
     for(const id of ['sHr','sResp'])
       document.getElementById(id).textContent='';
-    document.getElementById('sHead').textContent='Head skin surface, not body temperature';
+    document.getElementById('sHead').textContent='Surface site unavailable; not core temperature';
+    document.getElementById('hudTempNote').textContent='Surface site unavailable; not core temperature';
     for(const id of ['hudHeart','hudBreath','hudTemp','hudPosition'])
       setHud(id,'not available');
     document.getElementById('strip').innerHTML=
@@ -486,12 +487,17 @@ es.onmessage=e=>{
   document.getElementById('sResp').textContent = respAvailable ? SRC[V.respiration_source]||'' : '';
   document.getElementById('sHr').textContent = heartAvailable ? SRC[V.heart_source]||'' : '';
 
-  const ht=s.health.thermal.status!=='offline' && (s.body||{}).head_temp;
-  const skinF=ht && Number.isFinite(ht.peak_f) ? ht.peak_f : null;
+  const radarTarget=s.health.radar.status==='ok' && s.radar &&
+    s.radar.presence===true && Number.isFinite(s.radar.distance_m) &&
+    s.radar.distance_m<=1.5;
+  const st=s.health.thermal.status==='ok' && radarTarget && (s.body||{}).surface_temp;
+  const skinF=st && Number.isFinite(st.estimate_f) ? st.estimate_f : null;
+  const tempNote=skinF!=null && st.note ? st.note : 'Surface site unavailable; not core temperature';
   document.getElementById('vHead').innerHTML = skinF!=null
     ? skinF.toFixed(1)+'<small> &deg;F</small>'
-    : '<span class="v none">no head in view</span>';
-  document.getElementById('sHead').textContent = 'Head skin surface, not body temperature';
+    : '<span class="v none">not available</span>';
+  document.getElementById('sHead').textContent = tempNote;
+  document.getElementById('hudTempNote').textContent = tempNote;
   setHud('hudTemp',skinF!=null ? skinF.toFixed(1)+' °F' : 'not available');
   const position=s.health.thermal.status!=='offline' && (s.body||{}).position;
   setHud('hudPosition',position && position.position ? position.position : 'not available');

@@ -44,7 +44,7 @@ const live = {
   stats: {frames_ok: 42, crc_errors: 0},
   thermal: {pixels: Array(768).fill(30), min: 20, max: 35, blob: null},
   radar: {presence: true, distance_m: 0.8, heart_rate_bpm: 72, respiration_rpm: 16},
-  body: {position: {position: 'upright'}, head_temp: {peak_f: 94.2, quality: 'good', estimate: {skin_f: 94.4}}},
+  body: {position: {position: 'upright'}, surface_temp: {estimate_f: 94.2, site: 'neck region', note: 'Neck-region surface; skin unverified; not core temperature'}},
   fusion: {verdict: 'person', distance_m: 0.8, bearing_deg: 0},
   vitals: {heart_rate_bpm: 72, respiration_rpm: 16, heart_source: 'radar', respiration_source: 'radar',
     heart_reason: 'current', respiration_reason: 'current', estimate: {
@@ -59,11 +59,19 @@ assert.match(element('hudHeart').textContent, /70/);
 assert.match(element('hudBreath').textContent, /15/);
 assert.match(element('hudTemp').textContent, /94\.2/);
 assert.match(element('hudPosition').textContent, /upright/i);
-assert.match(element('hudTempNote').textContent, /skin surface/i);
+assert.match(element('hudTempNote').textContent, /neck-region surface; skin unverified/i);
+assert.match(element('sHead').textContent, /neck-region surface; skin unverified/i);
 assert.match(element('vHr').innerHTML, /70/);
 assert.match(element('vResp').innerHTML, /15/);
 assert.doesNotMatch(html, /id="vAbn"|id="postureEvents"/);
 assert.doesNotMatch(html, /id="conflict"|Suspect reading|The two instruments disagree/);
+
+const unconfirmed = JSON.parse(JSON.stringify(live));
+unconfirmed.radar.presence = null;
+unconfirmed.radar.distance_m = null;
+streams[0].onmessage({data: JSON.stringify(unconfirmed)});
+assert.match(element('hudTemp').textContent, /not available/i);
+assert.match(element('vHead').innerHTML, /not available/i);
 
 const unavailable = JSON.parse(JSON.stringify(live));
 unavailable.vitals.estimate = {};

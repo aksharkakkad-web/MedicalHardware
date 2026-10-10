@@ -107,9 +107,15 @@ The current engineering policies are:
   constants have not been fitted against reference physiology.
 - After 4 seconds without dashboard events, numeric readings and live stream
   indicators become unavailable. Synthetic input remains labelled DEMO DATA.
-- The dashboard shows head skin-surface temperature with an explicit note that
-  it is not body temperature. Its main vital readout and thermal scene HUD show
-  only the published heart and breathing estimates, never raw rate fallbacks.
+- The dashboard selects a neck-region surface when the thermal silhouette
+  supports a narrow region above the shoulders, a head-region surface when
+  only that site is supported, or the warm visible body surface otherwise.
+  Tiny warm patches are omitted, and the main dashboard shows the estimate
+  only when radar confirms a target within 1.5 m.
+  The displayed note names the site and states that skin exposure is
+  unverified; none of these readings is core temperature. Its main vital
+  readout and thermal scene HUD show only the published heart and breathing
+  estimates, never raw rate fallbacks.
 - Automatic posture notifications and temperature anomaly assessments are
   disabled. Body position remains visible on the thermal scene when available.
 
