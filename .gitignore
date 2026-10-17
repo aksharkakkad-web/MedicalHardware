@@ -42,3 +42,4 @@ firmware/**/.pio/
 firmware/captures/
 firmware/host/temp_calibration.json
 firmware/host/temp_baseline.json
+firmware/xiao-c5-bringup/device.env

@@ -20,6 +20,10 @@ future PlatformIO `firmware.bin`. The 8 MB partition table has two OTA app
 slots. Keep USB available until a complete OTA update and reboot have been
 tested on this particular board.
 
+For the current prototype, a local copy of the access details can be kept in
+`device.env` beside this README. That file is ignored by Git and stays on this
+Mac; it will not appear when the public repository is cloned elsewhere.
+
 Before connecting the external 5 V rail, measure its polarity and voltage at
 the intended XIAO leads. Printed labels or earlier successful use do not
 verify the present soldered harness. Never power the XIAO from USB and an
