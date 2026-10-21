@@ -13,7 +13,7 @@ function createUnusualMovementEvent(now: Date): MonitoringEventDetail {
   return {
     schemaVersion: "1.0",
     eventId: "evt_unusual_movement_102",
-    resident: { residentId: "res_2c8d4f", displayLabel: "Resident B", roomId: "room_6a91c3", roomLabel: "Room 102" },
+    resident: { residentId: "res_2c8d4f", displayLabel: "Arthur Chen", roomId: "room_6a91c3", roomLabel: "Room 102" },
     createdAt,
     lastSignalAt: timestampBefore(now, 47 * 60_000),
     status: "open",
@@ -86,7 +86,7 @@ function createUnknownPatternEvent(now: Date): MonitoringEventDetail {
   return {
     schemaVersion: "1.0",
     eventId: "evt_unknown_pattern_104",
-    resident: { residentId: "res_4ab783", displayLabel: "Resident D", roomId: "room_85cd20", roomLabel: "Room 104" },
+    resident: { residentId: "res_4ab783", displayLabel: "Daniel Ortiz", roomId: "room_85cd20", roomLabel: "Room 104" },
     createdAt,
     lastSignalAt: timestampBefore(now, 9 * 60_000),
     status: "open",
@@ -129,7 +129,7 @@ function createDeviceIssueEvent(now: Date): MonitoringEventDetail {
   return {
     schemaVersion: "1.0",
     eventId: "evt_device_issue_105",
-    resident: { residentId: "res_d0e519", displayLabel: "Resident E", roomId: "room_1f64b8", roomLabel: "Room 105" },
+    resident: { residentId: "res_d0e519", displayLabel: "Ruth Palmer", roomId: "room_1f64b8", roomLabel: "Room 105" },
     createdAt,
     lastSignalAt: createdAt,
     status: "open",

@@ -1,8 +1,6 @@
-import { MonitoringSetup } from "@/features/setup/monitoring-setup";
+import { ScopedMonitoringSetup } from "@/components/workspace-access/workspace-access";
 
-export default async function MonitoringSetupPage({
-  params,
-}: Readonly<{ params: Promise<{ residentId: string }> }>) {
+export default async function MonitoringSetupPage({ params }: { params: Promise<{ residentId: string }> }) {
   const { residentId } = await params;
-  return <MonitoringSetup residentId={residentId} />;
+  return <ScopedMonitoringSetup residentId={residentId} />;
 }

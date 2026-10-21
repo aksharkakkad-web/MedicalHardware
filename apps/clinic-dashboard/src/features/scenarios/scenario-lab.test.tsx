@@ -29,8 +29,8 @@ describe("ScenarioLab", () => {
 
     await user.click(screen.getByRole("button", { name: "Run resident leaves the room" }));
     expect(await screen.findByRole("heading", { name: "Resident leaves the room active" })).toBeVisible();
-    expect(screen.getByText("Resident A shows monitoring paused")).toBeVisible();
-    expect(screen.getByRole("link", { name: "Open Resident A" })).toHaveAttribute("href", "/residents/res_7f3a1c");
+    expect(screen.getByText("Evelyn Brooks shows monitoring paused")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Open Evelyn Brooks" })).toHaveAttribute("href", "/residents/res_7f3a1c");
 
     await user.click(screen.getByRole("button", { name: "Reset demo" }));
     expect(await screen.findByRole("heading", { name: "Baseline demo" })).toBeVisible();

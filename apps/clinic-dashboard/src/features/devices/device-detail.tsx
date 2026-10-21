@@ -31,7 +31,7 @@ function nextStep(device: ClinicDeviceDetailResponse["device"]): { title: string
   return { title: "No device action needed", body: "The device is reporting normally. Continue routine monitoring from the clinic overview." };
 }
 
-export function DeviceDetail({ deviceId }: Readonly<{ deviceId: string }>) {
+export function DeviceDetail({ deviceId, authorizedResidentIds, timeZone }: Readonly<{ deviceId: string; authorizedResidentIds?: string[]; timeZone?: string }>) {
   const client = useMonitoringClient();
   const [result, setResult] = useState<LoadState>({ status: "loading" });
   const [requestKey, setRequestKey] = useState(0);
@@ -48,6 +48,7 @@ export function DeviceDetail({ deviceId }: Readonly<{ deviceId: string }>) {
   if (result.status === "error") return <div className={styles.message} role="alert"><h1>Device information is unavailable</h1><p>This screen cannot confirm whether monitoring is active.</p><div className={styles.messageActions}><button type="button" onClick={() => { setResult({ status: "loading" }); setRequestKey((value) => value + 1); }}>Try again</button><Link href="/devices">Return to devices</Link></div></div>;
 
   const { device } = result.data;
+  if (authorizedResidentIds && (!device.residentId || !authorizedResidentIds.includes(device.residentId))) return <section className={styles.message} role="alert"><h1>This room unit is unavailable</h1><p>It is outside this shared device’s coverage or has no current validated resident assignment.</p><Link href="/devices">Return to monitoring status</Link></section>;
   const health = deviceStatusPresentation[device.health.status];
   const action = nextStep(device);
 
@@ -59,7 +60,7 @@ export function DeviceDetail({ deviceId }: Readonly<{ deviceId: string }>) {
           <div className={styles.titleLine}><h1>{device.displayLabel}</h1><StatusPill label={health.label} tone={health.tone} /></div>
           <p>{device.modelLabel} · {device.roomLabel ?? "Not assigned to a room"}</p>
         </div>
-        <span className={styles.lastUpdate}>Last update<br /><strong>{formatTimestamp(device.health.lastSeenAt)}</strong></span>
+        <span className={styles.lastUpdate}>Last update<br /><strong>{formatTimestamp(device.health.lastSeenAt, timeZone)}</strong></span>
       </header>
 
       <div className={styles.notice} data-tone={health.tone}>
@@ -78,7 +79,7 @@ export function DeviceDetail({ deviceId }: Readonly<{ deviceId: string }>) {
               {device.sources.map((source) => (
                 <div className={styles.sourceRow} key={source.sourceId}>
                   <div><strong>{source.label}</strong><p>{source.detail}</p></div>
-                  <div className={styles.sourceState}><StatusPill label={sourceStatusLabel[source.status]} tone={sourceTone[source.status]} /><time dateTime={source.lastSeenAt ?? undefined}>{formatTimestamp(source.lastSeenAt)}</time></div>
+                  <div className={styles.sourceState}><StatusPill label={sourceStatusLabel[source.status]} tone={sourceTone[source.status]} /><time dateTime={source.lastSeenAt ?? undefined}>{formatTimestamp(source.lastSeenAt, timeZone)}</time></div>
                 </div>
               ))}
             </div>
@@ -100,7 +101,7 @@ export function DeviceDetail({ deviceId }: Readonly<{ deviceId: string }>) {
             <dl className={styles.facts}>
               <div><dt>Setup version</dt><dd>{device.setup.version || "Not started"}</dd></div>
               <div><dt>Readiness</dt><dd>{setupLabel(device.setup.state)}</dd></div>
-              <div><dt>Last changed</dt><dd>{formatTimestamp(device.setup.updatedAt)}</dd></div>
+              <div><dt>Last changed</dt><dd>{formatTimestamp(device.setup.updatedAt, timeZone)}</dd></div>
             </dl>
             {device.residentId && <Link className={styles.setupLink} href={`/residents/${device.residentId}/setup`}>Review resident setup</Link>}
           </section>

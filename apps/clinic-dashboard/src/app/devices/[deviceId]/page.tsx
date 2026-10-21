@@ -1,6 +1,6 @@
-import { DeviceDetail } from "@/features/devices/device-detail";
+import { ScopedDeviceDetail } from "@/components/workspace-access/workspace-access";
 
 export default async function DevicePage({ params }: { params: Promise<{ deviceId: string }> }) {
   const { deviceId } = await params;
-  return <DeviceDetail deviceId={deviceId} />;
+  return <ScopedDeviceDetail deviceId={deviceId} />;
 }

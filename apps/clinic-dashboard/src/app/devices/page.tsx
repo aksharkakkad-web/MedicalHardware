@@ -1,5 +1,5 @@
-import { DeviceList } from "@/features/devices/device-list";
+import { ScopedDeviceList } from "@/components/workspace-access/workspace-access";
 
 export default function DevicesPage() {
-  return <DeviceList />;
+  return <ScopedDeviceList />;
 }

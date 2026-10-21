@@ -1,8 +1,6 @@
-import { ResidentSettings } from "@/features/resident-settings/resident-settings";
+import { ResidentAdministration } from "@/features/workspace-admin";
 
-export default async function ResidentSettingsPage({
-  params,
-}: Readonly<{ params: Promise<{ residentId: string }> }>) {
+export default async function ResidentSettingsPage({ params }: { params: Promise<{ residentId: string }> }) {
   const { residentId } = await params;
-  return <ResidentSettings residentId={residentId} />;
+  return <ResidentAdministration residentId={residentId} />;
 }

@@ -9,16 +9,12 @@ describe("ExportActions", () => {
     vi.restoreAllMocks();
   });
 
-  it("offers the current PDF and editable source as downloads", () => {
+  it("offers the current editable guide as a download", () => {
     render(<ExportActions />);
 
-    expect(screen.getByRole("link", { name: "Download PDF" })).toHaveAttribute(
-      "href",
-      "/downloads/adaptive-care-clear-signal-design-system.pdf",
-    );
     expect(screen.getByRole("link", { name: "Download text guide" })).toHaveAttribute(
       "href",
-      "/downloads/adaptive-care-design-system.md",
+      "/downloads/syren-design-system.md",
     );
   });
 

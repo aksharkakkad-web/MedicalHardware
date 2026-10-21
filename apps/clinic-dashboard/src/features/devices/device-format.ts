@@ -4,7 +4,7 @@ import type { StatusTone } from "@/components/status-pill/status-pill";
 export const deviceStatusPresentation: Record<ClinicDeviceStatus, { label: string; tone: StatusTone }> = {
   online: { label: "Online", tone: "healthy" },
   degraded: { label: "Limited", tone: "attention" },
-  offline: { label: "Offline", tone: "critical" },
+  offline: { label: "Offline", tone: "unavailable" },
   buffering: { label: "Buffering", tone: "attention" },
   retrying: { label: "Retrying", tone: "attention" },
   unavailable: { label: "Not set up", tone: "unavailable" },
@@ -22,9 +22,11 @@ export const sourceStatusLabel: Record<ClinicDevice["sources"][number]["status"]
   unavailable: "Unavailable",
 };
 
-export function formatTimestamp(value: string | null): string {
-  if (!value) return "No update yet";
+export function formatTimestamp(value: string | null, timeZone?: string): string {
+  if (!value || !Number.isFinite(Date.parse(value))) return "No update yet";
   return new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    timeZoneName: "short",
     month: "short",
     day: "numeric",
     hour: "numeric",

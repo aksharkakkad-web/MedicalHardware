@@ -1,93 +1,130 @@
 import { render, screen } from "@testing-library/react";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { describe, expect, it, vi } from "vitest";
-
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AppShell } from "./app-shell";
-
 let pathname = "/";
-
+const selectArea = vi.fn().mockResolvedValue(undefined);
 vi.mock("next/navigation", () => ({ usePathname: () => pathname }));
-
-const stylesheet = readFileSync(resolve(import.meta.dirname, "app-shell.module.css"), "utf8");
-
-describe("AppShell", () => {
-  it("gives the active overview workspace a clear structure", () => {
+vi.mock("@/lib/workspace", () => ({
+  useWorkspace: () => ({
+    snapshot: {
+      facility: { name: "Maplewood Residence" },
+      areas: [
+        { areaId: "west", name: "West wing" },
+        { areaId: "east", name: "East wing" },
+        { areaId: "private", name: "Unapproved wing" },
+      ],
+      currentAreaId: "west",
+      currentClient: {
+        name: "West station",
+        areaIds: ["west", "east"],
+        status: "approved",
+      },
+      admin: { active: false },
+      mode: "demo",
+    },
+    status: "ready",
+    client: { setCurrentArea: selectArea },
+  }),
+}));
+describe("SYREN staff shell", () => {
+  beforeEach(() => {
+    pathname = "/";
+    vi.clearAllMocks();
+  });
+  it("identifies the shared workspace without personal staff sign in", () => {
     render(
       <AppShell>
-        <p>Residents content</p>
+        <p>Care content</p>
       </AppShell>,
     );
-
+    expect(screen.getByText("SYREN")).toBeVisible();
+    expect(screen.getByText("Maplewood Residence")).toBeVisible();
+    expect(screen.getByText("West station")).toBeVisible();
+    expect(screen.getByText("Synthetic residents")).toBeVisible();
+    expect(screen.getByRole("main")).toHaveTextContent("Care content");
+    expect(screen.queryByText("Northstar Clinic")).not.toBeInTheDocument();
+    expect(screen.queryByText("Sign in")).not.toBeInTheDocument();
+  });
+  it("offers only authorized area choices", async () => {
+    render(
+      <AppShell>
+        <p>Care content</p>
+      </AppShell>,
+    );
+    const area = screen.getByRole("combobox", { name: /monitoring area/i });
     expect(
-      screen.getByRole("navigation", { name: /clinic navigation/i }),
-    ).toBeVisible();
-    expect(screen.getByRole("main")).toHaveTextContent("Residents content");
-    expect(screen.getByLabelText("Current clinic workspace")).toHaveTextContent("Northstar Clinic");
-    expect(screen.getAllByText("Northstar Clinic")).toHaveLength(1);
-    expect(screen.getByText("Care operations workspace")).toBeVisible();
-    expect(screen.getByText("Synthetic records only")).toBeVisible();
-    expect(screen.queryByText("Synthetic demo data")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /overview/i })).toHaveAttribute(
+      screen.queryByRole("option", { name: "Unapproved wing" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: "All covered areas" }),
+    ).toHaveValue("all");
+    await userEvent.selectOptions(area, "east");
+    expect(selectArea).toHaveBeenCalledWith("east");
+  });
+  it("links the care workflows and administrative entry", () => {
+    render(
+      <AppShell>
+        <p>Care content</p>
+      </AppShell>,
+    );
+    expect(screen.getByRole("link", { name: "Overview" })).toHaveAttribute(
       "aria-current",
       "page",
     );
+    expect(screen.getByRole("link", { name: "Residents" })).toHaveAttribute(
+      "href",
+      "/residents",
+    );
+    expect(screen.getByRole("link", { name: "Handover" })).toHaveAttribute(
+      "href",
+      "/handover",
+    );
+    expect(screen.getByRole("link", { name: "Events" })).toHaveAttribute(
+      "href",
+      "/events",
+    );
+    expect(
+      screen.getByRole("link", { name: /administration/i }),
+    ).toHaveAttribute("href", "/administration");
   });
-
-  it("links to the complete event queue without dead navigation", () => {
+  it("exposes keyboard access directly to the workspace", () => {
     render(
       <AppShell>
-        <p>Residents content</p>
+        <p>Care content</p>
       </AppShell>,
     );
-
-    expect(screen.getByRole("link", { name: /events/i })).toHaveAttribute("href", "/events");
-    expect(screen.queryByText("Soon")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /skip to workspace/i }),
+    ).toHaveAttribute("href", "#care-workspace");
+    expect(screen.getByRole("main")).toHaveAttribute("id", "care-workspace");
   });
-
-  it.each(["/design-system", "/design-system/colors"]) (
-    "renders %s children directly without clinic chrome or a nested main landmark",
-    (designSystemPath) => {
-      pathname = designSystemPath;
-
+  it.each(["/design-system", "/design-system/colors"])(
+    "keeps %s specimens outside the product shell",
+    (path) => {
+      pathname = path;
       render(
         <AppShell>
-          <main id="design-system-content">Design system specimens</main>
+          <main>Specimens</main>
         </AppShell>,
       );
-
-      expect(screen.getByText("Design system specimens")).toBeInTheDocument();
-      expect(screen.queryByRole("navigation", { name: /clinic navigation/i })).not.toBeInTheDocument();
       expect(screen.getAllByRole("main")).toHaveLength(1);
-      expect(screen.getByRole("main")).toHaveAttribute("id", "design-system-content");
+      expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
     },
   );
-
-  it("keeps clinic chrome for ordinary routes", () => {
-    pathname = "/events";
-
+  it("identifies the current section on nested routes", () => {
+    pathname = "/residents/res_demo";
     render(
       <AppShell>
-        <p>Events content</p>
+        <p>Resident</p>
       </AppShell>,
     );
-
-    expect(screen.getByRole("navigation", { name: /clinic navigation/i })).toBeVisible();
-    expect(screen.getByRole("main")).toHaveTextContent("Events content");
-    expect(screen.getByRole("main").className).not.toMatch(/overviewMain/);
-  });
-
-  it("locks an intentional accessible collapsed sidebar before mobile navigation", () => {
-    expect(stylesheet).toMatch(/@media \(min-width: 761px\) and \(max-width: 1050px\)/);
-    expect(stylesheet).toContain("grid-template-columns: var(--ac-sidebar-collapsed-width) minmax(0, 1fr)");
-    expect(stylesheet).toMatch(/\.navLink > span,[\s\S]*clip-path: inset\(50%\);/);
-    expect(stylesheet).toMatch(/@media \(max-width: 760px\)/);
-  });
-
-  it("scopes the supplied compact visual system to clinic chrome", () => {
-    expect(stylesheet).toContain("grid-template-columns: var(--ac-sidebar-width) minmax(0, 1fr)");
-    expect(stylesheet).toContain("background: var(--ac-canvas)");
-    expect(stylesheet).toContain("background: var(--ac-surface)");
-    expect(stylesheet).toContain("color: var(--ac-action)");
+    expect(screen.getByRole("link", { name: "Residents" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("link", { name: "Overview" })).not.toHaveAttribute(
+      "aria-current",
+    );
   });
 });

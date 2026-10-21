@@ -1,8 +1,6 @@
-import { EventDetail } from "@/features/events/event-detail";
+import { CareEventDetail } from "@/features/workspace";
 
-export default async function EventPage({
-  params,
-}: Readonly<{ params: Promise<{ eventId: string }> }>) {
+export default async function EventPage({ params }: { params: Promise<{ eventId: string }> }) {
   const { eventId } = await params;
-  return <EventDetail eventId={eventId} />;
+  return <CareEventDetail eventId={eventId} />;
 }

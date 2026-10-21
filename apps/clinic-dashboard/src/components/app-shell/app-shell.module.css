@@ -1,11 +1,10 @@
 .shell {
-  min-height: 100svh;
   display: grid;
   grid-template-columns: var(--ac-sidebar-width) minmax(0, 1fr);
-  color: var(--ac-text-primary);
+  min-height: 100svh;
   background: var(--ac-canvas);
+  color: var(--ac-text-primary);
 }
-
 .sidebar {
   position: sticky;
   top: 0;
@@ -13,141 +12,444 @@
   display: flex;
   height: 100svh;
   flex-direction: column;
-  padding: 20px 12px 16px;
+  padding: 27px 13px 18px;
   border-right: 1px solid var(--ac-border-subtle);
   background: var(--ac-surface);
 }
-
 .brand {
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 0 9px 36px;
   min-height: 40px;
-  padding: 0 8px 20px;
+  width: fit-content;
 }
-
 .brandMark {
-  display: grid;
-  width: 26px;
-  height: 26px;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: var(--ac-radius-control);
-  color: white;
-  background: var(--ac-action);
+  width: 29px;
+  height: 29px;
+  flex: none;
+  color: var(--ac-text-primary);
 }
-.brandMark svg { width: 15px; height: 15px; }
-.brandName, .brandSubtitle { display: block; }
-.brandName { font-size: 14px; font-weight: 650; letter-spacing: -.018em; line-height: 18px; }
-.brandSubtitle { margin-top: 1px; color: var(--ac-text-secondary); font-size: 11px; line-height: 14px; }
-
-.navigation { margin-top: 8px; }
+.brandMark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.brandName,
+.brandSubtitle {
+  display: block;
+}
+.brandName {
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  line-height: 21px;
+}
+.brandSubtitle {
+  margin-top: 3px;
+  font-size: 11px;
+  letter-spacing: 0.025em;
+  color: var(--ac-text-secondary);
+}
 .navigationLabel {
-  padding: 0 8px 8px;
+  padding: 0 11px 10px;
   color: var(--ac-text-secondary);
   font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .09em;
-  line-height: 14px;
+  font-weight: 550;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
+  line-height: 14px;
 }
-.navigationList { display: grid; gap: 2px; list-style: none; }
-.navLink, .activeLink {
+.navigationList {
+  display: grid;
+  gap: 3px;
+  list-style: none;
+}
+.navLink,
+.activeLink {
   position: relative;
   display: flex;
-  min-height: 36px;
+  min-height: 38px;
   align-items: center;
   gap: 10px;
-  padding: 0 8px;
-  border-radius: var(--ac-radius-control);
-  color: var(--ac-text-secondary);
+  padding: 0 11px;
+  border-radius: 6px;
+  color: var(--ac-text-strong-secondary);
   font-size: 13px;
-  font-weight: 400;
   line-height: 18px;
-  transition: color var(--ac-duration-fast) var(--ac-ease-standard), background-color var(--ac-duration-fast) var(--ac-ease-standard);
+  transition:
+    background-color 0.15s,
+    color 0.15s;
 }
-.navLink:hover { color: var(--ac-text-primary); background: var(--ac-surface-quiet); }
-.activeLink { color: var(--ac-action); background: var(--ac-action-soft); font-weight: 550; }
-.activeLink::before { display: none; }
-.navIcon { width: 16px; height: 16px; flex: 0 0 auto; }
-
+.navLink:hover {
+  background: var(--ac-surface-quiet);
+  color: var(--ac-text-primary);
+}
+.activeLink {
+  color: var(--ac-action);
+  background: var(--ac-action-soft);
+  font-weight: 550;
+}
+.navIcon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.navLink .navIcon {
+  color: var(--ac-text-secondary);
+}
+.facilityNavigation {
+  margin-top: 33px;
+  display: grid;
+  gap: 2px;
+}
 .sidebarFooter {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
   margin-top: auto;
-  padding: 14px 8px 2px;
   border-top: 1px solid var(--ac-border-subtle);
+  padding: 17px 10px 0;
 }
-.demoDot { width: 6px; height: 6px; flex: 0 0 auto; margin-top: 5px; border-radius: 50%; background: var(--ac-watch-text); }
-.footerLabel { font-size: 11px; font-weight: 600; line-height: 15px; }
-.footerNote { margin-top: 1px; color: var(--ac-text-secondary); font-size: 11px; line-height: 15px; }
-
-.workspace { min-width: 0; }
+.environment {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  line-height: 17px;
+}
+.environment strong {
+  font-weight: 550;
+}
+.demoDot {
+  width: 5px;
+  height: 5px;
+  background: var(--ac-watch-text);
+  border-radius: 50%;
+  flex: none;
+}
+.footerNote {
+  font-size: 11px;
+  color: var(--ac-text-strong-secondary);
+  margin-top: 3px;
+}
+.footerDetail {
+  font-size: 11px;
+  color: var(--ac-text-secondary);
+  line-height: 15px;
+  margin-top: 5px;
+  max-width: 145px;
+}
+.developerTools {
+  font-size: 11px;
+  color: var(--ac-text-secondary);
+  margin-top: 15px;
+}
+.developerTools summary {
+  cursor: pointer;
+  width: fit-content;
+}
+.developerTools a {
+  display: block;
+  padding: 6px 0 0 11px;
+}
+.developerTools a:hover {
+  color: var(--ac-action);
+}
+.tabletDemo {
+  display: none;
+}
+.workspace {
+  min-width: 0;
+}
 .topbar {
   position: sticky;
   top: 0;
   z-index: 20;
   display: flex;
-  height: var(--ac-topbar-height);
+  justify-content: space-between;
+  gap: 16px;
   align-items: center;
-  padding: 0 36px;
+  min-height: 62px;
+  padding: 10px 32px;
   border-bottom: 1px solid var(--ac-border-subtle);
   background: var(--ac-surface);
 }
-.workspaceName { font-size: 13px; font-weight: 600; letter-spacing: -.012em; line-height: 17px; }
-.workspaceMeta { margin-top: 1px; color: var(--ac-text-secondary); font-size: 11px; line-height: 14px; }
-.main, .overviewMain {
+.facilityContext {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.workspaceName {
+  font-size: 12px;
+  font-weight: 550;
+  white-space: nowrap;
+}
+.contextDivider {
+  color: var(--ac-border-strong);
+  font-size: 17px;
+}
+.areaLabel {
+  min-width: 0;
+}
+.areaSelect {
+  max-width: 190px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ac-text-strong-secondary);
+  font-size: 12px;
+  min-height: 32px;
+  cursor: pointer;
+  padding: 0 17px 0 0;
+}
+.areaSelect:disabled {
+  cursor: default;
+  color: var(--ac-text-secondary);
+}
+.topbarActions {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  min-width: 0;
+}
+.stationLink {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ac-text-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.stationDot {
+  width: 5px;
+  height: 5px;
+  flex: none;
+  border: 1px solid var(--ac-text-secondary);
+  border-radius: 50%;
+}
+.adminLink,
+.adminActive {
+  font-size: 11px;
+  color: var(--ac-text-strong-secondary);
+  white-space: nowrap;
+}
+.adminLink:hover,
+.stationLink:hover {
+  color: var(--ac-action);
+}
+.adminActive {
+  color: var(--ac-action);
+}
+.main,
+.overviewMain {
   width: 100%;
-  max-width: 1400px;
-  min-height: calc(100svh - var(--ac-topbar-height));
+  max-width: 1360px;
+  min-height: calc(100svh - 62px);
   margin: 0 auto;
-  padding: 36px 40px 72px;
-  color: var(--ac-text-primary);
-  background: var(--ac-canvas);
+  padding: 36px 40px 64px;
 }
-
+.main:focus {
+  outline: none;
+  box-shadow: none;
+}
+.mobileContext {
+  display: none;
+}
+.areaError {
+  padding: 10px 32px;
+  font-size: 12px;
+  color: var(--ac-risk-text);
+  background: var(--ac-risk-bg);
+  border-bottom: 1px solid var(--ac-risk-border);
+}
+.skipLink {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 1000;
+  background: var(--ac-text-primary);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 6px;
+  transform: translateY(-160%);
+}
+.skipLink:focus {
+  transform: translateY(0);
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.accessState {
+  max-width: 540px;
+  padding-block: 48px;
+}
+.accessState .navigationLabel {
+  padding-left: 0;
+}
+.accessState h1 {
+  font-size: 27px;
+  font-weight: 550;
+  letter-spacing: -0.035em;
+  line-height: 1.2;
+}
+.accessState p {
+  margin-top: 16px;
+  color: var(--ac-text-secondary);
+}
+.accessState a {
+  display: inline-block;
+  margin-top: 20px;
+  color: var(--ac-action);
+  font-size: 13px;
+}
 @media (min-width: 761px) and (max-width: 1050px) {
-  .shell { grid-template-columns: var(--ac-sidebar-collapsed-width) minmax(0, 1fr); }
-  .sidebar { padding-inline: 10px; }
-  .brand { justify-content: center; padding-inline: 0; }
-  .brand > span:last-child, .navigationLabel, .sidebarFooter { display: none; }
-  .navigation { margin-top: 12px; }
-  .navLink, .activeLink { justify-content: center; padding-inline: 0; }
-  .navLink > span, .activeLink > span {
-    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  .shell {
+    grid-template-columns: var(--ac-sidebar-collapsed-width) minmax(0, 1fr);
   }
-  .main, .overviewMain { padding-inline: 28px; }
+  .sidebar {
+    padding-inline: 10px;
+  }
+  .brand {
+    padding-inline: 0;
+    justify-content: center;
+    width: 100%;
+  }
+  .brand > span:last-child,
+  .navigationLabel,
+  .sidebarFooter {
+    display: none;
+  }
+  .navLink,
+  .activeLink {
+    justify-content: center;
+    padding-inline: 0;
+  }
+  .navLink > span,
+  .activeLink > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .main,
+  .overviewMain {
+    padding-inline: 28px;
+  }
+  .topbar {
+    padding-inline: 24px;
+  }
+  .stationLink {
+    display: none;
+  }
+  .tabletDemo {
+    display: inline;
+    color: var(--ac-text-secondary);
+    font-size: 11px;
+    white-space: nowrap;
+  }
 }
-
 @media (max-width: 760px) {
-  .shell { display: block; }
+  .shell {
+    display: block;
+  }
   .sidebar {
     position: sticky;
     inset: 0 0 auto;
     z-index: 50;
-    width: 100%;
     height: auto;
     padding: 6px 12px;
-    border: 0;
+    border-right: 0;
     border-bottom: 1px solid var(--ac-border-subtle);
   }
-  .brand, .sidebarFooter, .navigationLabel { display: none; }
-  .navigation { margin: 0; }
-  .navigationList { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
-  .navigationList > li { min-width: 0; }
-  .navLink, .activeLink { min-width: 0; height: 42px; justify-content: center; gap: 5px; padding-inline: 4px; font-size: 11px; }
-  .activeLink { background: var(--ac-action-soft); }
-  .navLink span, .activeLink span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .topbar { position: static; height: 48px; padding: 0 16px; }
-  .workspaceMeta { display: none; }
-  .main, .overviewMain { min-height: calc(100svh - 103px); padding: 26px 16px 48px; }
+  .brand,
+  .sidebarFooter,
+  .navigationLabel,
+  .facilityNavigation {
+    display: none;
+  }
+  .navigationList {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .navLink,
+  .activeLink {
+    min-height: 46px;
+    justify-content: center;
+    flex-direction: column;
+    gap: 3px;
+    padding: 4px 0;
+    font-size: 11px;
+    line-height: 13px;
+  }
+  .navIcon {
+    width: 15px;
+    height: 15px;
+  }
+  .topbar {
+    position: static;
+    min-height: 54px;
+    padding: 8px 16px;
+    gap: 8px;
+  }
+  .facilityContext {
+    gap: 7px;
+    flex-wrap: wrap;
+  }
+  .workspaceName {
+    font-size: 11px;
+    max-width: 170px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .contextDivider {
+    display: none;
+  }
+  .areaSelect {
+    font-size: 12px;
+    min-height: 44px;
+    max-width: 190px;
+  }
+  .topbarActions {
+    gap: 0;
+  }
+  .stationLink {
+    display: none;
+  }
+  .adminLink,
+  .adminActive {
+    font-size: 12px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .mobileContext {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 16px;
+    background: var(--ac-surface-quiet);
+    border-bottom: 1px solid var(--ac-border-subtle);
+    font-size: 11px;
+    color: var(--ac-text-secondary);
+  }
+  .main,
+  .overviewMain {
+    padding: 25px 16px 48px;
+    min-height: calc(100svh - 146px);
+  }
+  .areaError {
+    padding-inline: 16px;
+  }
 }
-
-@media (max-width: 420px) {
-  .navLink, .activeLink { flex-direction: column; gap: 2px; height: 48px; font-size: 11px; line-height: 13px; }
-}
-
-@media (forced-colors: active) {
-  .brandMark, .activeLink { border: 1px solid CanvasText; }
+@media (prefers-reduced-motion: reduce) {
+  .navLink,
+  .activeLink {
+    transition: none;
+  }
 }

@@ -34,7 +34,7 @@ describe("MockMonitoringClient", () => {
     first.device.displayLabel = "Changed outside client";
 
     expect((await client.getDevice("dev_room_104")).device).toMatchObject({
-      displayLabel: "Northstar 104",
+      displayLabel: "Room unit 104",
       health: { status: "degraded", dataAvailability: "limited" },
     });
     await expect(client.getDevice("dev_missing")).rejects.toThrow(/could not be found/i);
@@ -131,7 +131,7 @@ describe("MockMonitoringClient", () => {
 
     expect(events.items).toHaveLength(4);
     expect(events.items[0].eventId).toBe("evt_unknown_pattern_104");
-    expect(resident.resident.displayLabel).toBe("Resident B");
+    expect(resident.resident.displayLabel).toBe("Arthur Chen");
     expect(resident.events.map((event) => event.eventId)).toEqual([
       "evt_unusual_movement_102",
       "evt_previous_movement_102",
