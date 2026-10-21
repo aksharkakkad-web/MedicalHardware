@@ -14,7 +14,7 @@ export function createResidentOverviewFixture(
       {
         schemaVersion: "1.0",
         residentId: "res_7f3a1c",
-        displayLabel: "Resident A",
+        displayLabel: "Evelyn Brooks",
         roomId: "room_b14e2d",
         roomLabel: "Room 101",
         assignmentStatus: "active",
@@ -36,7 +36,7 @@ export function createResidentOverviewFixture(
       {
         schemaVersion: "1.0",
         residentId: "res_2c8d4f",
-        displayLabel: "Resident B",
+        displayLabel: "Arthur Chen",
         roomId: "room_6a91c3",
         roomLabel: "Room 102",
         assignmentStatus: "active",
@@ -59,7 +59,7 @@ export function createResidentOverviewFixture(
       {
         schemaVersion: "1.0",
         residentId: "res_91be60",
-        displayLabel: "Resident C",
+        displayLabel: "Miriam Ellis",
         roomId: "room_3d72ab",
         roomLabel: "Room 103",
         assignmentStatus: "active",
@@ -81,7 +81,7 @@ export function createResidentOverviewFixture(
       {
         schemaVersion: "1.0",
         residentId: "res_4ab783",
-        displayLabel: "Resident D",
+        displayLabel: "Daniel Ortiz",
         roomId: "room_85cd20",
         roomLabel: "Room 104",
         assignmentStatus: "active",
@@ -106,7 +106,7 @@ export function createResidentOverviewFixture(
       {
         schemaVersion: "1.0",
         residentId: "res_d0e519",
-        displayLabel: "Resident E",
+        displayLabel: "Ruth Palmer",
         roomId: "room_1f64b8",
         roomLabel: "Room 105",
         assignmentStatus: "active",
@@ -130,7 +130,7 @@ export function createResidentOverviewFixture(
       {
         schemaVersion: "1.0",
         residentId: "res_assignment_review",
-        displayLabel: "Resident F",
+        displayLabel: "Joan Wallace",
         roomId: "assignment_conflict",
         roomLabel: "Assignment review",
         assignmentStatus: "conflicting",

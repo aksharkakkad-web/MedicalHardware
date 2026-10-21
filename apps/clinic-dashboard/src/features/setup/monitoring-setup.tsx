@@ -43,15 +43,15 @@ const setupReasonLabel: Record<SetupChangeReason, string> = Object.fromEntries(
   reasonOptions.map((option) => [option.value, option.label]),
 ) as Record<SetupChangeReason, string>;
 
-function formatTime(value: string): string {
-  return new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+function formatTime(value: string, timeZone?: string): string {
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short", timeZone }).format(new Date(value));
 }
 
 function humanize(value: string): string {
   return value.replaceAll("_", " ");
 }
 
-export function MonitoringSetup({ residentId }: Readonly<{ residentId: string }>) {
+export function MonitoringSetup({ residentId, timeZone }: Readonly<{ residentId: string; timeZone?: string }>) {
   const client = useMonitoringClient();
   const [result, setResult] = useState<LoadState>({ status: "loading" });
   const [reason, setReason] = useState<SetupChangeReason>("device_moved");
@@ -142,7 +142,7 @@ export function MonitoringSetup({ residentId }: Readonly<{ residentId: string }>
 
           <section className={styles.panel}>
             <div className={styles.panelHeader}><div><span>Setup history</span><h2>What changed and what was preserved</h2></div><small>{setup.setupChanges.length} {setup.setupChanges.length === 1 ? "change" : "changes"}</small></div>
-            {setup.setupChanges.length ? <div className={styles.history}>{[...setup.setupChanges].reverse().map((change) => <article key={`${change.newSetupVersion}-${change.changedAt}`}><span>{formatTime(change.changedAt)}</span><div><strong>{setupReasonLabel[change.reason]}</strong><p>Restarted {change.affectedDimensions.map((item) => dimensionLabel[item]).join(" and ").toLowerCase()}. Other established areas stayed intact.</p></div><small>{change.previousSetupVersion} → {change.newSetupVersion}</small></article>)}</div> : <p className={styles.empty}>No setup changes have been recorded. The original setup history is intact.</p>}
+            {setup.setupChanges.length ? <div className={styles.history}>{[...setup.setupChanges].reverse().map((change) => <article key={`${change.newSetupVersion}-${change.changedAt}`}><span>{formatTime(change.changedAt, timeZone)}</span><div><strong>{setupReasonLabel[change.reason]}</strong><p>Restarted {change.affectedDimensions.map((item) => dimensionLabel[item]).join(" and ").toLowerCase()}. Other established areas stayed intact.</p></div><small>{change.previousSetupVersion} → {change.newSetupVersion}</small></article>)}</div> : <p className={styles.empty}>No setup changes have been recorded. The original setup history is intact.</p>}
           </section>
         </div>
 

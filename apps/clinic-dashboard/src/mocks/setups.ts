@@ -35,11 +35,11 @@ export function createMonitoringSetupFixtures(now: Date): ResidentMonitoringSetu
   });
 
   const items = [
-    base("res_7f3a1c", "Resident A", "room_b14e2d", "Room 101", "dev_room_101", "Northstar 101"),
-    base("res_2c8d4f", "Resident B", "room_6a91c3", "Room 102", "dev_room_102", "Northstar 102"),
-    base("res_91be60", "Resident C", "room_3d72ab", "Room 103", "dev_room_103", "Northstar 103"),
-    base("res_4ab783", "Resident D", "room_85cd20", "Room 104", "dev_room_104", "Northstar 104"),
-    base("res_d0e519", "Resident E", "room_1f64b8", "Room 105", "dev_room_105", "Northstar 105"),
+    base("res_7f3a1c", "Evelyn Brooks", "room_b14e2d", "Room 101", "dev_room_101", "Room unit 101"),
+    base("res_2c8d4f", "Arthur Chen", "room_6a91c3", "Room 102", "dev_room_102", "Room unit 102"),
+    base("res_91be60", "Miriam Ellis", "room_3d72ab", "Room 103", "dev_room_103", "Room unit 103"),
+    base("res_4ab783", "Daniel Ortiz", "room_85cd20", "Room 104", "dev_room_104", "Room unit 104"),
+    base("res_d0e519", "Ruth Palmer", "room_1f64b8", "Room 105", "dev_room_105", "Room unit 105"),
   ];
 
   items[1] = {
@@ -71,7 +71,7 @@ export function createMonitoringSetupFixtures(now: Date): ResidentMonitoringSetu
     {
       schemaVersion: "1.0",
       residentId: "res_assignment_review",
-      residentLabel: "Resident F",
+      residentLabel: "Joan Wallace",
       roomId: null,
       roomLabel: null,
       deviceId: null,

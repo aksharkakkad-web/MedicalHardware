@@ -1,6 +1,6 @@
-import { ResidentDetail } from "@/features/residents/resident-detail";
+import { CareResidentDetail } from "@/features/workspace";
 
 export default async function ResidentPage({ params }: { params: Promise<{ residentId: string }> }) {
   const { residentId } = await params;
-  return <ResidentDetail residentId={residentId} />;
+  return <CareResidentDetail residentId={residentId} />;
 }

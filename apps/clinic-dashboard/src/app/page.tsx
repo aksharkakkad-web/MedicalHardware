@@ -1,5 +1,5 @@
-import { ResidentOverview } from "@/features/residents/resident-overview";
+import { CareOverview } from "@/features/workspace";
 
 export default function Home() {
-  return <ResidentOverview />;
+  return <CareOverview />;
 }

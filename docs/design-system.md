@@ -1,6 +1,6 @@
-# Adaptive Care design system
+# SYREN clinic design system
 
-**Version:** Care Ledger V2
+**Version:** Care Ledger V3 — shared staff workspace
 
 **Primary mode:** Clinic operations
 
@@ -38,7 +38,7 @@ Sentence case is the default. Keep line length near 70 characters for explanatio
 
 The base spacing rhythm is 4px. Common steps are 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, and 80px.
 
-- Desktop shell: 208px sidebar, 56px top bar, and 32–40px page gutter.
+- Desktop shell: 208px sidebar, 62px top bar, and 32–40px page gutter.
 - Desktop content: one main ledger with an optional 320–350px context rail.
 - Toolbar and inputs: 40px minimum height.
 - Repeated operational rows: 60–82px based on content.
@@ -48,13 +48,13 @@ Use whitespace and rules to group related facts. A border should usually replace
 
 ## Action hierarchy
 
-Each view has one filled electric-blue action. Secondary actions use a white surface and hairline border. Tertiary actions are text links or row navigation. Repeated rows do not repeat filled buttons. All controls need hover, focus-visible, pressed, disabled, and loading states. Focus uses the blue focus ring and remains visible against white and gray backgrounds.
+Each focused form has at most one filled electric-blue action. Ledger rows use navigation rather than repeated filled buttons. Secondary actions use a white surface and hairline border. Tertiary actions are text links or row navigation. Repeated rows do not repeat filled buttons. All controls need hover, focus-visible, pressed, disabled, and loading states. Focus uses the blue focus ring and remains visible against white and gray backgrounds.
 
 ## App shell
 
-The desktop sidebar is quiet and compact. The active destination uses a pale blue field with blue icon and text. The top bar identifies the clinic without competing with page content.
+The desktop sidebar is quiet and compact. The active destination uses a pale blue field with blue icon and text. The top bar identifies the facility, current view area and approved shared client. “All covered areas” is an explicit choice. Area filtering cannot hide authorized high or critical work. The primary destinations are Overview, Residents, Handover and Events. Facility tools include shared clients, directory imports and monitoring status. Administration is a separate entry; routine care has no personal staff login. A persistent demo label explains synthetic records and absent live alert delivery.
 
-Between 761px and 1050px the sidebar becomes an intentional icon rail with accessible labels. At 760px and below, primary navigation becomes a compact four-item bar above the clinic workspace. The design-system route remains outside clinic chrome so it can be printed and exported.
+Between 761px and 1050px the sidebar becomes an intentional icon rail with accessible labels. At 760px and below, primary navigation becomes a compact four-item bar above the clinic workspace. Keep the area selector, administration entry and demonstration context readable. On narrow event detail, response controls precede the evidence and history; resident measurements retain their own leading position. The design-system route remains outside clinic chrome so it can be printed and exported.
 
 ## Tables and ledgers
 
@@ -99,11 +99,15 @@ Use semantic color in a dot, thin leading rule, or restrained soft background. D
 
 The overview leads with the most urgent unresolved work, followed by the resident ledger. The events view separates active work from permanent resolved history. Event detail presents sensor evidence first, AI interpretation second, then immutable workflow history and feedback. Resident detail keeps current attention, monitoring, assignment, setup, context, and history distinct. Device views separate device health from resident safety. Scenario Lab clearly marks synthetic local data.
 
+Shared devices have explicit routine-action grants independently of their area coverage. A view-only station still displays authorized concerns and readings; administration does not create clinical response authority. Stale station edits require explicit review of the latest configuration before saving.
+
+Date/time entry uses the facility zone through `FacilityTimeField`, with normal local date controls and an explicit first/second occurrence choice when clocks repeat. Nonexistent times remain invalid; staff never need to type timestamp offsets.
+
 Resolved events remain immutable; recurrences are linked new events. Low-quality or multi-person data appears as limited or unavailable. The interface never fabricates precision or guesses which person produced a signal.
 
 ## AI and medical language
 
-AI may explain a structured anomaly evidence packet. It does not monitor telemetry and cannot suppress deterministic warnings. Label its output as an interpretation and keep the supporting evidence visible. Use “possible explanation,” “pattern,” and “needs staff review.” Do not claim diagnosis, emergency detection, or proof that a resident is safe.
+Deterministic monitoring measures anomaly evidence. AI analysis owns ordinary anomaly disposition under the current product architecture; an explicit urgent safety path may create provisional caregiver work that AI cannot suppress. The frontend renders the backend disposition and never creates urgency thresholds or independently discards an event. Unavailable analysis remains visible as pending or needing review. Label its output as an interpretation and keep the supporting evidence visible. Use “possible explanation,” “pattern,” and “needs staff review.” Do not claim diagnosis, emergency detection, or proof that a resident is safe.
 
 Synthetic warnings and thresholds must be labeled test-only. Fixtures, screenshots, and examples contain no real PHI.
 
@@ -121,9 +125,13 @@ Reuse these shared components before adding a page-specific pattern:
 - `Button` and `IconButton` for action hierarchy;
 - `StatusPill` for a dot plus status text;
 - `StatusIndicator` and `SystemState` for explained operational state;
-- `AttentionItem` for prioritized work;
 - `ResidentRecords` for resident ledgers;
 - `FormField` for labeled input and validation;
-- `LiquidGlassCard` only as its retained compatibility name; it renders as a flat bordered surface in Care Ledger.
 
-The typed `MonitoringClient` boundary, routes, hooks, fixtures, and workflow handlers are product contracts. Visual work must preserve them. The rendered `/design-system` route, this document, and `design-tokens.css` must describe the same system.
+The staff screens share `features/workspace/care-shared.tsx` and `care-workspace.module.css` for concern rows, scope explanation, headings, states and follow-up. Administration shares its own frame, section headings and save states. Extend these patterns before inventing another record treatment. The retired overview/event implementations and unused liquid-glass component were removed.
+
+The typed `MonitoringClient` boundary, routes, hooks, fixtures, and workflow handlers are product contracts. `WorkspaceClient` composes that boundary with synthetic frontend workflow metadata; it is not a production server schema. Its provider exposes explicit capabilities and unavailable states pending coordinated backend support. Visual work must preserve them. The rendered `/design-system` route, this document, and `design-tokens.css` must describe the same system.
+
+## Visual review criteria
+
+Review rendered desktop and phone screens before completion. Use restrained operational hierarchy: resident and room, current work, evidence and next action. Reject decorative gradients, glass effects, KPI-card walls, oversized marketing headings, fabricated trend lines, gratuitous avatars, repetitive capsules, empty feature tiles and repeated boilerplate on each row. Keep useful facts and avoid cosmetic counters without a workflow purpose. Use the existing tokens, fine rules, measured spacing and natural language. Aesthetic review does not replace staff usability validation or establish WCAG conformance.

@@ -1,0 +1,30 @@
+.field {
+  display: grid;
+  gap: var(--ac-space-2);
+  min-width: 0;
+}
+.occurrences {
+  margin-top: var(--ac-space-1);
+}
+.choice {
+  display: flex;
+  align-items: center;
+  gap: var(--ac-space-2);
+  min-height: 44px;
+  color: var(--ac-text-primary);
+  font-size: var(--ac-font-size-body);
+  cursor: pointer;
+}
+.choice input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--ac-action);
+}
+.choice input:focus-visible {
+  outline: 2px solid var(--ac-focus);
+  outline-offset: 3px;
+}
+.choice:has(input:disabled) {
+  color: var(--ac-text-disabled);
+  cursor: not-allowed;
+}

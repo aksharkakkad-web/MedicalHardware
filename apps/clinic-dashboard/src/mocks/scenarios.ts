@@ -18,7 +18,7 @@ export const demoScenarioDefinitions: DemoScenarioDefinition[] = [
     summary: "Pause resident-specific monitoring without creating a warning event.",
     safetyRule: "Existing calibration history stays saved while new learning pauses.",
     expectedOutcomes: [
-      "Resident A shows monitoring paused",
+      "Evelyn Brooks shows monitoring paused",
       "No warning event is created",
       "New baseline learning is paused",
     ],
@@ -31,7 +31,7 @@ export const demoScenarioDefinitions: DemoScenarioDefinition[] = [
     summary: "Resume resident-specific monitoring after an away period.",
     safetyRule: "Returning is an awareness update, not proof that the resident is safe.",
     expectedOutcomes: [
-      "Resident A shows monitoring active",
+      "Evelyn Brooks shows monitoring active",
       "Eligible baseline learning can continue",
       "No warning event is created for the return",
     ],
@@ -44,7 +44,7 @@ export const demoScenarioDefinitions: DemoScenarioDefinition[] = [
     summary: "Limit resident-specific monitoring when room attribution is unclear.",
     safetyRule: "The system never guesses which person produced a signal.",
     expectedOutcomes: [
-      "Resident A shows monitoring limited",
+      "Evelyn Brooks shows monitoring limited",
       "A watch item asks staff to confirm occupancy",
       "Resident-specific interpretation is unavailable",
     ],
@@ -57,7 +57,7 @@ export const demoScenarioDefinitions: DemoScenarioDefinition[] = [
     summary: "Show a combined change from a personal baseline that needs staff review.",
     safetyRule: "The synthetic pattern does not identify a diagnosis or medical cause.",
     expectedOutcomes: [
-      "A high-priority event appears for Resident A",
+      "A high-priority event appears for Evelyn Brooks",
       "Evidence describes changes from personal baseline",
       "The explanation clearly states its uncertainty",
     ],
@@ -77,7 +77,7 @@ export function createScenarioEventFixture(
   const eventId = scenarioEventIds[scenarioId];
   if (!eventId) return null;
   const createdAt = new Date(now.getTime() - 2 * 60_000).toISOString();
-  const resident = { residentId: SCENARIO_RESIDENT_ID, displayLabel: "Resident A", roomId: "room_b14e2d", roomLabel: "Room 101" };
+  const resident = { residentId: SCENARIO_RESIDENT_ID, displayLabel: "Evelyn Brooks", roomId: "room_b14e2d", roomLabel: "Room 101" };
 
   if (scenarioId === "possible_multi_person") {
     return {
@@ -94,7 +94,7 @@ export function createScenarioEventFixture(
         value: 0.34,
         label: "Low confidence",
         dataQuality: "limited",
-        limitation: "Another person may be present, so the system cannot safely attribute this pattern to Resident A.",
+        limitation: "Another person may be present, so the system cannot safely attribute this pattern to Evelyn Brooks.",
       },
       evidence: [{
         evidenceId: "demo_occupancy_ambiguity",
@@ -161,7 +161,7 @@ export function createScenarioEventFixture(
     ],
     interpretation: {
       status: "complete",
-      summary: "Several synthetic signals changed together compared with Resident A's personal baseline.",
+      summary: "Several synthetic signals changed together compared with Evelyn Brooks's personal baseline.",
       uncertainty: "This is not a diagnosis. The sensors cannot determine a medical cause, so staff must check the resident.",
     },
     device: {

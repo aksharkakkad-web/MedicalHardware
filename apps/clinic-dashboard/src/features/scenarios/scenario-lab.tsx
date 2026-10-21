@@ -91,7 +91,7 @@ export function ScenarioLab() {
   const { definitions, state } = result.data;
   const active = definitions.find((definition) => definition.scenarioId === state.activeScenarioId) ?? null;
   const targetHref = state.targetEventId ? `/events/${state.targetEventId}` : `/residents/${state.targetResidentId}`;
-  const targetLabel = state.targetEventId ? "Open generated event" : "Open Resident A";
+  const targetLabel = state.targetEventId ? "Open generated event" : "Open Evelyn Brooks";
 
   return (
     <section className={styles.page}>
@@ -107,7 +107,7 @@ export function ScenarioLab() {
 
       <div className={styles.layout}>
         <section className={styles.sheet}>
-          <div className={styles.sheetHeader}><div><h2>Choose the next room story</h2><p>Each scenario updates the same resident, event, and setup screens used by the rest of the app.</p></div><span>Resident A · Room 101</span></div>
+          <div className={styles.sheetHeader}><div><h2>Choose the next room story</h2><p>Each scenario updates the same resident, event, and setup screens used by the rest of the app.</p></div><span>Evelyn Brooks · Room 101</span></div>
           <div className={styles.scenarioList}>
             {definitions.map((definition, index) => {
               const isActive = definition.scenarioId === state.activeScenarioId;
@@ -127,7 +127,7 @@ export function ScenarioLab() {
         </section>
 
         <aside className={styles.resultRail}>
-          <div className={styles.resultHeader}><div><h2>{active ? `${active.label} active` : "Baseline demo"}</h2><p>{active ? "The shared clinic demo now reflects this situation." : "Resident A begins with active monitoring and no open attention items."}</p></div><span className={styles.liveDot} aria-hidden="true" /></div>
+          <div className={styles.resultHeader}><div><h2>{active ? `${active.label} active` : "Baseline demo"}</h2><p>{active ? "The shared clinic demo now reflects this situation." : "Evelyn Brooks begins with active monitoring and no open attention items."}</p></div><span className={styles.liveDot} aria-hidden="true" /></div>
           {active ? <ol className={styles.outcomes}>{active.expectedOutcomes.map((outcome) => <li key={outcome}>{outcome}</li>)}</ol> : <div className={styles.baseline}><strong>Ready for a walkthrough</strong><p>Choose one situation. You can inspect the result, return here, and run another without changing real data.</p></div>}
           <dl className={styles.resultMeta}><div><dt>Applied</dt><dd>{formattedTime(state.appliedAt)}</dd></div><div><dt>Data</dt><dd>Synthetic and local</dd></div></dl>
           {running && <p className={styles.runningStatus} role="status" aria-live="polite">{running === "reset" ? "Resetting the clinic demo…" : "Applying the selected scenario…"}</p>}

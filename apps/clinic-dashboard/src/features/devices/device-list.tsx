@@ -16,7 +16,7 @@ function needsAttention(device: ClinicDevice): boolean {
   return !["online"].includes(device.health.status) || device.setup.state === "needs_attention";
 }
 
-export function DeviceList() {
+export function DeviceList({ authorizedResidentIds, timeZone }: { authorizedResidentIds?: string[]; timeZone?: string }) {
   const client = useMonitoringClient();
   const [devices, setDevices] = useState<ClinicDevice[]>([]);
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
@@ -39,7 +39,8 @@ export function DeviceList() {
     return () => { current = false; };
   }, [client, requestKey]);
 
-  const visible = useMemo(() => devices.filter((device) => {
+  const covered = useMemo(() => devices.filter((device) => !authorizedResidentIds || (device.residentId !== null && authorizedResidentIds.includes(device.residentId))), [devices, authorizedResidentIds]);
+  const visible = useMemo(() => covered.filter((device) => {
     const matchesFilter = filter === "all"
       || (filter === "attention" && needsAttention(device))
       || (filter === "online" && device.health.status === "online")
@@ -52,9 +53,9 @@ export function DeviceList() {
       device.residentLabel ?? "",
     ].some((value) => value.toLowerCase().includes(search));
     return matchesFilter && matchesSearch;
-  }), [devices, filter, query]);
+  }), [covered, filter, query]);
 
-  const attentionCount = devices.filter(needsAttention).length;
+  const attentionCount = covered.filter(needsAttention).length;
 
   return (
     <section className={styles.page}>
@@ -73,7 +74,7 @@ export function DeviceList() {
 
       <div className={styles.toolbar}>
         <div className={styles.filters} aria-label="Filter devices">
-          {(["all", "attention", "online", "unassigned"] as const).map((item) => (
+          {(["all", "attention", "online", ...(!authorizedResidentIds ? ["unassigned" as const] : [])] as const).map((item) => (
             <button key={item} type="button" aria-pressed={filter === item} onClick={() => setFilter(item)}>
               {{ all: "All", attention: "Needs attention", online: "Online", unassigned: "Unassigned" }[item]}
             </button>
@@ -110,7 +111,7 @@ export function DeviceList() {
                   <small>{device.residentLabel ?? "No resident assigned"}</small>
                 </span>
                 <span className={styles.health}><span className={styles.srOnly}>Health: </span><StatusPill label={health.label} tone={health.tone} /><small>{device.health.summary}</small></span>
-                <time dateTime={device.health.lastSeenAt ?? undefined}><span className={styles.srOnly}>Last update: </span>{formatTimestamp(device.health.lastSeenAt)}</time>
+                <time dateTime={device.health.lastSeenAt ?? undefined}><span className={styles.srOnly}>Last update: </span>{formatTimestamp(device.health.lastSeenAt, timeZone)}</time>
                 <span className={styles.setup}><span className={styles.srOnly}>Setup: </span><strong>Version {device.setup.version}</strong><small>{setupLabel(device.setup.state)}</small></span>
                 <ArrowIcon className={styles.arrow} />
               </Link>

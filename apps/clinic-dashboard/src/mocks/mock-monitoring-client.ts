@@ -651,10 +651,10 @@ export class MockMonitoringClient implements MonitoringClient, DemoScenarioContr
     if (resident.residentId !== SCENARIO_RESIDENT_ID || !scenario.activeScenarioId) return resident;
     const lastUpdatedAt = scenario.appliedAt ?? resident.monitoring.lastUpdatedAt;
     if (scenario.activeScenarioId === "resident_away") {
-      return { ...resident, monitoring: { state: "paused", reason: "Resident A is away, so resident-specific monitoring and new baseline learning are paused.", lastUpdatedAt }, attention: { priority: "none", headline: "No warning event — resident away", openEventCount: 0 } };
+      return { ...resident, monitoring: { state: "paused", reason: "Evelyn Brooks is away, so resident-specific monitoring and new baseline learning are paused.", lastUpdatedAt }, attention: { priority: "none", headline: "No warning event — resident away", openEventCount: 0 } };
     }
     if (scenario.activeScenarioId === "resident_returned") {
-      return { ...resident, monitoring: { state: "active", reason: "Resident A returned. Resident-specific monitoring is active and eligible learning can continue.", lastUpdatedAt }, attention: { priority: "none", headline: "No open attention items", openEventCount: 0 } };
+      return { ...resident, monitoring: { state: "active", reason: "Evelyn Brooks returned. Resident-specific monitoring is active and eligible learning can continue.", lastUpdatedAt }, attention: { priority: "none", headline: "No open attention items", openEventCount: 0 } };
     }
     if (scenario.activeScenarioId === "possible_multi_person") {
       return { ...resident, monitoring: { state: "limited", contextLabel: "Possible visitor or another person", reason: "Possible multiple-person presence limits resident-specific monitoring.", lastUpdatedAt }, attention: { priority: "watch", headline: "Confirm who is in Room 101", openEventCount: 1, primaryEventId: scenario.targetEventId ?? undefined } };
@@ -667,9 +667,9 @@ export class MockMonitoringClient implements MonitoringClient, DemoScenarioContr
     scenario: DemoScenarioState,
   ): ResidentMonitoringSetup {
     if (setup.residentId !== SCENARIO_RESIDENT_ID || !scenario.activeScenarioId) return setup;
-    if (scenario.activeScenarioId === "resident_away") return { ...setup, learningState: "paused", learningReason: "New learning is paused while Resident A is away. Established calibration history is preserved." };
+    if (scenario.activeScenarioId === "resident_away") return { ...setup, learningState: "paused", learningReason: "New learning is paused while Evelyn Brooks is away. Established calibration history is preserved." };
     if (scenario.activeScenarioId === "possible_multi_person") return { ...setup, learningState: "paused", learningReason: "New learning is paused while possible multiple-person presence makes resident attribution unclear." };
-    if (scenario.activeScenarioId === "resident_returned") return { ...setup, learningState: "active", learningReason: "Resident A returned. Eligible baseline learning can continue using the established setup." };
+    if (scenario.activeScenarioId === "resident_returned") return { ...setup, learningState: "active", learningReason: "Evelyn Brooks returned. Eligible baseline learning can continue using the established setup." };
     return setup;
   }
 

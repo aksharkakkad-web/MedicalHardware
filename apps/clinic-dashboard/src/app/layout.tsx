@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Adaptive Care | Clinic Console",
-  description: "Contactless resident monitoring workspace for clinic teams.",
+  title: "SYREN · Care workspace",
+  description: "A shared care workspace for resident monitoring, staff response, and shift handover.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

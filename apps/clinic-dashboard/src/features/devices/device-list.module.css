@@ -28,7 +28,7 @@
 .deviceGlyph span { width: 5px; height: 5px; border-radius: 50%; background: var(--ac-unavailable-text); }
 .deviceGlyph[data-status="online"] span { background: var(--ac-positive-text); }
 .deviceGlyph[data-status="degraded"] span, .deviceGlyph[data-status="buffering"] span { background: var(--ac-watch-text); }
-.deviceGlyph[data-status="offline"] span { background: var(--ac-risk-text); }
+.deviceGlyph[data-status="offline"] span { background: var(--ac-device-text); }
 .health { display: grid; min-width: 0; gap: 4px; }
 .health :global([class*="pill"]) { width: fit-content; }
 .row time { color: var(--ac-text-secondary); font-family: var(--ac-font-mono); font-size: 11px; }

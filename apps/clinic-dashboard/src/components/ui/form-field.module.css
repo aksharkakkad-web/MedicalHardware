@@ -31,6 +31,8 @@
 
 .control {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   min-height: 40px;
   padding: var(--ac-space-2) var(--ac-space-3);
   border: 1px solid var(--ac-text-primary);

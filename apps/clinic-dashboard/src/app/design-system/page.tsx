@@ -185,9 +185,9 @@ export default function DesignSystemPage() {
       <a className={styles.skipLink} href="#design-system-content">Skip to specimens</a>
       <div className={styles.canvas}>
         <header className={styles.masthead}>
-          <a className={styles.wordmark} href="#top" aria-label="Adaptive Care design system, back to top">
+          <a className={styles.wordmark} href="#top" aria-label="SYREN design system, back to top">
             <span aria-hidden="true">AC</span>
-            <strong>Adaptive Care</strong>
+            <strong>SYREN</strong>
           </a>
           <div className={styles.mastheadTools}>
             <p>ADAPTIVE CARE · CARE LEDGER V2</p>
@@ -228,7 +228,7 @@ export default function DesignSystemPage() {
               <div className={styles.heroFoot}>
                 <div className={styles.heroCopy}>
                   <p className={styles.heroCopyLabel}>Product rule</p>
-                  <p>Adaptive Care separates resident attention, device health, confidence, freshness, and workflow so staff can decide what to do next.</p>
+                  <p>SYREN separates resident attention, device health, confidence, freshness, and workflow so staff can decide what to do next.</p>
                   <p className={styles.heroTypeNote}>Product typography stays strong, compact, and readable across every operational screen.</p>
                 </div>
                 <dl>
@@ -277,7 +277,7 @@ export default function DesignSystemPage() {
                 <div><p>Page title · 30 / 36 · 650</p><strong className={styles.pageTitleType}>Residents needing attention</strong></div>
                 <div><p>Major heading · 22 / 28 · 650</p><strong className={styles.majorType}>Morning care review</strong></div>
                 <div><p>Section heading · 18 / 24 · 650</p><strong className={styles.productSectionType}>Monitoring coverage</strong></div>
-                <div><p>Record title · 15 / 21 · 600</p><strong className={styles.recordType}>Resident B · Room 214</strong></div>
+                <div><p>Record title · 15 / 21 · 600</p><strong className={styles.recordType}>Arthur Chen · Room 214</strong></div>
                 <div><p>Body · 14 / 20 · 400</p><span className={styles.bodyType}>Monitoring is active. Latest room evidence arrived 38 seconds ago.</span></div>
                 <div><p>Body strong · 14 / 20 · 550</p><strong className={styles.bodyStrongType}>Review the current evidence before resolving.</strong></div>
                 <div><p>Label · 13 / 18 · 550</p><span className={styles.labelType}>Workflow state</span></div>
@@ -305,10 +305,10 @@ export default function DesignSystemPage() {
             </Section>
 
             <Section number="05" title="App shell" intro="Navigation stays quiet while the working surface carries the operational hierarchy.">
-              <div className={styles.shellSpecimen} aria-label="Adaptive Care clinic shell specimen">
+              <div className={styles.shellSpecimen} aria-label="SYREN clinic shell specimen">
                 <aside className={styles.shellSidebar}>
-                  <div className={styles.shellBrand}><CareMark /><strong>Adaptive Care</strong></div>
-                  <button className={styles.facilityControl} type="button"><span>NC</span><span><strong>Northstar Clinic</strong><small>Care operations</small></span><ArrowIcon /></button>
+                  <div className={styles.shellBrand}><CareMark /><strong>SYREN</strong></div>
+                  <button className={styles.facilityControl} type="button"><span>NC</span><span><strong>Maplewood Residence</strong><small>Care operations</small></span><ArrowIcon /></button>
                   <nav aria-label="Clinic shell specimen navigation">
                     <p>Workspace</p>
                     <a className={styles.shellActive} href="#section-05"><OverviewIcon />Overview</a>
@@ -316,10 +316,10 @@ export default function DesignSystemPage() {
                     <a href="#section-10"><DeviceIcon />Devices</a>
                     <a href="#section-09"><ScenarioIcon />Scenario lab</a>
                   </nav>
-                  <div className={styles.shellAccount}><span>MC</span><div><strong>Maya Chen</strong><small>Care coordinator</small></div><MoreIcon /></div>
+                  <div className={styles.shellAccount}><span>SS</span><div><strong>Shared station</strong><small>No personal staff login</small></div><MoreIcon /></div>
                 </aside>
                 <div className={styles.shellWorkspace}>
-                  <header className={styles.shellTopbar}><span>Northstar Clinic / Residents</span><div><SearchIcon /><span>Search residents</span><kbd>⌘ K</kbd></div></header>
+                  <header className={styles.shellTopbar}><span>Maplewood Residence / Residents</span><div><SearchIcon /><span>Search residents</span><kbd>⌘ K</kbd></div></header>
                   <div className={styles.shellPage}>
                     <header className={styles.shellPageHeader}>
                       <div><p>Care operations</p><h3>Residents</h3><span>5 monitored rooms · updated just now</span></div>
@@ -535,7 +535,7 @@ export default function DesignSystemPage() {
                   <SystemFeedback />
                 </details>
               </div>
-              <footer className={styles.pageFooter}><span>Adaptive Care · Care Ledger V2</span><a href="#top">Back to top <ArrowIcon /></a></footer>
+              <footer className={styles.pageFooter}><span>SYREN · Care Ledger V3</span><a href="#top">Back to top <ArrowIcon /></a></footer>
             </Section>
           </main>
         </div>

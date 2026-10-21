@@ -4,14 +4,14 @@ import type { ReactNode } from "react";
 
 import { DemoScenarioProvider } from "@/lib/demo-scenarios";
 import { MonitoringClientProvider } from "@/lib/monitoring/provider";
-import {
-  MockMonitoringClient,
-  type MonitoringStorage,
-} from "@/mocks/mock-monitoring-client";
+import { WorkspaceProvider, createDemoWorkspaceRuntime } from "@/lib/workspace";
+import type { MonitoringStorage } from "@/mocks/mock-monitoring-client";
 
 const browserStorage: MonitoringStorage = {
   getItem(key) {
-    return typeof window === "undefined" ? null : window.localStorage.getItem(key);
+    return typeof window === "undefined"
+      ? null
+      : window.localStorage.getItem(key);
   },
   setItem(key, value) {
     if (typeof window !== "undefined") {
@@ -20,13 +20,16 @@ const browserStorage: MonitoringStorage = {
   },
 };
 
-const monitoringClient = new MockMonitoringClient(undefined, browserStorage);
+const { monitoringClient, workspaceClient, scenarioController } =
+  createDemoWorkspaceRuntime({ storage: browserStorage });
 
 export function Providers({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <MonitoringClientProvider client={monitoringClient}>
-      <DemoScenarioProvider controller={monitoringClient}>
-        {children}
+      <DemoScenarioProvider controller={scenarioController}>
+        <WorkspaceProvider client={workspaceClient}>
+          {children}
+        </WorkspaceProvider>
       </DemoScenarioProvider>
     </MonitoringClientProvider>
   );

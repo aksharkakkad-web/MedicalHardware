@@ -1,5 +1,5 @@
-import { EventList } from "@/features/events/event-list";
+import { CareEvents } from "@/features/workspace";
 
 export default function EventsPage() {
-  return <EventList />;
+  return <CareEvents />;
 }

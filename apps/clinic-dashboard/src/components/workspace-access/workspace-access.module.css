@@ -1,0 +1,27 @@
+.state {
+  max-width: 600px;
+  padding-block: 36px;
+}
+.state h1 {
+  font-size: 26px;
+  font-weight: 550;
+  line-height: 1.25;
+  letter-spacing: -0.035em;
+}
+.state p {
+  margin-top: 16px;
+  color: var(--ac-text-secondary);
+  line-height: 1.7;
+}
+.state a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 16px;
+  color: var(--ac-action);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.note {
+  font-size: 12px;
+}
