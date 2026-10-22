@@ -16,6 +16,7 @@ from backend.app.ai.analysis_contracts import (
     StageResponse,
     StageStatus,
     StructuredAnalysisClient,
+    UnavailableStructuredAnalysisClient,
 )
 from backend.app.ai.analysis_skills import (
     AnalysisSkill,
@@ -81,6 +82,7 @@ __all__ = [
     "StageResponse",
     "StageStatus",
     "StructuredAnalysisClient",
+    "UnavailableStructuredAnalysisClient",
     "UncertaintyCategory",
     "SkillBundle",
     "build_interpretation_request",

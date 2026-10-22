@@ -23,6 +23,7 @@ class FeaturePurpose(StrEnum):
     POSTURE = "posture"
     RESPIRATION = "respiration"
     PRESENCE = "presence"
+    PHYSIOLOGY = "physiology"
 
 
 FeaturePrimitive = float | int | bool | str | None

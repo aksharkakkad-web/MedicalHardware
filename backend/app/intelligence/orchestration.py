@@ -148,6 +148,39 @@ class MonitoringIntelligenceEngine:
         self._fall_packet_revisions: dict[tuple[LaneKey, str], int] = {}
         self._event_ids_by_anomaly: dict[tuple[LaneKey, str], str] = {}
 
+    def restore_episode(
+        self,
+        *,
+        tenant_id: str,
+        room_id: str,
+        resident_id: str,
+        episode: AnomalyEpisode,
+        event: MonitoringEvent | None = None,
+    ) -> None:
+        """Restore validated durable lane state before processing a new frame."""
+        if not isinstance(episode, AnomalyEpisode):
+            raise ValueError("episode must be an AnomalyEpisode")
+        lane = (tenant_id, room_id, resident_id)
+        if any(not isinstance(value, str) or not value.strip() for value in lane):
+            raise ValueError("restored lane identity must be nonblank")
+        existing = self._episodes.get(lane)
+        if existing is not None and existing != episode:
+            if existing.current_time > episode.current_time:
+                return
+            raise ValueError("restored episode conflicts with in-memory episode")
+        self._episodes[lane] = episode
+        if event is None:
+            return
+        if (
+            event.resident_id != resident_id
+            or event.room_id != room_id
+            or event.source_anomaly_id != episode.anomaly_id
+        ):
+            raise ValueError("restored event does not match anomaly lane")
+        store = self._event_store_for(tenant_id)
+        store.restore(event)
+        self._event_ids_by_anomaly[(lane, episode.anomaly_id)] = event.event_id
+
     def process_frame(
         self,
         frame: AlignedFrame,

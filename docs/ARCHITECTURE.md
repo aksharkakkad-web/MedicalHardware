@@ -1,7 +1,7 @@
 # Contactless Adaptive Care Platform — Technical Architecture
 
-**Status:** Pre-build architecture source of truth
-**Version:** 1.6
+**Status:** Implemented software architecture; real-hardware validation open
+**Version:** 1.7
 **Companion docs:** `PRD.md`, `DATA_CONTRACT.md`, `BUILD_PLAN.md`, root `AGENTS.md`
 
 ---
@@ -71,12 +71,11 @@ WIFI CSI ────┘      • per-sensor raw→usable conversion
                 Edge telemetry store
                          |
                          v
-                 Cloud normalizers
+              Assignment proof + cloud normalizers
                 radar thermal csi
                    \    |    /
                     v   v   v
               Time alignment + fusion
-                + room assignment
                          |
                          v
                 Fused resident state
@@ -206,13 +205,22 @@ This boundary is deliberate: **edge makes data manageable; cloud makes it intell
 
 ## 5. Layer 2 — Ingestion Gateway
 
+**Implementation status:** Complete for the V1 bench/software boundary. The
+backend now exposes bearer-authenticated `POST /v1/ingest/telemetry` and
+`POST /v1/ingest/heartbeat`, accepts Mahin's current three compact formats,
+commits raw packets before processing, and records exact retry/conflict/stream
+behavior. New captures return `202 pending`; a single durable background lane
+processes them and drains pending/failed work on restart. Production device
+identity and credential rotation remain later
+deployment work.
+
 ### Responsibilities
 
 - authenticate device;
 - validate envelope schema/version;
 - reject impossible/oversized payloads;
 - assign server receive time;
-- deduplicate by device/source/sequence;
+- deduplicate by tenant/device/source/stream/sequence/schema version;
 - persist compact edge telemetry;
 - optionally persist bounded diagnostic raw chunks;
 - emit work for processing;
@@ -220,7 +228,10 @@ This boundary is deliberate: **edge makes data manageable; cloud makes it intell
 
 ### V1 transport
 
-Use versioned HTTPS/HTTP POST endpoints.
+Use versioned HTTPS/HTTP POST endpoints. One telemetry-list request is one
+atomic capture cycle even when the producer's per-envelope transport batch IDs
+differ. A missing `stream_id` remains compatible as `legacy`; real firmware
+should add a new boot/session stream ID when it can.
 
 MQTT or another streaming transport may be introduced later behind the same domain contracts if needed.
 
@@ -252,6 +263,11 @@ Do not hard-code permanent processed or diagnostic-raw retention durations yet.
 ---
 
 ## 7. Layer 4 — Sensor Adapters / Processors
+
+**Implementation status:** The cloud normalizers and fail-closed assignment
+adapter are implemented for `radar_edge_features_v1`,
+`mlx90640_edge_features_v1`, and `esp32_csi_edge_v1`. Firmware/vendor feature
+quality is still owned and validated by the hardware track.
 
 Each sensor has a separate **edge preprocessor** that converts vendor/raw output into compact per-modality telemetry. The cloud then has a lightweight normalizer/validator per modality before fusion.
 
@@ -759,7 +775,7 @@ Track at minimum:
 - feedback completion;
 - baseline update history;
 - model/prompt/version IDs attached to events;
-- queue/backlog depth if asynchronous workers are introduced.
+- queue/backlog depth for the asynchronous telemetry worker.
 
 Every important event must be reproducible from stored evidence/version metadata where practical.
 

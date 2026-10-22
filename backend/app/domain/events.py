@@ -720,6 +720,26 @@ class EventStore:
         except KeyError as exc:
             raise KeyError(f"Unknown event: {event_id}") from exc
 
+    def restore(self, event: MonitoringEvent) -> MonitoringEvent:
+        """Restore one validated durable event without replaying its signals."""
+        if not isinstance(event, MonitoringEvent):
+            raise ValueError("event must be a MonitoringEvent")
+        if event.episode_policy_version != self.policy.policy_version:
+            raise ValueError("restored event policy does not match event store")
+        existing = self._events.get(event.event_id)
+        if existing is not None:
+            if existing != event:
+                raise ValueError("restored event conflicts with in-memory event")
+            return existing
+        restored = EventStore(
+            policy=self.policy,
+            initial_events=(*self._events.values(), event),
+        )
+        self._events = restored._events
+        self._bridge_records = restored._bridge_records
+        self._legacy_bridge_event_ids = restored._legacy_bridge_event_ids
+        return event
+
     def acknowledge(
         self,
         event_id: str,

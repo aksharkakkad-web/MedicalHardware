@@ -932,16 +932,23 @@ def _simple_scenario(
         extra_values["setup_version_changed"] = recalibrated.setup_version != progress.setup_version
         extra_values["affected_dimensions"] = list(recalibrated.setup_change_history[-1].affected_dimensions)
     if scenario_id == "sustained_movement_change":
-        if client is None or not client.requests:
-            raise RuntimeError("synthetic selected-context scenario did not invoke AI")
-        request = client.requests[-1]
-        raw_result = client.raw_results[-1] if client.raw_results else None
+        request = None if client is None or not client.requests else client.requests[-1]
+        raw_result = (
+            None
+            if client is None or not client.raw_results
+            else client.raw_results[-1]
+        )
         extra_values["context_provenance"] = {
-            "explicit_selection": True,
-            "selected_entry_ids": ["sustained_movement_context"],
-            "retrieved_context_refs": list(request.retrieved_context_refs),
+            "explicit_selection": request is not None,
+            "selected_entry_ids": (
+                ["sustained_movement_context"] if request is not None else []
+            ),
+            "retrieved_context_refs": (
+                [] if request is None else list(request.retrieved_context_refs)
+            ),
             "result_request_fingerprint_matches": (
-                raw_result is not None
+                request is not None
+                and raw_result is not None
                 and raw_result.request_fingerprint == request.request_fingerprint
             ),
         }
