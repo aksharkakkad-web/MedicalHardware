@@ -128,7 +128,11 @@ export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
             <ResidentsIcon className={styles.navIcon} />
             <span>Directory imports</span>
           </Link>
-          <Link className={styles.navLink} href="/devices">
+          <Link
+            className={pathname.startsWith("/devices") ? styles.activeLink : styles.navLink}
+            href="/devices"
+            aria-current={pathname.startsWith("/devices") ? "page" : undefined}
+          >
             <OverviewIcon className={styles.navIcon} />
             <span>Monitoring status</span>
           </Link>
@@ -178,7 +182,7 @@ export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
           <div className={styles.topbarActions}>
             <span className={styles.tabletDemo}>Demo · no live alerts</span>
             <Link className={styles.stationLink} href="/station">
-              <span className={styles.stationDot} />
+              <DeviceIcon className={styles.stationIcon} />
               <span>
                 {snapshot?.currentClient.name ??
                   (status === "error"

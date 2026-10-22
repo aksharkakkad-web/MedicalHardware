@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { FormField } from "@/components/ui/form-field";
+import { AlertIcon, DeviceIcon, ResidentsIcon } from "@/components/icons/icons";
 import { useWorkspace, type WorkspaceSnapshot } from "@/lib/workspace";
 import {
   careTime,
@@ -44,7 +45,7 @@ export function ResidentRoster({ snapshot }: { snapshot: WorkspaceSnapshot }) {
     );
   });
   return (
-    <>
+    <div className={styles.roster}>
       <div className={styles.toolbar}>
         <FormField
           className={styles.search}
@@ -103,14 +104,21 @@ export function ResidentRoster({ snapshot }: { snapshot: WorkspaceSnapshot }) {
                       className={styles.residentLink}
                       href={`/residents/${resident.residentId}`}
                     >
-                      <strong>
-                        {residentName(
-                          snapshot.profiles,
-                          resident.residentId,
-                          resident.displayLabel,
-                        )}
-                      </strong>
-                      <span className={styles.meta}>{resident.roomLabel}</span>
+                      <span className={styles.roomAnchor} aria-hidden="true">
+                        <DeviceIcon />
+                      </span>
+                      <span className={styles.residentIdentity}>
+                        <strong>
+                          {residentName(
+                            snapshot.profiles,
+                            resident.residentId,
+                            resident.displayLabel,
+                          )}
+                        </strong>
+                        <span className={styles.roomLabel}>
+                          {resident.roomLabel}
+                        </span>
+                      </span>
                     </Link>
                   </td>
                   <td data-label="Monitoring">
@@ -180,7 +188,7 @@ export function ResidentRoster({ snapshot }: { snapshot: WorkspaceSnapshot }) {
       <p className={styles.finePrint}>
         Readings and the absence of a concern do not establish resident safety.
       </p>
-    </>
+    </div>
   );
 }
 export function CareOverview() {
@@ -205,21 +213,29 @@ export function CareOverview() {
         </Link>
       </PageHeading>
       <ScopeNote snapshot={snapshot} />
-      <section className={styles.section} aria-labelledby="attention-heading">
+      <section
+        className={`${styles.section} ${styles.attentionSurface}`}
+        aria-labelledby="attention-heading"
+      >
         <div className={styles.sectionHeading}>
-          <div>
-            <h2 id="attention-heading">
-              Needs attention
-              <span className={styles.count}>{queue.length}</span>
-            </h2>
-            <p>
-              Unresolved concerns across this station’s authorized coverage.
-            </p>
+          <div className={styles.sectionLead}>
+            <span
+              className={styles.sectionAnchor}
+              data-tone="attention"
+              aria-hidden="true"
+            >
+              <AlertIcon />
+            </span>
+            <div>
+              <h2 id="attention-heading">
+                Needs attention
+                <span className={styles.count}>{queue.length}</span>
+              </h2>
+              <p>
+                Unresolved concerns across this station’s authorized coverage.
+              </p>
+            </div>
           </div>
-          <Link className={styles.textLink} href="/events">
-            All concerns
-          </Link>
-        </div>
         <div className={styles.stats}>
           <span>
             <strong>{unanswered}</strong> unacknowledged
@@ -236,6 +252,10 @@ export function CareOverview() {
             </strong>{" "}
             follow-ups outstanding
           </span>
+        </div>
+          <Link className={styles.textLink} href="/events">
+            All concerns
+          </Link>
         </div>
         {queue.length ? (
           <div className={styles.concernList}>
@@ -256,13 +276,18 @@ export function CareOverview() {
       </section>
       <section className={styles.section} aria-labelledby="roster-heading">
         <div className={styles.sectionHeading}>
-          <div>
-            <h2 id="roster-heading">Residents & rooms</h2>
-            <p>
-              {gapCount} {gapCount === 1 ? "resident has" : "residents have"}{" "}
-              monitoring gaps or limitations in covered areas. Monitoring
-              availability is separate from resident risk.
-            </p>
+          <div className={styles.sectionLead}>
+            <span className={styles.sectionAnchor} aria-hidden="true">
+              <ResidentsIcon />
+            </span>
+            <div>
+              <h2 id="roster-heading">Residents & rooms</h2>
+              <p>
+                {gapCount} {gapCount === 1 ? "resident has" : "residents have"}{" "}
+                monitoring gaps or limitations in covered areas. Monitoring
+                availability is separate from resident risk.
+              </p>
+            </div>
           </div>
         </div>
         <ResidentRoster snapshot={snapshot} />

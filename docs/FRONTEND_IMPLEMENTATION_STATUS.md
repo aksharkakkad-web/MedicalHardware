@@ -1,6 +1,6 @@
 # SYREN staff workspace implementation status
 
-Updated October 21, 2026. This is a frontend delivery record, not a clinical release approval.
+Updated October 22, 2026. This is a frontend delivery record, not a clinical release approval.
 
 ## Delivered interface
 
@@ -33,6 +33,14 @@ The previous resident overview/detail and event list/detail implementations, unu
 | 19–20 Release acceptance | Automated critical workflow tests and browser checks described below | Representative nurses/caregivers, actual notification receipt, server synchronization and facility validation remain required before live use |
 | 21 Research | Functional PRD retains its primary-source research links | Published evidence informed requirements; no direct nursing-staff study was performed in this implementation |
 
+## October 22 visual revision
+
+Native Care V4 replaces the flat ledger foundation with platform system fonts, a cool-gray canvas, grouped opaque white content, restrained depth, a blue SYREN mark, colored navigation/status anchors and limited translucent navigation. Attention still precedes the resident roster. Resident readings, evidence, interpretation, response and historical context retain their separate meanings. Shared care handlers, clients and permissions are unchanged.
+
+The visual revision was checked in Chrome at a normal 1512×771 desktop, 900×900 tablet, and 390×844 phone viewport. Resident search, response placement, facility settings, handover date controls and reference navigation were inspected. Short desktop navigation was checked at 1280×600. Screenshots are kept outside Git in `/Users/mahin/Documents/Codex/2026-10-22/SYREN Frontend QA/`.
+
+The design guide, downloadable guide and `/design-system` reference describe the revised roles. Text/status contrast and enabled input boundaries are checked numerically; this does not establish full WCAG conformance. Existing staff and live-service validation dependencies still apply.
+
 ## Synthetic state migration
 
 Existing synthetic v1 station records without an explicit permissions array load as view-only, including known seed identities. Previous care history and area coverage remain intact. Administrators explicitly assign permitted actions; normalized grants persist with the next successful demo mutation. New station approvals default to view-only. Omitting permissions when editing a station preserves its existing grant. This fail-closed migration is for synthetic local state, not production authentication.
@@ -50,7 +58,7 @@ Existing synthetic v1 station records without an explicit permissions array load
 
 Automated and browser evidence is recorded here after the final verification run. Tests exercise synthetic behavior; they do not establish real backend delivery or clinical safety.
 
-- Automated clinic verification: 242 tests across 30 files passed; ESLint, standalone TypeScript checking and the optimized Next.js production build passed. The build includes every clinic route listed in the README. Exact commands remain in AGENTS.md and the clinic README.
+- Automated clinic verification: 243 tests across 30 files passed; ESLint, standalone TypeScript checking and the optimized Next.js production build passed. The build includes every clinic route listed in the README. Exact commands remain in AGENTS.md and the clinic README.
 - Independent implementation reviews found and fixed failed-write lifecycle advances, future/impossible date handling, room-ID collisions, forgotten station identity, lost handover notes, inaccessible departed/completed history, stale import previews, missing action grants, stale station configuration saves, rolling handover intervals and legacy assignment leakage. Regression tests exercise the reproduced cases.
 - Production build inspected in the user's Chrome browser: combined overview, resident roster, concern acknowledgment/unsuccessful check, resident unavailable/hospice context, administration, CSV review/apply, shared-client permissions and notification readiness, and handover. Administrator logout preserved routine care access. A second same-browser tab recovered the imported resident and recorded concern state; this is not cross-device server synchronization.
 - Responsive checks used 1512px desktop, 900px tablet and 390px phone viewports. The phone concern view presents response controls before evidence/history; checked tablet/phone screens had no horizontal page overflow. Date controls were widened to prevent native date/time fields overlapping. The keyboard skip link moved focus to the main workspace.

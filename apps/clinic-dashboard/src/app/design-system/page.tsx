@@ -25,30 +25,30 @@ const sections = [
 ] as const;
 
 const foundationColors = [
-  ["Canvas white", "Page canvas", "App shell and primary workspace", "canvasToken", "#FFFFFF"],
-  ["Surface white", "Working surface", "Primary content and controls", "paper0", "#FFFFFF"],
-  ["Neutral 50", "Quiet surface", "Hover and grouped secondary content", "paper50", "#FAFAFA"],
-  ["Neutral 100", "Alternate surface", "Nested panels and muted sections", "paper100", "#F5F5F5"],
-  ["Neutral 200", "Hairline", "Rows, controls, and surface edges", "paper200", "#E5E5E5"],
-  ["Neutral 500", "Secondary text", "Helper copy and metadata", "ink600", "#737373"],
-  ["Neutral 900", "Primary text", "Headings and decisions", "ink950", "#171717"],
+  ["Cool gray canvas", "Page canvas", "Background beneath grouped care content", "canvasToken", "#F5F5F7"],
+  ["Panel white", "Working surface", "Opaque content, panels, and controls", "paper0", "#FFFFFF"],
+  ["Raised white", "Raised surface", "Foreground content distinguished by depth", "paper50", "#FFFFFF"],
+  ["Cool secondary canvas", "Secondary background", "Supporting workspace areas", "paper100", "#EEF1F6"],
+  ["Soft separator", "Hairline", "Rows, controls, and surface edges", "paper200", "#E4E7EC"],
+  ["Secondary ink", "Supporting text", "Helper copy and metadata", "ink600", "#656972"],
+  ["Primary ink", "Primary text", "Headings and decisions", "ink950", "#1D1D1F"],
 ] as const;
 
 const brandColors = [
-  ["Blue 50", "Selection wash", "Selected rows and active navigation", "cobalt50", "#EFF6FF"],
-  ["Blue 100", "Strong selection", "Focused information groups", "cobalt100", "#DBEAFE"],
-  ["Blue 600", "Brand and interaction", "Primary actions and focus", "cobalt600", "#2563EB"],
-  ["Blue 800", "Pressed interaction", "Pressed primary actions", "cobalt800", "#1E40AF"],
-  ["Neutral 600", "Device information", "Device and data context", "sky400", "#525252"],
-  ["Electric blue", "Brand accent only", "Brand moments, never severity", "violet500", "#2563EB"],
-  ["Green 700", "Positive accent", "Healthy and available states", "mint400", "#15803D"],
+  ["Soft blue", "Selection wash", "Selected rows and active navigation", "cobalt50", "#EDF4FF"],
+  ["Emphasized blue wash", "Strong selection", "Focused information groups", "cobalt100", "#DDEAFF"],
+  ["Action blue", "Brand and interaction", "Primary actions and focus", "cobalt600", "#0066D6"],
+  ["Pressed blue", "Pressed interaction", "Pressed primary actions", "cobalt800", "#004697"],
+  ["Informational teal", "Information accent", "Supporting context and navigation", "sky400", "#087A99"],
+  ["Brand blue", "Brand accent", "Brand identity, separate from severity", "violet500", "#0066D6"],
+  ["Positive green", "Positive accent", "Available or confirmed operational states", "mint400", "#267449"],
 ] as const;
 
 const statusColors = [
-  ["Positive green", "Operationally positive", "Healthy, online, or current confirmation", "positive", "#15803D"],
-  ["Watch amber", "Review support", "Watch, limited, or delayed states", "watch", "#A16207"],
-  ["Risk red", "Resident attention", "Critical or high attention priority", "risk", "#B42318"],
-  ["Unavailable gray", "Evidence limitation", "Missing, stale, or unavailable evidence", "unavailable", "#737373"],
+  ["Positive green", "Operationally positive", "Healthy, online, or current confirmation", "positive", "#267449"],
+  ["Watch amber", "Review support", "Watch, limited, or delayed states", "watch", "#8C600D"],
+  ["Risk red", "Resident attention", "Critical or high attention priority", "risk", "#B5362E"],
+  ["Unavailable gray", "Evidence limitation", "Missing, stale, or unavailable evidence", "unavailable", "#656972"],
 ] as const;
 
 const spacing = [
@@ -64,10 +64,10 @@ const spacing = [
 
 const radii = [
   ["Tiny detail", "4px", "radiusSquare"],
-  ["Input", "6px", "radiusField"],
-  ["Button", "8px", "radiusControl"],
-  ["Card", "12px", "radiusSurface"],
-  ["Floating", "12px", "radiusFloating"],
+  ["Input", "10px", "radiusField"],
+  ["Button", "10px", "radiusControl"],
+  ["Grouped panel", "20px", "radiusSurface"],
+  ["Popover", "16px", "radiusFloating"],
 ] as const;
 
 const residentRecords: ResidentRecord[] = [
@@ -186,11 +186,11 @@ export default function DesignSystemPage() {
       <div className={styles.canvas}>
         <header className={styles.masthead}>
           <a className={styles.wordmark} href="#top" aria-label="SYREN design system, back to top">
-            <span aria-hidden="true">AC</span>
+            <span aria-hidden="true">S</span>
             <strong>SYREN</strong>
           </a>
           <div className={styles.mastheadTools}>
-            <p>ADAPTIVE CARE · CARE LEDGER V2</p>
+            <p>SYREN · NATIVE CARE V4</p>
             <ExportActions />
           </div>
         </header>
@@ -229,27 +229,27 @@ export default function DesignSystemPage() {
                 <div className={styles.heroCopy}>
                   <p className={styles.heroCopyLabel}>Product rule</p>
                   <p>SYREN separates resident attention, device health, confidence, freshness, and workflow so staff can decide what to do next.</p>
-                  <p className={styles.heroTypeNote}>Product typography stays strong, compact, and readable across every operational screen.</p>
+                  <p className={styles.heroTypeNote}>Platform system typography keeps text familiar, compact, and readable across every operational screen.</p>
                 </div>
                 <dl>
                   <div><dt>Product mode</dt><dd>Clinic operations</dd></div>
-                  <div><dt>Visual direction</dt><dd>Dub-derived neutral ledger</dd></div>
-                  <div><dt>Interface density</dt><dd>Compact operational</dd></div>
-                  <div><dt>Accessibility</dt><dd>WCAG 2.2 AA</dd></div>
+                  <div><dt>Visual direction</dt><dd>Apple-inspired care workspace</dd></div>
+                  <div><dt>Interface density</dt><dd>Compact, clearly grouped</dd></div>
+                  <div><dt>Accessibility target</dt><dd>WCAG 2.2 AA</dd></div>
                 </dl>
               </div>
             </section>
 
-            <Section number="01" title="Foundation" intro="A bright, approachable reference for live care operations.">
+            <Section number="01" title="Foundation" intro="Familiar system typography, distinct navigation, and opaque working surfaces for care operations.">
               <div className={styles.principles}>
                 <article><span>01</span><h3>Separate the facts</h3><p>Risk, device health, confidence, freshness, and workflow are never collapsed into one status.</p></article>
                 <article><span>02</span><h3>Show uncertainty</h3><p>Missing or limited evidence is labelled clearly. Last-known values never pretend to be current.</p></article>
                 <article><span>03</span><h3>Lead with action</h3><p>One decision area gets one primary next step. Supporting detail stays useful and quiet.</p></article>
               </div>
-              <blockquote className={styles.foundationQuote}>“Which resident needs my attention right now?”<footer>The question every clinic screen should answer within two seconds.</footer></blockquote>
+              <blockquote className={styles.foundationQuote}>“Which resident needs my attention right now?”<footer>Keep current work and the next permitted action clearly in view.</footer></blockquote>
             </Section>
 
-            <Section number="02" title="Color" intro="Electric blue guides interaction. Operational color keeps its exact meaning.">
+            <Section number="02" title="Color" intro="Clear blue identifies interaction. Operational color keeps its exact meaning.">
               <div className={styles.colorGroup}>
                 <SpecimenLabel>Foundation tokens</SpecimenLabel>
                 <div className={styles.swatchStrip}>
@@ -269,14 +269,15 @@ export default function DesignSystemPage() {
                 </div>
               </div>
               <p className={styles.ruleNote}><strong>Color rule</strong> Blue means brand or interaction. Green, amber, red, and gray carry operational status. Device or data trouble never borrows resident-risk red.</p>
+              <p className={styles.ruleNote}><strong>Design references</strong> Apple’s <a href="https://developer.apple.com/design/human-interface-guidelines/color">Color</a> and <a href="https://developer.apple.com/design/human-interface-guidelines/materials">Materials</a> guidance informs consistent color meaning, clear layers, and restrained effects. These are SYREN web tokens and CSS treatments, not native Apple components or a reproduction of Liquid Glass. Working content stays opaque.</p>
             </Section>
 
-            <Section number="03" title="Typography" intro="Compact, direct language built for repeated scanning.">
+            <Section number="03" title="Typography" intro="Platform system sans for everyday care work; system monospace for compact readings and identifiers.">
               <div className={styles.typeSpecimens}>
                 <div><p>Display · 36 / 40 · 650</p><strong className={styles.displayType}>Care, without the noise.</strong></div>
-                <div><p>Page title · 30 / 36 · 650</p><strong className={styles.pageTitleType}>Residents needing attention</strong></div>
-                <div><p>Major heading · 22 / 28 · 650</p><strong className={styles.majorType}>Morning care review</strong></div>
-                <div><p>Section heading · 18 / 24 · 650</p><strong className={styles.productSectionType}>Monitoring coverage</strong></div>
+                <div><p>Page title · 34 / 36 · 650</p><strong className={styles.pageTitleType}>Residents needing attention</strong></div>
+                <div><p>Major heading · 24 / 30 · 650</p><strong className={styles.majorType}>Morning care review</strong></div>
+                <div><p>Section heading · 18 / 23 · 650</p><strong className={styles.productSectionType}>Monitoring coverage</strong></div>
                 <div><p>Record title · 15 / 21 · 600</p><strong className={styles.recordType}>Arthur Chen · Room 214</strong></div>
                 <div><p>Body · 14 / 20 · 400</p><span className={styles.bodyType}>Monitoring is active. Latest room evidence arrived 38 seconds ago.</span></div>
                 <div><p>Body strong · 14 / 20 · 550</p><strong className={styles.bodyStrongType}>Review the current evidence before resolving.</strong></div>
@@ -285,26 +286,26 @@ export default function DesignSystemPage() {
                 <div><p>Overline · 11 / 16 · 650</p><span className={styles.overlineType}>Resident attention</span></div>
                 <div><p>Mono reading · 12 / 17 · 500</p><span className={styles.metaType}>AC-R214-B&nbsp;&nbsp; 08:42:18&nbsp;&nbsp; +00:38</span></div>
               </div>
-              <div className={styles.numericSpecimen}><span>Geist Mono · Operational readings</span><strong>08:42:18&nbsp;&nbsp; 12 MIN&nbsp;&nbsp; 04 / 06</strong><code>DEVICE AC-214-A<br />FRAME 00018472</code></div>
+              <div className={styles.numericSpecimen}><span>System monospace · Operational readings</span><strong>08:42:18&nbsp;&nbsp; 12 MIN&nbsp;&nbsp; 04 / 06</strong><code>DEVICE AC-214-A<br />FRAME 00018472</code></div>
             </Section>
 
-            <Section number="04" title="Space & shape" intro="A four-pixel grid and compact geometry make the interface precise without becoming cramped.">
+            <Section number="04" title="Space & shape" intro="A four-pixel rhythm, generous panel corners, and restrained depth keep related work together.">
               <div className={styles.spacingGrid}>
                 {spacing.map(([label, value]) => <div key={label}><span className={styles.spacingBar} style={{ "--specimen-size": value } as CSSProperties} /><strong>{label}</strong><small>{value}</small></div>)}
               </div>
               <div className={styles.geometryGrid}>
                 <div><SpecimenLabel>Corner radius</SpecimenLabel><div className={styles.radiusRow}>{radii.map(([label, value, className]) => <div key={label}><span className={styles[className]} /><strong>{label}</strong><small>{value}</small></div>)}</div></div>
-                <div><SpecimenLabel>Depth</SpecimenLabel><div className={styles.depthRow}><div className={styles.borderSurface}>Base surface<span>Hairline border</span></div><div className={styles.overlaySurface}>Popover<span>Overlap shadow</span></div></div></div>
+                <div><SpecimenLabel>Depth</SpecimenLabel><div className={styles.depthRow}><div className={styles.borderSurface}>Grouped content<span>Subtle surface depth</span></div><div className={styles.overlaySurface}>Popover<span>Stronger floating depth</span></div></div></div>
               </div>
               <div className={styles.layoutSpacing}>
-                <article><strong>16–20px</strong><span>Standard surface padding</span><small>Use 12px in compact toolbars and rows.</small></article>
+                <article><strong>20–24px</strong><span>Grouped panel padding</span><small>Use 12px in compact toolbars and rows.</small></article>
                 <article><strong>8–12px</strong><span>Related item gap</span><small>Use 24–32px between major modules.</small></article>
-                <article><strong>32px</strong><span>Desktop page gutter</span><small>Reduce to 16px below 768px.</small></article>
-                <article><strong>24–32px</strong><span>Module rhythm</span><small>Precision, not empty space, creates quality.</small></article>
+                <article><strong>32px</strong><span>Desktop page gutter</span><small>Reduce to 16px on narrow screens.</small></article>
+                <article><strong>24–32px</strong><span>Module rhythm</span><small>Give separate tasks a clear visual boundary.</small></article>
               </div>
             </Section>
 
-            <Section number="05" title="App shell" intro="Navigation stays quiet while the working surface carries the operational hierarchy.">
+            <Section number="05" title="App shell" intro="A distinct navigation layer keeps facility context separate from opaque care content.">
               <div className={styles.shellSpecimen} aria-label="SYREN clinic shell specimen">
                 <aside className={styles.shellSidebar}>
                   <div className={styles.shellBrand}><CareMark /><strong>SYREN</strong></div>
@@ -342,17 +343,17 @@ export default function DesignSystemPage() {
                 </div>
               </div>
               <div className={styles.shellSpecs}>
-                <div><strong>208px</strong><span>Sidebar</span><small>58px collapsed</small></div>
-                <div><strong>56px</strong><span>Topbar</span><small>One quiet utility row</small></div>
-                <div><strong>32px</strong><span>Page gutter</span><small>24px at tablet widths</small></div>
-                <div><strong>320px</strong><span>Secondary rail</span><small>Moves into a sheet below 1100px</small></div>
-                <div><strong>400px</strong><span>Detail sheet</span><small>6px radius, floating shadow</small></div>
-                <div><strong>36px</strong><span>Navigation item</span><small>16px icon, restrained selection</small></div>
+                <div><strong>232px</strong><span>Sidebar</span><small>72px collapsed</small></div>
+                <div><strong>68px</strong><span>Topbar</span><small>Facility context and shared access</small></div>
+                <div><strong>32px</strong><span>Page gutter</span><small>16px on narrow screens</small></div>
+                <div><strong>320px</strong><span>Secondary rail</span><small>Stacks into page flow on narrow screens</small></div>
+                <div><strong>400px</strong><span>Detail sheet</span><small>16px popover corners, floating depth</small></div>
+                <div><strong>44px</strong><span>Navigation item</span><small>18px icon and clear selected state</small></div>
                 <div><strong>40px</strong><span>Toolbar</span><small>Directly above working content</small></div>
-                <div><strong>40px</strong><span>Tabs</span><small>Underline selection, never pill tabs</small></div>
-                <div><strong>480px</strong><span>Dialog</span><small>Maximum default width, floating only</small></div>
+                <div><strong>40px</strong><span>Tabs</span><small>Readable labels and contained selection</small></div>
+                <div><strong>480px</strong><span>Dialog</span><small>22px corners and stronger overlay depth</small></div>
               </div>
-              <p className={styles.ruleNote}><strong>Responsive rule</strong> Collapse the sidebar to icons at 1100px, move the secondary rail into a right sheet, and replace the sidebar with compact primary navigation below 768px. Main work remains first in the reading order.</p>
+              <p className={styles.ruleNote}><strong>Responsive rule</strong> Use a 72px icon rail at tablet widths and compact primary navigation on phones. Supporting content stacks into the page; care work keeps its reading order and remains available without a sheet interaction.</p>
             </Section>
 
             <Section number="06" title="Iconography" intro="One internal line-icon family supports navigation and actions without competing with the words.">
@@ -535,7 +536,7 @@ export default function DesignSystemPage() {
                   <SystemFeedback />
                 </details>
               </div>
-              <footer className={styles.pageFooter}><span>SYREN · Care Ledger V3</span><a href="#top">Back to top <ArrowIcon /></a></footer>
+              <footer className={styles.pageFooter}><span>SYREN · Native Care V4</span><a href="#top">Back to top <ArrowIcon /></a></footer>
             </Section>
           </main>
         </div>
