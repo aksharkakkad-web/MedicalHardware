@@ -1,6 +1,6 @@
 # SYREN clinic design system
 
-**Version:** Native Care V5 — shared staff workspace
+**Version:** Native Care V6 — shared staff workspace
 
 **Primary mode:** Clinic operations
 
@@ -8,29 +8,34 @@
 
 **Accessibility target:** WCAG 2.2 AA
 
-Native Care helps staff answer two questions: **who needs attention now, and what is the next safe action?** Its Apple-inspired foundation uses native system typography, a soft cool-gray canvas, white grouped surfaces, restrained depth, clear blue controls, and purposeful colored anchors. Content stays crisp and opaque; navigation may use a translucent material. It states uncertainty directly and never implies a diagnosis or proof of safety.
+Native Care helps staff answer two questions: **who needs attention now, and what is the next safe action?** Its foundation uses native system typography, a cool light canvas, white grouped surfaces, a deep blue-slate navigation frame and restrained blue-teal controls. Content stays crisp and opaque. It states uncertainty directly and never implies a diagnosis or proof of safety.
 
-The current user-requested direction supersedes the former Dub-derived flat ledger. Reference principles come from Apple’s [Color](https://developer.apple.com/design/human-interface-guidelines/color) and [Materials](https://developer.apple.com/design/human-interface-guidelines/materials) guidance. These are adapted CSS treatments, not native Apple SDK components or a claim to reproduce Liquid Glass.
+The current user-requested direction adapts UI/UX Pro Max's accessible healthcare/senior-care palette and operational density guidance. Its marketing-page pattern was rejected because staff need a working ledger. Retain the native typography and clarity informed by Apple’s [Color](https://developer.apple.com/design/human-interface-guidelines/color) guidance. These are CSS treatments, not native Apple SDK components. No WCAG or clinical validation follows from a skill recommendation.
 
 ## Foundation
 
-`apps/clinic-dashboard/src/styles/design-tokens.css` is the canonical value-bearing source for the clinic dashboard. The home app maps the same core values in its local CSS because the apps do not import styles from one another. Clinic product CSS consumes the `--ac-*` role tokens. Page modules may set layout values, but must not invent new brand colors, radii, shadows, or font families.
+`apps/clinic-dashboard/src/styles/design-tokens.css` is the canonical value-bearing source for the clinic dashboard. The separate home app owns its own visual layer; these clinic changes do not implicitly revise it. Clinic product CSS consumes the `--ac-*` role tokens. Page modules may set layout values, but must not invent new brand colors, radii, shadows, or font families.
 
 | Role | Token | Value |
 | --- | --- | --- |
-| Canvas | `--ac-canvas` | `#f5f5f7` |
+| Canvas | `--ac-canvas` | `#f4f7f8` |
 | Surface | `--ac-surface` | `#ffffff` |
-| Quiet surface | `--ac-surface-quiet` | `#f1f3f6` |
-| Primary ink | `--ac-text-primary` | `#1d1d1f` |
-| Secondary ink | `--ac-text-secondary` | `#5e636d` |
-| Hairline | `--ac-border-subtle` | `#e4e7ec` |
-| Strong rule | `--ac-border-strong` | `#cdd3dc` |
-| Action | `--ac-action` | `#0066d6` |
-| Action hover | `--ac-action-hover` | `#0055b6` |
+| Quiet surface | `--ac-surface-quiet` | `#eef4f5` |
+| Primary ink | `--ac-text-primary` | `#19333f` |
+| Secondary ink | `--ac-text-secondary` | `#586b74` |
+| Hairline | `--ac-border-subtle` | `#dce5e9` |
+| Strong rule | `--ac-border-strong` | `#c4d1d7` |
+| Action | `--ac-action` | `#086b83` |
+| Action hover | `--ac-action-hover` | `#07556b` |
+| Navigation | `--ac-navigation-bg` | `#173b4a` |
+| Navigation text | `--ac-navigation-text` | `#e1edf2` |
+| Navigation supporting text | `--ac-navigation-muted` | `#b0c7d1` |
+| Navigation selection | `--ac-navigation-active-bg` | `#2b5666` |
+| Navigation accent | `--ac-navigation-accent` | `#a0e1e3` |
 
-Grouped content panels use 16px corners, a consistent quiet border and no shadow. Controls and inputs use 10px corners; popovers use 16px. Floating menus/dialogs use stronger documented overlay shadows. Full rounding is reserved for compact state markers, dots and real binary switches. Use panels to group a task, never a card for every fact. Equivalent measurement labels share one neutral color; semantic color is reserved for real state, current selection and actions. Evidence sequence numbers are plain muted numerals, and resolved rows use one explicit check/completion marker. Canvas, content and navigation are intentionally distinct.
+Grouped content panels use 12px corners, a consistent quiet border and no shadow. Controls and inputs use 8px corners; popovers use 16px. Floating menus/dialogs use stronger documented overlay shadows. Full rounding is reserved for compact state markers, dots and real binary switches. Use panels to group a task, never a card for every fact. Equivalent measurement labels share one neutral color; semantic color is reserved for real state, current selection and actions. Evidence sequence numbers are plain muted numerals, and resolved rows use one explicit check/completion marker. Canvas, content and navigation are intentionally distinct.
 
-Additional roles: `--ac-chrome` is the navigation surface, `--ac-chrome-translucent` is a legible topbar layer, `--ac-surface-tint` is quiet informational context, `--ac-shadow-soft` and `--ac-shadow-card` are currently `none` to keep controls and static content flat; `--ac-shadow-action` gives primary actions restrained depth. Use role tokens rather than page-specific colors. Enabled input boundaries use `--ac-border-control` (`#8793a2`), which maintains at least 3:1 contrast against white; structural panel rules may remain lighter. Content never uses background blur. Reduced-transparency preference removes navigation blur.
+Additional roles: `--ac-chrome` and `--ac-chrome-translucent` provide the light topbar, `--ac-navigation-*` provide the dark navigation frame, and `--ac-surface-tint` is quiet informational context. `--ac-shadow-soft` and `--ac-shadow-card` are `none`; `--ac-shadow-action` gives primary actions restrained depth. Use role tokens rather than page-specific colors. Enabled input boundaries use `--ac-border-control` (`#7b909b`), which maintains at least 3:1 contrast against white; structural panel rules may remain lighter. Content and navigation do not use background blur. Reduced-transparency preference makes the topbar opaque.
 
 ## Typography
 
@@ -44,7 +49,7 @@ The base spacing rhythm is 4px. Common steps are 4, 8, 12, 16, 20, 24, 32, 40, 4
 
 - Desktop shell: 232px sidebar, 68px top bar, and 32–36px page gutter.
 - Desktop content: one main ledger with an optional 320–350px context rail.
-- Toolbar and inputs: 40px minimum height.
+- Form fields and buttons: 44px minimum height. The compact area selector is 40px on desktop and 44px on phones.
 - Repeated operational rows: 60–82px based on content.
 - Mobile: 16px page gutter and 44px touch targets.
 
@@ -52,11 +57,11 @@ Use whitespace and grouped white surfaces to organize tasks. Keep repeated recor
 
 ## Action hierarchy
 
-Each focused form has at most one filled electric-blue action. Ledger rows use navigation rather than repeated filled buttons. Secondary actions use a flat white surface and the same accessible border token as inputs and the scope selector. Tertiary actions are text links or row navigation. Repeated rows do not repeat filled buttons. All controls need hover, focus-visible, pressed, disabled, and loading states. Focus uses the blue focus ring and remains visible against white and gray backgrounds.
+Each focused form has at most one filled blue-teal action. Ledger rows use navigation rather than repeated filled buttons. Secondary actions use a flat white surface and the same accessible border token as inputs and the scope selector. Tertiary actions are text links or row navigation. Repeated rows do not repeat filled buttons. All controls need hover, focus-visible, pressed, disabled, and loading states. Focus uses the blue-teal ring; navigation uses a light outline on its dark surface. Hover changes color without moving or scaling a control. Respect reduced motion.
 
 ## App shell
 
-The desktop sidebar uses a soft gray material, a compact blue SYREN mark and small neutral navigation symbols without decorative backplates. The active destination uses a restrained blue selection tint and darker blue text. The top bar identifies the facility, current view area and approved shared client. “All covered areas” is an explicit choice. Area filtering cannot hide authorized high or critical work. The primary destinations are Overview, Residents, Handover and Events. Facility tools include shared clients, directory imports and monitoring status. Administration is a separate entry; routine care has no personal staff login. A persistent demo label explains synthetic records and absent live alert delivery.
+The desktop sidebar uses deep blue-slate with a pale cyan SYREN mark and consistent supporting navigation symbols. The active destination combines a lighter slate surface, white text and a narrow cyan inset marker. The phone marker sits below the selected destination. Light-on-dark navigation text is contrast checked separately from content. The light top bar identifies the facility, current view area and approved shared client. “All covered areas” is an explicit choice. Area filtering cannot hide authorized high or critical work. The primary destinations are Overview, Residents, Handover and Events. Facility tools include shared clients, directory imports and monitoring status. Administration is a separate entry; routine care has no personal staff login. A persistent demo label explains synthetic records and absent live alert delivery.
 
 Between 761px and 1050px the sidebar becomes an intentional icon rail with accessible labels. At 760px and below, primary navigation becomes a compact four-item bar above the clinic workspace. Keep the area selector, administration entry and demonstration context readable. On narrow event detail, response controls precede evidence, interpretation/history and then record details. Resident detail puts actual open concerns above a compact measurement band. The phone header combines facility and demo context without repeating the area selection. The design-system route remains outside clinic chrome so it can be printed and exported.
 
@@ -95,7 +100,7 @@ Show only the axes that change the current decision. Healthy defaults stay neutr
 - Amber means watch, limited evidence, delayed delivery, or review needed.
 - Red means resident-risk escalation or destructive validation.
 - Gray describes device, delivery, stale, missing, or unavailable data conditions; a device problem is not resident risk.
-- Electric blue means action, selection, and focus. It never means severity.
+- Blue-teal means action, selection, and focus. Pale cyan on the navigation frame identifies the brand and current destination. Neither means severity.
 
 Use semantic color in a dot, thin leading rule, or restrained soft background. Do not flood a whole operational section with saturated color.
 
@@ -140,4 +145,4 @@ The typed `MonitoringClient` boundary, routes, hooks, fixtures, and workflow han
 
 ## Visual review criteria
 
-Review rendered desktop and phone screens before completion. Use restrained operational hierarchy: resident and room, current work, evidence and next action. Reject decorative gradients, blur in clinical content, KPI-card walls, oversized marketing headings, fabricated trend lines, gratuitous avatars, repetitive capsules, empty feature tiles and repeated boilerplate on each row. Limited translucent navigation is allowed; content remains opaque. Keep useful facts and avoid cosmetic counters without a workflow purpose. Use the shared tokens, native type, grouped surfaces, measured spacing and natural language. Aesthetic review does not replace staff usability validation or establish WCAG conformance.
+Review rendered desktop and phone screens before completion. Use restrained operational hierarchy: resident and room, current work, evidence and next action. Reject decorative gradients, background blur, KPI-card walls, oversized marketing headings, fabricated trend lines, gratuitous avatars, repetitive capsules, empty feature tiles and repeated boilerplate on each row. Keep useful facts and avoid cosmetic counters without a workflow purpose. Use the shared tokens, native type, grouped surfaces, measured spacing and natural language. Aesthetic review does not replace staff usability validation or establish WCAG conformance.

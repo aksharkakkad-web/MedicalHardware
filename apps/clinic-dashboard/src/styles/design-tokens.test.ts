@@ -8,16 +8,16 @@ const pageCss = readFileSync(resolve(stylesDirectory, "../app/design-system/page
 
 describe("SYREN native care tokens", () => {
   it("defines distinct native-inspired canvas and working surfaces", () => {
-    expect(tokens).toContain("--ac-canvas: #f5f5f7");
+    expect(tokens).toContain("--ac-canvas: #f4f7f8");
     expect(tokens).toContain("--ac-surface: #ffffff");
-    expect(tokens).toContain("--ac-surface-quiet: #f1f3f6");
-    expect(tokens).toContain("--ac-text-primary: #1d1d1f");
-    expect(tokens).toContain("--ac-text-secondary: #5e636d");
-    expect(tokens).toContain("--ac-border-subtle: #e4e7ec");
-    expect(tokens).toContain("--ac-action: #0066d6");
-    expect(tokens).toContain("--ac-radius-input: 10px");
-    expect(tokens).toContain("--ac-radius-control: 10px");
-    expect(tokens).toContain("--ac-radius-card: 16px");
+    expect(tokens).toContain("--ac-surface-quiet: #eef4f5");
+    expect(tokens).toContain("--ac-text-primary: #19333f");
+    expect(tokens).toContain("--ac-text-secondary: #586b74");
+    expect(tokens).toContain("--ac-border-subtle: #dce5e9");
+    expect(tokens).toContain("--ac-action: #086b83");
+    expect(tokens).toContain("--ac-radius-input: 8px");
+    expect(tokens).toContain("--ac-radius-control: 8px");
+    expect(tokens).toContain("--ac-radius-card: 12px");
     expect(tokens).toContain("--ac-shadow-card: none");
   });
 
@@ -39,6 +39,11 @@ describe("SYREN native care tokens", () => {
       ["text-secondary", "surface"], ["action", "surface"],
       ["text-inverse", "action"], ["risk-text", "risk-bg"],
       ["watch-text", "watch-bg"], ["positive-text", "positive-bg"],
+      ["navigation-text", "navigation-bg"],
+      ["navigation-muted", "navigation-bg"],
+      ["navigation-active-text", "navigation-active-bg"],
+      ["text-inverse", "info-accent"],
+      ["text-inverse", "positive-accent"],
     ]) {
       const a = luminance(color(text));
       const b = luminance(color(background));

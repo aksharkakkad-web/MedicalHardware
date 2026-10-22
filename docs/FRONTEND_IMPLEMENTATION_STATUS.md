@@ -49,6 +49,12 @@ Resolved concern details, history rows and resident records now show an explicit
 
 The four rounds and final production screenshots are stored outside Git in `/Users/mahin/Documents/Codex/2026-10-22/SYREN Design Critique/`. This is visual review of synthetic workflows, not representative nursing-staff testing. Final verification results are recorded below.
 
+## UI/UX Pro Max refinement
+
+Native Care V6 applies the requested UI/UX Pro Max guidance to the existing clinic workspace. A deep blue-slate navigation frame, pale cyan selection marker, contrast-checked blue-teal actions, clearer table typography and consistent 8px controls/12px grouped panels replace the prior uniformly pale treatment. Native fonts, opaque clinical content, restrained borders and purposeful status color remain. Form fields and buttons now have 44px targets; supplied reading values stay with their units when a narrow table column wraps. No client, permission, lifecycle, contract or data-generation behavior changed.
+
+The required skill design-system search and supplemental style/color/Next.js guidance informed the pass. The generated marketing-page structure was intentionally rejected. Dark navigation and guide swatch contrast are covered by the existing numerical contrast test. All 248 clinic tests, lint, typecheck and the production build passed. Browser checks covered 1440, 1024, 768 and 375px widths, search preserving the attention queue, history navigation, phone handover controls and local demo administration. An isolated synthetic event was acknowledged, checked and explicitly resolved; only the final operation produced the green completion state. The original 127.0.0.1 journal was preserved. Production images are in `/Users/mahin/Documents/Codex/2026-10-22/SYREN UI Pro Max QA/`. This remains synthetic frontend validation.
+
 ## Synthetic state migration
 
 Existing synthetic v1 station records without an explicit permissions array load as view-only, including known seed identities. Previous care history and area coverage remain intact. Administrators explicitly assign permitted actions; normalized grants persist with the next successful demo mutation. New station approvals default to view-only. Omitting permissions when editing a station preserves its existing grant. This fail-closed migration is for synthetic local state, not production authentication.

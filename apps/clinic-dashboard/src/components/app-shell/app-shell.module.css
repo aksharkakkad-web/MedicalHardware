@@ -17,14 +17,16 @@
   overscroll-behavior: contain;
   scrollbar-width: thin;
   padding: 28px 14px 20px;
-  border-right: 1px solid var(--ac-border-subtle);
-  background: var(--ac-chrome);
+  border-right: 1px solid var(--ac-navigation-border);
+  background: var(--ac-navigation-bg);
+  color: var(--ac-navigation-text);
+  scrollbar-color: var(--ac-navigation-border) var(--ac-navigation-bg);
 }
 .brand {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 0 8px 34px;
+  padding: 0 10px 36px;
   min-height: 40px;
   width: fit-content;
 }
@@ -34,11 +36,10 @@
   width: 40px;
   height: 40px;
   padding: 7px;
-  border-radius: var(--ac-radius-popover);
+  border-radius: var(--ac-radius-control);
   flex: none;
-  color: var(--ac-text-inverse);
-  background: var(--ac-brand-accent);
-  box-shadow: var(--ac-shadow-action);
+  color: var(--ac-navigation-bg);
+  background: var(--ac-navigation-accent);
 }
 .brandMark svg {
   display: block;
@@ -52,19 +53,19 @@
 .brandName {
   font-size: 19px;
   font-weight: 650;
-  letter-spacing: -0.035em;
+  letter-spacing: 0.015em;
   line-height: 21px;
 }
 .brandSubtitle {
   margin-top: 3px;
   font-size: 11px;
   letter-spacing: 0;
-  color: var(--ac-text-secondary);
+  color: var(--ac-navigation-muted);
 }
 .navigationLabel {
   padding: 0 11px 10px;
-  color: var(--ac-text-secondary);
-  font-size: 11px;
+  color: var(--ac-navigation-muted);
+  font-size: 12px;
   font-weight: 550;
   letter-spacing: 0.025em;
   text-transform: none;
@@ -84,36 +85,38 @@
   gap: 11px;
   padding: 6px 10px;
   border-radius: var(--ac-radius-control);
-  color: var(--ac-text-strong-secondary);
-  font-size: 13px;
+  color: var(--ac-navigation-text);
+  font-size: 14px;
   line-height: 18px;
-  transition: background-color 0.15s,
-    color 0.15s;
+  transition: background-color var(--ac-duration-standard), color var(--ac-duration-standard);
 }
 .navLink:hover {
-  background: var(--ac-surface-quiet);
-  color: var(--ac-text-primary);
+  background: var(--ac-navigation-hover);
+  color: var(--ac-navigation-active-text);
 }
 .activeLink {
-  color: var(--ac-action-hover);
-  background: var(--ac-action-soft-strong);
+  color: var(--ac-navigation-active-text);
+  background: var(--ac-navigation-active-bg);
   font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--ac-navigation-accent);
+}
+.sidebar a:focus-visible,
+.sidebar summary:focus-visible {
+  outline: 2px solid var(--ac-navigation-accent);
+  outline-offset: 3px;
+  box-shadow: none;
 }
 .navIcon {
-  width: 28px;
-  height: 28px;
-  padding: 6px;
+  width: 22px;
+  height: 22px;
+  padding: 3px;
   border-radius: var(--ac-radius-sm);
   background: transparent;
-  color: var(--ac-text-strong-secondary);
+  color: var(--ac-navigation-muted);
   flex: none;
 }
 .activeLink .navIcon {
-  color: var(--ac-action);
-  background: transparent;
-}
-.facilityNavigation .navIcon {
-  color: var(--ac-text-strong-secondary);
+  color: var(--ac-navigation-accent);
   background: transparent;
 }
 .facilityNavigation {
@@ -123,7 +126,7 @@
 }
 .sidebarFooter {
   margin-top: auto;
-  border-top: 1px solid var(--ac-border-subtle);
+  border-top: 1px solid var(--ac-navigation-border);
   padding: 17px 8px 0;
 }
 .environment {
@@ -139,25 +142,25 @@
 .demoDot {
   width: 5px;
   height: 5px;
-  background: var(--ac-watch-text);
+  background: var(--ac-navigation-accent);
   border-radius: 50%;
   flex: none;
 }
 .footerNote {
   font-size: 11px;
-  color: var(--ac-text-strong-secondary);
+  color: var(--ac-navigation-text);
   margin-top: 3px;
 }
 .footerDetail {
   font-size: 11px;
-  color: var(--ac-text-secondary);
+  color: var(--ac-navigation-muted);
   line-height: 15px;
   margin-top: 5px;
   max-width: 145px;
 }
 .developerTools {
   font-size: 11px;
-  color: var(--ac-text-secondary);
+  color: var(--ac-navigation-muted);
   margin-top: 15px;
 }
 .developerTools summary {
@@ -169,7 +172,7 @@
   padding: 6px 0 0 11px;
 }
 .developerTools a:hover {
-  color: var(--ac-action);
+  color: var(--ac-navigation-active-text);
 }
 .tabletDemo {
   display: none;
@@ -189,8 +192,6 @@
   padding: 10px 32px;
   border-bottom: 1px solid var(--ac-border-subtle);
   background: var(--ac-chrome-translucent);
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
 }
 .facilityContext {
   display: flex;
@@ -217,7 +218,7 @@
   background: var(--ac-surface);
   color: var(--ac-text-strong-secondary);
   font-size: 12px;
-  min-height: 36px;
+  min-height: 40px;
   cursor: pointer;
   padding: 0 10px;
 }
@@ -304,6 +305,7 @@
 }
 .accessState .navigationLabel {
   padding-left: 0;
+  color: var(--ac-text-secondary);
 }
 .accessState h1 {
   font-size: 27px;
@@ -383,7 +385,7 @@
     height: auto;
     padding: 6px 12px;
     border-right: 0;
-    border-bottom: 1px solid var(--ac-border-subtle);
+    border-bottom: 1px solid var(--ac-navigation-border);
   }
   .brand,
   .facilityNavigation,
@@ -404,6 +406,9 @@
     padding: 4px 0;
     font-size: 11px;
     line-height: 13px;
+  }
+  .activeLink {
+    box-shadow: inset 0 -2px 0 var(--ac-navigation-accent);
   }
   .navIcon {
     width: 22px;
@@ -474,7 +479,26 @@
 @media (prefers-reduced-transparency: reduce) {
   .topbar {
     background: var(--ac-chrome);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+  }
+}
+@media (forced-colors: active) {
+  .sidebar {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+  }
+  .sidebar a,
+  .sidebar p,
+  .navigationLabel,
+  .navIcon {
+    color: CanvasText;
+  }
+  .activeLink {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+  .sidebar a:focus-visible,
+  .sidebar summary:focus-visible {
+    outline-color: Highlight;
   }
 }

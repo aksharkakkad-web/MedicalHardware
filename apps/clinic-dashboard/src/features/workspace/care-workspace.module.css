@@ -14,7 +14,7 @@
   font-size: var(--ac-font-size-page-title);
   font-weight: 650;
   line-height: 1.16;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.03em;
 }
 .heading p {
   margin-top: 8px;
@@ -59,11 +59,15 @@
   font-family: var(--ac-font-mono);
   font-variant-numeric: tabular-nums;
 }
+.readingPair {
+  display: inline-block;
+  white-space: nowrap;
+}
 .scope {
   display: flex;
   align-items: flex-start;
   gap: 9px;
-  padding: 0 2px;
+  padding: 0 0 2px;
   margin-bottom: 16px;
   font-size: 12px;
   line-height: 1.6;
@@ -140,7 +144,7 @@
   overflow: hidden;
 }
 .attentionSurface .sectionHeading {
-  padding-bottom: 12px;
+  padding-bottom: 14px;
 }
 .stats {
   display: flex;
@@ -191,9 +195,9 @@
   padding: 10px 18px;
   border-bottom: 1px solid var(--ac-border-subtle);
   text-decoration: none;
-  transition: background var(--ac-duration-fast);
+  transition: background-color var(--ac-duration-standard);
   min-height: 70px;
-  grid-template-columns: 24px 150px minmax(0, 1fr) 190px 16px;
+  grid-template-columns: 24px 148px minmax(0, 1fr) 200px 16px;
   gap: 14px;
 }
 .concernRow:first-child {
@@ -211,6 +215,9 @@
 }
 .concernRow:hover {
   background: var(--ac-surface-hover);
+}
+.concernRow:hover .chevron {
+  color: var(--ac-action);
 }
 .completedFollowUps > summary:focus-visible,
 .concernRow:focus-visible,
@@ -248,7 +255,7 @@
 .concernResident {
   display: block;
   color: var(--ac-text-strong-secondary);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 400;
 }
 .concernRoom {
@@ -258,7 +265,7 @@
   margin: 0;
   color: var(--ac-text-primary);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 650;
 }
 .priority {
   display: inline-flex;
@@ -299,7 +306,7 @@
   height: 16px;
 }
 .roster {
-  padding: 16px 20px 14px;
+  padding: 16px 20px 12px;
   background: var(--ac-surface);
   border: 1px solid var(--ac-border-subtle);
   border-radius: var(--ac-radius-card);
@@ -330,20 +337,19 @@
   table-layout: fixed;
 }
 .table th {
-  padding: 10px 12px;
-  font-size: 11px;
+  padding: 11px 12px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--ac-text-strong-secondary);
   border-block: 1px solid var(--ac-border-subtle);
   background: var(--ac-surface-quiet);
 }
 .table td {
-  padding: 16px 12px;
+  padding: 15px 12px;
   vertical-align: top;
   border-bottom: 1px solid var(--ac-border-subtle);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.55;
-  padding-block: 15px;
 }
 .table tbody tr:last-child td {
   border-bottom: 0;
@@ -362,7 +368,7 @@
 }
 .table td strong {
   display: block;
-  font-weight: 550;
+  font-weight: 600;
 }
 .table td p {
   margin-top: 4px;
@@ -382,8 +388,6 @@
 }
 .residentLink:hover strong {
   color: var(--ac-action);
-  text-decoration: underline;
-  text-underline-offset: 3px;
 }
 .table tr:hover td {
   background: var(--ac-surface-hover);
@@ -491,7 +495,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 .panelTitle a {
   white-space: nowrap;
@@ -554,9 +558,8 @@
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.045em;
-  margin: 8px 0 10px;
+  margin: 4px 0 6px;
   font-size: 30px;
-  margin-block: 4px 6px;
 }
 .reading small {
   display: inline-block;
@@ -964,7 +967,7 @@
 .searchControl > svg {
   position: absolute;
   left: 12px;
-  bottom: 11px;
+  bottom: 13px;
   width: 18px;
   height: 18px;
   color: var(--ac-text-secondary);
@@ -1010,22 +1013,24 @@
   gap: 3px;
   padding: 4px;
   margin-bottom: 20px;
-  background: var(--ac-border-subtle);
+  background: var(--ac-surface-quiet);
+  border: 1px solid var(--ac-border-subtle);
   border-radius: var(--ac-radius-control);
 }
 .eventTabs button {
-  border: 0;
+  border: 1px solid transparent;
   background: transparent;
   color: var(--ac-text-strong-secondary);
   padding: 8px 14px;
-  min-height: 36px;
+  min-height: 40px;
   border-radius: var(--ac-radius-sm);
   font-size: 13px;
   cursor: pointer;
 }
 .eventTabs button[aria-pressed="true"] {
   background: var(--ac-surface);
-  color: var(--ac-text-primary);
+  color: var(--ac-action);
+  border-color: var(--ac-border-control);
   font-weight: 600;
   box-shadow: var(--ac-shadow-soft);
 }
@@ -1461,6 +1466,15 @@
   }
   .eventHeading h1 {
     font-size: 27px;
+  }
+  .panel > p,
+  .interpretation p,
+  .evidenceList p {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  .facts {
+    font-size: 14px;
   }
   .eventMetadata {
     gap: 8px;
