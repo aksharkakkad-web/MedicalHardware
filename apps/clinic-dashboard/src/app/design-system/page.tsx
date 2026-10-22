@@ -25,22 +25,22 @@ const sections = [
 ] as const;
 
 const foundationColors = [
-  ["Cool gray canvas", "Page canvas", "Background beneath grouped care content", "canvasToken", "#F5F5F7"],
+  ["Cool canvas", "Page canvas", "Background beneath grouped care content", "canvasToken", "#F4F7F8"],
   ["Panel white", "Working surface", "Opaque content, panels, and controls", "paper0", "#FFFFFF"],
   ["Raised white", "Raised surface", "Foreground content distinguished by depth", "paper50", "#FFFFFF"],
-  ["Cool secondary canvas", "Secondary background", "Supporting workspace areas", "paper100", "#EEF1F6"],
-  ["Soft separator", "Hairline", "Rows, controls, and surface edges", "paper200", "#E4E7EC"],
-  ["Secondary ink", "Supporting text", "Helper copy and metadata", "ink600", "#5E636D"],
-  ["Primary ink", "Primary text", "Headings and decisions", "ink950", "#1D1D1F"],
+  ["Cool secondary canvas", "Secondary background", "Supporting workspace areas", "paper100", "#EDF3F5"],
+  ["Soft separator", "Hairline", "Rows, controls, and surface edges", "paper200", "#DCE5E9"],
+  ["Secondary ink", "Supporting text", "Helper copy and metadata", "ink600", "#586B74"],
+  ["Primary ink", "Primary text", "Headings and decisions", "ink950", "#19333F"],
 ] as const;
 
 const brandColors = [
-  ["Soft blue", "Selection wash", "Selected rows and active navigation", "cobalt50", "#EDF4FF"],
-  ["Emphasized blue wash", "Strong selection", "Focused information groups", "cobalt100", "#DDEAFF"],
-  ["Action blue", "Brand and interaction", "Primary actions and focus", "cobalt600", "#0066D6"],
-  ["Pressed blue", "Pressed interaction", "Pressed primary actions", "cobalt800", "#004697"],
-  ["Informational teal", "Information accent", "Supporting context and navigation", "sky400", "#087A99"],
-  ["Brand blue", "Brand accent", "Brand identity, separate from severity", "violet500", "#0066D6"],
+  ["Soft teal", "Selection wash", "Selected rows and contextual controls", "cobalt50", "#EAF5F7"],
+  ["Emphasized teal wash", "Strong selection", "Focused information groups", "cobalt100", "#D8EDF1"],
+  ["Action teal", "Brand and interaction", "Primary actions and focus", "cobalt600", "#086B83"],
+  ["Pressed teal", "Pressed interaction", "Pressed primary actions", "cobalt800", "#064354"],
+  ["Informational teal", "Information accent", "Supporting context", "sky400", "#086B83"],
+  ["Navigation slate", "Navigation frame", "Brand and navigation, separate from severity", "navigationSlate", "#173B4A"],
   ["Positive green", "Positive accent", "Available or confirmed operational states", "mint400", "#267449"],
 ] as const;
 
@@ -64,9 +64,9 @@ const spacing = [
 
 const radii = [
   ["Tiny detail", "4px", "radiusSquare"],
-  ["Input", "10px", "radiusField"],
-  ["Button", "10px", "radiusControl"],
-  ["Grouped panel", "16px", "radiusSurface"],
+  ["Input", "8px", "radiusField"],
+  ["Button", "8px", "radiusControl"],
+  ["Grouped panel", "12px", "radiusSurface"],
   ["Popover", "16px", "radiusFloating"],
 ] as const;
 
@@ -190,7 +190,7 @@ export default function DesignSystemPage() {
             <strong>SYREN</strong>
           </a>
           <div className={styles.mastheadTools}>
-            <p>SYREN · NATIVE CARE V5</p>
+            <p>SYREN · NATIVE CARE V6</p>
             <ExportActions />
           </div>
         </header>
@@ -249,7 +249,7 @@ export default function DesignSystemPage() {
               <blockquote className={styles.foundationQuote}>“Which resident needs my attention right now?”<footer>Keep current work and the next permitted action clearly in view.</footer></blockquote>
             </Section>
 
-            <Section number="02" title="Color" intro="Clear blue identifies interaction. Operational color keeps its exact meaning.">
+            <Section number="02" title="Color" intro="Blue-teal identifies interaction. Operational color keeps its exact meaning.">
               <div className={styles.colorGroup}>
                 <SpecimenLabel>Foundation tokens</SpecimenLabel>
                 <div className={styles.swatchStrip}>
@@ -268,7 +268,7 @@ export default function DesignSystemPage() {
                   {statusColors.map(([name, role, use, className, value]) => <div className={styles[className]} key={name}><strong>{name}</strong><span>{role}</span><small>{use}</small><code>{value}</code></div>)}
                 </div>
               </div>
-              <p className={styles.ruleNote}><strong>Color rule</strong> Blue means brand or interaction. Green, amber, red, and gray carry operational status. Device or data trouble never borrows resident-risk red.</p>
+              <p className={styles.ruleNote}><strong>Color rule</strong> Blue-teal means interaction; deep slate and pale cyan frame navigation. Green, amber, red, and gray carry operational status. Device or data trouble never borrows resident-risk red.</p>
               <p className={styles.ruleNote}><strong>Design references</strong> Apple’s <a href="https://developer.apple.com/design/human-interface-guidelines/color">Color</a> and <a href="https://developer.apple.com/design/human-interface-guidelines/materials">Materials</a> guidance informs consistent color meaning, clear layers, and restrained effects. These are SYREN web tokens and CSS treatments, not native Apple components or a reproduction of Liquid Glass. Working content stays opaque.</p>
             </Section>
 
@@ -349,7 +349,7 @@ export default function DesignSystemPage() {
                 <div><strong>320px</strong><span>Secondary rail</span><small>Stacks into page flow on narrow screens</small></div>
                 <div><strong>400px</strong><span>Detail sheet</span><small>16px popover corners, floating depth</small></div>
                 <div><strong>44px</strong><span>Navigation item</span><small>18px icon and clear selected state</small></div>
-                <div><strong>40px</strong><span>Toolbar</span><small>Directly above working content</small></div>
+                <div><strong>44px</strong><span>Form controls</span><small>Consistent accessible targets</small></div>
                 <div><strong>40px</strong><span>Tabs</span><small>Readable labels and contained selection</small></div>
                 <div><strong>480px</strong><span>Dialog</span><small>22px corners and stronger overlay depth</small></div>
               </div>
@@ -407,7 +407,7 @@ export default function DesignSystemPage() {
             <Section number="08" title="Forms" intro="Visible labels, fixed control heights, and local recovery make forms boring in the best way.">
               <form className={styles.formStage}>
                 <FormField id="resident-search" label="Search residents" hint="Search by resident label or room." type="search" placeholder="Example: Room 214" />
-                <FormField id="room-search-focus" className={styles.focusField} label="Search focus state" hint="Visible focus uses the blue interaction ring." defaultValue="Room 214" />
+                <FormField id="room-search-focus" className={styles.focusField} label="Search focus state" hint="Visible focus uses the blue-teal interaction ring." defaultValue="Room 214" />
                 <FormField id="workflow-state" label="Workflow state" as="select" defaultValue="acknowledged" options={[{ value: "new", label: "New" }, { value: "acknowledged", label: "Acknowledged" }, { value: "investigating", label: "Investigating" }, { value: "resolved", label: "Resolved" }]} />
                 <FormField id="room-disabled" label="Assigned room" hint="Room assignment is managed by an administrator." defaultValue="Room 214" disabled />
                 <FormFieldset legend="Follow-up timing">
@@ -538,7 +538,7 @@ export default function DesignSystemPage() {
                   <SystemFeedback />
                 </details>
               </div>
-              <footer className={styles.pageFooter}><span>SYREN · Native Care V5</span><a href="#top">Back to top <ArrowIcon /></a></footer>
+              <footer className={styles.pageFooter}><span>SYREN · Native Care V6</span><a href="#top">Back to top <ArrowIcon /></a></footer>
             </Section>
           </main>
         </div>

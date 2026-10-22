@@ -1,6 +1,6 @@
 .button {
   display: inline-flex;
-  min-height: 40px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   gap: var(--ac-space-2);
@@ -68,9 +68,9 @@
 }
 
 .iconButton {
-  width: 40px;
-  height: 40px;
-  flex: 0 0 40px;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
   padding: 0;
   border-color: var(--ac-border-control);
   color: var(--ac-text-secondary);

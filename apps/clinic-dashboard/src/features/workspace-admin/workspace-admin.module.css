@@ -19,7 +19,7 @@
 }
 .pageHeader h1 {
   margin: 0;
-  font-size: 34px;
+  font-size: var(--ac-font-size-page-title);
   font-weight: 650;
   letter-spacing: -0.035em;
   line-height: 1.15;

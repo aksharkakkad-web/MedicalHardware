@@ -130,9 +130,12 @@ export function ResidentRoster({ snapshot }: { snapshot: WorkspaceSnapshot }) {
                     {available.length ? (
                       <>
                         <span className={styles.mono}>
-                          {available
-                            .map((m) => `${m.value} ${m.unit}`)
-                            .join(" · ")}
+                          {available.map((measurement, index) => (
+                            <span className={styles.readingPair} key={index}>
+                              {index > 0 ? " · " : ""}
+                              {measurement.value} {measurement.unit}
+                            </span>
+                          ))}
                         </span>
                         <p className={styles.meta}>
                           Observed{" "}
