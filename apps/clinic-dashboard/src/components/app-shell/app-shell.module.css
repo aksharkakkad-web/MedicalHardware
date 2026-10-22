@@ -10,25 +10,35 @@
   top: 0;
   z-index: 30;
   display: flex;
+  align-self: start;
   height: 100svh;
   flex-direction: column;
-  padding: 27px 13px 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  padding: 28px 16px 20px;
   border-right: 1px solid var(--ac-border-subtle);
-  background: var(--ac-surface);
+  background: var(--ac-chrome);
 }
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 9px 36px;
+  gap: 12px;
+  padding: 0 8px 34px;
   min-height: 40px;
   width: fit-content;
 }
 .brandMark {
-  width: 29px;
-  height: 29px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 7px;
+  border-radius: var(--ac-radius-popover);
   flex: none;
-  color: var(--ac-text-primary);
+  color: var(--ac-text-inverse);
+  background: var(--ac-brand-accent);
+  box-shadow: var(--ac-shadow-action);
 }
 .brandMark svg {
   display: block;
@@ -40,15 +50,15 @@
   display: block;
 }
 .brandName {
-  font-size: 17px;
+  font-size: 19px;
   font-weight: 650;
-  letter-spacing: 0.08em;
+  letter-spacing: -0.035em;
   line-height: 21px;
 }
 .brandSubtitle {
   margin-top: 3px;
   font-size: 11px;
-  letter-spacing: 0.025em;
+  letter-spacing: 0;
   color: var(--ac-text-secondary);
 }
 .navigationLabel {
@@ -56,24 +66,24 @@
   color: var(--ac-text-secondary);
   font-size: 11px;
   font-weight: 550;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  text-transform: none;
   line-height: 14px;
 }
 .navigationList {
   display: grid;
-  gap: 3px;
+  gap: 5px;
   list-style: none;
 }
 .navLink,
 .activeLink {
   position: relative;
   display: flex;
-  min-height: 38px;
+  min-height: 44px;
   align-items: center;
-  gap: 10px;
-  padding: 0 11px;
-  border-radius: 6px;
+  gap: 11px;
+  padding: 6px 10px;
+  border-radius: var(--ac-radius-control);
   color: var(--ac-text-strong-secondary);
   font-size: 13px;
   line-height: 18px;
@@ -87,26 +97,44 @@
 }
 .activeLink {
   color: var(--ac-action);
-  background: var(--ac-action-soft);
-  font-weight: 550;
+  background: var(--ac-surface);
+  box-shadow: var(--ac-shadow-soft);
+  font-weight: 600;
 }
 .navIcon {
-  width: 16px;
-  height: 16px;
+  width: 28px;
+  height: 28px;
+  padding: 6px;
+  border-radius: var(--ac-radius-sm);
+  background: var(--ac-action-soft-strong);
+  color: var(--ac-action);
   flex: none;
 }
-.navLink .navIcon {
-  color: var(--ac-text-secondary);
+.navLink[href="/residents"] .navIcon {
+  color: var(--ac-info-accent);
+  background: var(--ac-surface-tint);
+}
+.navLink[href="/handover"] .navIcon {
+  color: var(--ac-violet-text);
+  background: var(--ac-violet-bg);
+}
+.navLink[href="/events"] .navIcon {
+  color: var(--ac-watch-text);
+  background: var(--ac-watch-bg);
+}
+.facilityNavigation .navIcon {
+  color: var(--ac-device-text);
+  background: var(--ac-border-subtle);
 }
 .facilityNavigation {
-  margin-top: 33px;
+  margin-top: 30px;
   display: grid;
   gap: 2px;
 }
 .sidebarFooter {
   margin-top: auto;
   border-top: 1px solid var(--ac-border-subtle);
-  padding: 17px 10px 0;
+  padding: 17px 8px 0;
 }
 .environment {
   display: flex;
@@ -167,10 +195,12 @@
   justify-content: space-between;
   gap: 16px;
   align-items: center;
-  min-height: 62px;
+  min-height: var(--ac-topbar-height);
   padding: 10px 32px;
   border-bottom: 1px solid var(--ac-border-subtle);
-  background: var(--ac-surface);
+  background: var(--ac-chrome-translucent);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
 }
 .facilityContext {
   display: flex;
@@ -179,8 +209,8 @@
   min-width: 0;
 }
 .workspaceName {
-  font-size: 12px;
-  font-weight: 550;
+  font-size: 13px;
+  font-weight: 600;
   white-space: nowrap;
 }
 .contextDivider {
@@ -192,14 +222,14 @@
 }
 .areaSelect {
   max-width: 190px;
-  border: 0;
-  border-radius: 4px;
-  background: transparent;
+  border: 1px solid var(--ac-border-subtle);
+  border-radius: var(--ac-radius-control);
+  background: var(--ac-surface);
   color: var(--ac-text-strong-secondary);
   font-size: 12px;
-  min-height: 32px;
+  min-height: 36px;
   cursor: pointer;
-  padding: 0 17px 0 0;
+  padding: 0 10px;
 }
 .areaSelect:disabled {
   cursor: default;
@@ -208,7 +238,7 @@
 .topbarActions {
   display: flex;
   align-items: center;
-  gap: 22px;
+  gap: 18px;
   min-width: 0;
 }
 .stationLink {
@@ -219,16 +249,14 @@
   font-size: 12px;
   white-space: nowrap;
 }
-.stationDot {
-  width: 5px;
-  height: 5px;
+.stationIcon {
+  width: 17px;
+  height: 17px;
   flex: none;
-  border: 1px solid var(--ac-text-secondary);
-  border-radius: 50%;
 }
 .adminLink,
 .adminActive {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--ac-text-strong-secondary);
   white-space: nowrap;
 }
@@ -242,10 +270,10 @@
 .main,
 .overviewMain {
   width: 100%;
-  max-width: 1360px;
-  min-height: calc(100svh - 62px);
+  max-width: 1440px;
+  min-height: calc(100svh - var(--ac-topbar-height));
   margin: 0 auto;
-  padding: 36px 40px 64px;
+  padding: 28px 36px 64px;
 }
 .main:focus {
   outline: none;
@@ -269,7 +297,7 @@
   background: var(--ac-text-primary);
   color: white;
   padding: 10px 14px;
-  border-radius: 6px;
+  border-radius: var(--ac-radius-control);
   transform: translateY(-160%);
 }
 .skipLink:focus {
@@ -388,8 +416,10 @@
     line-height: 13px;
   }
   .navIcon {
-    width: 15px;
-    height: 15px;
+    width: 22px;
+    height: 22px;
+    padding: 2px;
+    background: transparent;
   }
   .topbar {
     position: static;
@@ -440,7 +470,7 @@
   }
   .main,
   .overviewMain {
-    padding: 25px 16px 48px;
+    padding: 24px 16px 48px;
     min-height: calc(100svh - 146px);
   }
   .areaError {
@@ -452,4 +482,8 @@
   .activeLink {
     transition: none;
   }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .topbar { background: var(--ac-chrome); backdrop-filter: none; -webkit-backdrop-filter: none; }
 }

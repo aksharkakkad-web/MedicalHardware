@@ -6,25 +6,53 @@ const stylesDirectory = import.meta.dirname;
 const tokens = readFileSync(resolve(stylesDirectory, "design-tokens.css"), "utf8");
 const pageCss = readFileSync(resolve(stylesDirectory, "../app/design-system/page.module.css"), "utf8");
 
-describe("Care Ledger tokens", () => {
-  it("defines the restrained Dub-derived product foundation", () => {
-    expect(tokens).toContain("--ac-canvas: #ffffff");
+describe("SYREN native care tokens", () => {
+  it("defines distinct native-inspired canvas and working surfaces", () => {
+    expect(tokens).toContain("--ac-canvas: #f5f5f7");
     expect(tokens).toContain("--ac-surface: #ffffff");
-    expect(tokens).toContain("--ac-surface-quiet: #f5f5f5");
-    expect(tokens).toContain("--ac-text-primary: #171717");
-    expect(tokens).toContain("--ac-text-secondary: #737373");
-    expect(tokens).toContain("--ac-border-subtle: #e5e5e5");
-    expect(tokens).toContain("--ac-action: #2563eb");
-    expect(tokens).toContain("--ac-radius-input: 6px");
-    expect(tokens).toContain("--ac-radius-control: 8px");
-    expect(tokens).toContain("--ac-radius-card: 12px");
-    expect(tokens).toContain("--ac-shadow-card: none");
+    expect(tokens).toContain("--ac-surface-quiet: #f1f3f6");
+    expect(tokens).toContain("--ac-text-primary: #1d1d1f");
+    expect(tokens).toContain("--ac-text-secondary: #656972");
+    expect(tokens).toContain("--ac-border-subtle: #e4e7ec");
+    expect(tokens).toContain("--ac-action: #0066d6");
+    expect(tokens).toContain("--ac-radius-input: 10px");
+    expect(tokens).toContain("--ac-radius-control: 10px");
+    expect(tokens).toContain("--ac-radius-card: 20px");
+    expect(tokens).toContain("--ac-shadow-card: 0 2px 8px");
+  });
+
+  it("keeps body, action and semantic text readable on their intended surfaces", () => {
+    function color(role: string) {
+      const value = tokens.match(new RegExp(`--ac-${role}: (#[0-9a-f]{6});`))?.[1];
+      if (!value) throw new Error(`Missing color role ${role}`);
+      return value;
+    }
+    function luminance(hex: string) {
+      const channels = [1, 3, 5].map((i) => {
+        const component = Number.parseInt(hex.slice(i, i + 2), 16) / 255;
+        return component <= 0.04045 ? component / 12.92 : ((component + 0.055) / 1.055) ** 2.4;
+      });
+      return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+    }
+    for (const [text, background] of [
+      ["text-primary", "canvas"], ["text-secondary", "canvas"],
+      ["text-secondary", "surface"], ["action", "surface"],
+      ["text-inverse", "action"], ["risk-text", "risk-bg"],
+      ["watch-text", "watch-bg"], ["positive-text", "positive-bg"],
+    ]) {
+      const a = luminance(color(text));
+      const b = luminance(color(background));
+      expect((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05), `${text} on ${background}`).toBeGreaterThanOrEqual(4.5);
+    }
+    const boundary = luminance(color("border-control"));
+    const surface = luminance(color("surface"));
+    expect((surface + 0.05) / (boundary + 0.05), "enabled control boundary on white").toBeGreaterThanOrEqual(3);
   });
 
   it("locks the compact shell and working-surface dimensions", () => {
-    expect(tokens).toContain("--ac-sidebar-width: 208px");
-    expect(tokens).toContain("--ac-sidebar-collapsed-width: 58px");
-    expect(tokens).toContain("--ac-topbar-height: 56px");
+    expect(tokens).toContain("--ac-sidebar-width: 232px");
+    expect(tokens).toContain("--ac-sidebar-collapsed-width: 72px");
+    expect(tokens).toContain("--ac-topbar-height: 68px");
     expect(tokens).toContain("--ac-page-gutter: 32px");
     expect(tokens).toContain("--ac-secondary-rail-width: 320px");
     expect(tokens).toContain("--ac-detail-sheet-width: 400px");

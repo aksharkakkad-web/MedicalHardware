@@ -309,9 +309,9 @@
 .typeSpecimens > div { display: grid; grid-template-columns: minmax(180px, 22%) minmax(0, 1fr); gap: var(--signal-space-6); align-items: baseline; padding: var(--signal-space-5) 0; border-bottom: 1px solid var(--signal-border-subtle); }
 .typeSpecimens p { color: var(--signal-text-secondary); font-size: 11px; line-height: 16px; }
 .displayType { font-size: 36px; font-weight: 650; line-height: 40px; letter-spacing: -.035em; }
-.pageTitleType { font-size: 30px; font-weight: 650; line-height: 36px; letter-spacing: -.03em; }
-.majorType { font-size: 22px; font-weight: 650; line-height: 28px; }
-.productSectionType { font-size: 18px; font-weight: 650; line-height: 24px; }
+.pageTitleType { font-size: var(--ac-font-size-page-title); font-weight: 650; line-height: var(--ac-line-height-page-title); letter-spacing: -.03em; }
+.majorType { font-size: var(--ac-font-size-major-heading); font-weight: 650; line-height: var(--ac-line-height-major-heading); }
+.productSectionType { font-size: var(--ac-font-size-section-heading); font-weight: 650; line-height: var(--ac-line-height-section-heading); }
 .recordType { font-size: 15px; font-weight: 600; line-height: 21px; }
 .bodyType { font-size: 14px; line-height: 20px; }
 .bodyStrongType { font-size: 14px; font-weight: 550; line-height: 20px; }
@@ -338,7 +338,7 @@
 .radiusRow > div { display: grid; gap: var(--signal-space-2); }
 .radiusRow span { width: 100%; aspect-ratio: 1.35; border: 1px solid var(--signal-action-border); background: var(--signal-action-soft); }
 .radiusSquare { border-radius: var(--signal-radius-xs); }
-.radiusField { border-radius: var(--signal-radius-sm); }
+.radiusField { border-radius: var(--ac-radius-input); }
 .radiusControl { border-radius: var(--signal-radius-control); }
 .radiusSurface { border-radius: var(--signal-radius-card); }
 .radiusFloating { border-radius: var(--signal-radius-popover); }

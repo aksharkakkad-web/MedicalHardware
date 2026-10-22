@@ -1,6 +1,6 @@
 # SYREN clinic design system
 
-**Version:** Care Ledger V3 — shared staff workspace
+**Version:** Native Care V4 — shared staff workspace
 
 **Primary mode:** Clinic operations
 
@@ -8,7 +8,9 @@
 
 **Accessibility target:** WCAG 2.2 AA
 
-Care Ledger helps staff answer two questions: **who needs attention now, and what is the next safe action?** Its Dub-derived visual foundation uses a white canvas, neutral black type, gray alternate surfaces, hairline rules, and electric blue only for brand and interaction. It states uncertainty directly and never implies a diagnosis or proof of safety.
+Native Care helps staff answer two questions: **who needs attention now, and what is the next safe action?** Its Apple-inspired foundation uses native system typography, a soft cool-gray canvas, white grouped surfaces, restrained depth, clear blue controls, and purposeful colored anchors. Content stays crisp and opaque; navigation may use a translucent material. It states uncertainty directly and never implies a diagnosis or proof of safety.
+
+The current user-requested direction supersedes the former Dub-derived flat ledger. Reference principles come from Apple’s [Color](https://developer.apple.com/design/human-interface-guidelines/color) and [Materials](https://developer.apple.com/design/human-interface-guidelines/materials) guidance. These are adapted CSS treatments, not native Apple SDK components or a claim to reproduce Liquid Glass.
 
 ## Foundation
 
@@ -16,21 +18,23 @@ Care Ledger helps staff answer two questions: **who needs attention now, and wha
 
 | Role | Token | Value |
 | --- | --- | --- |
-| Canvas | `--ac-canvas` | `#ffffff` |
+| Canvas | `--ac-canvas` | `#f5f5f7` |
 | Surface | `--ac-surface` | `#ffffff` |
-| Quiet surface | `--ac-surface-quiet` | `#f5f5f5` |
-| Primary ink | `--ac-text-primary` | `#171717` |
-| Secondary ink | `--ac-text-secondary` | `#737373` |
-| Hairline | `--ac-border-subtle` | `#e5e5e5` |
-| Strong rule | `--ac-border-strong` | `#d4d4d4` |
-| Action | `--ac-action` | `#2563eb` |
-| Action hover | `--ac-action-hover` | `#1d4ed8` |
+| Quiet surface | `--ac-surface-quiet` | `#f1f3f6` |
+| Primary ink | `--ac-text-primary` | `#1d1d1f` |
+| Secondary ink | `--ac-text-secondary` | `#656972` |
+| Hairline | `--ac-border-subtle` | `#e4e7ec` |
+| Strong rule | `--ac-border-strong` | `#cdd3dc` |
+| Action | `--ac-action` | `#0066d6` |
+| Action hover | `--ac-action-hover` | `#0055b6` |
 
-Resting sections have no shadow. Floating menus and dialogs may use the documented overlay shadows. Cards use 12px corners, buttons use 8px, and inputs use 6px. Full rounding is reserved for status tags, dots, and real binary switches.
+Grouped content panels use 20px corners and a subtle two-level shadow. Controls and inputs use 10px corners; popovers use 16px. Floating menus/dialogs use stronger documented overlay shadows. Full rounding is reserved for compact state markers, dots and real binary switches. Use panels to group a task, never a card for every fact. Canvas, content and navigation are intentionally distinct.
+
+Additional roles: `--ac-chrome` is the navigation surface, `--ac-chrome-translucent` is a legible topbar layer, `--ac-surface-tint` is quiet informational context, `--ac-shadow-soft` is control depth and `--ac-shadow-action` is primary-action depth. Use role tokens rather than page-specific colors. Enabled input boundaries use `--ac-border-control` (`#8793a2`), which maintains at least 3:1 contrast against white; structural panel rules may remain lighter. Content never uses background blur. Reduced-transparency preference removes navigation blur.
 
 ## Typography
 
-Use Geist Sans for interface text and Geist Mono for timestamps, identifiers, and operational readings. Page titles are 30–36px at weight 600–650. Section titles are 18–24px at weight 500–650. Operational body copy is 13–14px; meaningful metadata is never smaller than 11px and should be 12px whenever space permits. Weight creates the hierarchy, while color and size remain restrained.
+Use the platform system sans stack: `-apple-system`, `BlinkMacSystemFont`, SF Pro Text when locally available, Segoe UI, Helvetica and Arial. Do not download proprietary Apple fonts. Use the platform monospace stack only for operational identifiers and compact readings; ordinary timestamps may use system sans with tabular numerals. Page titles are 30–36px at weight 600–700, section titles 18–22px at weight 600. Operational body copy is 14px, meaningful metadata at least 12px wherever feasible. Phone inputs use 16px to avoid unintended focus zoom. Hierarchy comes from size, weight, grouping and controlled contrast.
 
 Sentence case is the default. Keep line length near 70 characters for explanations. Prefer plain verbs: “Review event,” “Acknowledge event,” and “Save delivery preferences.”
 
@@ -38,13 +42,13 @@ Sentence case is the default. Keep line length near 70 characters for explanatio
 
 The base spacing rhythm is 4px. Common steps are 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, and 80px.
 
-- Desktop shell: 208px sidebar, 62px top bar, and 32–40px page gutter.
+- Desktop shell: 232px sidebar, 68px top bar, and 32–36px page gutter.
 - Desktop content: one main ledger with an optional 320–350px context rail.
 - Toolbar and inputs: 40px minimum height.
 - Repeated operational rows: 60–82px based on content.
 - Mobile: 16px page gutter and 44px touch targets.
 
-Use whitespace and rules to group related facts. A border should usually replace a container. Cards are reserved for a focused action, summary, or secondary rail; repeated records belong in a table or divided list.
+Use whitespace and grouped white surfaces to organize tasks. Keep repeated records inside one divided list or table rather than independent floating cards. Surface padding is generally 20–24px; preserve enough density to show the start of the resident roster on a normal laptop when three concerns are present.
 
 ## Action hierarchy
 
@@ -52,13 +56,13 @@ Each focused form has at most one filled electric-blue action. Ledger rows use n
 
 ## App shell
 
-The desktop sidebar is quiet and compact. The active destination uses a pale blue field with blue icon and text. The top bar identifies the facility, current view area and approved shared client. “All covered areas” is an explicit choice. Area filtering cannot hide authorized high or critical work. The primary destinations are Overview, Residents, Handover and Events. Facility tools include shared clients, directory imports and monitoring status. Administration is a separate entry; routine care has no personal staff login. A persistent demo label explains synthetic records and absent live alert delivery.
+The desktop sidebar uses a soft gray material, a compact blue SYREN mark and small colored navigation symbols. The active destination uses a crisp white selection surface with blue text and subtle depth. The top bar identifies the facility, current view area and approved shared client. “All covered areas” is an explicit choice. Area filtering cannot hide authorized high or critical work. The primary destinations are Overview, Residents, Handover and Events. Facility tools include shared clients, directory imports and monitoring status. Administration is a separate entry; routine care has no personal staff login. A persistent demo label explains synthetic records and absent live alert delivery.
 
 Between 761px and 1050px the sidebar becomes an intentional icon rail with accessible labels. At 760px and below, primary navigation becomes a compact four-item bar above the clinic workspace. Keep the area selector, administration entry and demonstration context readable. On narrow event detail, response controls precede the evidence and history; resident measurements retain their own leading position. The design-system route remains outside clinic chrome so it can be printed and exported.
 
 ## Tables and ledgers
 
-Use a muted header row, horizontal hairlines, and whole-row navigation. A row contains the minimum facts needed for a decision, then a chevron. Long explanations wrap; do not truncate the reason staff need to understand. Use mono text only for compact timestamps and identifiers.
+Use a soft header row, horizontal hairlines within an opaque white surface, and clearly indicated record navigation. A row contains the minimum facts needed for a decision, then a chevron. Long explanations wrap; do not truncate the reason staff need to understand. Use mono text only for compact timestamps and identifiers.
 
 On mobile, table rows become vertically ordered records:
 
@@ -123,7 +127,7 @@ Reuse these shared components before adding a page-specific pattern:
 
 - `AppShell` for desktop, collapsed, and narrow navigation;
 - `Button` and `IconButton` for action hierarchy;
-- `StatusPill` for a dot plus status text;
+- `StatusPill` for a compact marker plus explicit status text;
 - `StatusIndicator` and `SystemState` for explained operational state;
 - `ResidentRecords` for resident ledgers;
 - `FormField` for labeled input and validation;
@@ -134,4 +138,4 @@ The typed `MonitoringClient` boundary, routes, hooks, fixtures, and workflow han
 
 ## Visual review criteria
 
-Review rendered desktop and phone screens before completion. Use restrained operational hierarchy: resident and room, current work, evidence and next action. Reject decorative gradients, glass effects, KPI-card walls, oversized marketing headings, fabricated trend lines, gratuitous avatars, repetitive capsules, empty feature tiles and repeated boilerplate on each row. Keep useful facts and avoid cosmetic counters without a workflow purpose. Use the existing tokens, fine rules, measured spacing and natural language. Aesthetic review does not replace staff usability validation or establish WCAG conformance.
+Review rendered desktop and phone screens before completion. Use restrained operational hierarchy: resident and room, current work, evidence and next action. Reject decorative gradients, blur in clinical content, KPI-card walls, oversized marketing headings, fabricated trend lines, gratuitous avatars, repetitive capsules, empty feature tiles and repeated boilerplate on each row. Limited translucent navigation is allowed; content remains opaque. Keep useful facts and avoid cosmetic counters without a workflow purpose. Use the shared tokens, native type, grouped surfaces, measured spacing and natural language. Aesthetic review does not replace staff usability validation or establish WCAG conformance.

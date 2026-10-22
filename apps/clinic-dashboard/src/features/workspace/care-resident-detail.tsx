@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
+import { CareMark, DeviceIcon, SignalIcon } from "@/components/icons/icons";
 import {
   hasWorkspacePermission,
   useWorkspace,
@@ -40,8 +41,15 @@ function Measurement({
 }) {
   const available = readingIsAvailable(measurement, resident);
   return (
-    <div className={styles.measurement}>
-      <h3>{measurement.label}</h3>
+    <div
+      className={styles.measurement}
+      data-kind={measurement.kind}
+      data-available={available}
+    >
+      <h3>
+        <CareMark />
+        {measurement.label}
+      </h3>
       {available ? (
         <div className={styles.reading}>
           {measurement.value}
@@ -218,7 +226,10 @@ export function CareResidentDetail({ residentId }: { residentId: string }) {
             aria-labelledby="measurements-heading"
           >
             <div className={styles.panelTitle}>
-              <h2 id="measurements-heading">Last supplied measurements</h2>
+              <h2 id="measurements-heading" className={styles.iconHeading}>
+                <span className={styles.panelAnchor}><CareMark /></span>
+                Last supplied measurements
+              </h2>
               <span className={styles.meta}>Synthetic observations</span>
             </div>
             <div className={styles.measurements}>
@@ -247,7 +258,10 @@ export function CareResidentDetail({ residentId }: { residentId: string }) {
             className={styles.panel}
             aria-labelledby="monitoring-heading"
           >
-            <h2 id="monitoring-heading">Monitoring & coverage</h2>
+            <h2 id="monitoring-heading" className={styles.iconHeading}>
+              <span className={styles.panelAnchor}><SignalIcon /></span>
+              Monitoring & coverage
+            </h2>
             <dl className={styles.facts}>
               <div>
                 <dt>Availability</dt>
@@ -364,7 +378,10 @@ export function CareResidentDetail({ residentId }: { residentId: string }) {
         <aside className={styles.rail}>
           <section className={styles.panel} aria-labelledby="context-heading">
             <div className={styles.panelTitle}>
-              <h2 id="context-heading">Care context</h2>
+              <h2 id="context-heading" className={styles.iconHeading}>
+                <span className={styles.panelAnchor}><CareMark /></span>
+                Care context
+              </h2>
             </div>
             {contexts.length ? (
               <ul className={styles.contextList}>
@@ -423,7 +440,10 @@ export function CareResidentDetail({ residentId }: { residentId: string }) {
             </div>
           </section>
           <section className={styles.panel} aria-labelledby="identity-heading">
-            <h2 id="identity-heading">Assignment details</h2>
+            <h2 id="identity-heading" className={styles.iconHeading}>
+              <span className={styles.panelAnchor}><DeviceIcon /></span>
+              Assignment details
+            </h2>
             <dl className={styles.facts}>
               <div>
                 <dt>Room</dt>

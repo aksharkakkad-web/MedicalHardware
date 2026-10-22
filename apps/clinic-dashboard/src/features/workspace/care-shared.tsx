@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { FormField } from "@/components/ui/form-field";
 import { Button } from "@/components/ui/button";
+import { AlertIcon, ArrowIcon, SignalIcon } from "@/components/icons/icons";
 import type { MonitoringEventDetail } from "@/lib/monitoring";
 import {
   hasWorkspacePermission,
@@ -87,6 +88,7 @@ export function ScopeNote({ snapshot }: { snapshot: WorkspaceSnapshot }) {
     .join(", ");
   return (
     <div className={styles.scope}>
+      <SignalIcon className={styles.scopeIcon} />
       <div>
         <strong>
           {snapshot.currentClient.name} covers {coverage || "no approved areas"}
@@ -145,6 +147,9 @@ export function ConcernRow({
       className={styles.concernRow}
       data-priority={event.priority}
     >
+      <span className={styles.concernIcon} aria-hidden="true">
+        <AlertIcon />
+      </span>
       <div className={styles.concernWho}>
         <span className={styles.priority} data-priority={event.priority}>
           {event.priority} priority
@@ -180,7 +185,7 @@ export function ConcernRow({
         <span className={styles.meta}>{actor ?? "No response recorded"}</span>
       </div>
       <span className={styles.chevron} aria-hidden="true">
-        ›
+        <ArrowIcon />
       </span>
     </Link>
   );
