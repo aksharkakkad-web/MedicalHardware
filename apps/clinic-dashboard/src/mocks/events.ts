@@ -56,10 +56,15 @@ function createUnusualMovementEvent(now: Date): MonitoringEventDetail {
 }
 
 function createPreviousMovementEvent(now: Date): MonitoringEventDetail {
+  const original = createUnusualMovementEvent(now);
   const createdAt = timestampBefore(now, 3 * 24 * 60 * 60_000);
   const resolvedAt = timestampBefore(now, 3 * 24 * 60 * 60_000 - 22 * 60_000);
   return {
-    ...createUnusualMovementEvent(now),
+    ...original,
+    evidence: original.evidence.map((evidence) => ({
+      ...evidence,
+      recordedAt: new Date(Date.parse(createdAt) + Date.parse(evidence.recordedAt) - Date.parse(original.createdAt)).toISOString(),
+    })),
     eventId: "evt_previous_movement_102",
     createdAt,
     lastSignalAt: timestampBefore(now, 3 * 24 * 60 * 60_000 - 60_000),

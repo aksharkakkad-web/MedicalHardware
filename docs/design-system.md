@@ -1,6 +1,6 @@
 # SYREN clinic design system
 
-**Version:** Native Care V4 — shared staff workspace
+**Version:** Native Care V5 — shared staff workspace
 
 **Primary mode:** Clinic operations
 
@@ -22,15 +22,15 @@ The current user-requested direction supersedes the former Dub-derived flat ledg
 | Surface | `--ac-surface` | `#ffffff` |
 | Quiet surface | `--ac-surface-quiet` | `#f1f3f6` |
 | Primary ink | `--ac-text-primary` | `#1d1d1f` |
-| Secondary ink | `--ac-text-secondary` | `#656972` |
+| Secondary ink | `--ac-text-secondary` | `#5e636d` |
 | Hairline | `--ac-border-subtle` | `#e4e7ec` |
 | Strong rule | `--ac-border-strong` | `#cdd3dc` |
 | Action | `--ac-action` | `#0066d6` |
 | Action hover | `--ac-action-hover` | `#0055b6` |
 
-Grouped content panels use 20px corners and a subtle two-level shadow. Controls and inputs use 10px corners; popovers use 16px. Floating menus/dialogs use stronger documented overlay shadows. Full rounding is reserved for compact state markers, dots and real binary switches. Use panels to group a task, never a card for every fact. Canvas, content and navigation are intentionally distinct.
+Grouped content panels use 16px corners, a consistent quiet border and no shadow. Controls and inputs use 10px corners; popovers use 16px. Floating menus/dialogs use stronger documented overlay shadows. Full rounding is reserved for compact state markers, dots and real binary switches. Use panels to group a task, never a card for every fact. Equivalent measurement labels share one neutral color; semantic color is reserved for real state, current selection and actions. Evidence sequence numbers are plain muted numerals, and resolved rows use one explicit check/completion marker. Canvas, content and navigation are intentionally distinct.
 
-Additional roles: `--ac-chrome` is the navigation surface, `--ac-chrome-translucent` is a legible topbar layer, `--ac-surface-tint` is quiet informational context, `--ac-shadow-soft` is control depth and `--ac-shadow-action` is primary-action depth. Use role tokens rather than page-specific colors. Enabled input boundaries use `--ac-border-control` (`#8793a2`), which maintains at least 3:1 contrast against white; structural panel rules may remain lighter. Content never uses background blur. Reduced-transparency preference removes navigation blur.
+Additional roles: `--ac-chrome` is the navigation surface, `--ac-chrome-translucent` is a legible topbar layer, `--ac-surface-tint` is quiet informational context, `--ac-shadow-soft` and `--ac-shadow-card` are currently `none` to keep controls and static content flat; `--ac-shadow-action` gives primary actions restrained depth. Use role tokens rather than page-specific colors. Enabled input boundaries use `--ac-border-control` (`#8793a2`), which maintains at least 3:1 contrast against white; structural panel rules may remain lighter. Content never uses background blur. Reduced-transparency preference removes navigation blur.
 
 ## Typography
 
@@ -52,13 +52,13 @@ Use whitespace and grouped white surfaces to organize tasks. Keep repeated recor
 
 ## Action hierarchy
 
-Each focused form has at most one filled electric-blue action. Ledger rows use navigation rather than repeated filled buttons. Secondary actions use a white surface and hairline border. Tertiary actions are text links or row navigation. Repeated rows do not repeat filled buttons. All controls need hover, focus-visible, pressed, disabled, and loading states. Focus uses the blue focus ring and remains visible against white and gray backgrounds.
+Each focused form has at most one filled electric-blue action. Ledger rows use navigation rather than repeated filled buttons. Secondary actions use a flat white surface and the same accessible border token as inputs and the scope selector. Tertiary actions are text links or row navigation. Repeated rows do not repeat filled buttons. All controls need hover, focus-visible, pressed, disabled, and loading states. Focus uses the blue focus ring and remains visible against white and gray backgrounds.
 
 ## App shell
 
-The desktop sidebar uses a soft gray material, a compact blue SYREN mark and small colored navigation symbols. The active destination uses a crisp white selection surface with blue text and subtle depth. The top bar identifies the facility, current view area and approved shared client. “All covered areas” is an explicit choice. Area filtering cannot hide authorized high or critical work. The primary destinations are Overview, Residents, Handover and Events. Facility tools include shared clients, directory imports and monitoring status. Administration is a separate entry; routine care has no personal staff login. A persistent demo label explains synthetic records and absent live alert delivery.
+The desktop sidebar uses a soft gray material, a compact blue SYREN mark and small neutral navigation symbols without decorative backplates. The active destination uses a restrained blue selection tint and darker blue text. The top bar identifies the facility, current view area and approved shared client. “All covered areas” is an explicit choice. Area filtering cannot hide authorized high or critical work. The primary destinations are Overview, Residents, Handover and Events. Facility tools include shared clients, directory imports and monitoring status. Administration is a separate entry; routine care has no personal staff login. A persistent demo label explains synthetic records and absent live alert delivery.
 
-Between 761px and 1050px the sidebar becomes an intentional icon rail with accessible labels. At 760px and below, primary navigation becomes a compact four-item bar above the clinic workspace. Keep the area selector, administration entry and demonstration context readable. On narrow event detail, response controls precede the evidence and history; resident measurements retain their own leading position. The design-system route remains outside clinic chrome so it can be printed and exported.
+Between 761px and 1050px the sidebar becomes an intentional icon rail with accessible labels. At 760px and below, primary navigation becomes a compact four-item bar above the clinic workspace. Keep the area selector, administration entry and demonstration context readable. On narrow event detail, response controls precede evidence, interpretation/history and then record details. Resident detail puts actual open concerns above a compact measurement band. The phone header combines facility and demo context without repeating the area selection. The design-system route remains outside clinic chrome so it can be printed and exported.
 
 ## Tables and ledgers
 
@@ -87,11 +87,11 @@ Do not collapse these facts into one generic badge. A record can be high attenti
 
 Exact values come from `docs/DATA_CONTRACT.md` and the typed frontend client. Visual documentation must not add substitute enums.
 
-Show only the axes that change the current decision. Healthy defaults stay neutral. Status indicators use a 6px dot and text, not colored capsules. Color always accompanies a readable label.
+Show only the axes that change the current decision. Healthy defaults stay neutral. Routine status indicators use a 6px dot and text. Resolved workflow uses an explicit green check and Resolved label, with a restrained completion marker where needed. Color always accompanies a readable label.
 
 ## Semantic color
 
-- Green means operationally positive or currently available.
+- Green means operationally positive, currently available, or explicitly resolved workflow. A resolved check means the care workflow ended; it does not claim that the resident is healthy or safe.
 - Amber means watch, limited evidence, delayed delivery, or review needed.
 - Red means resident-risk escalation or destructive validation.
 - Gray describes device, delivery, stale, missing, or unavailable data conditions; a device problem is not resident risk.
@@ -101,13 +101,15 @@ Use semantic color in a dot, thin leading rule, or restrained soft background. D
 
 ## Care workflow patterns
 
-The overview leads with the most urgent unresolved work, followed by the resident ledger. The events view separates active work from permanent resolved history. Event detail presents sensor evidence first, AI interpretation second, then immutable workflow history and feedback. Resident detail keeps current attention, monitoring, assignment, setup, context, and history distinct. Device views separate device health from resident safety. Scenario Lab clearly marks synthetic local data.
+The overview leads with the most urgent unresolved work, followed by the resident ledger. Keep the attention header compact and show the start of actual resident rows at a normal laptop height. Queues and the roster use a consistent full room locator followed by resident name; do not infer a room number from an arbitrary location label. The events view separates active work from permanent resolved history. Event detail presents sensor evidence first, AI interpretation second, then immutable workflow history and feedback. Resident detail keeps current attention, monitoring, assignment, setup, context, and history distinct. Actual open concerns precede compact supplied measurements; units and observation times remain readable. Device views separate device health from resident safety. Scenario Lab clearly marks synthetic local data.
 
 Shared devices have explicit routine-action grants independently of their area coverage. A view-only station still displays authorized concerns and readings; administration does not create clinical response authority. Stale station edits require explicit review of the latest configuration before saving.
 
 Date/time entry uses the facility zone through `FacilityTimeField`, with normal local date controls and an explicit first/second occurrence choice when clocks repeat. Nonexistent times remain invalid; staff never need to type timestamp offsets.
 
-Resolved events remain immutable; recurrences are linked new events. Low-quality or multi-person data appears as limited or unavailable. The interface never fabricates precision or guesses which person produced a signal.
+Priority and response state are separate typographic elements. Overdue response belongs in the response column with an explicit label, rather than inside a faint date string. Acknowledged or checked does not claim that a responder is physically present.
+
+Resolved events remain immutable; recurrences are linked new events. Completed records use green/check/Resolved as the dominant state; original severity is quiet historical context and cannot continue to paint the record as a current red problem. History shows closure time and source attribution when supplied. Historical device/confidence fields are explicitly labeled at review, and original interpretation limitations remain preserved. Low-quality or multi-person data appears as limited or unavailable. The interface never fabricates precision or guesses which person produced a signal.
 
 ## AI and medical language
 

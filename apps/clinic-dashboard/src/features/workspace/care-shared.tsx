@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { FormField } from "@/components/ui/form-field";
 import { Button } from "@/components/ui/button";
-import { AlertIcon, ArrowIcon, SignalIcon } from "@/components/icons/icons";
+import { AlertIcon, ArrowIcon, CheckIcon, SignalIcon } from "@/components/icons/icons";
 import type { MonitoringEventDetail } from "@/lib/monitoring";
 import {
   hasWorkspacePermission,
@@ -121,6 +121,24 @@ export function EmptyState({
     </div>
   );
 }
+export function ResolvedConcernStatus() {
+  return (
+    <span className={styles.completedStatus} aria-label="Resolved concern">
+      <CheckIcon /> Resolved
+    </span>
+  );
+}
+export function HistoricalPriority({
+  priority,
+}: {
+  priority: MonitoringEventDetail["priority"];
+}) {
+  return (
+    <span className={styles.historicalPriority}>
+      Originally {priority} priority
+    </span>
+  );
+}
 export function ConcernRow({
   event,
   snapshot,
@@ -132,7 +150,12 @@ export function ConcernRow({
     (check) => check.eventId === event.eventId,
   );
   const latest = checks[checks.length - 1];
+  const resolution = event.actionHistory.find(
+    (entry) => entry.action === "resolved",
+  );
+  const resolvedAt = resolution?.occurredAt ?? event.feedback?.createdAt;
   const actor =
+    resolution?.actorLabel ??
     latest?.clientLabel ??
     event.actionHistory.filter((item) => item.action !== "opened").at(-1)
       ?.actorLabel;
@@ -145,44 +168,44 @@ export function ConcernRow({
     <Link
       href={`/events/${event.eventId}`}
       className={styles.concernRow}
-      data-priority={event.priority}
+      data-priority={event.status === "resolved" ? undefined : event.priority}
+      data-state={event.status}
     >
       <span className={styles.concernIcon} aria-hidden="true">
-        <AlertIcon />
+        {event.status !== "resolved" && <AlertIcon />}
       </span>
       <div className={styles.concernWho}>
-        <span className={styles.priority} data-priority={event.priority}>
-          {event.priority} priority
-        </span>
+        <span className={styles.concernRoom}>{event.resident.roomLabel}</span>
         <span className={styles.concernResident}>
-          {residentName(
-            snapshot.profiles,
-            event.resident.residentId,
-            event.resident.displayLabel,
-          )}
+          {residentName(snapshot.profiles, event.resident.residentId, event.resident.displayLabel)}
         </span>
-        <span className={styles.concernRoom}>
-          {" "}
-          {event.resident.roomLabel}
-          {outsideSelected ? " · other covered area" : ""}
-        </span>
+        {outsideSelected && <span className={styles.meta}>Other covered area</span>}
       </div>
       <div className={styles.concernCopy}>
         <h3>{event.headline}</h3>
-        <p className={styles.meta}>
-          Opened {careTime(event.createdAt, snapshot.facility.timeZone)}
-          {event.overdue ? " · response overdue" : ""}
-        </p>
+        {event.status === "resolved" ? <HistoricalPriority priority={event.priority} /> : (
+          <span className={styles.priority} data-priority={event.priority}>{event.priority} priority</span>
+        )}
+        <span className={styles.concernOpened}>Opened {careTime(event.createdAt, snapshot.facility.timeZone)}</span>
       </div>
       <div className={styles.response}>
-        <strong>{eventStateLabels[event.status]}</strong>
-        {latest && (
-          <span className={styles.meta}>
-            {outcomeLabels[latest.outcome]}
-            <br />
-          </span>
+        {event.status === "resolved" ? (
+          <>
+            <ResolvedConcernStatus />
+            {resolvedAt && (
+              <span className={styles.meta}>
+                {careTime(resolvedAt, snapshot.facility.timeZone)}
+              </span>
+            )}
+          </>
+        ) : (
+          <>
+            <strong>{eventStateLabels[event.status]}</strong>
+            {event.overdue && <span className={styles.overdue}>Response overdue</span>}
+            {latest && <span className={styles.meta}>{outcomeLabels[latest.outcome]}</span>}
+          </>
         )}
-        <span className={styles.meta}>{actor ?? "No response recorded"}</span>
+        {actor && <span className={styles.meta}>{actor}</span>}
       </div>
       <span className={styles.chevron} aria-hidden="true">
         <ArrowIcon />

@@ -30,7 +30,7 @@ const foundationColors = [
   ["Raised white", "Raised surface", "Foreground content distinguished by depth", "paper50", "#FFFFFF"],
   ["Cool secondary canvas", "Secondary background", "Supporting workspace areas", "paper100", "#EEF1F6"],
   ["Soft separator", "Hairline", "Rows, controls, and surface edges", "paper200", "#E4E7EC"],
-  ["Secondary ink", "Supporting text", "Helper copy and metadata", "ink600", "#656972"],
+  ["Secondary ink", "Supporting text", "Helper copy and metadata", "ink600", "#5E636D"],
   ["Primary ink", "Primary text", "Headings and decisions", "ink950", "#1D1D1F"],
 ] as const;
 
@@ -66,7 +66,7 @@ const radii = [
   ["Tiny detail", "4px", "radiusSquare"],
   ["Input", "10px", "radiusField"],
   ["Button", "10px", "radiusControl"],
-  ["Grouped panel", "20px", "radiusSurface"],
+  ["Grouped panel", "16px", "radiusSurface"],
   ["Popover", "16px", "radiusFloating"],
 ] as const;
 
@@ -190,7 +190,7 @@ export default function DesignSystemPage() {
             <strong>SYREN</strong>
           </a>
           <div className={styles.mastheadTools}>
-            <p>SYREN · NATIVE CARE V4</p>
+            <p>SYREN · NATIVE CARE V5</p>
             <ExportActions />
           </div>
         </header>
@@ -289,13 +289,13 @@ export default function DesignSystemPage() {
               <div className={styles.numericSpecimen}><span>System monospace · Operational readings</span><strong>08:42:18&nbsp;&nbsp; 12 MIN&nbsp;&nbsp; 04 / 06</strong><code>DEVICE AC-214-A<br />FRAME 00018472</code></div>
             </Section>
 
-            <Section number="04" title="Space & shape" intro="A four-pixel rhythm, generous panel corners, and restrained depth keep related work together.">
+            <Section number="04" title="Space & shape" intro="A four-pixel rhythm, measured panel corners, and flat content surfaces keep related work together.">
               <div className={styles.spacingGrid}>
                 {spacing.map(([label, value]) => <div key={label}><span className={styles.spacingBar} style={{ "--specimen-size": value } as CSSProperties} /><strong>{label}</strong><small>{value}</small></div>)}
               </div>
               <div className={styles.geometryGrid}>
                 <div><SpecimenLabel>Corner radius</SpecimenLabel><div className={styles.radiusRow}>{radii.map(([label, value, className]) => <div key={label}><span className={styles[className]} /><strong>{label}</strong><small>{value}</small></div>)}</div></div>
-                <div><SpecimenLabel>Depth</SpecimenLabel><div className={styles.depthRow}><div className={styles.borderSurface}>Grouped content<span>Subtle surface depth</span></div><div className={styles.overlaySurface}>Popover<span>Stronger floating depth</span></div></div></div>
+                <div><SpecimenLabel>Depth</SpecimenLabel><div className={styles.depthRow}><div className={styles.borderSurface}>Grouped content<span>Quiet border, no shadow</span></div><div className={styles.overlaySurface}>Popover<span>Stronger floating depth</span></div></div></div>
               </div>
               <div className={styles.layoutSpacing}>
                 <article><strong>20–24px</strong><span>Grouped panel padding</span><small>Use 12px in compact toolbars and rows.</small></article>
@@ -520,6 +520,8 @@ export default function DesignSystemPage() {
             </Section>
 
             <Section number="11" title="Care patterns" intro="Semantic specification stays rigorous; actual care UI stays concise and task-focused.">
+              <p className={styles.ruleNote}><strong>Care hierarchy</strong> Room and resident identity lead the scan. Show open care work before compact supplied measurements. Priority, response state and monitoring availability remain separate.</p>
+              <p className={styles.ruleNote}><strong>Resolved history</strong> A single green check and Resolved label mean the workflow is complete. Show the supplied closure time and outcome; retain original priority as quiet historical context. Device and confidence fields describe the time of review, and original limitations remain visible. This is not a claim of resident health or safety.</p>
               <SpecimenLabel>Operational manifestations · synthetic/test-only</SpecimenLabel>
               <div className={styles.careManifestations}>
                 <article data-tone="risk"><div><span>Critical</span><strong>Unexpected movement</strong><p>Low-confidence evidence · updated 1 minute ago</p></div><a href="#section-10">Review resident <ArrowIcon /></a></article>
@@ -536,7 +538,7 @@ export default function DesignSystemPage() {
                   <SystemFeedback />
                 </details>
               </div>
-              <footer className={styles.pageFooter}><span>SYREN · Native Care V4</span><a href="#top">Back to top <ArrowIcon /></a></footer>
+              <footer className={styles.pageFooter}><span>SYREN · Native Care V5</span><a href="#top">Back to top <ArrowIcon /></a></footer>
             </Section>
           </main>
         </div>

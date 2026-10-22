@@ -38,8 +38,7 @@
 .primary:active:not(:disabled) { background: var(--ac-action-pressed); }
 
 .secondary {
-  box-shadow: var(--ac-shadow-soft);
-  border-color: var(--ac-border-subtle);
+  border-color: var(--ac-border-control);
   background: var(--ac-surface);
 }
 
@@ -73,7 +72,7 @@
   height: 40px;
   flex: 0 0 40px;
   padding: 0;
-  border-color: var(--ac-border-subtle);
+  border-color: var(--ac-border-control);
   color: var(--ac-text-secondary);
   background: var(--ac-surface);
 }

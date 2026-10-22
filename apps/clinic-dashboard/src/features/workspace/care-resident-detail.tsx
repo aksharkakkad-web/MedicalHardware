@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
-import { CareMark, DeviceIcon, SignalIcon } from "@/components/icons/icons";
 import {
   hasWorkspacePermission,
   useWorkspace,
@@ -22,6 +21,9 @@ import {
 } from "./care-format";
 import {
   CompletedFollowUpHistory,
+  ConcernRow,
+  HistoricalPriority,
+  ResolvedConcernStatus,
   EmptyState,
   FollowUpList,
   PageHeading,
@@ -47,7 +49,6 @@ function Measurement({
       data-available={available}
     >
       <h3>
-        <CareMark />
         {measurement.label}
       </h3>
       {available ? (
@@ -63,11 +64,7 @@ function Measurement({
           ? `Observed ${careTime(measurement.observedAt, snapshot.facility.timeZone)}`
           : measurement.reason || resident.monitoring.reason}
       </p>
-      <p>
-        {available
-          ? "Synthetic estimate · resident attribution eligible"
-          : "No resident-specific value shown"}
-      </p>
+      {!available && <p>No resident-specific value shown</p>}
     </div>
   );
 }
@@ -217,8 +214,18 @@ export function CareResidentDetail({ residentId }: { residentId: string }) {
           resident.displayLabel,
         )}
         eyebrow={`${resident.roomLabel} · ${snapshot.areas.find((a) => a.areaId === profile?.areaId)?.name ?? "Area unavailable"}`}
-        description="Resident record and the evidence currently available to this station."
       />
+      {events.some((event) => event.status !== "resolved") && (
+        <section className={styles.residentOpenWork} aria-labelledby="resident-open-heading">
+          <div className={styles.openWorkHeading}>
+            <h2 id="resident-open-heading">Open concerns <span className={styles.count}>{events.filter((event) => event.status !== "resolved").length}</span></h2>
+            <span className={styles.meta}>Staff review remains needed</span>
+          </div>
+          {events.filter((event) => event.status !== "resolved").map((event) => (
+            <ConcernRow key={event.eventId} event={event} snapshot={snapshot} />
+          ))}
+        </section>
+      )}
       <div className={styles.layout}>
         <div className={styles.main}>
           <section
@@ -227,10 +234,9 @@ export function CareResidentDetail({ residentId }: { residentId: string }) {
           >
             <div className={styles.panelTitle}>
               <h2 id="measurements-heading" className={styles.iconHeading}>
-                <span className={styles.panelAnchor}><CareMark /></span>
                 Last supplied measurements
               </h2>
-              <span className={styles.meta}>Synthetic observations</span>
+
             </div>
             <div className={styles.measurements}>
               {measurements.length ? (
@@ -250,8 +256,7 @@ export function CareResidentDetail({ residentId }: { residentId: string }) {
               )}
             </div>
             <p>
-              These estimates describe their observation time. They do not
-              establish the resident’s present condition or safety.
+              Synthetic estimates at the stated observation times. They do not establish the resident’s present condition or safety.
             </p>
           </section>
           <section
@@ -259,7 +264,7 @@ export function CareResidentDetail({ residentId }: { residentId: string }) {
             aria-labelledby="monitoring-heading"
           >
             <h2 id="monitoring-heading" className={styles.iconHeading}>
-              <span className={styles.panelAnchor}><SignalIcon /></span>
+
               Monitoring & coverage
             </h2>
             <dl className={styles.facts}>
@@ -334,10 +339,16 @@ export function CareResidentDetail({ residentId }: { residentId: string }) {
                         {event.headline}
                       </Link>
                     </h3>
-                    <p className={styles.meta}>
-                      {event.priority} priority ·{" "}
-                      {eventStateLabels[event.status]}
-                    </p>
+                    {event.status === "resolved" ? (
+                      <div className={styles.recordDisposition}>
+                        <ResolvedConcernStatus />
+                        <HistoricalPriority priority={event.priority} />
+                      </div>
+                    ) : (
+                      <p className={styles.meta}>
+                        {event.priority} priority · {eventStateLabels[event.status]}
+                      </p>
+                    )}
                     <p className={styles.meta}>
                       Opened{" "}
                       {careTime(event.createdAt, snapshot.facility.timeZone)}
@@ -379,7 +390,7 @@ export function CareResidentDetail({ residentId }: { residentId: string }) {
           <section className={styles.panel} aria-labelledby="context-heading">
             <div className={styles.panelTitle}>
               <h2 id="context-heading" className={styles.iconHeading}>
-                <span className={styles.panelAnchor}><CareMark /></span>
+
                 Care context
               </h2>
             </div>
@@ -441,7 +452,7 @@ export function CareResidentDetail({ residentId }: { residentId: string }) {
           </section>
           <section className={styles.panel} aria-labelledby="identity-heading">
             <h2 id="identity-heading" className={styles.iconHeading}>
-              <span className={styles.panelAnchor}><DeviceIcon /></span>
+
               Assignment details
             </h2>
             <dl className={styles.facts}>

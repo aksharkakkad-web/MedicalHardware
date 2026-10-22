@@ -436,8 +436,8 @@
 .shellSidebar nav { display: grid; gap: 2px; margin-top: var(--signal-space-6); }
 .shellSidebar nav p { margin: 0 var(--signal-space-2) var(--signal-space-2); color: var(--signal-text-secondary); font-size: 10px; font-weight: 600; }
 .shellSidebar nav a { display: flex; min-height: 36px; align-items: center; gap: var(--signal-space-2); padding: var(--signal-space-2); border-radius: 0; color: var(--signal-text-secondary); font-size: 12px; font-weight: 550; }
-.shellSidebar nav a:hover { color: var(--signal-text-primary); background: var(--signal-surface-hover); }
-.shellSidebar nav .shellActive { border-radius: var(--signal-radius-sm); color: var(--signal-text-primary); background: var(--signal-surface-hover); }
+.shellSidebar nav a:hover { color: var(--signal-action-hover); background: var(--signal-action-soft-strong); }
+.shellSidebar nav .shellActive { border-radius: var(--signal-radius-sm); color: var(--signal-action-hover); background: var(--signal-action-soft-strong); }
 .shellSidebar nav .shellActive svg { color: var(--signal-action); }
 .shellSidebar nav svg { width: 18px; height: 18px; }
 .shellAccount { display: grid; grid-template-columns: 28px minmax(0, 1fr) 16px; gap: var(--signal-space-2); align-items: center; margin-top: auto; padding: var(--signal-space-3) var(--signal-space-2) 0; border-top: 1px solid var(--signal-border-subtle); }
@@ -459,7 +459,7 @@
 .shellPageHeader > div:first-child > span { color: var(--signal-text-secondary); font-size: 11px; }
 .shellToolbar { display: flex; gap: var(--signal-space-2); }
 .shellToolbar button { min-height: 32px; padding: 0 var(--signal-space-2); border: 0; border-radius: 0; color: var(--signal-text-secondary); background: transparent; font-size: 11px; font-weight: 550; }
-.shellToolbar button:hover { color: var(--signal-text-primary); background: var(--signal-surface-hover); }
+.shellToolbar button:hover { color: var(--signal-action-hover); background: var(--signal-action-soft-strong); }
 .shellToolbar button:last-child { color: var(--signal-action-hover); font-weight: 600; }
 .shellWorkArea { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: var(--signal-space-5); margin-top: var(--signal-space-5); }
 .shellMainSurface { overflow: hidden; border-block: 1px solid var(--signal-border-subtle); border-radius: 0; background: transparent; }

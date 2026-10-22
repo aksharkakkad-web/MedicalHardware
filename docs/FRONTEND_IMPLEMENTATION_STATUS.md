@@ -41,6 +41,14 @@ The visual revision was checked in Chrome at a normal 1512×771 desktop, 900×90
 
 The design guide, downloadable guide and `/design-system` reference describe the revised roles. Text/status contrast and enabled input boundaries are checked numerically; this does not establish full WCAG conformance. Existing staff and live-service validation dependencies still apply.
 
+## Concern completion and four-round critique
+
+Native Care V5 follows four actual screenshot-and-critique rounds between one implementing designer and one screenshot-only critic. The final round specifically emphasized visual finish and generic template cues. The revisions compact the attention ledger, make full room locators consistent, put resident open work before supplied measurements, and preserve useful first-screen content. Navigation, panels, controls, evidence and completion markers use a more restrained shared treatment. On narrow concern views, response controls precede evidence and record metadata follows the evidence.
+
+Resolved concern details, history rows and resident records now show an explicit green check and Resolved text. Original priority remains available as historical context, without current red urgency or overdue-response styling. Closure time, attribution and original interpretation limitations remain visible when supplied. Acknowledgment and recorded checks remain unresolved until explicit resolution; green completion does not assert resident health or safety. The resolved synthetic seed now timestamps its evidence within its own historical episode. Previously saved demonstration history is not silently rewritten.
+
+The four rounds and final production screenshots are stored outside Git in `/Users/mahin/Documents/Codex/2026-10-22/SYREN Design Critique/`. This is visual review of synthetic workflows, not representative nursing-staff testing. Final verification results are recorded below.
+
 ## Synthetic state migration
 
 Existing synthetic v1 station records without an explicit permissions array load as view-only, including known seed identities. Previous care history and area coverage remain intact. Administrators explicitly assign permitted actions; normalized grants persist with the next successful demo mutation. New station approvals default to view-only. Omitting permissions when editing a station preserves its existing grant. This fail-closed migration is for synthetic local state, not production authentication.
@@ -58,7 +66,7 @@ Existing synthetic v1 station records without an explicit permissions array load
 
 Automated and browser evidence is recorded here after the final verification run. Tests exercise synthetic behavior; they do not establish real backend delivery or clinical safety.
 
-- Automated clinic verification: 243 tests across 30 files passed; ESLint, standalone TypeScript checking and the optimized Next.js production build passed. The build includes every clinic route listed in the README. Exact commands remain in AGENTS.md and the clinic README.
+- Automated clinic verification after the four-round revision: 248 tests across 30 files passed; ESLint, standalone TypeScript checking and the optimized Next.js production build passed. The build includes every clinic route listed in the README. Regression coverage verifies completed detail/history/resident treatment, preserved original priority/uncertainty, explicit resolution, stale-overdue suppression, resident work order and historical seed chronology. Exact commands remain in AGENTS.md and the clinic README.
 - Independent implementation reviews found and fixed failed-write lifecycle advances, future/impossible date handling, room-ID collisions, forgotten station identity, lost handover notes, inaccessible departed/completed history, stale import previews, missing action grants, stale station configuration saves, rolling handover intervals and legacy assignment leakage. Regression tests exercise the reproduced cases.
 - Production build inspected in the user's Chrome browser: combined overview, resident roster, concern acknowledgment/unsuccessful check, resident unavailable/hospice context, administration, CSV review/apply, shared-client permissions and notification readiness, and handover. Administrator logout preserved routine care access. A second same-browser tab recovered the imported resident and recorded concern state; this is not cross-device server synchronization.
 - Responsive checks used 1512px desktop, 900px tablet and 390px phone viewports. The phone concern view presents response controls before evidence/history; checked tablet/phone screens had no horizontal page overflow. Date controls were widened to prevent native date/time fields overlapping. The keyboard skip link moved focus to the main workspace.

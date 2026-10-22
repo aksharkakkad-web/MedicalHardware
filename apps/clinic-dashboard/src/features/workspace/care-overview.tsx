@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { FormField } from "@/components/ui/form-field";
-import { AlertIcon, DeviceIcon, ResidentsIcon } from "@/components/icons/icons";
+import { SearchIcon } from "@/components/icons/icons";
 import { useWorkspace, type WorkspaceSnapshot } from "@/lib/workspace";
 import {
   careTime,
@@ -47,14 +47,17 @@ export function ResidentRoster({ snapshot }: { snapshot: WorkspaceSnapshot }) {
   return (
     <div className={styles.roster}>
       <div className={styles.toolbar}>
-        <FormField
-          className={styles.search}
-          label="Find a resident or room"
-          type="search"
-          placeholder="Search name or room…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+        <div className={styles.searchControl}>
+          <SearchIcon />
+          <FormField
+            className={styles.search}
+            label="Find a resident or room"
+            type="search"
+            placeholder="Search name or room…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
         <FormField
           className={styles.filter}
           as="select"
@@ -78,7 +81,7 @@ export function ResidentRoster({ snapshot }: { snapshot: WorkspaceSnapshot }) {
         >
           <thead>
             <tr>
-              <th>Resident / room</th>
+              <th>Room / resident</th>
               <th>Monitoring</th>
               <th>Last supplied estimates</th>
               <th>Open work</th>
@@ -104,20 +107,9 @@ export function ResidentRoster({ snapshot }: { snapshot: WorkspaceSnapshot }) {
                       className={styles.residentLink}
                       href={`/residents/${resident.residentId}`}
                     >
-                      <span className={styles.roomAnchor} aria-hidden="true">
-                        <DeviceIcon />
-                      </span>
                       <span className={styles.residentIdentity}>
-                        <strong>
-                          {residentName(
-                            snapshot.profiles,
-                            resident.residentId,
-                            resident.displayLabel,
-                          )}
-                        </strong>
-                        <span className={styles.roomLabel}>
-                          {resident.roomLabel}
-                        </span>
+                        <strong>{resident.roomLabel}</strong>
+                        <span>{residentName(snapshot.profiles, resident.residentId, resident.displayLabel)}</span>
                       </span>
                     </Link>
                   </td>
@@ -219,40 +211,18 @@ export function CareOverview() {
       >
         <div className={styles.sectionHeading}>
           <div className={styles.sectionLead}>
-            <span
-              className={styles.sectionAnchor}
-              data-tone="attention"
-              aria-hidden="true"
-            >
-              <AlertIcon />
-            </span>
             <div>
               <h2 id="attention-heading">
                 Needs attention
                 <span className={styles.count}>{queue.length}</span>
               </h2>
-              <p>
-                Unresolved concerns across this station’s authorized coverage.
-              </p>
+              <div className={styles.stats}>
+                <span><strong>{unanswered}</strong> unacknowledged</span>
+                <span><strong>{queue.length - unanswered}</strong> seen or checked</span>
+                <span><strong>{snapshot.followUps.filter((f) => f.status !== "completed").length}</strong> follow-ups outstanding</span>
+              </div>
             </div>
           </div>
-        <div className={styles.stats}>
-          <span>
-            <strong>{unanswered}</strong> unacknowledged
-          </span>
-          <span>
-            <strong>{queue.length - unanswered}</strong> acknowledged
-          </span>
-          <span>
-            <strong>
-              {
-                snapshot.followUps.filter((f) => f.status !== "completed")
-                  .length
-              }
-            </strong>{" "}
-            follow-ups outstanding
-          </span>
-        </div>
           <Link className={styles.textLink} href="/events">
             All concerns
           </Link>
@@ -277,9 +247,6 @@ export function CareOverview() {
       <section className={styles.section} aria-labelledby="roster-heading">
         <div className={styles.sectionHeading}>
           <div className={styles.sectionLead}>
-            <span className={styles.sectionAnchor} aria-hidden="true">
-              <ResidentsIcon />
-            </span>
             <div>
               <h2 id="roster-heading">Residents & rooms</h2>
               <p>
@@ -335,17 +302,13 @@ export function CareEvents() {
         title="Concerns"
         description="Active care work and permanent resolved history."
       />
-      <div className={styles.toolbar}>
-        <FormField
-          as="select"
-          label="Show concerns"
-          value={tab}
-          onChange={(e) => setTab(e.target.value)}
-          options={[
-            { value: "active", label: `Unresolved (${active.length})` },
-            { value: "history", label: `Resolved history (${history.length})` },
-          ]}
-        />
+      <div className={styles.eventTabs} role="group" aria-label="Show concerns">
+        <button type="button" aria-pressed={tab === "active"} onClick={() => setTab("active")}>
+          Unresolved <span>{active.length}</span>
+        </button>
+        <button type="button" aria-pressed={tab === "history"} onClick={() => setTab("history")}>
+          Resolved history <span>{history.length}</span>
+        </button>
       </div>
       {items.length ? (
         <div className={styles.concernList}>
