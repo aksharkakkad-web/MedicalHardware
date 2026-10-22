@@ -83,7 +83,12 @@ describe("care workflows with the workspace service", () => {
       "yes",
     );
     await user.click(screen.getByRole("button", { name: "Resolve concern" }));
-    expect(await screen.findByText("Resolved history.")).toBeVisible();
+    const completion = await screen.findByLabelText("Resolved concern");
+    expect(completion).toBeVisible();
+    expect(completion).toHaveTextContent("Resolved");
+    expect(completion.querySelector("svg")).not.toBeNull();
+    expect(screen.getByText("Originally high priority")).toBeVisible();
+    expect(document.querySelector('[data-priority="high"]')).toBeNull();
     expect(
       (await client.snapshot()).events.find((e) => e.eventId === eventId)
         ?.status,

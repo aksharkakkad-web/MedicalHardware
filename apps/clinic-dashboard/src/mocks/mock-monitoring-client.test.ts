@@ -2,6 +2,14 @@ import { describe, expect, it } from "vitest";
 import { MockMonitoringClient } from "./mock-monitoring-client";
 
 describe("MockMonitoringClient", () => {
+  it("keeps resolved seed evidence within its historical episode", async () => {
+    const event = await new MockMonitoringClient(() => new Date("2026-10-22T15:00:00Z")).getEvent("evt_previous_movement_102");
+    const resolvedAt = Date.parse(event.actionHistory.find((entry) => entry.action === "resolved")!.occurredAt);
+    for (const evidence of event.evidence) {
+      expect(Date.parse(evidence.recordedAt)).toBeGreaterThanOrEqual(Date.parse(event.createdAt));
+      expect(Date.parse(evidence.recordedAt)).toBeLessThanOrEqual(resolvedAt);
+    }
+  });
   it("returns a complete device inventory without inventing missing setup data", async () => {
     const client = new MockMonitoringClient(
       () => new Date("2026-08-27T18:00:00.000Z"),

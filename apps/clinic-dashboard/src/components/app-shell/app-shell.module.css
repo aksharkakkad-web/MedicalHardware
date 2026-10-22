@@ -16,7 +16,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  padding: 28px 16px 20px;
+  padding: 28px 14px 20px;
   border-right: 1px solid var(--ac-border-subtle);
   background: var(--ac-chrome);
 }
@@ -75,8 +75,8 @@
   gap: 5px;
   list-style: none;
 }
-.navLink,
-.activeLink {
+.activeLink,
+.navLink {
   position: relative;
   display: flex;
   min-height: 44px;
@@ -87,8 +87,7 @@
   color: var(--ac-text-strong-secondary);
   font-size: 13px;
   line-height: 18px;
-  transition:
-    background-color 0.15s,
+  transition: background-color 0.15s,
     color 0.15s;
 }
 .navLink:hover {
@@ -96,9 +95,8 @@
   color: var(--ac-text-primary);
 }
 .activeLink {
-  color: var(--ac-action);
-  background: var(--ac-surface);
-  box-shadow: var(--ac-shadow-soft);
+  color: var(--ac-action-hover);
+  background: var(--ac-action-soft-strong);
   font-weight: 600;
 }
 .navIcon {
@@ -106,25 +104,17 @@
   height: 28px;
   padding: 6px;
   border-radius: var(--ac-radius-sm);
-  background: var(--ac-action-soft-strong);
-  color: var(--ac-action);
+  background: transparent;
+  color: var(--ac-text-strong-secondary);
   flex: none;
 }
-.navLink[href="/residents"] .navIcon {
-  color: var(--ac-info-accent);
-  background: var(--ac-surface-tint);
-}
-.navLink[href="/handover"] .navIcon {
-  color: var(--ac-violet-text);
-  background: var(--ac-violet-bg);
-}
-.navLink[href="/events"] .navIcon {
-  color: var(--ac-watch-text);
-  background: var(--ac-watch-bg);
+.activeLink .navIcon {
+  color: var(--ac-action);
+  background: transparent;
 }
 .facilityNavigation .navIcon {
-  color: var(--ac-device-text);
-  background: var(--ac-border-subtle);
+  color: var(--ac-text-strong-secondary);
+  background: transparent;
 }
 .facilityNavigation {
   margin-top: 30px;
@@ -222,7 +212,7 @@
 }
 .areaSelect {
   max-width: 190px;
-  border: 1px solid var(--ac-border-subtle);
+  border: 1px solid var(--ac-border-control);
   border-radius: var(--ac-radius-control);
   background: var(--ac-surface);
   color: var(--ac-text-strong-secondary);
@@ -254,8 +244,8 @@
   height: 17px;
   flex: none;
 }
-.adminLink,
-.adminActive {
+.adminActive,
+.adminLink {
   font-size: 12px;
   color: var(--ac-text-strong-secondary);
   white-space: nowrap;
@@ -278,9 +268,6 @@
 .main:focus {
   outline: none;
   box-shadow: none;
-}
-.mobileContext {
-  display: none;
 }
 .areaError {
   padding: 10px 32px;
@@ -334,6 +321,9 @@
   color: var(--ac-action);
   font-size: 13px;
 }
+.mobileDemo {
+  display: none;
+}
 @media (min-width: 761px) and (max-width: 1050px) {
   .shell {
     grid-template-columns: var(--ac-sidebar-collapsed-width) minmax(0, 1fr);
@@ -351,13 +341,13 @@
   .sidebarFooter {
     display: none;
   }
-  .navLink,
-  .activeLink {
+  .activeLink,
+  .navLink {
     justify-content: center;
     padding-inline: 0;
   }
-  .navLink > span,
-  .activeLink > span {
+  .activeLink > span,
+  .navLink > span {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -396,17 +386,17 @@
     border-bottom: 1px solid var(--ac-border-subtle);
   }
   .brand,
-  .sidebarFooter,
+  .facilityNavigation,
   .navigationLabel,
-  .facilityNavigation {
+  .sidebarFooter {
     display: none;
   }
   .navigationList {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 4px;
   }
-  .navLink,
-  .activeLink {
+  .activeLink,
+  .navLink {
     min-height: 46px;
     justify-content: center;
     flex-direction: column;
@@ -451,39 +441,40 @@
   .stationLink {
     display: none;
   }
-  .adminLink,
-  .adminActive {
+  .adminActive,
+  .adminLink {
     font-size: 12px;
     min-height: 44px;
     display: inline-flex;
     align-items: center;
   }
-  .mobileContext {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 8px 16px;
-    background: var(--ac-surface-quiet);
-    border-bottom: 1px solid var(--ac-border-subtle);
-    font-size: 11px;
-    color: var(--ac-text-secondary);
-  }
   .main,
   .overviewMain {
     padding: 24px 16px 48px;
-    min-height: calc(100svh - 146px);
+    min-height: calc(100svh - 119px);
+    padding-top: 18px;
   }
   .areaError {
     padding-inline: 16px;
   }
+  .mobileDemo {
+    display: block;
+    color: var(--ac-text-secondary);
+    font-size: 10px;
+    font-weight: 400;
+    margin-top: 2px;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  .navLink,
-  .activeLink {
+  .activeLink,
+  .navLink {
     transition: none;
   }
 }
-
 @media (prefers-reduced-transparency: reduce) {
-  .topbar { background: var(--ac-chrome); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .topbar {
+    background: var(--ac-chrome);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }

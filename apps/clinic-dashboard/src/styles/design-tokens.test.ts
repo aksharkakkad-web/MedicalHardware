@@ -12,13 +12,13 @@ describe("SYREN native care tokens", () => {
     expect(tokens).toContain("--ac-surface: #ffffff");
     expect(tokens).toContain("--ac-surface-quiet: #f1f3f6");
     expect(tokens).toContain("--ac-text-primary: #1d1d1f");
-    expect(tokens).toContain("--ac-text-secondary: #656972");
+    expect(tokens).toContain("--ac-text-secondary: #5e636d");
     expect(tokens).toContain("--ac-border-subtle: #e4e7ec");
     expect(tokens).toContain("--ac-action: #0066d6");
     expect(tokens).toContain("--ac-radius-input: 10px");
     expect(tokens).toContain("--ac-radius-control: 10px");
-    expect(tokens).toContain("--ac-radius-card: 20px");
-    expect(tokens).toContain("--ac-shadow-card: 0 2px 8px");
+    expect(tokens).toContain("--ac-radius-card: 16px");
+    expect(tokens).toContain("--ac-shadow-card: none");
   });
 
   it("keeps body, action and semantic text readable on their intended surfaces", () => {

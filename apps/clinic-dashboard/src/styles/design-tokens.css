@@ -7,7 +7,7 @@
   --ac-surface-quiet: #f1f3f6;
   --ac-surface-hover: #f5f8fd;
   --ac-text-primary: #1d1d1f;
-  --ac-text-secondary: #656972;
+  --ac-text-secondary: #5e636d;
   --ac-text-strong-secondary: #424751;
   --ac-text-disabled: #858b95;
   --ac-text-inverse: #ffffff;
@@ -29,7 +29,7 @@
   --ac-surface-tint: #edf4fb;
   --ac-chrome: #eef0f5;
   --ac-chrome-translucent: rgb(247 249 252 / 88%);
-  --ac-shadow-soft: 0 1px 3px rgb(25 39 66 / 5%);
+  --ac-shadow-soft: none;
   --ac-shadow-action: 0 2px 5px rgb(0 85 182 / 15%);
 
   --ac-positive-bg: #edf7f0;
@@ -92,11 +92,11 @@
   --ac-radius-sm: 8px;
   --ac-radius-input: 10px;
   --ac-radius-control: 10px;
-  --ac-radius-card: 20px;
+  --ac-radius-card: 16px;
   --ac-radius-popover: 16px;
   --ac-radius-dialog: 22px;
   --ac-radius-pill: 9999px;
-  --ac-shadow-card: 0 2px 8px rgb(25 39 66 / 3%), 0 12px 32px rgb(25 39 66 / 3%);
+  --ac-shadow-card: none;
   --ac-shadow-popover: 0 8px 32px rgb(25 39 66 / 12%);
   --ac-shadow-dialog: 0 24px 80px rgb(25 39 66 / 18%);
   --ac-overlay: rgb(0 0 0 / 42%);

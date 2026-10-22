@@ -24,8 +24,9 @@ import {
 } from "./care-format";
 import {
   CompletedFollowUpHistory,
+  HistoricalPriority,
+  ResolvedConcernStatus,
   FollowUpList,
-  PageHeading,
   PermissionNotice,
   WorkspaceState,
 } from "./care-shared";
@@ -150,9 +151,7 @@ function EventActions({
     <section className={styles.actionPanel} aria-labelledby="response-heading">
       <h2 id="response-heading">Response & outcome</h2>
       <p>
-        Actions are attributed to {snapshot.currentClient.name}. Acknowledgment
-        means this concern was seen; it does not verify who is responding or
-        that a resident was checked.
+        Actions use {snapshot.currentClient.name}. Acknowledgment marks this seen; it does not confirm a responder or a completed check.
       </p>
       {event.status === "open" &&
         hasWorkspacePermission(snapshot, "acknowledge") && (
@@ -495,6 +494,8 @@ export function CareEventDetail({ eventId }: { eventId: string }) {
   const event = snapshot.events.find((e) => e.eventId === eventId);
   if (!event) return <WorkspaceState subject="Concern information" />;
   const checks = snapshot.checks.filter((c) => c.eventId === eventId);
+  const resolution = event.actionHistory.find((entry) => entry.action === "resolved");
+  const resolvedAt = resolution?.occurredAt ?? event.feedback?.createdAt;
   const followUps = snapshot.followUps.filter(
     (f) => f.eventId === eventId && f.status !== "completed",
   );
@@ -503,25 +504,31 @@ export function CareEventDetail({ eventId }: { eventId: string }) {
       <Link className={styles.backLink} href="/events">
         ← Concerns
       </Link>
-      <PageHeading
-        title={event.headline}
-        eyebrow={`${event.resident.roomLabel} · ${residentName(snapshot.profiles, event.resident.residentId, event.resident.displayLabel)}`}
-        description={`Opened ${careTime(event.createdAt, snapshot.facility.timeZone)}`}
-      >
-        <span className={styles.priority} data-priority={event.priority}>
-          {event.priority} priority · {eventStateLabels[event.status]}
-        </span>
-      </PageHeading>
+      <header className={styles.eventHeading}>
+        <p className={styles.eventResident}>
+          {event.resident.roomLabel} <span>·</span> {residentName(snapshot.profiles, event.resident.residentId, event.resident.displayLabel)}
+        </p>
+        <h1>{event.headline}</h1>
+        <div className={styles.eventMetadata}>
+          {event.status !== "resolved" && (
+            <span className={styles.priority} data-priority={event.priority}>
+              {event.priority} priority
+            </span>
+          )}
+          {event.status !== "resolved" && <span className={styles.responseState} aria-label="Concern response state">{eventStateLabels[event.status]}</span>}
+          <span className={styles.meta}>Opened {careTime(event.createdAt, snapshot.facility.timeZone)}</span>
+        </div>
+      </header>
       {event.status === "resolved" && (
         <div className={styles.resolved}>
-          <strong>Resolved history.</strong> This event is immutable. Later
-          concerns create separate linked records.
-          {event.feedback && (
-            <p>
-              {event.feedback.actualEventLabel} ·{" "}
-              {careTime(event.feedback.createdAt, snapshot.facility.timeZone)}
-            </p>
-          )}
+          <div className={styles.resolvedHeading}>
+            <div className={styles.completionLine}>
+              <ResolvedConcernStatus />
+              {resolvedAt && <span>Completed {careTime(resolvedAt, snapshot.facility.timeZone)}</span>}
+            </div>
+            <HistoricalPriority priority={event.priority} />
+          </div>
+          <p>{event.feedback?.actualEventLabel ?? "No resolution note supplied"}</p>
         </div>
       )}
       <div className={`${styles.layout} ${styles.eventLayout}`}>
@@ -532,7 +539,9 @@ export function CareEventDetail({ eventId }: { eventId: string }) {
           >
             <div className={styles.panelTitle}>
               <h2 id="event-evidence-heading">Observed evidence</h2>
-              <span className={styles.meta}>{event.confidence.label}</span>
+              <span className={styles.evidenceStatus} data-quality={event.confidence.dataQuality}>
+                {event.confidence.dataQuality === "unavailable" ? "Evidence unavailable" : `Evidence confidence: ${event.confidence.label}`}
+              </span>
             </div>
             {event.confidence.limitation && (
               <p>{event.confidence.limitation}</p>
@@ -552,7 +561,7 @@ export function CareEventDetail({ eventId }: { eventId: string }) {
                           evidence.recordedAt,
                           snapshot.facility.timeZone,
                         )}{" "}
-                        · {evidence.quality} quality
+                        · {evidence.quality === "unavailable" ? "Evidence unavailable" : `${evidence.quality} quality`}
                       </time>
                     </div>
                   </li>
@@ -570,9 +579,9 @@ export function CareEventDetail({ eventId }: { eventId: string }) {
             aria-labelledby="explanation-heading"
           >
             <h2 id="explanation-heading">Possible explanation</h2>
-            <div className={styles.interpretation}>
+            <div className={styles.interpretation} data-analysis={event.interpretation.status}>
               <strong>
-                {event.interpretation.status === "complete"
+                {event.status === "resolved" ? "Historical interpretation" : event.interpretation.status === "complete"
                   ? "AI interpretation · possible explanation"
                   : event.interpretation.status === "pending"
                     ? "Analysis pending"
@@ -580,9 +589,12 @@ export function CareEventDetail({ eventId }: { eventId: string }) {
               </strong>
               <p>
                 {event.interpretation.summary ??
-                  "No explanation is available. The concern remains visible for staff review."}
+                  (event.status === "resolved" ? "No interpretation was available at review." : "No explanation is available. Staff review remains needed.")}
               </p>
-              <p className={styles.meta}>{event.interpretation.uncertainty}</p>
+              <p className={styles.meta}>
+                {event.interpretation.uncertainty}
+              </p>
+              {event.status === "resolved" && <p className={styles.meta}>Preserved from the original review; this interpretation does not describe the resident’s current state.</p>}
             </div>
           </section>
           <section
@@ -686,7 +698,7 @@ export function CareEventDetail({ eventId }: { eventId: string }) {
             className={styles.panel}
             aria-labelledby="event-record-heading"
           >
-            <h2 id="event-record-heading">Record & limitations</h2>
+            <h2 id="event-record-heading">{event.status === "resolved" ? "Record at review" : "Record & limitations"}</h2>
             <dl className={styles.facts}>
               <div>
                 <dt>Resident</dt>
@@ -719,7 +731,7 @@ export function CareEventDetail({ eventId }: { eventId: string }) {
               </div>
               {event.overdueAt && (
                 <div>
-                  <dt>Response due</dt>
+                  <dt>{event.status === "resolved" ? "Original response due" : "Response due"}</dt>
                   <dd>
                     {careTime(event.overdueAt, snapshot.facility.timeZone)}
                   </dd>
@@ -727,8 +739,9 @@ export function CareEventDetail({ eventId }: { eventId: string }) {
               )}
             </dl>
             <p>
-              Follow {snapshot.facility.escalationContact}. A missing
-              explanation or reading does not close this concern.
+              {event.status === "resolved"
+                ? "This completed record preserves the evidence and response available at the time of review. Current monitoring is shown in the resident record."
+                : <>Follow {snapshot.facility.escalationContact}. A missing explanation or reading does not close this concern.</>}
             </p>
           </section>
         </aside>

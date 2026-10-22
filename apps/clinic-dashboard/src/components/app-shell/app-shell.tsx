@@ -49,7 +49,6 @@ export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
     snapshot?.areas.filter((area) =>
       snapshot.currentClient.areaIds.includes(area.areaId),
     ) ?? [];
-  const area = areas.find((item) => item.areaId === snapshot?.currentAreaId);
   const revoked = snapshot?.currentClient.status === "revoked";
 
   async function changeArea(areaId: string) {
@@ -158,6 +157,7 @@ export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
           <div className={styles.facilityContext}>
             <span className={styles.workspaceName}>
               {snapshot?.facility.name ?? "Care workspace"}
+              <span className={styles.mobileDemo}>Demo · no live alerts</span>
             </span>
             <span className={styles.contextDivider}>/</span>
             <label className={styles.areaLabel}>
@@ -205,14 +205,6 @@ export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
             {areaError}
           </p>
         )}
-        <div className={styles.mobileContext}>
-          <span>
-            {snapshot?.currentAreaId === "all"
-              ? "All covered areas"
-              : (area?.name ?? "Shared workspace")}
-          </span>
-          <span>Demo · no live alerts</span>
-        </div>
         <main
           id="care-workspace"
           tabIndex={-1}

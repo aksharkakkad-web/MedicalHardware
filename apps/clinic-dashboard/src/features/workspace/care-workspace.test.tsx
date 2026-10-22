@@ -116,6 +116,15 @@ beforeEach(async () => {
 });
 
 describe("care workspace", () => {
+  it("puts a resident's unresolved care work before measurements while keeping history separate", () => {
+    const event = snapshot.events.find((e) => e.eventId === "evt_unusual_movement_102")!;
+    render(<CareResidentDetail residentId={event.resident.residentId} />);
+    const work = screen.getByRole("region", { name: /open concerns/i });
+    expect(within(work).getByRole("link", { name: new RegExp(event.headline) })).toBeVisible();
+    expect(within(work).queryByText(/Previous unusual movement review/)).not.toBeInTheDocument();
+    const measurements = screen.getByRole("region", { name: /last supplied measurements/i });
+    expect(work.compareDocumentPosition(measurements) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
   it("filters the roster without hiding urgent concerns", async () => {
     const user = userEvent.setup();
     render(<CareOverview />);
@@ -247,6 +256,7 @@ describe("care workspace", () => {
       (e) => e.eventId === "evt_unusual_movement_102",
     )!;
     event.status = "resolved";
+    event.overdue = true;
     snapshot.checks.push({
       checkId: "check_1",
       eventId: event.eventId,
@@ -261,14 +271,43 @@ describe("care workspace", () => {
       requestId: "req1",
     });
     render(<CareEvents />);
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: "Show concerns" }),
-      "history",
-    );
+    await user.click(screen.getByRole("button", { name: /resolved history/i }));
     const row = screen.getByRole("link", { name: new RegExp(event.headline) });
-    expect(
-      within(row).getByText("Resolved", { selector: "strong" }),
-    ).toBeVisible();
+    expect(within(row).getByLabelText("Resolved concern")).toHaveTextContent("Resolved");
+    expect(within(row).getByText("Originally high priority")).toBeVisible();
+    expect(row).toHaveAttribute("data-state", "resolved");
+    expect(row).not.toHaveTextContent(/response overdue/i);
+    expect(row).not.toHaveAttribute("data-priority");
+    expect(within(row).queryByText("high priority", { exact: true })).not.toBeInTheDocument();
+  });
+  it("shows completed treatment in resident concern history without changing original priority", () => {
+    const event = snapshot.events.find((e) => e.eventId === "evt_unusual_movement_102")!;
+    event.status = "resolved";
+    render(<CareResidentDetail residentId={event.resident.residentId} />);
+    const section = screen.getByRole("region", { name: /concern records/i });
+    const record = within(section).getByRole("link", { name: event.headline }).closest("li")!;
+    expect(within(record).getByLabelText("Resolved concern")).toHaveTextContent("Resolved");
+    expect(within(record).getByText("Originally high priority")).toBeVisible();
+    expect(event.priority).toBe("high");
+  });
+  it("frames resolved evidence as history and omits current response instructions", () => {
+    const event = snapshot.events.find((e) => e.eventId === "evt_unusual_movement_102")!;
+    event.status = "resolved";
+    render(<CareEventDetail eventId={event.eventId} />);
+    expect(screen.getByText("Historical interpretation")).toBeVisible();
+    expect(screen.getByText(event.interpretation.uncertainty)).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Record at review" })).toBeVisible();
+    expect(screen.getByText(event.interpretation.uncertainty!)).toBeVisible();
+    expect(screen.queryByText(/a missing explanation or reading does not close this concern/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/preserved from the original review/i)).toBeVisible();
+  });
+  it("keeps checked concerns visibly unresolved until explicitly resolved", () => {
+    const event = snapshot.events.find((e) => e.eventId === "evt_unusual_movement_102")!;
+    event.status = "checked";
+    render(<CareEventDetail eventId={event.eventId} />);
+    expect(screen.queryByLabelText("Resolved concern")).not.toBeInTheDocument();
+    expect(screen.getByText("high priority")).toHaveAttribute("data-priority", "high");
+    expect(screen.getByLabelText("Concern response state")).toHaveTextContent("Check recorded · still open");
   });
   it("limits the roster to the selected authorized area and preserves other covered urgent work", () => {
     snapshot.currentAreaId = "south";
