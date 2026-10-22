@@ -19,6 +19,7 @@ import {
   ScopeNote,
   WorkspaceState,
 } from "./care-shared";
+import { useConcernResponseDialog } from "./care-response-dialog";
 import styles from "./care-workspace.module.css";
 
 export function ResidentRoster({ snapshot }: { snapshot: WorkspaceSnapshot }) {
@@ -187,6 +188,7 @@ export function ResidentRoster({ snapshot }: { snapshot: WorkspaceSnapshot }) {
   );
 }
 export function CareOverview() {
+  const { openResponse, responseDialog } = useConcernResponseDialog();
   const { snapshot, status } = useWorkspace();
   if (!snapshot || status === "error") return <WorkspaceState />;
   const queue = concernQueue(
@@ -237,6 +239,7 @@ export function CareOverview() {
                 key={event.eventId}
                 event={event}
                 snapshot={snapshot}
+                onRespond={() => openResponse(event.eventId)}
               />
             ))}
           </div>
@@ -269,6 +272,7 @@ export function CareOverview() {
         {careTime(snapshot.synchronizedAt, snapshot.facility.timeZone)}.
         Synthetic estimates are not live readings.
       </p>
+      {responseDialog}
     </div>
   );
 }
@@ -288,6 +292,7 @@ export function CareResidentDirectory() {
   );
 }
 export function CareEvents() {
+  const { openResponse, responseDialog } = useConcernResponseDialog();
   const { snapshot, status } = useWorkspace();
   const [tab, setTab] = useState("active");
   if (!snapshot || status === "error")
@@ -316,7 +321,7 @@ export function CareEvents() {
       {items.length ? (
         <div className={styles.concernList}>
           {items.map((event) => (
-            <ConcernRow key={event.eventId} event={event} snapshot={snapshot} />
+            <ConcernRow key={event.eventId} event={event} snapshot={snapshot} onRespond={() => openResponse(event.eventId)} />
           ))}
         </div>
       ) : (
@@ -325,6 +330,7 @@ export function CareEvents() {
           separately.
         </EmptyState>
       )}
+      {responseDialog}
     </div>
   );
 }

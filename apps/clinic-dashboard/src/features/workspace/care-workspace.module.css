@@ -200,6 +200,38 @@
   grid-template-columns: 24px 148px minmax(0, 1fr) 200px 16px;
   gap: 14px;
 }
+.concernItem {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--ac-border-subtle);
+}
+.concernItem:last-child { border-bottom: 0; }
+.concernItem .concernRow { flex: 1; min-width: 0; border: 0; }
+.concernAction { display: flex; align-items: center; padding: 12px 18px 12px 0; }
+.attentionSurface .concernItem { border-top: 1px solid var(--ac-border-subtle); border-bottom: 0; }
+.attentionSurface .concernItem .concernRow { border: 0; }
+.attentionSurface .concernAction { padding-right: 0; padding-left: 16px; }
+.detailResponseButton { margin-top: 20px; }
+.responseContext { padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid var(--ac-border-subtle); }
+.responseContext h3 { margin: 8px 0 12px; font-size: 19px; line-height: 1.35; font-weight: 600; }
+.responseContext .eventResident { font-size: 14px; }
+.responseContext .finePrint { margin-top: 12px; }
+.popupActions h3 { font-size: 17px; margin: 20px 0 8px; }
+.popupActions p { line-height: 1.5; }
+.popupActions .form { margin-top: 20px; }
+.responseModes { display: flex; flex-wrap: wrap; gap: 8px; }
+.responseModes button { flex: 1; white-space: nowrap; }
+.discardPrompt { padding: 16px; margin-bottom: 20px; border: 1px solid var(--ac-border-strong); border-radius: var(--ac-radius-card); background: var(--ac-surface-quiet); }
+.discardPrompt h3 { margin: 0; font-size: 17px; }
+.discardPrompt p { margin: 8px 0 16px; }
+.inlineActions { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 1180px) {
+  .concernItem .concernRow { grid-template-columns: 24px 118px minmax(0, 1fr) 140px 16px; gap: 10px; }
+}
+@media (max-width: 760px) {
+  .concernItem { display: block; }
+  .concernAction, .attentionSurface .concernAction { padding: 0 14px 14px; justify-content: flex-end; }
+}
 .concernRow:first-child {
   border-radius: var(--ac-radius-card) var(--ac-radius-card) 0 0;
 }
@@ -1190,7 +1222,8 @@
     grid-template-columns: 1fr;
     gap: 20px;
   }
-  .concernRow {
+  .concernRow,
+  .concernItem .concernRow {
     grid-template-columns: 24px 130px minmax(0, 1fr) 14px;
     gap: 8px 10px;
   }
@@ -1359,7 +1392,8 @@
   .residentLink strong {
     font-size: 16px;
   }
-  .concernRow {
+  .concernRow,
+  .concernItem .concernRow {
     gap: 8px 10px;
     padding: 16px;
     padding-block: 14px;
