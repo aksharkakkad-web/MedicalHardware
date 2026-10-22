@@ -30,6 +30,7 @@ import {
   PermissionNotice,
   WorkspaceState,
 } from "./care-shared";
+import { useConcernResponseDialog } from "./care-response-dialog";
 import styles from "./care-workspace.module.css";
 
 function Measurement({
@@ -181,6 +182,7 @@ function ContextEditor({
   );
 }
 export function CareResidentDetail({ residentId }: { residentId: string }) {
+  const { openResponse, responseDialog } = useConcernResponseDialog();
   const { snapshot, status } = useWorkspace();
   if (!snapshot || status === "error")
     return <WorkspaceState subject="Resident information" />;
@@ -222,7 +224,7 @@ export function CareResidentDetail({ residentId }: { residentId: string }) {
             <span className={styles.meta}>Staff review remains needed</span>
           </div>
           {events.filter((event) => event.status !== "resolved").map((event) => (
-            <ConcernRow key={event.eventId} event={event} snapshot={snapshot} />
+            <ConcernRow key={event.eventId} event={event} snapshot={snapshot} onRespond={() => openResponse(event.eventId)} />
           ))}
         </section>
       )}
@@ -485,6 +487,7 @@ export function CareResidentDetail({ residentId }: { residentId: string }) {
           </section>
         </aside>
       </div>
+      {responseDialog}
     </div>
   );
 }

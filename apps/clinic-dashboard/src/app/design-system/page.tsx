@@ -521,6 +521,7 @@ export default function DesignSystemPage() {
 
             <Section number="11" title="Care patterns" intro="Semantic specification stays rigorous; actual care UI stays concise and task-focused.">
               <p className={styles.ruleNote}><strong>Care hierarchy</strong> Room and resident identity lead the scan. Show open care work before compact supplied measurements. Priority, response state and monitoring availability remain separate.</p>
+              <p className={styles.ruleNote}><strong>Response access</strong> Respond beside an open concern and Response &amp; outcome on its detail open the same modal. Record response and Resolve concern remain separate actions. Keep Close visible, protect unsaved entries, block dismissal during saving and retain completion feedback after the concern leaves the queue.</p>
               <p className={styles.ruleNote}><strong>Resolved history</strong> A single green check and Resolved label mean the workflow is complete. Show the supplied closure time and outcome; retain original priority as quiet historical context. Device and confidence fields describe the time of review, and original limitations remain visible. This is not a claim of resident health or safety.</p>
               <SpecimenLabel>Operational manifestations · synthetic/test-only</SpecimenLabel>
               <div className={styles.careManifestations}>

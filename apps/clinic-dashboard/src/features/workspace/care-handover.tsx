@@ -18,6 +18,7 @@ import {
   PageHeading,
   WorkspaceState,
 } from "./care-shared";
+import { useConcernResponseDialog } from "./care-response-dialog";
 import styles from "./care-workspace.module.css";
 
 export function CareHandover() {
@@ -32,6 +33,7 @@ function relativeStart(end: string, hours: number): string {
     : "";
 }
 function HandoverContent({ snapshot }: { snapshot: WorkspaceSnapshot }) {
+  const { openResponse, responseDialog } = useConcernResponseDialog();
   const [hours, setHours] = useState("12");
   const [customStart, setStartTime] = useState(() =>
     relativeStart(snapshot.synchronizedAt, 12),
@@ -190,6 +192,7 @@ function HandoverContent({ snapshot }: { snapshot: WorkspaceSnapshot }) {
                 key={event.eventId}
                 event={event}
                 snapshot={snapshot}
+                onRespond={() => openResponse(event.eventId)}
               />
             ))}
           </div>
@@ -393,6 +396,7 @@ function HandoverContent({ snapshot }: { snapshot: WorkspaceSnapshot }) {
         Use the facility’s handover procedure to confirm who will carry work
         forward. No personal staff identity is verified by this shared station.
       </p>
+      {responseDialog}
     </div>
   );
 }

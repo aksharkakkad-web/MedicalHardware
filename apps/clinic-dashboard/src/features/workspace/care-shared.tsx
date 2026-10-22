@@ -142,9 +142,11 @@ export function HistoricalPriority({
 export function ConcernRow({
   event,
   snapshot,
+  onRespond,
 }: {
   event: MonitoringEventDetail;
   snapshot: WorkspaceSnapshot;
+  onRespond?: () => void;
 }) {
   const checks = snapshot.checks.filter(
     (check) => check.eventId === event.eventId,
@@ -164,7 +166,7 @@ export function ConcernRow({
   )?.areaId;
   const outsideSelected =
     snapshot.currentAreaId !== "all" && selectedArea !== snapshot.currentAreaId;
-  return (
+  const recordLink = (
     <Link
       href={`/events/${event.eventId}`}
       className={styles.concernRow}
@@ -212,6 +214,12 @@ export function ConcernRow({
       </span>
     </Link>
   );
+  return onRespond && event.status !== "resolved" ? (
+    <div className={styles.concernItem}>
+      {recordLink}
+      <div className={styles.concernAction}><Button variant="secondary" aria-label={`Respond to ${event.resident.roomLabel}`} onClick={onRespond}>Respond</Button></div>
+    </div>
+  ) : recordLink;
 }
 export function FollowUpList({
   items,

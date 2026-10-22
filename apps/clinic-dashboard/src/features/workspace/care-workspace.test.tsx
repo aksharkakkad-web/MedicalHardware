@@ -116,6 +116,93 @@ beforeEach(async () => {
 });
 
 describe("care workspace", () => {
+  it("opens the correct queue response popup without navigating or recording an action", async () => {
+    const user = userEvent.setup();
+    render(<CareOverview />);
+    const trigger = screen.getByRole("button", { name: "Respond to Room 102" });
+    expect(trigger.closest("a")).toBeNull();
+    await user.click(trigger);
+    const dialog = screen.getByRole("dialog", { name: "Response & outcome" });
+    expect(within(dialog).getByText("Unusual activity needs staff review")).toBeVisible();
+    expect(within(dialog).getByRole("button", { name: "Acknowledge concern" })).toBeVisible();
+    await user.click(within(dialog).getByRole("button", { name: "Close response" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(acknowledgeEvent).not.toHaveBeenCalled();
+    expect(recordCheck).not.toHaveBeenCalled();
+    expect(trigger).toHaveFocus();
+  });
+  it("opens response actions from the detail heading instead of exposing a duplicate inline form", async () => {
+    const user = userEvent.setup();
+    render(<CareEventDetail eventId="evt_unusual_movement_102" />);
+    expect(screen.queryByRole("button", { name: "Acknowledge concern" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Response & outcome" }));
+    expect(within(screen.getByRole("dialog")).getByRole("button", { name: "Acknowledge concern" })).toBeVisible();
+  });
+  it("protects an actual response draft until staff explicitly discard it", async () => {
+    const user = userEvent.setup();
+    snapshot.events.find((event) => event.eventId === "evt_unusual_movement_102")!.status = "acknowledged";
+    render(<CareEventDetail eventId="evt_unusual_movement_102" />);
+    await user.click(screen.getByRole("button", { name: "Response & outcome" }));
+    const dialog = screen.getByRole("dialog");
+    await user.type(within(dialog).getByRole("textbox", { name: "Note (optional)" }), "Unfinished synthetic note");
+    await user.click(within(dialog).getByRole("button", { name: "Close response" }));
+    expect(dialog).toBeVisible();
+    expect(within(dialog).queryByRole("button", { name: "Save outcome" })).not.toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Keep editing" }));
+    expect(within(dialog).getByRole("textbox", { name: "Note (optional)" })).toHaveValue("Unfinished synthetic note");
+    await user.click(within(dialog).getByRole("button", { name: "Close response" }));
+    await user.click(within(dialog).getByRole("button", { name: "Discard and close" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(recordCheck).not.toHaveBeenCalled();
+  });
+  it("keeps the popup open while an outcome save is pending", async () => {
+    const user = userEvent.setup();
+    snapshot.events.find((event) => event.eventId === "evt_unusual_movement_102")!.status = "acknowledged";
+    let finish!: (record: { completedCheck: boolean }) => void;
+    recordCheck.mockReturnValue(new Promise((resolve) => { finish = resolve; }));
+    render(<CareEventDetail eventId="evt_unusual_movement_102" />);
+    await user.click(screen.getByRole("button", { name: "Response & outcome" }));
+    const dialog = screen.getByRole("dialog");
+    await user.click(within(dialog).getByRole("radio", { name: /checked · no concern observed/i }));
+    await user.click(within(dialog).getByRole("button", { name: "Save outcome" }));
+    expect(within(dialog).getByRole("button", { name: "Close response" })).toBeDisabled();
+    fireEvent(dialog, new Event("cancel", { cancelable: true }));
+    expect(dialog).toBeVisible();
+    finish({ completedCheck: true });
+    expect(await within(dialog).findByRole("status")).toHaveTextContent(/outcome saved/i);
+  });
+  it("retains a resolution draft across a changed permission and keeps unavailable actions hidden", async () => {
+    const user = userEvent.setup();
+    const event = snapshot.events.find((item) => item.eventId === "evt_unusual_movement_102")!;
+    event.status = "checked";
+    const view = render(<CareEventDetail eventId={event.eventId} />);
+    await user.click(screen.getByRole("button", { name: "Response & outcome" }));
+    await user.click(screen.getByRole("button", { name: "Resolve concern" }));
+    await user.type(screen.getByLabelText("What actually happened?"), "Synthetic draft remains available");
+    snapshot.currentClient.permissions = ["record_check"];
+    view.rerender(<CareEventDetail eventId={event.eventId} />);
+    expect(screen.getByRole("button", { name: "Resolve concern" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Confirm resolution" })).not.toBeInTheDocument();
+    snapshot.currentClient.permissions.push("resolve_concern");
+    view.rerender(<CareEventDetail eventId={event.eventId} />);
+    expect(screen.getByLabelText("What actually happened?")).toBeVisible();
+    expect(screen.getByLabelText("What actually happened?")).toHaveValue("Synthetic draft remains available");
+    await user.click(screen.getByRole("button", { name: "Close response" }));
+    expect(screen.getByRole("button", { name: "Keep editing" })).toBeVisible();
+  });
+  it("removes the concern details and controls if it leaves the authorized snapshot", async () => {
+    const user = userEvent.setup();
+    const view = render(<CareOverview />);
+    await user.click(screen.getByRole("button", { name: "Respond to Room 102" }));
+    snapshot.events = snapshot.events.filter((item) => item.eventId !== "evt_unusual_movement_102");
+    view.rerender(<CareOverview />);
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByRole("status")).toHaveTextContent(/no longer available/i);
+    expect(within(dialog).queryByText("Unusual activity needs staff review")).not.toBeInTheDocument();
+    expect(within(dialog).queryByRole("button", { name: "Acknowledge concern" })).not.toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Close response" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
   it("puts a resident's unresolved care work before measurements while keeping history separate", () => {
     const event = snapshot.events.find((e) => e.eventId === "evt_unusual_movement_102")!;
     render(<CareResidentDetail residentId={event.resident.residentId} />);
@@ -159,6 +246,7 @@ describe("care workspace", () => {
     event.status = "acknowledged";
     recordCheck.mockResolvedValue({ completedCheck: false });
     render(<CareEventDetail eventId={event.eventId} />);
+    await user.click(screen.getByRole("button", { name: "Response & outcome" }));
     await user.click(
       screen.getByRole("radio", { name: /could not complete a check/i }),
     );
@@ -171,7 +259,7 @@ describe("care workspace", () => {
       /not recorded as a completed check/i,
     );
     expect(
-      screen.queryByRole("button", { name: "Resolve concern" }),
+      screen.queryByRole("button", { name: "Confirm resolution" }),
     ).not.toBeInTheDocument();
   });
   it("keeps the entered outcome after a rejected save and does not report success", async () => {
@@ -184,6 +272,7 @@ describe("care workspace", () => {
       new Error("Save could not be confirmed. Try again."),
     );
     render(<CareEventDetail eventId={event.eventId} />);
+    await user.click(screen.getByRole("button", { name: "Response & outcome" }));
     await user.click(
       screen.getByRole("radio", { name: /could not complete a check/i }),
     );
@@ -198,13 +287,16 @@ describe("care workspace", () => {
       screen.queryByText(/saved in demonstration/i),
     ).not.toBeInTheDocument();
   });
-  it("permits explicit resolution of a canonical checked event without inventing a local check record", () => {
+  it("permits explicit resolution of a canonical checked event without inventing a local check record", async () => {
+    const user = userEvent.setup();
     const event = snapshot.events.find(
       (e) => e.eventId === "evt_unusual_movement_102",
     )!;
     event.status = "checked";
     render(<CareEventDetail eventId={event.eventId} />);
-    expect(screen.getByText("Resolve this concern")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Response & outcome" }));
+    await user.click(screen.getByRole("button", { name: "Resolve concern" }));
+    expect(screen.getByRole("button", { name: "Confirm resolution" })).toBeVisible();
   });
   it("reuses one action identity after an unconfirmed outcome save", async () => {
     const user = userEvent.setup();
@@ -216,6 +308,7 @@ describe("care workspace", () => {
       .mockRejectedValueOnce(new Error("Save could not be confirmed"))
       .mockResolvedValueOnce({ completedCheck: false });
     render(<CareEventDetail eventId={event.eventId} />);
+    await user.click(screen.getByRole("button", { name: "Response & outcome" }));
     await user.click(
       screen.getByRole("radio", { name: /could not complete a check/i }),
     );
@@ -535,10 +628,12 @@ describe("care workspace", () => {
       screen.getByText("Unusual activity needs staff review"),
     ).toBeVisible();
   });
-  it("keeps view-only concerns visible without offering mutation controls even in admin mode", () => {
+  it("keeps view-only concerns visible without offering mutation controls even in admin mode", async () => {
+    const user = userEvent.setup();
     snapshot.currentClient.permissions = [];
     snapshot.admin.active = true;
     render(<CareEventDetail eventId="evt_unusual_movement_102" />);
+    await user.click(screen.getByRole("button", { name: "Response & outcome" }));
     expect(
       screen.getByRole("heading", { name: "Observed evidence" }),
     ).toBeVisible();
@@ -561,8 +656,9 @@ describe("care workspace", () => {
     event.status = "checked";
     recordCheck.mockResolvedValue({ completedCheck: true });
     render(<CareEventDetail eventId={event.eventId} />);
+    await user.click(screen.getByRole("button", { name: "Response & outcome" }));
     expect(screen.getByRole("button", { name: "Save outcome" })).toBeVisible();
-    expect(screen.queryByText("Resolve this concern")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Confirm resolution" })).not.toBeInTheDocument();
     expect(
       screen.getByText(/not permitted to resolve concerns/i),
     ).toBeVisible();
